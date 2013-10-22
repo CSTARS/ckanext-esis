@@ -37,7 +37,7 @@
       <file leaf-file-name="search.html" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/search.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="38" column="20" selection-start="1683" selection-end="1683" vertical-scroll-proportion="0.79831934" vertical-offset="0" max-vertical-offset="714">
+            <state line="0" column="1" selection-start="1" selection-end="1" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="714">
               <folding />
             </state>
           </provider>
@@ -372,7 +372,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/search.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="38" column="20" selection-start="1683" selection-end="1683" vertical-scroll-proportion="0.79831934" vertical-offset="0" max-vertical-offset="714">
+        <state line="0" column="1" selection-start="1" selection-end="1" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="714">
           <folding />
         </state>
       </provider>
