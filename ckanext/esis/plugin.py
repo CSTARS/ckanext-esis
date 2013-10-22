@@ -11,15 +11,15 @@ class EsisPlugin(plugins.SingletonPlugin,
     Uses a tag vocabulary to add a custom metadata field to datasets.
 
     '''
-    plugins.implements(plugins.IConfigurer, inherit=False)
-    plugins.implements(plugins.IDatasetForm, inherit=False)
-    plugins.implements(plugins.ITemplateHelpers, inherit=False)
+    plugins.implements(plugins.IConfigurer)
+    plugins.implements(plugins.IDatasetForm)
+    plugins.implements(plugins.ITemplateHelpers)
 
 
     def update_config(self, config):
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
-        # tk.add_template_directory(config, 'templates')
+        tk.add_template_directory(config, 'templates')
         # setting up Fanstatic directory.  In here you will find a resource.config file
         tk.add_resource('public','esis')
 
