@@ -17,9 +17,9 @@ class EsisPlugin(plugins.SingletonPlugin,
 
 
     def update_config(self, config):
-        # Add this plugin's templates dir to CKAN's extra_template_paths, so
-        # that CKAN will use this plugin's custom templates.
-        tk.add_template_directory(config, 'templates')
+        # Add this plugin's spectral_templates dir to CKAN's extra_template_paths, so
+        # that CKAN will use this plugin's custom spectral_templates.
+        tk.add_template_directory(config, 'spectral_templates')
         # setting up Fanstatic directory.  In here you will find a resource.config file
         tk.add_resource('public','esis')
 
