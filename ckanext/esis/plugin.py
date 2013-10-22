@@ -28,7 +28,7 @@ class EsisPlugin(plugins.SingletonPlugin,
 
     def is_fallback(self):
         # Return True to register this plugin as the default handler for
-        # package types not handled by any other IDatasetForm plugin.
+        # spectral_package types not handled by any other IDatasetForm plugin.
         return True
 
     def package_types(self):
@@ -74,7 +74,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         return super(EsisPlugin, self).comments_template()
 
     def search_template(self):
-        return super(EsisPlugin, self).search_template()
+        return 'spectral_package/search.html'
 
     def history_template(self):
         return super(EsisPlugin, self).history_template()

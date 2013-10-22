@@ -1,0 +1,9 @@
+{% ckan_extends %}
+
+{% block subtitle %}
+        {{ _("Search for a Spectra")  }}
+{% endblock %}
+
+{% block breadcrumb_content %}
+  <li class="active">{{ h.nav_link(_('Spectra'), controller='package', action='search', highlight_actions = 'new index') }}</li>
+{% endblock %}
