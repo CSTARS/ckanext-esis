@@ -26,7 +26,7 @@
       <file leaf-file-name="plugin.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/plugin.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="13" column="30" selection-start="311" selection-end="311" vertical-scroll-proportion="0.2596538" vertical-offset="0" max-vertical-offset="1440">
+            <state line="19" column="51" selection-start="509" selection-end="509" vertical-scroll-proportion="0.379494" vertical-offset="0" max-vertical-offset="1440">
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -369,7 +369,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/plugin.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="30" selection-start="311" selection-end="311" vertical-scroll-proportion="0.2596538" vertical-offset="0" max-vertical-offset="1440">
+        <state line="19" column="51" selection-start="509" selection-end="509" vertical-scroll-proportion="0.379494" vertical-offset="0" max-vertical-offset="1440">
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>

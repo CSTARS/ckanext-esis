@@ -11,13 +11,13 @@ class EsisPlugin(plugins.SingletonPlugin,
     Uses a tag vocabulary to add a custom metadata field to datasets.
 
     '''
-    plugins.implements(plugins.IConfigurable)
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IDatasetForm)
     plugins.implements(plugins.ITemplateHelpers)
 
 
     def update_config(self, config):
+        print "UPDATING CONFIG FILE FROM EsisPlugin"
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
