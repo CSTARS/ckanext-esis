@@ -30,7 +30,7 @@ class EsisPlugin(plugins.SingletonPlugin,
     def is_fallback(self):
         # Return True to register this plugin as the default handler for
         # spectral types not handled by any other IDatasetForm plugin.
-        return True
+        return False
 
     def package_types(self):
         return ['spectral']
