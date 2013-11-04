@@ -5,10 +5,9 @@ from pylons.i18n import _
 from ckan import model
 
 import ckan.plugins as p
-import ckan.lib.helpers as h, json
 from ckan.common import c
-from ckan.lib.base import BaseController, \
-                          request, response, render, abort, redirect
+import ckan.lib.helpers as h
+from ckan.lib.base import BaseController, render
 
 import logging
 log = logging.getLogger(__name__)
