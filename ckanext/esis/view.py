@@ -12,7 +12,15 @@ from ckan.controllers.package import PackageController, render
 import logging
 log = logging.getLogger(__name__)
 
+NotFound = logic.NotFound
 NotAuthorized = logic.NotAuthorized
+ValidationError = logic.ValidationError
+check_access = logic.check_access
+get_action = logic.get_action
+tuplize_dict = logic.tuplize_dict
+clean_dict = logic.clean_dict
+parse_params = logic.parse_params
+flatten_to_string_key = logic.flatten_to_string_key
 
 class ViewController(PackageController):
 
