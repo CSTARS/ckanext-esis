@@ -21,5 +21,5 @@ class ViewController(BaseController):
         super(ViewController,self).__before__(action, **params)
 
 
-    def spectral_search(self, id):
+    def spectral_search(self):
         return render('spectral/search.html')
