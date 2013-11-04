@@ -7,12 +7,12 @@ from ckan import model
 import ckan.plugins as p
 from ckan.common import c
 import ckan.lib.helpers as h
-from ckan.lib.base import BaseController, render
+from ckan.controllers.package import PackageController, render
 
 import logging
 log = logging.getLogger(__name__)
 
-class ViewController(BaseController):
+class ViewController(PackageController):
 
     not_auth_message = p.toolkit._('Not authorized to see this page')
 
