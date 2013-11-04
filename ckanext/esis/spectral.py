@@ -7,7 +7,7 @@ import uuid
 from ckan.lib.base import BaseController, c, request, render, config, h, abort
 import ckan.logic as logic
 
-from ckanext.esis.parsers.aster import AsterParser
+from ckanext.esis.parsers import AsterParser
 
 
 class SpectralController(BaseController):
