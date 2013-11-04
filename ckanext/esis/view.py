@@ -3,7 +3,7 @@ import xml.etree.ElementTree as etree
 from pylons.i18n import _
 
 from ckan import model
-
+import ckan.logic as logic
 import ckan.plugins as p
 from ckan.common import c
 import ckan.lib.helpers as h
@@ -11,6 +11,8 @@ from ckan.controllers.package import PackageController, render
 
 import logging
 log = logging.getLogger(__name__)
+
+NotAuthorized = logic.NotAuthorized
 
 class ViewController(PackageController):
 
