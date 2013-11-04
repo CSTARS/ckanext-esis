@@ -6,7 +6,8 @@ from ckan import model
 
 import ckan.plugins as p
 import ckan.lib.helpers as h, json
-from ckan.lib.base import BaseController, c, \
+from ckan.common import c
+from ckan.lib.base import BaseController, \
                           request, response, render, abort, redirect
 
 import logging
