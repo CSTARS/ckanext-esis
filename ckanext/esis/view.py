@@ -47,7 +47,7 @@ class ViewController(PackageController):
         super(ViewController,self).__before__(action, **params)
 
 
-    def spectral_search(self):
+    def spectralSearch(self):
         from ckan.lib.search import SearchError
 
         package_type = self._guess_package_type()

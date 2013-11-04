@@ -88,7 +88,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
-        map.connect('spectral_search', '/spectral', controller=controller, action='spectral_search', highlight_actions='spectral_search')
+        map.connect('spectralSearch', '/spectral', controller=controller, action='spectralSearch')
 
         return map
 
