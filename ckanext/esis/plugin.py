@@ -84,10 +84,16 @@ class EsisPlugin(plugins.SingletonPlugin,
         return 'spectral/new_package_form.html'
 
     def before_map(self, map):
+        controller = 'ckanext.esis.spectral:SpectralController'
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
+        # just use the basic package controller for this on, there is a js hack
+        # to select the correct menu as the menu select is action based :/
         map.connect('spectralSearch', '/spectral', controller='package', action='search')
+
+        # attach the upload handle to the SpectralController
+        map.connect('upload', '/spectral/api/upload', controller=controller, action='upload')
 
         return map
 
