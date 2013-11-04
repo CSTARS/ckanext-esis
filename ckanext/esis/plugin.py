@@ -84,7 +84,6 @@ class EsisPlugin(plugins.SingletonPlugin,
         return 'spectral/new_package_form.html'
 
     def before_map(self, map):
-        controller = 'ckanext.esis.view:ViewController'
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
