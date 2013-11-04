@@ -48,7 +48,7 @@
       <file leaf-file-name="view.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/view.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="14" column="38" selection-start="331" selection-end="331" vertical-scroll-proportion="0.27962717" vertical-offset="0" max-vertical-offset="751">
+            <state line="194" column="0" selection-start="7049" selection-end="7049" vertical-scroll-proportion="3.7762983" vertical-offset="74" max-vertical-offset="3045">
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -537,7 +537,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/view.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="38" selection-start="331" selection-end="331" vertical-scroll-proportion="0.27962717" vertical-offset="0" max-vertical-offset="751">
+        <state line="194" column="0" selection-start="7049" selection-end="7049" vertical-scroll-proportion="3.7762983" vertical-offset="74" max-vertical-offset="3045">
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
