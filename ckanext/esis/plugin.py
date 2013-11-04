@@ -14,10 +14,10 @@ class EsisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IDatasetForm)
     plugins.implements(plugins.ITemplateHelpers)
+    plugins.implements(plugins.IRoutes, inherit=True)
 
 
     def update_config(self, config):
-        print "UPDATING CONFIG FILE FROM EsisPlugin"
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
@@ -63,7 +63,7 @@ class EsisPlugin(plugins.SingletonPlugin,
                 context, data_dict)
 
     def new_template(self):
-        return super(EsisPlugin, self).new_template()
+        return 'spectral/new.html'
 
     def read_template(self):
         return super(EsisPlugin, self).read_template()
@@ -81,7 +81,16 @@ class EsisPlugin(plugins.SingletonPlugin,
         return super(EsisPlugin, self).history_template()
 
     def package_form(self):
-        return super(EsisPlugin, self).package_form()
+        return 'spectral/new_package_form.html'
+
+    def before_map(self, map):
+
+        # Most of the routes are defined via the IDatasetForm interface
+        # (ie they are the ones for a package type)
+
+        map.connect('spectral_search', '/spectral', action='spectral_search')
+
+        return map
 
     # check_data_dict() is deprecated, this method is only here to test that
     # legacy support for the deprecated method works.
