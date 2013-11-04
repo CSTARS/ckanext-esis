@@ -6,6 +6,7 @@ import ckan.plugins as p
 from ckan.common import OrderedDict, _, json, request, c, g, response
 import ckan.lib.helpers as h
 from ckan.controllers.package import PackageController, render
+import ckan.lib.maintain as maintain
 
 import logging
 log = logging.getLogger(__name__)
