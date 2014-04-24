@@ -2,7 +2,8 @@ import logging
 
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
-
+import json
+from ckan.common import c
 
 class EsisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
@@ -25,7 +26,31 @@ class EsisPlugin(plugins.SingletonPlugin,
         tk.add_resource('public','esis')
 
     def get_helpers(self):
-        return {}
+        return {
+            'to_json' : self.to_json,
+            'getUser' : self.getUser,
+            'getPackage' : self.getPackage
+        }
+
+    def test(self):
+        user = c.userobj
+        t = 1
+
+    def getUser(self):
+        user = tk.get_action('user_show')({},{'id': c.userobj.id});
+        del user['datasets']
+        del user['activity']
+        return user
+
+    def getPackage(self):
+        pkg = tk.get_action('package_show')({},{'id': c.id})
+        return pkg
+
+    def to_json(self, data):
+        try:
+            return json.dumps(data)
+        except Exception:
+            return "{}"
 
     def is_fallback(self):
         # Return True to register this plugin as the default handler for
