@@ -26,10 +26,8 @@
       <file leaf-file-name="plugin.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/plugin.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="94" column="60" selection-start="3134" selection-end="3134" vertical-scroll-proportion="0.0" vertical-offset="809" max-vertical-offset="1650">
-              <folding>
-                <element signature="e#0#14#0" expanded="true" />
-              </folding>
+            <state line="94" column="39" selection-start="3113" selection-end="3113" vertical-scroll-proportion="0.0" vertical-offset="1410" max-vertical-offset="1650">
+              <folding />
             </state>
           </provider>
         </entry>
@@ -37,8 +35,10 @@
       <file leaf-file-name="spectral.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/spectral.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="9" column="25" selection-start="219" selection-end="219" vertical-scroll-proportion="0.17976032" vertical-offset="0" max-vertical-offset="751">
-              <folding />
+            <state line="21" column="19" selection-start="421" selection-end="421" vertical-scroll-proportion="0.23968042" vertical-offset="135" max-vertical-offset="945">
+              <folding>
+                <element signature="e#0#25#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -46,7 +46,7 @@
       <file leaf-file-name="parsers.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/parsers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="2" column="11" selection-start="22" selection-end="22" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="705">
+            <state line="2" column="11" selection-start="22" selection-end="22" vertical-scroll-proportion="0.0" vertical-offset="30" max-vertical-offset="705">
               <folding />
             </state>
           </provider>
@@ -55,7 +55,7 @@
       <file leaf-file-name="resource.config" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/public/resource.config">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="4" column="13" selection-start="41" selection-end="41" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="150">
+            <state line="4" column="13" selection-start="41" selection-end="41" vertical-scroll-proportion="0.0" vertical-offset="60" max-vertical-offset="150">
               <folding />
             </state>
           </provider>
@@ -64,7 +64,7 @@
       <file leaf-file-name="header.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/public/js/header.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="6" column="86" selection-start="298" selection-end="376" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="210">
+            <state line="6" column="86" selection-start="298" selection-end="376" vertical-scroll-proportion="0.0" vertical-offset="90" max-vertical-offset="210">
               <folding />
             </state>
           </provider>
@@ -73,7 +73,7 @@
       <file leaf-file-name="header.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/header.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="11" column="14" selection-start="399" selection-end="399" vertical-scroll-proportion="-6.875" vertical-offset="0" max-vertical-offset="255">
+            <state line="11" column="14" selection-start="399" selection-end="399" vertical-scroll-proportion="0.0" vertical-offset="165" max-vertical-offset="255">
               <folding />
             </state>
           </provider>
@@ -82,7 +82,7 @@
       <file leaf-file-name="search.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/search.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="38" column="72" selection-start="1589" selection-end="1589" vertical-scroll-proportion="-23.75" vertical-offset="0" max-vertical-offset="675">
+            <state line="38" column="72" selection-start="1589" selection-end="1589" vertical-scroll-proportion="0.0" vertical-offset="570" max-vertical-offset="675">
               <folding />
             </state>
           </provider>
@@ -91,7 +91,7 @@
       <file leaf-file-name="package_basic_fields.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/snippets/package_basic_fields.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="54" selection-start="54" selection-end="54" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="240">
+            <state line="0" column="54" selection-start="54" selection-end="54" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="240">
               <folding />
             </state>
           </provider>
@@ -127,9 +127,9 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-3" />
-    <option name="y" value="22" />
-    <option name="width" value="1440" />
+    <option name="x" value="132" />
+    <option name="y" value="141" />
+    <option name="width" value="1386" />
     <option name="height" value="874" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
@@ -158,7 +158,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -211,10 +210,11 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../tests" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../ceres/ckan/ckanext-ceic" />
     <property name="DefaultHtmlFileTemplate" value="Html5" />
   </component>
   <component name="RecentsManager">
@@ -356,15 +356,14 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-3" y="22" width="1440" height="874" extended-state="0" />
-    <editor active="true" />
+    <frame x="132" y="141" width="1386" height="874" extended-state="0" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32991013" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2736111" sideWeight="0.67008984" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.16594517" sideWeight="0.67008984" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32928178" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -373,6 +372,7 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32991013" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -395,9 +395,7 @@
     <entry file="file://$PROJECT_DIR$/ckanext/esis/plugin.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="35" column="0" selection-start="1120" selection-end="1120" vertical-scroll-proportion="0.0" vertical-offset="525" max-vertical-offset="1425">
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -408,42 +406,32 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/snippets/package_form.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="70" selection-start="410" selection-end="410" vertical-scroll-proportion="0.0" vertical-offset="165" max-vertical-offset="255">
-          <folding />
-        </state>
+        <state line="11" column="70" selection-start="410" selection-end="410" vertical-scroll-proportion="0.0" vertical-offset="165" max-vertical-offset="255" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/snippets/stages.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="53" column="5" selection-start="2084" selection-end="2084" vertical-scroll-proportion="0.0" vertical-offset="795" max-vertical-offset="885">
-          <folding />
-        </state>
+        <state line="53" column="5" selection-start="2084" selection-end="2084" vertical-scroll-proportion="0.0" vertical-offset="795" max-vertical-offset="885" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/new.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="67" selection-start="113" selection-end="113" vertical-scroll-proportion="0.0" vertical-offset="30" max-vertical-offset="120">
-          <folding />
-        </state>
+        <state line="2" column="67" selection-start="113" selection-end="113" vertical-scroll-proportion="0.0" vertical-offset="30" max-vertical-offset="120" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/base_form_page.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="20" selection-start="20" selection-end="20" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1137">
-          <folding />
-        </state>
+        <state line="0" column="20" selection-start="20" selection-end="20" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1137" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/base.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="0" selection-start="124" selection-end="124" vertical-scroll-proportion="0.10316369" vertical-offset="0" max-vertical-offset="727">
-          <folding />
-        </state>
+        <state line="5" column="0" selection-start="124" selection-end="124" vertical-scroll-proportion="0.10316369" vertical-offset="0" max-vertical-offset="727" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/spectral/search.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="38" column="72" selection-start="1589" selection-end="1589" vertical-scroll-proportion="-23.75" vertical-offset="0" max-vertical-offset="675">
+        <state line="38" column="72" selection-start="1589" selection-end="1589" vertical-scroll-proportion="0.0" vertical-offset="570" max-vertical-offset="675">
           <folding />
         </state>
       </provider>
@@ -466,7 +454,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/templates/header.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="14" selection-start="399" selection-end="399" vertical-scroll-proportion="-6.875" vertical-offset="0" max-vertical-offset="255">
+        <state line="11" column="14" selection-start="399" selection-end="399" vertical-scroll-proportion="0.0" vertical-offset="165" max-vertical-offset="255">
           <folding />
         </state>
       </provider>
@@ -485,15 +473,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ckanext/esis/plugin.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="94" column="60" selection-start="3134" selection-end="3134" vertical-scroll-proportion="0.0" vertical-offset="809" max-vertical-offset="1650">
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/parsers.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="2" column="11" selection-start="22" selection-end="22" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="705">
@@ -501,10 +480,19 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/ckanext/esis/plugin.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="94" column="39" selection-start="3113" selection-end="3113" vertical-scroll-proportion="0.0" vertical-offset="314" max-vertical-offset="1605">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ckanext/esis/spectral.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="25" selection-start="219" selection-end="219" vertical-scroll-proportion="0.17976032" vertical-offset="0" max-vertical-offset="751">
-          <folding />
+        <state line="21" column="19" selection-start="421" selection-end="421" vertical-scroll-proportion="0.23968042" vertical-offset="135" max-vertical-offset="945">
+          <folding>
+            <element signature="e#0#25#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

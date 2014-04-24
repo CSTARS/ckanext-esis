@@ -12,7 +12,15 @@ from ckanext.esis.parsers import AsterParser
 
 class SpectralController(BaseController):
 
+    def __init__(self):
+        self.parsers = {
+            "aster": AsterParser()
+        }
+
+
     def upload(self):
+        print "here"
+
         type = request.POST['type']
 
         filename = request.POST['file'].filename
@@ -38,7 +46,13 @@ class SpectralController(BaseController):
 
         f = open(temp_file_path, 'r')
         data = f.read()
-        data = AsterParser.parse(data)
+
+        if self.parsers[type] is not None:
+            data = self.parsers[type].parse(data)
+
+
+        asterParser = AsterParser()
+        data = asterParser.parse(data)
 
         print type
         print data

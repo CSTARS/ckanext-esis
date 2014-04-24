@@ -1,0 +1,25 @@
+{
+  "name": "spectra-importer",
+  "version": "0.0.0",
+  "homepage": "https://github.com/CSTARS/esis",
+  "authors": [
+    "Justin Merz <jrmerz@gmail.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.0",
+    "font-awesome": "~4.0.3",
+    "js-xlsx": "~0.5.17",
+    "js-xls": "~0.6.9",
+    "jszip": "~2.0.0",
+    "jquery-csv": "*"
+  }
+}
