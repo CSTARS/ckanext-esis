@@ -92,12 +92,13 @@ esis.structures.importer = (function() {
 		resources.push(_createSpectraJsonResource());
 
 		btn.addClass('disabled').html('Adding...');
-		_addResourceToCkan(0, 'test-upload-5', resources, btn);
+		_addResourceToCkan(0, '', resources, btn);
 	}
 
 	function _addResourceToCkan(index, pkg, resources, btn) {
 		if( index == resources.length ) {
 			btn.removeClass('disabled').html('Add Resources');
+			window.location = "/dataset/new_metadata/"+__ckan_.package.name;
 		} else {
 			btn.html('Uploading '+resources[index].getFilename()+'... ');
 

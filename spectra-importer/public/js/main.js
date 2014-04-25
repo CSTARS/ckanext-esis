@@ -29,7 +29,6 @@ esis.app = (function(){
 	}
 
 	function init() {
-debugger;
 		$('#Modal').modal({show:false});
 
 		$("#submit").on('click', function(){
