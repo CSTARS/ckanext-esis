@@ -1,2 +1,5 @@
 *.DS_Store
 *.idea
+sessions.json
+spectra-importer/public/components
+spectra-importer/node_modules
