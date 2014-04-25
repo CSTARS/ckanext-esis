@@ -29,7 +29,7 @@ esis.app = (function(){
 	}
 
 	function init() {
-
+debugger;
 		$('#Modal').modal({show:false});
 
 		$("#submit").on('click', function(){
@@ -111,6 +111,7 @@ esis.app = (function(){
   	}
 
   	function _handleDragOver(evt) {
+  	debugger;
   		evt.stopPropagation();
   		evt.preventDefault();
   		evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.

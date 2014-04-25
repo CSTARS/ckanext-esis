@@ -17,31 +17,31 @@ var ie = (function(){
 esis = {};
 
 esis.jslib = [
-	'lib/bootstrap2/js/bootstrap.min.js',
-	'lib/jszip.js',
-	'lib/xlsx.js',
-	//'components/js-xlsx/dist/xlsx.min.js',
-	'components/js-xls/dist/xls.min.js',
-	'components/jquery-csv/src/jquery.csv.js'
+	'/lib/bootstrap2/js/bootstrap.min.js',
+	'/lib/jszip.js',
+	'/lib/xlsx.js',
+	//'/components/js-xlsx/dist/xlsx.min.js',
+	'/components/js-xls/dist/xls.min.js',
+	'/components/jquery-csv/src/jquery.csv.js'
 ];
 
 esis.js = [
-	'js/main.js',
-	'js/uploader.js',
-	'js/extension.js',
-	'js/extractor.js',
-	'js/parser.js',
-	'js/structures/datasheet.js',
-	'js/structures/file.js',
-	'js/structures/import.js',
-	'js/structures/joinableMetadata.js',
-	'js/structures/resource.js',
-	'js/structures/spectra.js'
+	'/js/main.js',
+	'/js/uploader.js',
+	'/js/extension.js',
+	'/js/extractor.js',
+	'/js/parser.js',
+	'/js/structures/datasheet.js',
+	'/js/structures/file.js',
+	'/js/structures/import.js',
+	'/js/structures/joinableMetadata.js',
+	'/js/structures/resource.js',
+	'/js/structures/spectra.js'
 ];
 
 
 esis.css = [
-	'components/font-awesome/css/font-awesome.min.css'
+	'/components/font-awesome/css/font-awesome.min.css'
 ];
 
 esis.jquery = "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js";
@@ -52,6 +52,8 @@ esis.root = "#anchor";
 
 esis.load = function() {
 
+    // verify load location
+    if( esis.host == "{{host}}" ) esis.host = "";
 
 	var head = document.getElementsByTagName("head")[0];
 	
@@ -140,7 +142,7 @@ esis.onJqueryLoad = function() {
 	
 	// add css
 	for( var i = 0; i < esis.css.length; i++ ) {
-		head.append($('<link href="'+esis.host+"/"+esis.css[i]+'" rel="stylesheet" />'));
+		head.append($('<link href="'+esis.host+esis.css[i]+'" rel="stylesheet" />'));
 	}
 	
 	// inject root
@@ -152,7 +154,7 @@ esis.onJqueryLoad = function() {
 	// add script tags
 	var loadCount = 0;
 	for( var i = 0; i < esis.jslib.length; i++ ) {
-		$.getScript(esis.host+"/"+esis.jslib[i], function(){
+		$.getScript(esis.host+esis.jslib[i], function(){
 			loadCount++;
 			if( loadCount == esis.jslib.length ) {
 				esis.onLibsReady();
@@ -167,16 +169,19 @@ esis.onLibsReady = function() {
 	// add script tags
 	var loadCount = 0;
 	for( var i = 0; i < esis.js.length; i++ ) {
-		$.getScript(esis.host+"/"+esis.js[i], function(){
+		$.getScript(esis.host+esis.js[i], function(){
 			loadCount++;
+			console.log(loadCount);
 			if( loadCount == esis.js.length ) {
+
 				esis.onReady();
 			}
 		});
 	}	
 }
 
-esis.onReady = function() {	
+esis.onReady = function() {
+console.log(5);
 	esis.app.init();
 }
 
@@ -273,21 +278,17 @@ if (!Array.prototype.indexOf) {
 
 
 <div id="spectra-modify" style="display:none">
-	<div class="row-fluid">
-		<div class="span6">
-			<h3 class="panel-title">Parsed Spectral Data
-				<a class="btn btn-default pull-right" id="show-status">Spectra</a>
-			</h3>
-			<div class="well panel-body" id="data-body"></div>
-		</div>
-		<div class="span6">
-			<h3 class="panel-title">Resource Files</h3>
-			<div class="well panel-body" id="resources-body"></div>
-		</div>
-	</div>
+    <h3 class="panel-title">Parsed Spectral Data
+        <a class="btn btn-default pull-right" id="show-status">Spectra</a>
+    </h3>
+    <div class="well panel-body" id="data-body"></div>
 
-	<h3 class="panel-title">Ignoring</h3>
-	<div class="well panel-body" id="unknown-body"></div>
+    <h3 class="panel-title">Resource Files</h3>
+	<div class="well panel-body" id="resources-body"></div>
+
+
+	<!--<h3 class="panel-title">Ignoring</h3>-->
+	<div class="panel-body" id="unknown-body"></div>
 
 	<button class="btn btn-primary" id="addResources">Add Resources</button>
 </div>

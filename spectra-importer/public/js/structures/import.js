@@ -44,29 +44,20 @@ esis.structures.importer = (function() {
 	}
 
 	function _createSpectraElements(spectra) {
-  		var row1 = '';
-  		var row2 = '';
+  		var html = '';
 
-  		var c = 0;
   		for( var i = 0; i < spectra.length; i++ ) {
-			var card = _createCard(spectra[i]);
-
-			if( c % 2 == 0 ) row1 += card;
-			else row2 += card; 
-			c++;
+			html += _createCard(spectra[i]);
     	}
 
   		$('#spectra-status-content').html(
-  			'<h2>'+c+' Spectra Found</h2>'+
+  			'<h2>'+spectra.length+' Spectra Found</h2>'+
             '<div>'+
               '<span class="label label-success">File Level Metadata</span> ' +
               '<span class="label label-info">Spectra Level Metadata</span> ' +
               '<span class="label label-warning">Linked Metadata</span> ' +
             '</div>'+
-  			'<div class="row-fluid">' +
-  				'<div class="span6">'+row1+'</div>'+
-  				'<div class="span6">'+row2+'</div>'+
-  			'</div>'
+            '<div>'+html+'</div>'
   		);
   	}
 
