@@ -16,7 +16,7 @@ esis.uploader = (function(){
         if( __ckan_ && __ckan_.user ) key = __ckan_.user.apikey;
 
     	$.ajax({
-		    url: (esis.server ? esis.server : '') + '/api/action/resource_create',
+		    url: esis.host + '/api/action/resource_create',
 		    type: "POST",
 		    data: formData,
 		    processData: false,
@@ -28,7 +28,6 @@ esis.uploader = (function(){
 		        callback();
 		    },
 		    error : function(resp) {
-                statusCallback.onFileError(f.file.name);
 		        callback(true);
 		    }
 		});
