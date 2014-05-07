@@ -55,9 +55,14 @@ class EsisPlugin(plugins.SingletonPlugin,
 
 
     def before_map(self, map):
-        controller = 'ckanext.esis.spectral:SpectralController'
+        controller = 'ckanext.esis.controller:SpectraController'
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
+
+        # list all packages with spectra.json files
+        map.connect('all_spectra_packages', '/spectra/all', controller=controller, action='all')
+
+        map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
 
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
