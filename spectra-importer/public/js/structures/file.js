@@ -58,6 +58,8 @@ esis.structures.File = function(fileObj, parseZip) {
 			var zipEntry = zip.files[file];
 
 			var linfo = _getInfo(zipEntry.name);
+
+			// ignore directories
 			if( zipEntry.options.dir ) {
 				linfo.hasData = false;
 				linfo.isDir = true;
@@ -74,7 +76,7 @@ esis.structures.File = function(fileObj, parseZip) {
 	        		c++;
 	        		if( c == total ) _onIngestComplete(arr);
 	        	});
-        	} else if( parseZip ) {
+        	} else if( parseZip && !info.isDir ) {
         		arr.push({
         			name : info.name,
 					info : info,

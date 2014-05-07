@@ -20,6 +20,7 @@ esis.structures.Resource = function(resource) {
 		if( isFolder() || !resource ) return;
 		ele = _createElement();
 		$('#resources-body').append(ele);
+		esis.structures.importer.updateInfo();
 	}
 
 	function getFilename() {

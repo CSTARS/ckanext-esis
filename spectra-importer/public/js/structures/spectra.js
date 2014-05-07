@@ -55,6 +55,8 @@ esis.structures.Spectra = function(spectra, filename) {
 		return filename;
 	}
 
+	esis.structures.importer.updateInfo();
+
 	return {
 		setData : setData,
 		getData : getData,
