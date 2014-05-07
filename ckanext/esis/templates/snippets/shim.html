@@ -1,10 +1,13 @@
 <div id="__ckan_shim_root"></div>
-<script src="http://192.168.1.128:3000/components/jquery/dist/jquery.min.js"></script>
+<!--<script src="http://192.168.1.128:3000/components/jquery/dist/jquery.min.js"></script>-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <script type="text/javascript">
   var __ckan_ = {
      package : {{ h.to_json(pkg_dict)|safe }},
      pkg_name : "{{ pkg_name }}",
      user     : {{ h.to_json(user)|safe }}
   }
-  $('#__ckan_shim_root').load('http://192.168.1.128:3000/rest/getShim');
+  $('#__ckan_shim_root').load('/resource_shim.html');
+  //$('#__ckan_shim_root').load('http://192.168.1.128:3000/rest/getShim');
+
 </script>

@@ -17,7 +17,7 @@
   "dependencies": {
     "jquery": "~2.1.0",
     "font-awesome": "~4.0.3",
-    "js-xlsx": "~0.5.17",
+    "js-xlsx": "~0.5.10",
     "js-xls": "~0.6.9",
     "jszip": "~2.0.0",
     "jquery-csv": "*"

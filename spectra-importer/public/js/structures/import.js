@@ -157,6 +157,7 @@ esis.structures.importer = (function() {
 	function _addResourceToCkan(index, pkg, resources, btn) {
 		if( index == resources.length ) {
 			btn.removeClass('disabled').html('Add Resources');
+			window.location = "/dataset/new_metadata/"+__ckan_.package.name;
 		} else {
 			btn.html('Uploading '+resources[index].getFilename()+'... ');
 
