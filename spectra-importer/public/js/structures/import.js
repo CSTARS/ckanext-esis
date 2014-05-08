@@ -195,7 +195,7 @@ esis.structures.importer = (function() {
 		// define a disambiguator field
 
 		var resource = new esis.structures.Resource();
-		resource.setContents(JSON.stringify(resource));
+		resource.setContents(JSON.stringify(data));
 		resource.setFilename('esis_spectral_data.json');
 		resource.setMimetype('application/json');
 		return resource;
