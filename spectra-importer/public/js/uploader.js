@@ -21,8 +21,6 @@ esis.uploader = (function(){
         var key = esis.key;
         if( __ckan_ && __ckan_.user ) key = __ckan_.user.apikey;
 
-
-
     	$.ajax({
 		    url: esis.host + '/api/action/resource_create',
 		    type: "POST",
