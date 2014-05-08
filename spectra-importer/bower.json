@@ -20,6 +20,7 @@
     "js-xlsx": "~0.5.10",
     "js-xls": "~0.6.9",
     "jszip": "~2.0.0",
-    "jquery-csv": "*"
+    "jquery-csv": "*",
+    "js-md5": "~1.1.0"
   }
 }

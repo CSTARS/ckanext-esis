@@ -159,7 +159,7 @@ esis.structures.importer = (function() {
 			btn.removeClass('disabled').html('Add Resources');
 			window.location = "/dataset/new_metadata/"+__ckan_.package.name;
 		} else {
-			btn.html('Uploading '+resources[index].getFilename()+'... ');
+			btn.html('Uploading '+resources[index].getFilename().replace(/.*\//,'')+'... ');
 
 			esis.uploader.upload(pkg, resources[index], function() {
 				index++;
@@ -182,16 +182,20 @@ esis.structures.importer = (function() {
 	function _createSpectraJsonResource() {
 		var spectra = _getAndJoinSpectra();
 
-		var data = [], metadata;
+		var data = [];
 		for( var i = 0; i < spectra.length; i++ ) {
 			data.push({
 				metadata : spectra[i].getJoinedMetadata(),
-				spectra : spectra[i].getData(),
+				spectra_id : md5(JSON.stringify(spectra[i].getData())),
+				spectra : spectra[i].getData()
 			})
 		}
 
+		// TODO: if you find spectra with the same id, user needs to 
+		// define a disambiguator field
+
 		var resource = new esis.structures.Resource();
-		resource.setContents(JSON.stringify(data));
+		resource.setContents(JSON.stringify(resource));
 		resource.setFilename('esis_spectral_data.json');
 		resource.setMimetype('application/json');
 		return resource;
