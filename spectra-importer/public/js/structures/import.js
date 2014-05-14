@@ -75,15 +75,24 @@ esis.structures.importer = (function() {
 
   		// add global metadata
   		for( var key in metadata.file ) {
-  			card += '<tr><td><span class="label label-success">'+key+'</span></td><td>'+metadata.file[key]+'</td></tr>';
+  			var keyname = key;
+  			var mappedKey = esis.app.mapMetadata(key);
+  			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			card += '<tr><td><span class="label label-success">'+keyname+'</span></td><td>'+metadata.file[key]+'</td></tr>';
   			c++;
   		}
   		for( var key in metadata.joined ) {
-  			card += '<tr><td><span class="label label-warning">'+key+'</span></td><td>'+metadata.joined[key]+'</td></tr>';
+  			var keyname = key;
+  			var mappedKey = esis.app.mapMetadata(key);
+  			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			card += '<tr><td><span class="label label-warning">'+keyname+'</span></td><td>'+metadata.joined[key]+'</td></tr>';
   			c++;
   		}
   		for( var key in metadata.spectra ) {
-  			card += '<tr><td><span class="label label-info">'+key+'</span></td><td>'+metadata.spectra[key]+'</td></tr>';
+  			var keyname = key;
+  			var mappedKey = esis.app.mapMetadata(key);
+  			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			card += '<tr><td><span class="label label-info">'+keyname+'</span></td><td>'+metadata.spectra[key]+'</td></tr>';
   			c++;
   		}
 
@@ -150,6 +159,7 @@ esis.structures.importer = (function() {
 		var resources = _getCkanResources();
 		resources.push(_createSpectraJsonResource());
 
+		return;
 		btn.addClass('disabled').html('Adding...');
 		_addResourceToCkan(0, TEST_PACKAGE, resources, btn);
 	}
@@ -184,12 +194,30 @@ esis.structures.importer = (function() {
 
 		var data = [];
 		for( var i = 0; i < spectra.length; i++ ) {
-			data.push({
+			var d = {
 				metadata : spectra[i].getJoinedMetadata(),
 				spectra_id : md5(JSON.stringify(spectra[i].getData())),
-				spectra : spectra[i].getData()
-			})
+				spectra : spectra[i].getData(),
+				ecosis : {}
+			};
+
+			// now set the ecosis attributes
+			for( var key in d.metadata ) {
+				if( esis.app.isEcosisMetadata(key) ) {
+					d.ecosis[key] = d.metadata[key];
+					// in this case their value is our value, so delete their value
+					delete d.metadata[key];
+				} else if( esis.app.mapMetadata(key) ) {
+					var ecosisKey = esis.app.mapMetadata(key);
+					d.ecosis[ecosisKey] = d.metadata[key];
+				}
+			}
+
+			data.push(d);
 		}
+
+		console.log(data);
+		return;
 
 		// TODO: if you find spectra with the same id, user needs to 
 		// define a disambiguator field

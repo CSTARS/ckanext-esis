@@ -6,8 +6,6 @@
 	<link rel="stylesheet" href="lib/bootstrap2/css/bootstrap-responsive.min.css">
 	<link rel="stylesheet" href="components/font-awesome/css/font-awesome.min.css">
 
-
-
 	<script src="/components/jquery/dist/jquery.min.js"></script>
 	<script src="lib/bootstrap2/js/bootstrap.min.js"></script>
 	<script src="lib/jszip.js"></script>
@@ -29,9 +27,6 @@
 	<script src="js/structures/resource.js"></script>
 	<script src="js/structures/spectra.js"></script>
 	<script src="js/structures/joinableMetadata.js"></script>
-
-
-
 
 </head>
 <body style="padding: 0 20px">
@@ -55,10 +50,6 @@
 
 	google.onload = esis.onGoogleLoad;
 	head.appendChild(google);
-
-
-
-
 </script>
 
 <style>
@@ -94,36 +85,48 @@
 </style>
 
 <div id="spectra-start">
-		<h1 style="color:#333;margin-bottom:25px"><i class="fa fa-cloud-upload"></i> Import Resources</h1>
+	<h1 style="color:#333;margin-bottom:25px"><i class="fa fa-cloud-upload"></i> Import Resources</h1>
 
-		<div class="well" style="color:#666">
-			<div class="form-horizontal">
-			  <div class="control-group">
-			    <label class="control-label" for="parseZip">Zip Files</label>
-			    <div class="controls">
-			      <label class="checkbox">
-			      	<input type="checkbox" style="margin-top:5px" id="parseZip"> Extract
-			  	  </label>
-			      <span class="help-block">If a zip file is found, should its contents be imported as individual resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</span>
-			    </div>
-			  </div>
-			  <div class="control-group">
-			    <label class="control-label" for="inputEmail"><i class="fa fa-file"></i> Select File</label>
-			    <div class="controls">
-			      <input type="file" style="margin-top:5px" id="file" name="file" multiple>
-			      <span class="help-block">Select a files to be imported.</span>
-			    </div>
-			  </div>
-			  
-			</div>
-		    
-	        <h4 style="text-align:center">- OR -</h4>
-	        <div id="drop_zone">Drop files here</div>
-
-
-		    <input name="key" type="text" style="display:none" id="api-key" />
-		    <input name="username" type="text" style="display:none" id="username" />
+	<div class="well" style="color:#666">
+		<div class="form-horizontal">
+		  <div class="control-group">
+		    <label class="control-label" for="parseZip">Zip Files</label>
+		    <div class="controls">
+		      <label class="checkbox">
+		      	<input type="checkbox" style="margin-top:5px" id="parseZip"> Extract
+		  	  </label>
+		      <span class="help-block">If a zip file is found, should its contents be imported as individual resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</span>
+		    </div>
+		  </div>
+		  <div class="control-group">
+		    <label class="control-label" for="inputEmail"><i class="fa fa-file"></i> Select File</label>
+		    <div class="controls">
+		      <input type="file" style="margin-top:5px" id="file" name="file" multiple>
+		      <span class="help-block">Select a files to be imported.</span>
+		    </div>
+		  </div>
+		  
 		</div>
+	    
+        <h4 style="text-align:center">- OR -</h4>
+        <div id="drop_zone">Drop files here</div>
+
+        <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px">
+        	<h4>Metadata Map</h4>
+        	<span class="help-block">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.</span>
+
+        	<div class="row-fluid">
+        		<div class="span6">
+        			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+        		</div>
+        		<div class="span6">
+        			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map">
+        		</div>
+        	</div>
+
+
+        </div>
+	</div>
 </div>
 
 <div id="stats" style="display:none;text-align:center"></div>
