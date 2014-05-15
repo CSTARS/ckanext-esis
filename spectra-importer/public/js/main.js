@@ -124,12 +124,16 @@ esis.app = (function(){
 		reader.readAsText(files[0]);
 	}
 
+	function getMetadataMap() {
+		return inverseMap;
+	}
+
 	function mapMetadata(key) {
 		return inverseMap[key];
 	}
 
 	function isEcosisMetadata(key) {
-		if( metadataMap[key] != null ) return true;
+		if( esis.metadata[key] != null ) return true;
 		return false;
 	}
 
@@ -306,7 +310,8 @@ esis.app = (function(){
 		show : show,
 		render : render,
 		mapMetadata : mapMetadata,
-		isEcosisMetadata : isEcosisMetadata
+		isEcosisMetadata : isEcosisMetadata,
+		getMetadataMap : getMetadataMap
 	}
 
 })();

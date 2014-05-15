@@ -29,8 +29,9 @@ esis.structures.importer = (function() {
 			for( var j = 0; j < datasheets.length; j++ ) {
 				var arr = datasheets[j].getSpectra();
 				var jd = datasheets[j].getJoinableMetadata();
-				if( jd ) joindata.push(jd);
 
+
+				if( jd ) joindata.push(jd);
 				for( var z = 0; z < arr.length; z++ ) spectra.push(arr[z]);
 			}
 		}
@@ -57,6 +58,8 @@ esis.structures.importer = (function() {
               '<span class="label label-success">File Level Metadata</span> ' +
               '<span class="label label-info">Spectra Level Metadata</span> ' +
               '<span class="label label-warning">Linked Metadata</span> ' +
+              '<br /><span style="color:#888;text-size:12px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out'+
+              ' and upload a metadata map on the previous screen.</span>' +
             '</div>'+
             '<div class="pagination"><ul id="paging-btns" ></ul></div>'+
   			html
@@ -78,6 +81,7 @@ esis.structures.importer = (function() {
   			var keyname = key;
   			var mappedKey = esis.app.mapMetadata(key);
   			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			else if( !esis.app.isEcosisMetadata(key) ) keyname = '* '+key;
   			card += '<tr><td><span class="label label-success">'+keyname+'</span></td><td>'+metadata.file[key]+'</td></tr>';
   			c++;
   		}
@@ -85,6 +89,7 @@ esis.structures.importer = (function() {
   			var keyname = key;
   			var mappedKey = esis.app.mapMetadata(key);
   			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			else if( !esis.app.isEcosisMetadata(key) ) keyname = '* '+key;
   			card += '<tr><td><span class="label label-warning">'+keyname+'</span></td><td>'+metadata.joined[key]+'</td></tr>';
   			c++;
   		}
@@ -92,6 +97,7 @@ esis.structures.importer = (function() {
   			var keyname = key;
   			var mappedKey = esis.app.mapMetadata(key);
   			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			else if( !esis.app.isEcosisMetadata(key) ) keyname = '* '+key;
   			card += '<tr><td><span class="label label-info">'+keyname+'</span></td><td>'+metadata.spectra[key]+'</td></tr>';
   			c++;
   		}
@@ -214,6 +220,29 @@ esis.structures.importer = (function() {
 			}
 
 			data.push(d);
+		}
+
+		data = {
+			data : data,
+			map  : esis.app.getMetadataMap()
+		}
+
+		// we need to clean all of the attribute here ...
+		for( var i = 0; i < data.data.length; i++ ) {
+			var metadata = data.data[i].metadata;
+			for( var key in metadata ) {
+				var tmp = key.replace(/[^A-Za-z\s_-]/g, '');
+				if( tmp != key ) {
+					if( metadata[tmp] ) {
+						alert('Metadata Error: the attribute "'+key+'" has illegal characters.  Attempted to clean up key to "'+
+							tmp+'" but this key already exists.');
+						return;
+					}
+
+					metadata[tmp] = metadata[key];
+					delete metadata[key];
+				}
+			}
 		}
 
 		console.log(data);

@@ -1,6 +1,6 @@
 Vegetation Biophysical Variables
 Percent Crown Cover=
-Approx. Crown Diameter=
+Approx Crown Diameter=
 Chlorophyll Content=
 Crown Class (FPMRIS)=
 DBH=
@@ -19,6 +19,9 @@ File Version=
 Loading Time=
 Raw Data Format=
 Spectrum Number=
+Type=
+Class=
+Subclass=
 
 Campaign Details
 Agency Code=
@@ -64,8 +67,8 @@ Gibsite=
 Gibsite Method=
 Hematite=
 Hematite Method=
-Horizon Desig. Master=
-Horizon Desig. Sub. Division=
+Horizon Desig Master=
+Horizon Desig Sub Division=
 Horizon Name=
 Horizon Number=
 Illite=

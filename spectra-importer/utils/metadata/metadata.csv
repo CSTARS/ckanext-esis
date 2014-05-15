@@ -1,5 +1,5 @@
 attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_field,description,cardinality
-31,% Crown Cover,12,Vegetation Biophysical Variables,,NULL,double_val,Crown Cover Percentage,1
+31,Percent Crown Cover,12,Vegetation Biophysical Variables,,NULL,double_val,Crown Cover Percentage,1
 23,Acquisition Time,3,General,,NULL,datetime_val,NULL,1
 156,Agency Code,9,Campaign Details,,NULL,string_val,,1
 145,Air Dry Water Content,21,Soil Parameters,,13,double_val,NULL,1
@@ -7,7 +7,7 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 2,Air Pressure,4,Environmental Conditions,,NULL,double_val,NULL,1
 50,Altitude,1,Location,,15,double_val,NULL,1
 1,Ambient Temperature,4,Environmental Conditions,,NULL,double_val,NULL,1
-30,Approx. Crown Diameter,12,Vegetation Biophysical Variables,,NULL,double_val,,1
+30,Approx Crown Diameter,12,Vegetation Biophysical Variables,,NULL,double_val,,1
 148,ASC Order,21,Soil Parameters,,NULL,string_val,NULL,1
 149,ASC Sub-Order,21,Soil Parameters,,NULL,string_val,NULL,1
 8,Automatic Dark Current Correction,5,Instrument Settings,,NULL,string_val,Dark current has been compensated for by the instrument (ON/OFF),1
@@ -18,7 +18,7 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 103,Bulk Density,21,Soil Parameters,,4,double_val,NULL,1
 102,Bulk Density Method,21,Soil Parameters,,NULL,string_val,NULL,1
 62,Calibration Number,7,Instrument,,NULL,int_val,NULL,1
-65,Campaign Name,9,Campaign Details,,NULL,string_val,Further specification of a particular campaign. Mainly used where a SPECCHIO campaign comprises several original sampling campaigns,1
+65,Campaign Name,9,Campaign Details,,NULL,string_val,Further specification of a particular campaign Mainly used where a SPECCHIO campaign comprises several original sampling campaigns,1
 15,Capturing Software Name,5,Instrument Settings,,NULL,string_val,NULL,1
 16,Capturing Software Version,5,Instrument Settings,,NULL,string_val,NULL,1
 89,Carbon,21,Soil Parameters,,NULL,double_val,NULL,1
@@ -67,7 +67,7 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 52,FOV,2,Optics,,NULL,int_val,NULL,1
 11,Gain_SWIR1,5,Instrument Settings,,NULL,int_val,NULL,1
 12,Gain_SWIR2,5,Instrument Settings,,NULL,int_val,NULL,1
-60,Garbage Flag,18,Processing,,NULL,int_val,Designates this spectrum is garbage. This flag can be used to automatically exclude garbage spectra from processing.,1
+60,Garbage Flag,18,Processing,,NULL,int_val,Designates this spectrum is garbage This flag can be used to automatically exclude garbage spectra from processing,1
 105,Geothite,21,Soil Parameters,,NULL,double_val,NULL,1
 104,Geothite Method,21,Soil Parameters,,NULL,string_val,NULL,1
 107,Gibsite,21,Soil Parameters,,NULL,double_val,NULL,1
@@ -76,8 +76,8 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 29,Height,12,Vegetation Biophysical Variables,,NULL,double_val,Height of vegetation,1
 109,Hematite,21,Soil Parameters,,NULL,double_val,NULL,1
 108,Hematite Method,21,Soil Parameters,,NULL,string_val,NULL,1
-150,Horizon Desig. Master,21,Soil Parameters,,NULL,string_val,NULL,1
-151,Horizon Desig. Sub. Division,21,Soil Parameters,,NULL,string_val,NULL,1
+150,Horizon Desig Master,21,Soil Parameters,,NULL,string_val,NULL,1
+151,Horizon Desig Sub Division,21,Soil Parameters,,NULL,string_val,NULL,1
 83,Horizon Name,21,Soil Parameters,,NULL,string_val,NULL,1
 84,Horizon Number,21,Soil Parameters,,NULL,int_val,NULL,1
 111,Illite,21,Soil Parameters,,NULL,double_val,NULL,1
@@ -86,7 +86,7 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 76,Illumination Distance,6,Sampling Geometry,,NULL,double_val,NULL,1
 159,Illumination Sources,10,Instrumentation,,NULL,taxonomy_id,,1
 75,Illumination Zenith,6,Sampling Geometry,,NULL,double_val,NULL,1
-18,Instrument Channel,5,Instrument Settings,,NULL,string_val,"Channel designation for multi-channel instruments, e.g. irradiance and reflected radiance channels",1
+18,Instrument Channel,5,Instrument Settings,,NULL,string_val,"Channel designation for multi-channel instruments, eg irradiance and reflected radiance channels",1
 64,Instrument Serial Number,7,Instrument,,NULL,string_val,NULL,1
 67,Integrating Sphere,10,Instrumentation,,NULL,taxonomy_id,,1
 9,Integration Time,5,Instrument Settings,,NULL,int_val,NULL,1
@@ -111,19 +111,19 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 92,pH CaCl2 Method,21,Soil Parameters,,NULL,string_val,NULL,1
 91,pH Water,21,Soil Parameters,,9,double_val,NULL,1
 90,pH Water Method,21,Soil Parameters,,NULL,string_val,NULL,1
-81,Polarization,20,Illumination,,NULL,string_val,"Polarisation `description`, e.g. Horizontal or Vertical",1
+81,Polarization,20,Illumination,,NULL,string_val,"Polarisation `description`, eg Horizontal or Vertical",1
 82,Polarization Direction,20,Illumination,,NULL,double_val,Polarisation direction as degrees,1
 57,Processing Algorithm,18,Processing,,NULL,string_val,Description of processing algorithm applied to spectrum,NULL
 54,Processing Level,18,Processing,,NULL,double_val,NULL,1
 56,Processing Module,18,Processing,,NULL,string_val,Name of processing module applied to spectrum,NULL
 157,Project ID,9,Campaign Details,,NULL,string_val,,1
 37,Publication,15,Scientific References,,NULL,string_val,Publication relevant to these spectral data,NULL
-165,Raw Data Format,3,General,,NULL,string_val,Information on where data originated from before being stored in the file loaded to SPECCHIO.,1
+165,Raw Data Format,3,General,,NULL,string_val,Information on where data originated from before being stored in the file loaded to SPECCHIO,1
 5,Relative Humidity,4,Environmental Conditions,,NULL,double_val,NULL,1
-154,Sample Collection Date,17,Generic Target Properties,,NULL,datetime_val,Date when the original sample was collected in the field.,1
+154,Sample Collection Date,17,Generic Target Properties,,NULL,datetime_val,Date when the original sample was collected in the field,1
 153,Sample Number,17,Generic Target Properties,,NULL,string_val,NULL,1
 163,Sampling Environment,4,Environmental Conditions,,NULL,taxonomy_id,NULL,1
-45,Sampling Environment Picture,13,Pictures,,NULL,binary_val,"Picture showing the general sampling environment, i.e. vicinity of the target",NULL
+45,Sampling Environment Picture,13,Pictures,,NULL,binary_val,"Picture showing the general sampling environment, ie vicinity of the target",NULL
 87,Sampling Lower Depth,21,Soil Parameters,,NULL,double_val,NULL,1
 43,Sampling Setup Picture,13,Pictures,,NULL,binary_val,NULL,NULL
 86,Sampling Upper Depth,21,Soil Parameters,,NULL,double_val,NULL,1
@@ -162,3 +162,6 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 69,White Reference Panel Name,10,Instrumentation,,NULL,string_val,Description of white reference panel name,1
 4,Wind Direction,4,Environmental Conditions,,NULL,double_val,NULL,1
 3,Wind Speed,4,Environmental Conditions,,NULL,double_val,NULL,1
+-1,Type,3,General,,NULL,string_val,NULL,1
+-1,Class,3,General,,NULL,string_val,NULL,1
+-1,Subclass,3,General,,NULL,string_val,NULL,1

@@ -12,7 +12,7 @@ for( var i = 1; i < contents.length; i++ ) {
     };
 }
 
-fs.writeFileSync('../../public/metadata.js', JSON.stringify(json));
+fs.writeFileSync('../../public/metadata.js', 'esis.metadata='+JSON.stringify(json));
 
 
 var byCat = {};
