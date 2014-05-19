@@ -14,7 +14,7 @@ esis.structures.Datasheet = function(parseFile) {
 	function init() {
 		if( file.spectra ) {
 			for( var i = 0; i < file.spectra.length; i++ ) {
-				var sp = new esis.structures.Spectra(file.spectra[i], file.info.name);
+				var sp = new esis.structures.Spectra(file.spectra[i], file.info.name, file.sheetName);
 
 				if( file.metadata ) {
 					for( var key in file.metadata ) {
@@ -67,7 +67,7 @@ esis.structures.Datasheet = function(parseFile) {
 
 		if ( file.joindata ) {
 			innerHTML += '<td><span class="label label-danger">Parsed</span></td>'+
-						'<td style="font-size:12px">Linkable Metadata'+_createLinkSelector()+'</td>';
+						'<td style="font-size:12px"><b>Linkable Metadata</b>'+_createLinkSelector()+'</td>';
 		} else if( !file.error || file.warning ) {
 			innerHTML += '<td><span class="label label-success">Parsed</span></td>'+
 						'<td><a class="btn btn-link btn-show">info</a></td>';
@@ -90,25 +90,53 @@ esis.structures.Datasheet = function(parseFile) {
 			show();
 		});
 
+		card.find('input[type=checkbox]').on('click', function(){
+			if( $(this).is(':checked') ) {
+				card.find('input[type=checkbox]').removeAttr('checked');
+				$(this).prop('checked', true);
+			}
+		});
+
 		card.find('.link-selector').on('change', function(e){
 			joinableMetadata.setJoinId($(this).val());
 		});
 		card.find('.filename-match').on('change', function(e){
 			joinableMetadata.useFilename($(this).is(':checked'));
 		});
+		card.find('.worksheetname-match').on('change', function(e){
+			joinableMetadata.useWorksheetName($(this).is(':checked'));
+		});
 
 		return card;
 	}
 
 	function _createLinkSelector() {
-		var html = '<select class="link-selector form-control" style="display:block-inline">'+
+		var html = '<div class="form-horizontal">'+
+			'<div class="control-group">'+
+				'<label class="control-label">Join On: </label>'+
+				'<div class="controls">'+
+				'<select class="link-selector form-control" style="display:block-inline">'+
 					'<option></option>';
 		for( var i = 0; i < file.joindata[0].length; i++ ) {
 			var val = file.joindata[0][i];
 			html += '<option value="'+val+'">'+val+'</option>';
 		}
-		html += '<div>Join On: '+html+'</select>'+
-				'<br /><input type="checkbox" class="filename-match" /> Match on Filename</div>';
+		html += '</select></div></div>'+
+			'<div class="control-group">'+
+				'<div class="controls">'+
+					'<div class="checkbox">'+
+						'<input type="checkbox" class="filename-match" /> Match on Filename';
+
+		if( file.sheetName != null) {
+			html += '</div></div></div>'+
+				'<div class="control-group">'+
+					'<div class="controls">'+
+						'<div class="checkbox">'+
+							'<input type="checkbox" class="worksheetname-match" /> Match on Worksheet Name';
+		}
+
+
+		html +=	'</div></div></div></div>';
 		return html;
 	}
 

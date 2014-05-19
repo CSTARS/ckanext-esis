@@ -61,8 +61,8 @@ esis.structures.importer = (function() {
               '<br /><span style="color:#888;text-size:12px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out'+
               ' and upload a metadata map on the previous screen.</span>' +
             '</div>'+
-            '<div class="pull-right"><select id="paging-select"></select></div>'+
-            '<div class="pagination"><ul id="paging-btns" ></ul></div>'+
+            '<div class="pull-right" style="margin-top: 25px"><select id="paging-select"></select></div>'+
+            '<div class="pagination" style="margin:0px"><ul id="paging-btns" ></ul></div>'+
   			html
   		);
 
@@ -70,7 +70,8 @@ esis.structures.importer = (function() {
   	}
 
   	function _createCard(spectra, index, total) {
-  		var card = '<div class="card spectra-card" id="card-'+index+'-'+total+'" style="display:none" ><h4><span style="color:#888">From -</span> '+spectra.getFilename()+'</h4>'+
+  		var card = '<div class="card spectra-card" id="card-'+index+'-'+total+'" style="display:none" ><h4><span style="color:#888">From -</span> '+
+  			spectra.getFilename()+(spectra.getSheetname() ? ' ('+spectra.getSheetname()+')': '')+'</h4>'+
                 '<div style=""><table class="table" style="font-size:12px">';
 
         var metadata = spectra.getMetadata();

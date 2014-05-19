@@ -112,10 +112,14 @@ esis.extractor = (function(){
 	function parseMetadata(metadata) {
 		if( metadata.length == 0 ) return {};
 
+		console.log(metadata);
+
 		var m = {};
 		if( isTwoColMeta(metadata) ) {
 			for( var i = 0; i < metadata.length; i++ ) {
-				m[metadata[0]] = m[metadata[1]];
+				if( metadata[i][0] != '' ) {
+					m[metadata[i][0]] = metadata[i][1];
+				}	
 			}
 			return m;
 		}
@@ -148,11 +152,21 @@ esis.extractor = (function(){
 
 	function isTwoColMeta(metadata) {
 		for( var i = 0; i < metadata.length; i++ ) {
-			if( metadata[i].length < 2 ) return false;
+			if( getRowLength(metadata[i]) == 1 ) return false;
 			if( typeof metadata[i][0] != 'string' ) return false;
-			if( metadata[i][0].length == 0 ) return false;
+			if( metadata[i][0].length == 0 && i != (metadata.length-1)) return false;
 		}
 		return true;
+	}
+
+	// get the number off cells that have consecutive values
+	function getRowLength(arr) {
+		var c = 0;
+		for( var i = 0; i < arr.length; i++ ) {
+			if( arr[i] && arr[i] != '' ) c++;
+			else return c;
+		}
+		return c;
 	}
 
 	function isColonSplit(metadata) {

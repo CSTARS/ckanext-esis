@@ -1,4 +1,4 @@
-esis.structures.Spectra = function(spectra, filename) {
+esis.structures.Spectra = function(spectra, filename, sheetname) {
 	var data = [];
 	var error = null;
 
@@ -55,6 +55,11 @@ esis.structures.Spectra = function(spectra, filename) {
 		return filename;
 	}
 
+	function getSheetname() {
+		if( sheetname ) return sheetname;
+		return '';
+	}
+
 	esis.structures.importer.updateInfo();
 
 	return {
@@ -64,6 +69,7 @@ esis.structures.Spectra = function(spectra, filename) {
 		getMetadata : getMetadata,
 		getJoinedMetadata : getJoinedMetadata,
 		getFilename : getFilename,
+		getSheetname : getSheetname,
 		getError : getError,
 		setError : setError,
 		hasError : hasError
