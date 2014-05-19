@@ -61,7 +61,7 @@ esis.structures.importer = (function() {
               '<br /><span style="color:#888;text-size:12px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out'+
               ' and upload a metadata map on the previous screen.</span>' +
             '</div>'+
-            '<div class="pull-right" style="margin-top: 25px"><select id="paging-select"></select></div>'+
+            '<div class="pull-right" style="margin-top: 5px"><select id="paging-select"></select></div>'+
             '<div class="pagination" style="margin:0px"><ul id="paging-btns" ></ul></div>'+
   			html
   		);
