@@ -72,7 +72,7 @@ esis.structures.importer = (function() {
   	function _createCard(spectra, index, total) {
   		var card = '<div class="card spectra-card" id="card-'+index+'-'+total+'" style="display:none" ><h4><span style="color:#888">From -</span> '+
   			spectra.getFilename()+(spectra.getSheetname() ? ' ('+spectra.getSheetname()+')': '')+'</h4>'+
-                '<div style=""><table class="table" style="font-size:12px;table-layout:initial">';
+                '<div style=""><table class="table" style="font-size:12px">';
 
         var metadata = spectra.getMetadata();
 

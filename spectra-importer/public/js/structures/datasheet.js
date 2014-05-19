@@ -59,7 +59,7 @@ esis.structures.Datasheet = function(parseFile) {
 
 		
 		var innerHTML = '';
-		innerHTML += '<table class="table table-striped">';
+		innerHTML += '<table class="table table-striped" style="table-layout:initial">';
 		innerHTML += '<thead><tr><th>Parser</th><th>Status</th><th></th></tr></thead>';
 
 		innerHTML += '<tr><td>'+_createParserSelector(file.info.parser, "")+'</td>';
