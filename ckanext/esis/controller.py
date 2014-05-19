@@ -44,3 +44,24 @@ class SpectraController(PackageController):
         file.close()
 
         return json.dumps(data)
+
+    # clear all of the resources for a package
+    # currently we are not going to keep track of mapping between spectra to file
+    # was well as the workflow that got us there, so, you will always have to jump
+    # through the hoop to do this
+    #
+    # TODO: perhaps we let them download the attribute map?
+    # or let them use the attribute map?
+    def clear(self):
+        id = request.params.get('id')
+        context = {'model': model, 'user': c.user}
+
+        pkg = logic.get_action('package_show')(context, {'id': id})
+        resources = pkg['resources']
+        count = 0
+        for resource in resources:
+            count += 1
+            logic.get_action('resource_delete')(context, {'id':resource['id']})
+
+        return json.dumps({'success':'true', 'count':count})
+

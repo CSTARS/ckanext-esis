@@ -64,12 +64,14 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
 
+        map.connect('clear_spectra_package', '/spectra/clear', controller=controller, action='clear')
+
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
-        map.connect('spectralSearch', '/spectral', controller='package', action='search')
+        #map.connect('spectralSearch', '/spectral', controller='package', action='search')
 
         # attach the upload handle to the SpectralController
-        map.connect('upload', '/spectral/api/upload', controller=controller, action='upload')
+        #map.connect('upload', '/spectral/api/upload', controller=controller, action='upload')
 
         return map
 
