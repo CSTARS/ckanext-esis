@@ -3,6 +3,8 @@ esis.structures.importer = (function() {
 	var files = [];
 	var TEST_PACKAGE = 'test-upload-5';
 
+	var currentSpectra = [];
+
 	function getFiles() {
 		return files;
 	}
@@ -15,7 +17,8 @@ esis.structures.importer = (function() {
 	}
 
 	function showSpectra() {
-		_createSpectraElements(_getAndJoinSpectra());
+		currentSpectra = _getAndJoinSpectra();
+		createSpectraElement(0);
 	}
 
 	function _getAndJoinSpectra() {
@@ -29,8 +32,9 @@ esis.structures.importer = (function() {
 			for( var j = 0; j < datasheets.length; j++ ) {
 				var arr = datasheets[j].getSpectra();
 				var jd = datasheets[j].getJoinableMetadata();
-				if( jd ) joindata.push(jd);
 
+
+				if( jd ) joindata.push(jd);
 				for( var z = 0; z < arr.length; z++ ) spectra.push(arr[z]);
 			}
 		}
@@ -44,25 +48,25 @@ esis.structures.importer = (function() {
 		return spectra;
 	}
 
-	function _createSpectraElements(spectra) {
-  		var html = '';
+	function createSpectraElement(index) {
+  		var html = _createCard(currentSpectra[index], index, currentSpectra.length);
 
-  		for( var i = 0; i < spectra.length; i++ ) {
-			html += _createCard(spectra[i], i, spectra.length);
-    	}
 
   		$('#spectra-status-content').html(
-  			'<h2>'+spectra.length+' Spectra Found</h2>'+
+  			'<h2>'+currentSpectra.length+' Spectra Found</h2>'+
             '<div>'+
               '<span class="label label-success">File Level Metadata</span> ' +
               '<span class="label label-info">Spectra Level Metadata</span> ' +
               '<span class="label label-warning">Linked Metadata</span> ' +
+              '<br /><span style="color:#888;text-size:12px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out'+
+              ' and upload a metadata map on the previous screen.</span>' +
             '</div>'+
+            '<div class="pull-right"><select id="paging-select"></select></div>'+
             '<div class="pagination"><ul id="paging-btns" ></ul></div>'+
   			html
   		);
 
-  		updatePaging(0, spectra.length);
+  		updatePaging(index, currentSpectra.length);
   	}
 
   	function _createCard(spectra, index, total) {
@@ -75,15 +79,27 @@ esis.structures.importer = (function() {
 
   		// add global metadata
   		for( var key in metadata.file ) {
-  			card += '<tr><td><span class="label label-success">'+key+'</span></td><td>'+metadata.file[key]+'</td></tr>';
+  			var keyname = key;
+  			var mappedKey = esis.app.mapMetadata(key);
+  			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			else if( !esis.app.isEcosisMetadata(key) ) keyname = '* '+key;
+  			card += '<tr><td><span class="label label-success">'+keyname+'</span></td><td>'+metadata.file[key]+'</td></tr>';
   			c++;
   		}
   		for( var key in metadata.joined ) {
-  			card += '<tr><td><span class="label label-warning">'+key+'</span></td><td>'+metadata.joined[key]+'</td></tr>';
+  			var keyname = key;
+  			var mappedKey = esis.app.mapMetadata(key);
+  			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			else if( !esis.app.isEcosisMetadata(key) ) keyname = '* '+key;
+  			card += '<tr><td><span class="label label-warning">'+keyname+'</span></td><td>'+metadata.joined[key]+'</td></tr>';
   			c++;
   		}
   		for( var key in metadata.spectra ) {
-  			card += '<tr><td><span class="label label-info">'+key+'</span></td><td>'+metadata.spectra[key]+'</td></tr>';
+  			var keyname = key;
+  			var mappedKey = esis.app.mapMetadata(key);
+  			if( mappedKey && mappedKey != key ) keyname = mappedKey+' ('+key+')';
+  			else if( !esis.app.isEcosisMetadata(key) ) keyname = '* '+key;
+  			card += '<tr><td><span class="label label-info">'+keyname+'</span></td><td>'+metadata.spectra[key]+'</td></tr>';
   			c++;
   		}
 
@@ -122,28 +138,36 @@ esis.structures.importer = (function() {
 
 		// add back button
 		if( cPage != 0 ) {
-			panel.append($('<li><a '+_createPagingClick(cPage-1, numPages)+'>&#171;</a></li>'));
+			panel.append($('<li><a '+_createPagingClick(cPage-1)+'>&#171;</a></li>'));
 		}
 
 		for( var i = startBtn; i < endBtn; i++ ) {
 			var label = i+1;
 
-			var btn = $("<li><a "+_createPagingClick(i, numPages)+">"+label+"</a></li>");
+			var btn = $("<li><a "+_createPagingClick(i)+">"+label+"</a></li>");
 			if( cPage == i ) btn.addClass('active');
 			panel.append(btn);
 		}
 
 		// add next button
 		if(  cPage != numPages-1 && numPages != 0 ) {
-			panel.append($("<li><a "+_createPagingClick(cPage+1, numPages)+">&#187;</a></li>"));
+			panel.append($("<li><a "+_createPagingClick(cPage+1)+">&#187;</a></li>"));
 		}
+
+		var select = $("#paging-select");
+		for( var i = 0; i < numPages; i++ ) {
+			select.append('<option value="'+i+'" '+(i == cPage ? 'selected' : '')+'>'+(i+1)+'</option>');
+		}
+		select.on('change', function(e){
+			esis.structures.importer.createSpectraElement($(this).val());
+		});
 
 		$('.spectra-card').hide();
 		$('#card-'+cPage+'-'+numPages).show();
 	}
 
 	function _createPagingClick(page, total) {
-		return 'onclick="esis.structures.importer.updatePaging('+page+','+total+');"';
+		return 'onclick="esis.structures.importer.createSpectraElement('+page+');"';
 	}
 	
 	function addToCkan(btn) {
@@ -159,7 +183,7 @@ esis.structures.importer = (function() {
 			btn.removeClass('disabled').html('Add Resources');
 			window.location = "/dataset/new_metadata/"+__ckan_.package.name;
 		} else {
-			btn.html('Uploading '+resources[index].getFilename()+'... ');
+			btn.html('Uploading '+resources[index].getFilename().replace(/.*\//,'')+'... ');
 
 			esis.uploader.upload(pkg, resources[index], function() {
 				index++;
@@ -182,13 +206,55 @@ esis.structures.importer = (function() {
 	function _createSpectraJsonResource() {
 		var spectra = _getAndJoinSpectra();
 
-		var data = [], metadata;
+		var data = [];
 		for( var i = 0; i < spectra.length; i++ ) {
-			data.push({
+			var d = {
 				metadata : spectra[i].getJoinedMetadata(),
+				spectra_id : md5(JSON.stringify(spectra[i].getData())),
 				spectra : spectra[i].getData(),
-			})
+				ecosis : {}
+			};
+
+			// now set the ecosis attributes
+			for( var key in d.metadata ) {
+				if( esis.app.isEcosisMetadata(key) ) {
+					d.ecosis[key] = d.metadata[key];
+					// in this case their value is our value, so delete their value
+					delete d.metadata[key];
+				} else if( esis.app.mapMetadata(key) ) {
+					var ecosisKey = esis.app.mapMetadata(key);
+					d.ecosis[ecosisKey] = d.metadata[key];
+				}
+			}
+
+			data.push(d);
 		}
+
+		data = {
+			data : data,
+			map  : esis.app.getMetadataMap()
+		}
+
+		// we need to clean all of the attribute here ...
+		for( var i = 0; i < data.data.length; i++ ) {
+			var metadata = data.data[i].metadata;
+			for( var key in metadata ) {
+				var tmp = key.replace(/[^A-Za-z\s_-]/g, '');
+				if( tmp != key ) {
+					if( metadata[tmp] ) {
+						alert('Metadata Error: the attribute "'+key+'" has illegal characters.  Attempted to clean up key to "'+
+							tmp+'" but this key already exists.');
+						return;
+					}
+
+					metadata[tmp] = metadata[key];
+					delete metadata[key];
+				}
+			}
+		}
+
+		// TODO: if you find spectra with the same id, user needs to 
+		// define a disambiguator field
 
 		var resource = new esis.structures.Resource();
 		resource.setContents(JSON.stringify(data));
@@ -235,6 +301,6 @@ esis.structures.importer = (function() {
 		showSpectra : showSpectra,
 		addToCkan : addToCkan,
 		updateInfo : updateInfo,
-		updatePaging : updatePaging
+		createSpectraElement : createSpectraElement
 	}
 })();

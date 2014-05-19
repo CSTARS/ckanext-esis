@@ -28,6 +28,9 @@ esis.app = (function(){
 		spectra : 'fa-table'
 	}
 
+	var metadataMap = {};
+	var inverseMap = {};
+
 	function init() {
 		$('#Modal').modal({show:false});
 
@@ -80,7 +83,8 @@ esis.app = (function(){
 		dropZone.addEventListener('dragover', _handleDragOver, false);
 		dropZone.addEventListener('drop', _handleFileSelect, false);
 
-		document.getElementById('file').addEventListener('change', _handleFileSelect, false);
+		$('#file').on('change', _handleFileSelect);
+		$('#map').on('change', _setMetadataMap);
 
 		// double check this made it into the window scope
 		// if not xlsx parser will crap out
@@ -93,6 +97,44 @@ esis.app = (function(){
 			esis.key = __ckan_.user.apikey;
 		}
 
+	}
+
+	function _setMetadataMap(e) {
+		e.stopPropagation();
+		e.preventDefault();
+
+		var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+		if( files.length == 0 ) return;
+
+		var reader = new FileReader();
+		var contents, parts;
+		reader.onerror = function() {};
+		reader.onprogress = function() {};
+		reader.onloadstart = function(e) {};
+		reader.onload = function(e) {
+			contents = e.target.result.split('\n');
+			for( var i = 0; i < contents.length; i++ ) {
+				if( contents[i].indexOf('=') > -1 ) {
+					parts = contents[i].split('=');
+					metadataMap[parts[0]] = parts[1];
+					if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
+				}
+			}
+		}
+		reader.readAsText(files[0]);
+	}
+
+	function getMetadataMap() {
+		return inverseMap;
+	}
+
+	function mapMetadata(key) {
+		return inverseMap[key];
+	}
+
+	function isEcosisMetadata(key) {
+		if( esis.metadata[key] != null ) return true;
+		return false;
 	}
 
 	function _handleFileSelect(evt) {
@@ -266,7 +308,10 @@ esis.app = (function(){
 	return {
 		init : init,
 		show : show,
-		render : render
+		render : render,
+		mapMetadata : mapMetadata,
+		isEcosisMetadata : isEcosisMetadata,
+		getMetadataMap : getMetadataMap
 	}
 
 })();

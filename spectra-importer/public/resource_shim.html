@@ -22,7 +22,8 @@ esis.jslib = [
 	'/lib/xlsx.js',
 	//'/components/js-xlsx/dist/xlsx.min.js',
 	'/components/js-xls/dist/xls.min.js',
-	'/components/jquery-csv/src/jquery.csv.js'
+	'/components/jquery-csv/src/jquery.csv.js',
+	'/components/js-md5/js/md5.min.js'
 ];
 
 esis.js = [
@@ -36,7 +37,8 @@ esis.js = [
 	'/js/structures/import.js',
 	'/js/structures/joinableMetadata.js',
 	'/js/structures/resource.js',
-	'/js/structures/spectra.js'
+	'/js/structures/spectra.js',
+	'/metadata.js'
 ];
 
 
@@ -267,9 +269,21 @@ if (!Array.prototype.indexOf) {
 	        <h4 style="text-align:center">- OR -</h4>
 	        <div id="drop_zone">Drop files here</div>
 
+ 			<div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px">
+	        	<h4>Metadata Map</h4>
+	        	<span class="help-block">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.</span>
 
-		    <input name="key" type="text" style="display:none" id="api-key" />
-		    <input name="username" type="text" style="display:none" id="username" />
+	        	<div class="row-fluid">
+	        		<div class="span6">
+	        			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+	        		</div>
+	        		<div class="span6">
+	        			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map">
+	        		</div>
+	        	</div>
+
+
+        	</div>
 		</div>
 
 </div>
@@ -280,10 +294,10 @@ if (!Array.prototype.indexOf) {
 	<h3 class="panel-title">Parsed Spectral Data and Joinable Data
 		<a class="btn btn-default pull-right" id="show-status">Inspect</a>
 	</h3>
-	<div class="well panel-body" id="data-body"></div>
+	<div class="well panel-body" id="data-body" style="max-height:400px;overflow:auto"></div>
 
 	<h3 class="panel-title">Resource Files</h3>
-	<div class="well panel-body" id="resources-body" style="max-height:40px"></div>
+	<div class="well panel-body" id="resources-body" style="max-height:400px;overflow:auto"></div>
 
 	<button class="btn btn-primary" id="addResources">Add Resources</button>
 </div>
