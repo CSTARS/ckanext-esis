@@ -172,7 +172,9 @@ esis.structures.importer = (function() {
 	
 	function addToCkan(btn) {
 		var resources = _getCkanResources();
-		resources.push(_createSpectraJsonResource());
+		var data = _createSpectraJsonResource();
+		if( data == null ) return;
+		resources.push(data);
 
 		btn.addClass('disabled').html('Adding...');
 		_addResourceToCkan(0, TEST_PACKAGE, resources, btn);
@@ -239,7 +241,7 @@ esis.structures.importer = (function() {
 		for( var i = 0; i < data.data.length; i++ ) {
 			var metadata = data.data[i].metadata;
 			for( var key in metadata ) {
-				var tmp = key.replace(/[^A-Za-z\s_-]/g, '');
+				var tmp = key.replace(/[^A-Za-z0-9\s_-]/g, '');
 				if( tmp != key ) {
 					if( metadata[tmp] ) {
 						alert('Metadata Error: the attribute "'+key+'" has illegal characters.  Attempted to clean up key to "'+
