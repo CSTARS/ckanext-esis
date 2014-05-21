@@ -110,11 +110,50 @@ esis.structures.importer = (function() {
 
   		card += '</table></div>';
 
-  		card += '<div style="margin:10px;max-height:300px;overflow:auto">'+
-  				JSON.stringify(spectra.getData()).replace(/],/g,'],<br />')+'</div>';
+  		card += '<div style="margin:10px;" id="card-chart"></div>';
+
+  		_createChart(spectra.getData());
 
   		card += '</div>';
   		return card;
+    }
+
+    function _createChart(spectra) {
+    	setTimeout(function() {
+			  var data = new google.visualization.DataTable();
+			  var rows = [];
+
+			  data.addColumn('number', 'Wavelength');
+			  data.addColumn('number', '')
+
+			  for( var i = 0; i < spectra.length; i++ ) {
+			  		rows.push([
+			  			parseFloat(spectra[i][0]),
+			  			parseFloat(spectra[i][1])
+			  		]);
+			  }
+
+			  rows.sort(function(a, b){
+		       		if( a[0] > b[0] ) return 1;
+		       		if( a[0] < b[0] ) return -1;
+		       		return 0;
+		      });
+
+		      data.addRows(rows);
+
+		      // Set chart options
+		      var options = {
+		            width : $('#card-chart').width(),
+		            height : 400,
+		            legend : {
+		            	position : 'none'
+		            }
+		      };
+
+		      // Instantiate and draw our chart, passing in some options.
+		      var chart = new google.visualization.LineChart(document.getElementById('card-chart'));
+		      chart.draw(data, options);
+		}, 100);
     }
 
     function updatePaging(cPage, numPages) {
