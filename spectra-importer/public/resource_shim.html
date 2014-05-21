@@ -153,37 +153,33 @@ esis.onJqueryLoad = function() {
 	//	$(esis.root).html(esis.mainhtml);
 	//});
 	
-	// add script tags
-	var loadCount = 0;
-	for( var i = 0; i < esis.jslib.length; i++ ) {
-		$.getScript(esis.host+esis.jslib[i], function(){
-			loadCount++;
-			if( loadCount == esis.jslib.length ) {
-				esis.onLibsReady();
-			}
-		});
-	}
-	if( esis.jslib.length == 0 ) esis.onLibsReady();
+	esis.loadScripts(0, esis.jslib, function(){
+		esis.onLibsReady();
+	});
 }
 
 esis.onLibsReady = function() {
 	console.log(3);
-	// add script tags
-	var loadCount = 0;
-	for( var i = 0; i < esis.js.length; i++ ) {
-		$.getScript(esis.host+esis.js[i], function(){
-			loadCount++;
-			console.log(loadCount);
-			if( loadCount == esis.js.length ) {
 
-				esis.onReady();
-			}
+	esis.loadScripts(0, esis.js, function(){
+		esis.onReady();
+	});
+}
+
+esis.loadScripts = function(index, scripts, callback) {
+	if( index == scripts.length ) {
+		callback();
+	} else {
+		$.getScript(esis.host+scripts[index], function(){
+			index++;
+			esis.loadScripts(index, scripts, callback);
 		});
-	}	
+	}
 }
 
 esis.onReady = function() {
-console.log(5);
+	$('#loading').hide();
+	$('#spectra-start').show('fast');
 	esis.app.init();
 }
 
@@ -243,7 +239,11 @@ if (!Array.prototype.indexOf) {
 }
 </style>
 
-<div id="spectra-start">
+<div id="loading">
+	<h4>Loading...</h4>
+</div>
+
+<div id="spectra-start" style="display:none">
 
 		<div class="well" style="color:#666">
 			<div class="form-horizontal">
