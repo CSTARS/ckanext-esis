@@ -4,6 +4,7 @@
 <script type="text/javascript">
   var __ckan_ = {
      package : {{ h.to_json(pkg_dict)|safe }},
+     spectra : {{ spectra|safe }},
      pkg_name : "{{ pkg_name }}",
      user     : {{ h.to_json(user)|safe }}
   }
