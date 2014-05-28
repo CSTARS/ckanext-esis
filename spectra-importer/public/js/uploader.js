@@ -1,5 +1,11 @@
 esis.uploader = (function(){
 
+    function _getKey() {
+        var key = esis.key;
+        if( window.__ckan_ && window.__ckan_.user ) key = __ckan_.user.apikey;
+        return key;
+    }
+
 
 	function upload(pkg, resource, callback) {
         // TODO: if this fails, we have an issue on our hands
@@ -18,9 +24,6 @@ esis.uploader = (function(){
     	formData.append('name', filename);
     	formData.append('upload', new Blob([resource.getContents()], {type: resource.getMimetype()}), filename);
 
-        var key = esis.key;
-        if( __ckan_ && __ckan_.user ) key = __ckan_.user.apikey;
-
     	$.ajax({
 		    url: esis.host + '/api/action/resource_create',
 		    type: "POST",
@@ -28,10 +31,17 @@ esis.uploader = (function(){
 		    processData: false,
 		    contentType: false,
 		    beforeSend: function (request) {
-                request.setRequestHeader('Authorization', key);
+                request.setRequestHeader('Authorization', _getKey());
           	},
-		    success: function() {
-		        callback();
+		    success: function(response, status) {
+                if( response.success ) {
+                    if( response.result.name != 'esis_spectral_data.json' ) {
+                        resource.setCkanId(response.result.id);
+                    }
+		            callback();
+                } else {
+                    callback(true);
+                }
 		    },
 		    error : function(resp) {
 		        callback(true);
@@ -39,8 +49,50 @@ esis.uploader = (function(){
 		});
     }
 
+    // clean spectra first
+    function uploadSpectraResource(pkg, resource, btn, callback) {
+        btn.html('cleaning old spectral data...');
+        $.ajax({
+            url: esis.host + '/api/action/package_show?id='+pkg,
+            beforeSend: function (request) {
+                request.setRequestHeader('Authorization', _getKey());
+            },
+            success: function(response) {
+                _removeSpectraResources(0, response.result.resources, function(){
+                    btn.html('uploading new spectral data...');
+
+                    // now upload
+                    upload(pkg, resource, callback);
+                });
+            }
+        });
+    }
+
+    function _removeSpectraResources(index, resources, callback) {
+        if( index == resources.length ) {
+            callback();
+        } else if ( resources[index].name == 'esis_spectral_data.json' ) {
+            $.ajax({
+                type: 'POST',
+                url: esis.host + '/api/action/resource_delete',
+                data : JSON.stringify({id : resources[index].id }),
+                beforeSend: function (request) {
+                    request.setRequestHeader('Authorization', _getKey());
+                },
+                success: function(response) {
+                    index++;
+                    _removeSpectraResources(index, resources, callback);
+                }
+            });
+        } else {
+            index++;
+            _removeSpectraResources(index, resources, callback);
+        }
+    }
+
     return {
-        upload : upload
+        upload : upload,
+        uploadSpectraResource : uploadSpectraResource
     }
 
 })();

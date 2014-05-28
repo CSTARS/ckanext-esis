@@ -71,8 +71,13 @@ esis.structures.File = function(fileObj, parseZip) {
         		else contents = zipEntry.asText();
 
         		esis.parser.parse(linfo, contents, function(resp){
-	        		for( var i = 0; i < resp.length; i++ ) arr.push(resp[i]);
-	        		
+	        		for( var i = 0; i < resp.length; i++ ) {
+	        			var d = resp[i];
+	        			// do we need to add reference to the zip file to later relate the resource id?
+	        			if( !parseZip ) d.info.zipFilename = info.name;
+	        			arr.push(d);
+	        		}
+
 	        		c++;
 	        		if( c == total ) _onIngestComplete(arr);
 	        	});
@@ -105,16 +110,29 @@ esis.structures.File = function(fileObj, parseZip) {
 			});
 		}
 
+		var map = {};
 		for( var i = 0; i < files.length; i++ ) {
 			var f = files[i];
 
 			if( f.info.type == 'data' ) {
-				datasheets.push(new esis.structures.Datasheet(f));
+				var datasheet = new esis.structures.Datasheet(f);
+				var resourceName = f.info.zipFilename ? f.info.zipFilename : f.info.name;
+
+				if( resourceName ) {
+					if( !map[resourceName] ) map[resourceName] = [datasheet];
+					else map[resourceName].push(datasheet);
+				}
+				datasheets.push(datasheet);
 			} 
+		}
+
+		for( var i = 0; i < files.length; i++ ) {
+			var f = files[i];
 			if( f.info.type == 'resource' || f.info.type == 'both' ) {
-				resources.push(new esis.structures.Resource(f));
+				resources.push(new esis.structures.Resource(f, map[f.info.name]));
 			}
 		}
+
 	}
 
 	function _getInfo(name) {

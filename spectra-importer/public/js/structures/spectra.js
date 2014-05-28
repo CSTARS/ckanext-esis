@@ -1,6 +1,7 @@
 esis.structures.Spectra = function(spectra, filename, sheetname) {
 	var data = [];
 	var error = null;
+	var ckanId = "";
 
 	var joinOrder = ['joined', 'file', 'spectra'];
 	var metadata = {
@@ -60,6 +61,14 @@ esis.structures.Spectra = function(spectra, filename, sheetname) {
 		return '';
 	}
 
+	function getCkanId() {
+		return ckanId;
+	}
+
+	function setCkanId(id) {
+		ckanId = id;
+	}
+
 	esis.structures.importer.updateInfo();
 
 	return {
@@ -72,6 +81,8 @@ esis.structures.Spectra = function(spectra, filename, sheetname) {
 		getSheetname : getSheetname,
 		getError : getError,
 		setError : setError,
-		hasError : hasError
+		hasError : hasError,
+		getCkanId : getCkanId,
+		setCkanId : setCkanId
 	}
 }
