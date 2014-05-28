@@ -1,4 +1,4 @@
-ckanext-ceic
+ckanext-esis
 ============
 
-CEIC extension for CKAN adding additional fields and controls
+EcoSIS extension for CKAN adding resource controls for spectra
