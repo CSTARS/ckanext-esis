@@ -4,6 +4,7 @@ esis.structures.Datasheet = function(parseFile) {
 	var ele = null;
 	var spectra = [];
 	var joinableMetadata = null;
+	var ckanId = "";
 
 	var template = '<div class="card">' +
 		'<h4 style="color:#888;white-space:nowrap"><i class="fa {{icon}}"></i> {{title}}</h4>' +
@@ -251,12 +252,26 @@ esis.structures.Datasheet = function(parseFile) {
 		$('#Modal').modal('show');
 	}
 
+	function getCkanId() {
+		return ckanId;
+	}
+
+	function setCkanId(id) {
+		ckanId = id;
+		for( var i = 0; i < spectra.length; i++ ) {
+			spectra[i].setCkanId(id);
+		}
+		if( joinableMetadata ) joinableMetadata.setCkanId(id);
+	}
+
 	init();
 
 	return {
 		getJoinableMetadata : getJoinableMetadata,
 		getSpectra : getSpectra,
-		addSpectra : addSpectra
+		addSpectra : addSpectra,
+		setCkanId  : setCkanId,
+		getCkanId  : getCkanId
 	}
 
 }

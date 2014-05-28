@@ -5,6 +5,10 @@ esis.structures.importer = (function() {
 
 	var currentSpectra = [];
 
+	function getPackageName() {
+		return window.__ckan_ ? window.__ckan_.package.name : TEST_PACKAGE;
+	}
+
 	function getFiles() {
 		return files;
 	}
@@ -35,7 +39,10 @@ esis.structures.importer = (function() {
 
 
 				if( jd ) joindata.push(jd);
-				for( var z = 0; z < arr.length; z++ ) spectra.push(arr[z]);
+				for( var z = 0; z < arr.length; z++ ) {
+					arr[z].setCkanId(datasheets[j].getCkanId());
+					spectra.push(arr[z]);
+				}
 			}
 		}
 
@@ -46,6 +53,27 @@ esis.structures.importer = (function() {
 			}
 		}
 		return spectra;
+	}
+
+	function _getJoinableData() {
+		var arr = [];
+		for( var i = 0; i < files.length; i++ ) {
+			var datasheets = files[i].getDatasheets();
+
+			for( var j = 0; j < datasheets.length; j++ ) {
+				var jd = datasheets[j].getJoinableMetadata();
+				if( !jd ) continue;
+
+				arr.push({
+					metadata : jd.getMetadata(),
+					filename : jd.getFilename(),
+					join_id : jd.getJoinId(),
+					joinon : jd.getJoinType(),
+					resource_id : jd.getCkanId()
+				});
+			}
+		}
+		return arr;
 	}
 
 	function createSpectraElement(index) {
@@ -212,18 +240,23 @@ esis.structures.importer = (function() {
 	
 	function addToCkan(btn) {
 		var resources = _getCkanResources();
-		var data = _createSpectraJsonResource();
-		if( data == null ) return;
-		resources.push(data);
 
 		btn.addClass('disabled').html('Adding...');
-		_addResourceToCkan(0, TEST_PACKAGE, resources, btn);
+
+		_addResourceToCkan(0, getPackageName(), resources, btn);
 	}
 
 	function _addResourceToCkan(index, pkg, resources, btn) {
 		if( index == resources.length ) {
-			btn.removeClass('disabled').html('Add Resources');
-			window.location = "/dataset/new_metadata/"+__ckan_.package.name;
+
+			var data = _createSpectraJsonResource();
+			console.log(data);
+
+			esis.uploader.uploadSpectraResource(pkg, data, btn, function() {
+				btn.removeClass('disabled').html('Add Resources');
+				if( window.__ckan_ ) window.location = "/dataset/new_metadata/"+pkg;
+			});
+			
 		} else {
 			btn.html('Uploading '+resources[index].getFilename().replace(/.*\//,'')+'... ');
 
@@ -254,6 +287,9 @@ esis.structures.importer = (function() {
 				metadata : spectra[i].getJoinedMetadata(),
 				spectra_id : md5(JSON.stringify(spectra[i].getData())),
 				spectra : spectra[i].getData(),
+				filename : spectra[i].getFilename(),
+				sheetname : spectra[i].getSheetname(),
+				resource_id : spectra[i].getCkanId(),
 				ecosis : {}
 			};
 
@@ -274,7 +310,8 @@ esis.structures.importer = (function() {
 
 		data = {
 			data : data,
-			map  : esis.app.getMetadataMap()
+			map  : esis.app.getMetadataMap(),
+			join : _getJoinableData()
 		}
 
 		// we need to clean all of the attribute here ...
@@ -294,6 +331,8 @@ esis.structures.importer = (function() {
 				}
 			}
 		}
+
+		console.log(data);
 
 		// TODO: if you find spectra with the same id, user needs to 
 		// define a disambiguator field
@@ -343,6 +382,7 @@ esis.structures.importer = (function() {
 		showSpectra : showSpectra,
 		addToCkan : addToCkan,
 		updateInfo : updateInfo,
-		createSpectraElement : createSpectraElement
+		createSpectraElement : createSpectraElement,
+		getPackageName : getPackageName
 	}
 })();

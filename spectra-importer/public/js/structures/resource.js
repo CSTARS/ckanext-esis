@@ -1,4 +1,4 @@
-esis.structures.Resource = function(resource) {
+esis.structures.Resource = function(resource, datasheets) {
 	var contents = null;
 	var filename = '';
 	var mimetype = '';
@@ -39,6 +39,7 @@ esis.structures.Resource = function(resource) {
 		if( resource && resource.info ) {
 			if( esis.extensions[resource.info.ext] ) return esis.extensions[resource.info.ext].mime;
 		}
+
 		// give up for now
 		return 'text/plain';
 	}
@@ -85,6 +86,14 @@ esis.structures.Resource = function(resource) {
 		return 'fa-file-o';
 	}
 
+	function setCkanId(id) {
+		if( !datasheets ) return;
+		
+		for( var i = 0; i < datasheets.length; i++ ) {
+			datasheets[i].setCkanId(id);
+		}
+	}
+
 	init();
 
 	return {
@@ -94,5 +103,6 @@ esis.structures.Resource = function(resource) {
 		setContents : setContents,
 		setFilename : setFilename,
 		setMimetype : setMimetype,
+		setCkanId   : setCkanId
 	}
 }

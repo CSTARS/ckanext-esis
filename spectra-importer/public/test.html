@@ -20,6 +20,7 @@
 	<script src="js/uploader.js"></script>
 	<script src="js/extension.js"></script>
 	<script src="js/parser.js"></script>
+	<script src="js/existingData.js"></script>
 	<script src="metadata.js"></script>
 
 	<script src="js/structures/import.js"></script>
@@ -85,8 +86,12 @@
 }
 </style>
 
+
+<h1 style="color:#333;margin-bottom:25px"><i class="fa fa-cloud-upload"></i> Import Resources</h1>
+
+<div id="existing-spectra"></div>
+
 <div id="spectra-start">
-	<h1 style="color:#333;margin-bottom:25px"><i class="fa fa-cloud-upload"></i> Import Resources</h1>
 
 	<div class="well" style="color:#666">
 		<div class="form-horizontal">
@@ -142,7 +147,7 @@
 	<h3 class="panel-title">Resource Files</h3>
 	<div class="well panel-body" id="resources-body" style="max-height:400px;overflow:auto"></div>
 
-	<button class="btn btn-primary" id="addResources">Add Resources</button>
+	<button class="btn btn-primary disabled" id="addResources">Add Resources</button>
 </div>
 
 

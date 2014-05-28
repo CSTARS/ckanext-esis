@@ -4,10 +4,21 @@ esis.structures.JoinableMetadata = function(file) {
 	var joinCol = 0;
 	var filenameMatch = false;
 	var worksheetMatch = false;
+	var ckanId = "";
 
 	if( file.metadata ) metadata = file.joindata;
 	if( file.joinId ) joinId = file.joinId;
 	
+	function getJoinType() {
+		if( filenameMatch ) return 'filename';
+		if( worksheetMatch ) return 'worksheet';
+		return '';
+	}
+
+	function getFilename() {
+		return file.info.name;
+	}
+
 	function getMetadata() {
 		return metadata;
 	}
@@ -62,8 +73,6 @@ esis.structures.JoinableMetadata = function(file) {
 			for( var i = 1; i < metadata.length; i++ ) {
 				var name = filenameMatch ? spectra.getFilename() : spectra.getSheetname();
 
-				console.log('.*'+metadata[i][joinCol]+'.* == '+name);
-
 				regex = new RegExp('.*'+metadata[i][joinCol]+'.*');
 				if( regex.test(name) ) {
 					return i;
@@ -79,6 +88,14 @@ esis.structures.JoinableMetadata = function(file) {
 		return -1;
 	}
 
+	function getCkanId() {
+		return ckanId;
+	}
+
+	function setCkanId(id) {
+		ckanId = id;
+	}
+
 	_updateJoinRow();
 
 	return {
@@ -87,7 +104,11 @@ esis.structures.JoinableMetadata = function(file) {
 		getMetadata : getMetadata,
 		useFilename : useFilename,
 		useWorksheetName : useWorksheetName,
-		join : join
+		join : join,
+		setCkanId  : setCkanId,
+		getCkanId  : getCkanId,
+		getJoinType : getJoinType,
+		getFilename : getFilename
 	}
 
 
