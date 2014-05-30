@@ -1,7 +1,7 @@
 if( !window.esis ) window.esis = {};
 var data;
 
-esis.host = 'http://192.168.1.109:5000';
+esis.host = 'http://esis.casil.ucdavis.edu';
 esis.key = '66f67802-f4b4-4f07-979b-9a22e2e193ae';
 esis.structures = {};
 
