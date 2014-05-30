@@ -5,7 +5,7 @@ esis.extensions = {
 		mime : 'application/pdf'
 	},
 	spectra : {
-		type : 'data',
+		type : 'both',
 		parser : 'csv-tab',
 		format : 'string',
 		icon : 'fa-table',
