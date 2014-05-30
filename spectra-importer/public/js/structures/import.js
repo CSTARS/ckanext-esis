@@ -46,6 +46,21 @@ esis.structures.importer = (function() {
 			}
 		}
 
+		// get existing join data
+		if( esis.existingData.hasData() ) {
+			var spectraPkg = esis.existingData.get();
+			for( var i = 0; i < spectraPkg.dataset.join.length; i++ ) {
+				var jd = new esis.structures.JoinableMetadata();
+				jd.setMetadata(spectraPkg.dataset.join[i].metadata);
+				jd.setJoinId(spectraPkg.dataset.join[i].join_id);
+
+				if( spectraPkg.dataset.join[i].joinon == 'filename' ) jd.useFilename(true);
+				else if( spectraPkg.dataset.join[i].joinon == 'sheetname' ) jd.useWorksheetName(true);
+
+				joindata.push(jd);
+			}
+		}
+
 		// join metadata
 		for( var i = 0; i < joindata.length; i++ ) {
 			for( var j = 0; j < spectra.length; j++ ) {
@@ -241,6 +256,12 @@ esis.structures.importer = (function() {
 	function addToCkan(btn) {
 		var resources = _getCkanResources();
 
+		var data = _createSpectraJsonResource();
+		// verify verify everything is ok
+		// if not, quit
+		// you can't use this for upload though! it will not have the resource id assign
+		// since the resources have to be uploaded first!
+
 		btn.addClass('disabled').html('Adding...');
 
 		_addResourceToCkan(0, getPackageName(), resources, btn);
@@ -249,10 +270,7 @@ esis.structures.importer = (function() {
 	function _addResourceToCkan(index, pkg, resources, btn) {
 		if( index == resources.length ) {
 
-			var data = _createSpectraJsonResource();
-			console.log(data);
-
-			esis.uploader.uploadSpectraResource(pkg, data, btn, function() {
+			esis.uploader.uploadSpectraResource(pkg, _createSpectraJsonResource(), btn, function() {
 				btn.removeClass('disabled').html('Add Resources');
 				if( window.__ckan_ ) window.location = "/dataset/new_metadata/"+pkg;
 			});
@@ -308,15 +326,27 @@ esis.structures.importer = (function() {
 			data.push(d);
 		}
 
-		data = {
-			data : data,
-			map  : esis.app.getMetadataMap(),
-			join : _getJoinableData()
-		}
+		var dataset;
+		if( esis.existingData.hasData() ) {
+			dataset = esis.existingData.get().dataset;
+
+			for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
+
+			var joindata = _getJoinableData();
+			for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
+		} else {
+			dataset = {
+				data : data,
+				map  : esis.app.getMetadataMap(),
+				join : _getJoinableData()
+			}
+		};
+
+		
 
 		// we need to clean all of the attribute here ...
-		for( var i = 0; i < data.data.length; i++ ) {
-			var metadata = data.data[i].metadata;
+		for( var i = 0; i < dataset.data.length; i++ ) {
+			var metadata = dataset.data[i].metadata;
 			for( var key in metadata ) {
 				var tmp = key.replace(/[^A-Za-z0-9\s_-]/g, '');
 				if( tmp != key ) {
@@ -332,13 +362,11 @@ esis.structures.importer = (function() {
 			}
 		}
 
-		console.log(data);
-
 		// TODO: if you find spectra with the same id, user needs to 
 		// define a disambiguator field
 
 		var resource = new esis.structures.Resource();
-		resource.setContents(JSON.stringify(data));
+		resource.setContents(JSON.stringify(dataset));
 		resource.setFilename('esis_spectral_data.json');
 		resource.setMimetype('application/json');
 		return resource;

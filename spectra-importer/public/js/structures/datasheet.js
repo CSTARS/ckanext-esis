@@ -63,7 +63,8 @@ esis.structures.Datasheet = function(parseFile) {
 		innerHTML += '<table class="table table-striped" style="table-layout:initial">';
 		innerHTML += '<thead><tr><th>Parser</th><th>Status</th><th></th></tr></thead>';
 
-		innerHTML += '<tr><td>'+_createParserSelector(file.info.parser, "")+'</td>';
+		//innerHTML += '<tr><td>'+_createParserSelector(file.info.parser, "")+'</td>';
+		innerHTML += '<tr><td>'+file.info.parser+'</td>';
 		var id = '';
 
 		if ( file.joindata ) {
@@ -141,7 +142,7 @@ esis.structures.Datasheet = function(parseFile) {
 		return html;
 	}
 
-	function _createParserSelector(parser, id) {
+	/*function _createParserSelector(parser, id) {
 		if( !parser ) parser = '';
 
 		if( parser == 'excel' ) return 'excel';
@@ -153,7 +154,7 @@ esis.structures.Datasheet = function(parseFile) {
 			selector += '<option value="'+types[i]+'" '+(parser==types[i] ? 'selected' : '')+'>'+types[i]+'</option>';
 		}
 		return selector += '</select>';
-	}
+	}*/
 
 	function _getFileIcon() {
 		if( esis.extensions[file.info.ext] ) return esis.extensions[file.info.ext].icon;

@@ -196,7 +196,8 @@ esis.app = (function(){
 	function append(list, fileInfo, index) {
 		var info = '<i class="fa '+getFileIcon(fileInfo.file)+'"></i> <span style="color:#666"">'+fileInfo.file+'</span>';
 
-		if( fileInfo.type == 'data' || fileInfo.type == 'both' ) info += ' '+createParserSelector(fileInfo.parser);
+		//if( fileInfo.type == 'data' || fileInfo.type == 'both' ) info += ' '+createParserSelector(fileInfo.parser);
+		if( fileInfo.type == 'data' || fileInfo.type == 'both' ) info += ' '+fileInfo.parser;
 		if( fileInfo.contents ) info += ' <span class="label label-success">Parsed</span> <a class="btn btn-link" onclick="esis.app.show('+index+');">info</a>';
 
 		list.append($('<li class="list-group-item">'+info+'</li>'))

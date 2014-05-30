@@ -51,7 +51,7 @@ esis.uploader = (function(){
 
     // clean spectra first
     function uploadSpectraResource(pkg, resource, btn, callback) {
-        btn.html('cleaning old spectral data...');
+        if( btn ) btn.html('cleaning old spectral data...');
         $.ajax({
             url: esis.host + '/api/action/package_show?id='+pkg,
             beforeSend: function (request) {
@@ -59,7 +59,7 @@ esis.uploader = (function(){
             },
             success: function(response) {
                 _removeSpectraResources(0, response.result.resources, function(){
-                    btn.html('uploading new spectral data...');
+                    if( btn ) btn.html('uploading new spectral data...');
 
                     // now upload
                     upload(pkg, resource, callback);

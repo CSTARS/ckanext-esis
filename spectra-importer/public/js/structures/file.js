@@ -70,6 +70,15 @@ esis.structures.File = function(fileObj, parseZip) {
         		if( linfo.format == 'binary' ) contents = zipEntry.asBinary();
         		else contents = zipEntry.asText();
 
+        		// if we are extracting the zip, add the resource file as well
+        		if( parseZip ) {
+        			arr.push({
+	        			name : info.name,
+						info : info,
+						zipEntry : zipEntry
+					});
+        		}
+
         		esis.parser.parse(linfo, contents, function(resp){
 	        		for( var i = 0; i < resp.length; i++ ) {
 	        			var d = resp[i];

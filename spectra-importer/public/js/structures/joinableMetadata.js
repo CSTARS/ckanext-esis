@@ -6,8 +6,11 @@ esis.structures.JoinableMetadata = function(file) {
 	var worksheetMatch = false;
 	var ckanId = "";
 
-	if( file.metadata ) metadata = file.joindata;
-	if( file.joinId ) joinId = file.joinId;
+	if( file ) {
+		if( file.metadata ) metadata = file.joindata;
+		if( file.joinId ) joinId = file.joinId;
+	}
+	
 	
 	function getJoinType() {
 		if( filenameMatch ) return 'filename';
@@ -33,7 +36,7 @@ esis.structures.JoinableMetadata = function(file) {
 
 	function setJoinId(jid) {
 		joinId = jid;
-		_updateJoinRow();
+		if( joinId ) _updateJoinRow();
 	}
 
 	function useFilename(use) {
@@ -102,6 +105,7 @@ esis.structures.JoinableMetadata = function(file) {
 		getJoinId : getJoinId,
 		setJoinId : setJoinId,
 		getMetadata : getMetadata,
+		setMetadata : setMetadata,
 		useFilename : useFilename,
 		useWorksheetName : useWorksheetName,
 		join : join,
