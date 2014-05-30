@@ -4,6 +4,10 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import json
 from ckan.common import c
+from ckan.lib.base import model
+import ckan.lib.uploader as uploader
+import ckan.logic as logic
+
 
 class EsisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
@@ -28,7 +32,8 @@ class EsisPlugin(plugins.SingletonPlugin,
         return {
             'to_json' : self.to_json,
             'getUser' : self.getUser,
-            'getPackage' : self.getPackage
+            'getPackage' : self.getPackage,
+            'getSpectra' : self.getSpectra
         }
 
 
@@ -41,6 +46,23 @@ class EsisPlugin(plugins.SingletonPlugin,
     def getPackage(self):
         pkg = tk.get_action('package_show')({},{'id': c.id})
         return pkg
+
+    def getSpectra(self):
+        context = {'model': model, 'user': c.user}
+
+        pkg = tk.get_action('package_show')({}, {'id': c.id})
+        id = ""
+        for resource in pkg.get("resources"):
+            if resource.get("name") == "esis_spectral_data.json":
+                id = resource.get("id")
+                break
+
+        upload = uploader.ResourceUpload(logic.get_action('resource_show')(context, {'id': id}))
+        file = open(upload.get_path(id), 'r')
+        json = file.read()
+        file.close()
+        return json
+
 
     def to_json(self, data):
         try:

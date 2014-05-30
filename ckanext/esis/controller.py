@@ -39,7 +39,7 @@ class SpectraController(PackageController):
             'pkg_name' : pkg.name,
             'pkg_title' : pkg.title,
             'resource_id' : id,
-            'data'   : json.loads(file.read()),
+            'dataset'   : json.loads(file.read()),
         }
         file.close()
 
