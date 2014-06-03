@@ -66,9 +66,11 @@ class EsisPlugin(plugins.SingletonPlugin,
         # list all packages with spectra.json files
         map.connect('all_spectra_packages', '/spectra/all', controller=controller, action='all')
 
+        map.connect('add_spectra_package', '/spectra/add', controller=controller, action='add')
+
         map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
 
-        map.connect('clear_spectra_package', '/spectra/clear', controller=controller, action='clear')
+        map.connect('get_spectra_package_info', '/spectra/info', controller=controller, action='info')
 
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
