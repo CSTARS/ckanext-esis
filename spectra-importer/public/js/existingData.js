@@ -258,7 +258,7 @@ esis.existingData = (function(){
                                 '<div><b>'+f.name+'</b></div>'+
                                 (f.spectraCount > 0 ? 'Spectra: '+f.spectraCount : '')+
                                 (f.join_id ? 'Join Data: on "'+f.join_id+'" using '+(f.joinon.length > 0 ? f.joinon : 'attribute') : '')+
-                            '<td>'+
+                            '</td>'+
                         '</tr>';
             }
             html += '</table>'
