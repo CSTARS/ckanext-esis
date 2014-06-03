@@ -29,13 +29,16 @@ esis.existingData = (function(){
                 		return _done();
                 	}
 
+                    var found = false;
                 	for( var i = 0; i < response.result.resources.length; i++ ) {
                 		if( response.result.resources[i].name == 'esis_spectral_data.json' ) {
                 			_getSpectraPackage(response.result.resources[i].id);
+                            found = true;
                 		} else {
                             resources.push(response.result.resources[i]);
                         }
                 	}
+                    if( !found ) _done();
                 } else {
                 	_done();
                 }
