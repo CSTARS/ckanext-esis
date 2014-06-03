@@ -1,7 +1,8 @@
 if( !window.esis ) window.esis = {};
 var data;
 
-esis.host = 'http://esis.casil.ucdavis.edu';
+//esis.host = 'http://esis.casil.ucdavis.edu';
+esis.host = 'http://192.168.1.109:5000';
 esis.key = '66f67802-f4b4-4f07-979b-9a22e2e193ae';
 esis.structures = {};
 
@@ -32,6 +33,8 @@ esis.app = (function(){
 	var inverseMap = {};
 
 	function init() {
+		_initNav();
+
 		$('#Modal').modal({show:false});
 
 		$("#submit").on('click', function(){
@@ -68,15 +71,13 @@ esis.app = (function(){
 
 		$('#show-status').on('click', function(){
 			esis.structures.importer.showSpectra();
+			$('.nav-panel').hide();
 			$('#spectra-status').show();
-			$('#spectra-modify').hide();
-			$('#spectra-start').hide();
 		});
 
 		$('.back').on('click', function(){
-			$('#spectra-status').hide();
-			$('#spectra-modify').show();
-			$('#spectra-start').show();
+			$('.nav-panel').hide();
+			$('#data-body').show();
 		});
 
 		var dropZone = document.getElementById('drop_zone');
@@ -98,6 +99,18 @@ esis.app = (function(){
 		}
 
 		esis.existingData.init();
+	}
+
+	function _initNav() {
+		$('#spectra-start').show();
+		$('#upload-nav a').on('click', function(){
+			$('#upload-nav a').parent().removeClass('active');
+			$(this).parent().addClass('active');
+
+			var id = $(this).attr('id').replace(/nav-/, '');
+			$('.nav-panel').hide();
+			$('#'+id).show();
+		});
 	}
 
 	function _setMetadataMap(e) {
@@ -142,14 +155,24 @@ esis.app = (function(){
 	    evt.stopPropagation();
 	    evt.preventDefault();
 
-	    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
-	    for (var i = 0, f; f = files[i]; i++) {
-            esis.structures.importer.addFile(f, $('#parseZip').is(':checked'));
-	    	//var filePanel = new EsisUploadFile();
-	    	//filePanel.init(f, $('#parseZip').is(':checked'));
-	    }
+	    $('.file-select-group').hide();
+	    $('#processing').show();
 
-	    $('#spectra-modify').show();
+	    setTimeout(function(){
+	    	var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
+		    for (var i = 0, f; f = files[i]; i++) {
+	            esis.structures.importer.addFile(f, $('#parseZip').is(':checked'));
+		    }
+
+		    setTimeout(function(){
+		    	$('.file-select-group').show();
+	    		$('#processing').hide();
+		    }, 300);
+	    }, 150);
+
+	    
+
+	    //$('#spectra-modify').show();
   	}
 
   	function _handleDragOver(evt) {

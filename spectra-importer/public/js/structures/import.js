@@ -49,13 +49,13 @@ esis.structures.importer = (function() {
 		// get existing join data
 		if( esis.existingData.hasData() ) {
 			var spectraPkg = esis.existingData.get();
-			for( var i = 0; i < spectraPkg.dataset.join.length; i++ ) {
+			for( var i = 0; i < spectraPkg.join.length; i++ ) {
 				var jd = new esis.structures.JoinableMetadata();
-				jd.setMetadata(spectraPkg.dataset.join[i].metadata);
-				jd.setJoinId(spectraPkg.dataset.join[i].join_id);
+				jd.setMetadata(spectraPkg.join[i].metadata);
+				jd.setJoinId(spectraPkg.join[i].join_id);
 
-				if( spectraPkg.dataset.join[i].joinon == 'filename' ) jd.useFilename(true);
-				else if( spectraPkg.dataset.join[i].joinon == 'sheetname' ) jd.useWorksheetName(true);
+				if( spectraPkg.join[i].joinon == 'filename' ) jd.useFilename(true);
+				else if( spectraPkg.join[i].joinon == 'sheetname' ) jd.useWorksheetName(true);
 
 				joindata.push(jd);
 			}
@@ -270,14 +270,14 @@ esis.structures.importer = (function() {
 	function _addResourceToCkan(index, pkg, resources, btn) {
 		if( index == resources.length ) {
 
-			esis.uploader.uploadSpectraResource(pkg, _createSpectraJsonResource(), btn, function() {
+			esis.uploader.uploadSpectraResource(pkg, _createSpectraJsonResource(true), btn, function() {
 				btn.removeClass('disabled').html('Add Resources');
 				if( window.__ckan_ ) window.location = "/dataset/new_metadata/"+pkg;
 			});
 			
 		} else {
 			btn.html('Uploading '+resources[index].getFilename().replace(/.*\//,'')+'... ');
-
+	
 			esis.uploader.upload(pkg, resources[index], function() {
 				index++;
 				_addResourceToCkan(index, pkg, resources, btn);
@@ -296,7 +296,7 @@ esis.structures.importer = (function() {
 		return resources;				
 	}
 
-	function _createSpectraJsonResource() {
+	function _createSpectraJsonResource(zip) {
 		var spectra = _getAndJoinSpectra();
 
 		var data = [];
@@ -328,7 +328,7 @@ esis.structures.importer = (function() {
 
 		var dataset;
 		if( esis.existingData.hasData() ) {
-			dataset = esis.existingData.get().dataset;
+			dataset = esis.existingData.get();
 
 			for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
 
@@ -385,22 +385,28 @@ esis.structures.importer = (function() {
 	}
 
 	function _runUpdateInfo() {
+		$('#addResources').show();
+
 		var info = "";
 		var sCount = 0;
 		var rCount = 0;
+		var jCount = 0;
 
 		for( var i = 0; i < files.length; i++ ) {
 			var datasheets = files[i].getDatasheets();
 			rCount += files[i].getResources().length;
 
 			for( var j = 0; j < datasheets.length; j++ ) {
+				if( datasheets[j].hasJoinableMetadata() ) jCount++;
 				sCount += datasheets[j].getSpectra().length;
 			}
 		}
 
-		$('#stats').html('<h4>Upload Information</h4>'+
-			'<div>Spectra: '+sCount+'</div>'+
-			'<div>Resources: '+rCount+'</div>').show('slow');
+		$('#upload-nav li').show();
+		$('#parsed-count').text(' ('+sCount+')');
+		$('#join-count').text(' ('+jCount+')');
+		$('#resource-count').text(' ('+rCount+')');
+		$('#nav-data-body').trigger('click');
 	}
 
 

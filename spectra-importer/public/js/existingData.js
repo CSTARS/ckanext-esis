@@ -11,6 +11,7 @@ esis.existingData = (function(){
 
 	function init() {
 		$('#existing-spectra').html('Checking for exisiting spectra...');
+        $('#existing-count').html(' <i style="color:#888"> - loading...</i>');
 
 		_findSpectraPackage();
 	}
@@ -31,7 +32,7 @@ esis.existingData = (function(){
 
                     var found = false;
                 	for( var i = 0; i < response.result.resources.length; i++ ) {
-                		if( response.result.resources[i].name == 'esis_spectral_data.json' ) {
+                		if( response.result.resources[i].name == 'esis_spectral_data.zip' ) {
                 			_getSpectraPackage(response.result.resources[i].id);
                             found = true;
                 		} else {
@@ -49,16 +50,45 @@ esis.existingData = (function(){
 	function _getSpectraPackage(id) {
 		$('#existing-spectra').html('Spectra found, importing...');
 		$.ajax({
-            url: esis.host + '/spectra/get?id='+id,
+            url: esis.host + '/spectra/get?compressed=false&id='+id,
             beforeSend: function (request) {
                 request.setRequestHeader('Authorization', _getKey());
             },
+            mimeType:'text/plain; charset=x-user-defined',
             success: function(response) {
-            	if( typeof response == 'string' ) spectraPkg = JSON.parse(response);
-            	else spectraPkg = JSON.parse(response);
+                /* if we can get the zip import working;
+                var zip;
 
-                console.log(spectraPkg);
+                try {
+                    zip = new JSZip();
+                    zip.load(response);
+                } catch (e) {
+                    alert('Error extracting spectral zip file');
+                    spectraPkg = {
+                        data : [],
+                        join : []
+                    };
+                    _done();
+                    return;
+                }
+
+                var contents = '{"data":[],"join":[]}';
+
+                for( var file in zip.files ) {
+                    var zipEntry = zip.files[file];
+                    if( zipEntry.name == 'esis_spectral_data.json' ) {
+                        contents = zipEntry.asText();
+                        break;
+                    }
+                }*/
+
+            	spectraPkg = JSON.parse(response);
+
+                delete zip;
             	_done(); 
+            },
+            error: function() {
+                _done();
             }
         });
 	}
@@ -82,19 +112,19 @@ esis.existingData = (function(){
         var update = false;
 
         var newArr = [];
-        for( var i = 0; i < spectraPkg.dataset.data.length; i++ ) {
-            if( spectraPkg.dataset.data[i].resource_id != id ) {
-                newArr.push(spectraPkg.dataset.data[i]);
+        for( var i = 0; i < spectraPkg.data.length; i++ ) {
+            if( spectraPkg.data[i].resource_id != id ) {
+                newArr.push(spectraPkg.data[i]);
             } else {
                 update = true;
             }
         }
-        spectraPkg.dataset.data = newArr;
+        spectraPkg.data = newArr;
 
         newArr = [];
-        for( var i = 0; i < spectraPkg.dataset.join.length; i++ ) {
-            if( spectraPkg.dataset.join[i].resource_id != id ) {
-                newArr.push(spectraPkg.dataset.join[i]);
+        for( var i = 0; i < spectraPkg.join.length; i++ ) {
+            if( spectraPkg.join[i].resource_id != id ) {
+                newArr.push(spectraPkg.join[i]);
             } else {
                 update = true;
             }
@@ -103,7 +133,7 @@ esis.existingData = (function(){
         if( !update ) return callback();
 
         var resource = new esis.structures.Resource();
-        resource.setContents(JSON.stringify(spectraPkg.dataset));
+        resource.setContents(JSON.stringify(spectraPkg));
         resource.setFilename('esis_spectral_data.json');
         resource.setMimetype('application/json');
 
@@ -128,16 +158,16 @@ esis.existingData = (function(){
         }
 
         if( spectraPkg ) {
-            for( var i = 0; i < spectraPkg.dataset.data.length; i++ ) {
-                if( files[spectraPkg.dataset.data[i].resource_id] ) {
-                    files[spectraPkg.dataset.data[i].resource_id].spectraCount++;
+            for( var i = 0; i < spectraPkg.data.length; i++ ) {
+                if( files[spectraPkg.data[i].resource_id] ) {
+                    files[spectraPkg.data[i].resource_id].spectraCount++;
                 }
             }
-            for( var i = 0; i < spectraPkg.dataset.join.length; i++ ) {
-                if( files[spectraPkg.dataset.join[i].resource_id] ) {
-                    var f = files[spectraPkg.dataset.join[i].resource_id];
-                    f.join_id = spectraPkg.dataset.join[i].join_id;
-                    f.joinon = spectraPkg.dataset.join[i].joinon;
+            for( var i = 0; i < spectraPkg.join.length; i++ ) {
+                if( files[spectraPkg.join[i].resource_id] ) {
+                    var f = files[spectraPkg.join[i].resource_id];
+                    f.join_id = spectraPkg.join[i].join_id;
+                    f.joinon = spectraPkg.join[i].joinon;
                 }
             }
         }
@@ -181,7 +211,7 @@ esis.existingData = (function(){
                         }
 
                         for( var i = 0; i < response.result.resources.length; i++ ) {
-                            if( response.result.resources[i].name == 'esis_spectral_data.json' ) {
+                            if( response.result.resources[i].name == 'esis_spectral_data.zip' ) {
                                 _deleteResource(response.result.resources[i].id, function(resp){
                                     callback();
                                 });
@@ -204,7 +234,7 @@ esis.existingData = (function(){
                 removeResource(id);
                 $('#existing-resource-count').text(resources.length);
 
-                ele.parent().hide('slow');
+                ele.parent().parent().hide('slow');
                 setTimeout(function(){
                     ele.parent().remove();
                 }, 2000);
@@ -218,21 +248,23 @@ esis.existingData = (function(){
         if( spectraPkg || resources.length > 0 ) {
             var files = _getFiles();
 
-            var html = 
-                '<a class="btn btn-danger pull-right" id="delete-all">Delete All</a><a id="delete-all-cancel" class="btn btn-default pull-right" style="display:none;margin-right:15px">Cancel</a>'+
-                '<h4>Current Resources: <span id="existing-resource-count">'+resources.length+'</span> <a style="font-size:14px;cursor:pointer" id="inspect-existing">inspect</a></h4>'+
-                '<div style="margin:20px;border:1px solid #ccc;border-radius:6px;max-height: 300px; overflow:auto; display: none" id="existing-overflow">';
+            var html = '<table class="table table-stripped"><tr><th>Remove</th><th>Resource</th></tr>';
 
             for( var key in files ) {
+
                 var f = files[key];
-                html += '<div style="margin: 5px 10px"><a class="btn btn-danger remove-btn" id="remove-'+f.id+'"><i class="icon-remove icon-white"></i></a> <b>'+f.name+'</b>'+
-                            '<div style="margin: 5px 50px">'+
+                html += '<tr><td><a class="btn btn-danger remove-btn" id="remove-'+f.id+'"><i class="icon-remove icon-white"></i></a></td>'+
+                            '<td>'+
+                                '<div><b>'+f.name+'</b></div>'+
                                 (f.spectraCount > 0 ? 'Spectra: '+f.spectraCount : '')+
                                 (f.join_id ? 'Join Data: on "'+f.join_id+'" using '+(f.joinon.length > 0 ? f.joinon : 'attribute') : '')+
-                            '</div>'+
-                        '</div>';
+                            '<td>'+
+                        '</tr>';
             }
-            html += '</div>';
+            html += '</table>'
+            html += '<div style="height:50px"><a class="btn btn-danger pull-right" id="delete-all">Delete All</a><a id="delete-all-cancel" class="btn btn-default pull-right" style="display:none;margin-right:15px">Cancel</a></div>';
+
+            $('#existing-count').html(' ('+resources.length+')');
 
             $('#existing-spectra').html(html);
 
@@ -264,10 +296,6 @@ esis.existingData = (function(){
                 }
             });
 
-            $('#inspect-existing').on('click', function(){
-                $("#existing-overflow").toggle('slow');
-            });
-
             $('#delete-all').on('click', function(){
                 var text = $(this).text();
                 if( text == 'Delete All' ) {
@@ -277,7 +305,8 @@ esis.existingData = (function(){
                 } else if( text == 'Are you sure?!' ) {
                     _deleteAll(function(){
                         alert('Done!');
-                        $('#existing-spectra').hide();
+                        $('#nav-spectra-start').trigger('click');
+                        $('#existing-count').html(' (0)');
                     });
                 }
             });
@@ -288,6 +317,7 @@ esis.existingData = (function(){
             });
 
         } else {
+            $('#existing-count').html(' (0)');
             $('#existing-spectra').html('<div class="alert alert-info">No exisiting spectra found.</div>');
         }
 

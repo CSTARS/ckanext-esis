@@ -5,6 +5,7 @@ esis.structures.Datasheet = function(parseFile) {
 	var spectra = [];
 	var joinableMetadata = null;
 	var ckanId = "";
+	var maxChartCount = 50;
 
 	var template = '<div class="card">' +
 		'<h4 style="color:#888;white-space:nowrap"><i class="fa {{icon}}"></i> {{title}}</h4>' +
@@ -30,11 +31,21 @@ esis.structures.Datasheet = function(parseFile) {
 		}
 
 		ele = _createElement();
-		$('#data-body').append(ele);
+
+		if( file.joindata ) {
+			$('#join-body').append(ele);
+		} else {
+			$('#data-body-inner').append(ele);
+		}
 	}
 
 	function getJoinableMetadata() {
 		return joinableMetadata;
+	}
+
+	function hasJoinableMetadata() {
+		if( joinableMetadata ) return true;
+		return false;
 	}
 
 	function getSpectra() {
@@ -204,15 +215,19 @@ esis.structures.Datasheet = function(parseFile) {
 
 				  dt.addColumn('number', 'Wavelength');
 				  for( var i = 0; i < parseFile.spectra.length; i++ ) {
-				     dt.addColumn('number', ''+i);
+				  		if( i == maxChartCount ) break;
+				    	dt.addColumn('number', ''+i);
 				  }
 
 				  for( var i = 0; i < parseFile.spectra[0].data.length; i++ ) {
+
 				  		// add the wavelength
 				  		var row = [parseFloat(parseFile.spectra[0].data[i][0])];
 				  		var addRow = true;
 
 				  		for( var j = 0; j < parseFile.spectra.length; j++ ) {
+				  			if( j == maxChartCount ) break;
+
 				  			var f = parseFloat(parseFile.spectra[j].data[i][1]);
 				  			if( isNaN(f) ) f = 0;
 				  			if(  j == 0 && f == 0 ) {
@@ -272,7 +287,8 @@ esis.structures.Datasheet = function(parseFile) {
 		getSpectra : getSpectra,
 		addSpectra : addSpectra,
 		setCkanId  : setCkanId,
-		getCkanId  : getCkanId
+		getCkanId  : getCkanId,
+		hasJoinableMetadata : hasJoinableMetadata
 	}
 
 }

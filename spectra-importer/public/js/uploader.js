@@ -7,7 +7,7 @@ esis.uploader = (function(){
     }
 
 
-	function upload(pkg, resource, callback) {
+	function upload(pkg, resource, callback, isSpectra) {
         // TODO: if this fails, we have an issue on our hands
     	var formData = new FormData();
 
@@ -25,7 +25,7 @@ esis.uploader = (function(){
     	formData.append('upload', new Blob([resource.getContents()], {type: resource.getMimetype()}), filename);
 
     	$.ajax({
-		    url: esis.host + '/api/action/resource_create',
+		    url: esis.host + (isSpectra ? '/spectra/add' : '/api/action/resource_create'),
 		    type: "POST",
 		    data: formData,
 		    processData: false,
@@ -35,7 +35,7 @@ esis.uploader = (function(){
           	},
 		    success: function(response, status) {
                 if( response.success ) {
-                    if( response.result.name != 'esis_spectral_data.json' ) {
+                    if( response.result.name != 'esis_spectral_data.zip' ) {
                         resource.setCkanId(response.result.id);
                     }
 		            callback();
@@ -62,7 +62,7 @@ esis.uploader = (function(){
                     if( btn ) btn.html('uploading new spectral data...');
 
                     // now upload
-                    upload(pkg, resource, callback);
+                    upload(pkg, resource, callback, true);
                 });
             }
         });
@@ -71,7 +71,7 @@ esis.uploader = (function(){
     function _removeSpectraResources(index, resources, callback) {
         if( index == resources.length ) {
             callback();
-        } else if ( resources[index].name == 'esis_spectral_data.json' ) {
+        } else if ( resources[index].name == 'esis_spectral_data.zip' ) {
             $.ajax({
                 type: 'POST',
                 url: esis.host + '/api/action/resource_delete',

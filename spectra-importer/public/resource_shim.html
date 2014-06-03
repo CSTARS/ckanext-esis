@@ -238,15 +238,31 @@ if (!Array.prototype.indexOf) {
 	border: 1px solid #ccc;
 	overflow: hidden
 }
+
+.nav-panel {
+	display: none;
+}
 </style>
 
 <div id="loading">
 	<h4>Loading...</h4>
 </div>
 
-<div id="existing-spectra"></div>
+<h1 style="color:#333;margin-bottom:25px"><i class="fa fa-cloud-upload"></i> Import Resources</h1>
 
-<div id="spectra-start">
+<ul class="nav nav-pills" id="upload-nav">
+  <li class="active"><a id="nav-spectra-start">Upload</a></li>
+  <li>
+  	<a id="nav-existing-spectra">Current Resources<span id="existing-count"></span></a>
+  </li>
+  <li style="display:none"><a id="nav-data-body">Parsed Spectra<span id="parsed-count"></span></a></li>
+  <li style="display:none"><a id="nav-join-body">Join Data<span id="join-count"></span></a></li>
+  <li style="display:none"><a id="nav-resources-body">New Resources<span id="resource-count"></span></a></li>
+</ul>
+
+<div class="nav-panel" id="existing-spectra"></div>
+
+<div class="nav-panel" id="spectra-start">
 
 	<div class="well" style="color:#666">
 		<div class="form-horizontal">
@@ -254,25 +270,29 @@ if (!Array.prototype.indexOf) {
 		    <label class="control-label" for="parseZip">Zip Files</label>
 		    <div class="controls">
 		      <label class="checkbox">
-		      	<input type="checkbox" id="parseZip"> Extract
+		      	<input type="checkbox" style="margin-top:5px" id="parseZip"> Extract
 		  	  </label>
 		      <span class="help-block">If a zip file is found, should its contents be imported as individual resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</span>
 		    </div>
 		  </div>
-		  <div class="control-group">
+		  <div class="control-group file-select-group">
 		    <label class="control-label" for="inputEmail"><i class="fa fa-file"></i> Select File</label>
 		    <div class="controls">
-		      <input type="file" id="file" name="file" multiple>
+		      <input type="file" style="margin-top:5px" id="file" name="file" multiple>
 		      <span class="help-block">Select a files to be imported.</span>
 		    </div>
 		  </div>
 		  
 		</div>
 	    
-        <h4 style="text-align:center">- OR -</h4>
-        <div id="drop_zone">Drop files here</div>
+	    <div class="file-select-group">
+        	<h4 style="text-align:center">- OR -</h4>
+        	<div id="drop_zone">Drop files here</div>
+    	</div>
 
-			<div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px">
+    	<h2 style="display:none;text-align:center" id="processing">Parsing... <br /><small>Please wait, this may take a moment.</small></h2>
+
+        <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px">
         	<h4>Metadata Map</h4>
         	<span class="help-block">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.</span>
 
@@ -286,30 +306,30 @@ if (!Array.prototype.indexOf) {
         	</div>
 
 
-    	</div>
+        </div>
 	</div>
 
+	<a class="btn btn-primary" id="addResources" style="display:none">Add Resources</div>
 </div>
 
-<div id="stats" style="display:none;text-align:center"></div>
-
-<div id="spectra-modify" style="display:none">
-	<h3 class="panel-title">Parsed Spectral Data and Joinable Data
-		<a class="btn btn-default pull-right" id="show-status">Inspect</a>
-	</h3>
-	<div class="well panel-body" id="data-body" style="max-height:400px;overflow:auto"></div>
-
-	<h3 class="panel-title">Resource Files</h3>
-	<div class="well panel-body" id="resources-body" style="max-height:400px;overflow:auto"></div>
-
-	<button class="btn btn-primary" id="addResources">Add Resources</button>
-</div>
-
-<div id="spectra-status" style="display:none">
+<div id="spectra-status" class="nav-panel">
 	<a class="btn btn-default pull-right back">Back</a>
 	<div id="spectra-status-content"></div>
 	<a class="btn btn-default back">Back</a>
 </div>
+
+
+<div id="data-body" class="nav-panel">
+	<div><a id="show-status" class="btn btn-default">Inspect</a></div>
+	<div id="data-body-inner"></div>
+</div>
+
+<div id="join-body" class="nav-panel"></div>
+
+<div id="resources-body" class="nav-panel"></div>
+
+
+
 
 <div class="modal fade" id="Modal">
   <div class="modal-header">
