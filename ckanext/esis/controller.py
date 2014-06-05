@@ -82,8 +82,6 @@ class SpectraController(PackageController):
         f = tempfile.TemporaryFile()
         zf = zipfile.ZipFile(f, mode="w", compression=zipfile.ZIP_DEFLATED)
 
-        # TODO if len(resources) == 0, just return file
-
         for resource in pkg.get('resources'):
             if resource.get('name') == 'esis_spectral_data.zip':
                 continue
