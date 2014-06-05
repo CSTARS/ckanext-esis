@@ -3,9 +3,9 @@ import json, re, zlib, StringIO, zipfile, tempfile
 
 import ckan.lib.munge as munge
 
-from ckan.lib.base import c, model
+from ckan.lib.base import c, model, BaseController
 import ckan.logic as logic
-from ckan.common import request
+from ckan.common import request, response
 import ckan.lib.uploader as uploader
 
 from ckan.controllers.package import PackageController
@@ -72,6 +72,34 @@ class SpectraController(PackageController):
         f.close()
 
         return resource
+
+    # download all package resources
+    def download(self):
+        id = request.params.get('id')
+        context = {'model': model, 'user': c.user}
+        pkg = logic.get_action('package_show')(context, {'id': id})
+
+        f = tempfile.TemporaryFile()
+        zf = zipfile.ZipFile(f, mode="w", compression=zipfile.ZIP_DEFLATED)
+
+        # TODO if len(resources) == 0, just return file
+
+        for resource in pkg.get('resources'):
+            if resource.get('name') == 'esis_spectral_data.zip':
+                continue
+
+            upload = uploader.ResourceUpload(resource)
+            zf.write(upload.get_path(resource.get('id')), arcname=resource.get('name'))
+
+        zf.close()
+        f.seek(0)
+
+        data = f.read()
+        f.close()
+
+        response.headers["Content-Disposition"] = "attachment; filename="+pkg.get('name')+".zip"
+
+        return data
 
 
     def get(self):
