@@ -11,7 +11,7 @@ esis.existingData = (function(){
 
 	function init() {
 		$('#existing-spectra').html('Checking for exisiting spectra...');
-        $('#existing-count').html(' <i style="color:#888"> - loading...</i>');
+        $('#existing-count').html(' <i style="color:#888"> - checking...</i>');
 
 		_findSpectraPackage();
 	}
@@ -49,12 +49,41 @@ esis.existingData = (function(){
 
 	function _getSpectraPackage(id) {
 		$('#existing-spectra').html('Spectra found, importing...');
+        
+
+
+        var xhr = $.ajaxSettings.xhr();
+        // attach progress handler to the XMLHttpRequest Object
+        try {
+            xhr.addEventListener("progress", function(evt){
+                if (evt.lengthComputable) {  
+                    var percentComplete = ((evt.loaded / evt.total)*100).toFixed(0);
+                    $('#existing-count').html(' <i style="color:#888"> - loading... '+percentComplete+'%</i>');
+                }
+            }, false); 
+        } catch(e) {}
+
+
 		$.ajax({
             url: esis.host + '/spectra/get?compressed=false&id='+id,
             beforeSend: function (request) {
                 request.setRequestHeader('Authorization', _getKey());
             },
+            xhr : function() {
+                return xhr;
+            },
             mimeType:'text/plain; charset=x-user-defined',
+            onprogress : function(e) {
+
+                if (e.lengthComputable) {  
+                    console.log(e.loaded / evt.total);
+                }
+            },
+            progress : function(e) {
+                if (e.lengthComputable) {  
+                    console.log(e.loaded / evt.total);
+                }
+            },
             success: function(response) {
                 /* if we can get the zip import working;
                 var zip;
@@ -108,25 +137,29 @@ esis.existingData = (function(){
     }
 
     function _updateSpectraAfterDelete(id, callback) {
-        if( !spectraPkg ) callback();
+        if( !spectraPkg ) return callback();
         var update = false;
 
         var newArr = [];
-        for( var i = 0; i < spectraPkg.data.length; i++ ) {
-            if( spectraPkg.data[i].resource_id != id ) {
-                newArr.push(spectraPkg.data[i]);
-            } else {
-                update = true;
+        if( spectraPkg.data ) {
+            for( var i = 0; i < spectraPkg.data.length; i++ ) {
+                if( spectraPkg.data[i].resource_id != id ) {
+                    newArr.push(spectraPkg.data[i]);
+                } else {
+                    update = true;
+                }
             }
         }
         spectraPkg.data = newArr;
 
         newArr = [];
-        for( var i = 0; i < spectraPkg.join.length; i++ ) {
-            if( spectraPkg.join[i].resource_id != id ) {
-                newArr.push(spectraPkg.join[i]);
-            } else {
-                update = true;
+        if( spectraPkg.join ) {
+            for( var i = 0; i < spectraPkg.join.length; i++ ) {
+                if( spectraPkg.join[i].resource_id != id ) {
+                    newArr.push(spectraPkg.join[i]);
+                } else {
+                    update = true;
+                }
             }
         }
 
@@ -232,7 +265,7 @@ esis.existingData = (function(){
                 if( !resp.success ) return alert('Error removing resource :(');
 
                 removeResource(id);
-                $('#existing-resource-count').text(resources.length);
+                $('#existing-count').text(' ('+resources.length+')');
 
                 ele.parent().parent().hide('slow');
                 setTimeout(function(){
@@ -262,7 +295,11 @@ esis.existingData = (function(){
                         '</tr>';
             }
             html += '</table>'
-            html += '<div style="height:50px"><a class="btn btn-danger pull-right" id="delete-all">Delete All</a><a id="delete-all-cancel" class="btn btn-default pull-right" style="display:none;margin-right:15px">Cancel</a></div>';
+            html += '<div style="height:50px">'+
+                        '<a class="btn btn-primary" href="'+esis.host + '/spectra/download?id='+esis.structures.importer.getPackageName()+'" target="_blank">Download All</a>'+
+                        '<a id="delete-all-cancel" class="btn btn-default pull-right" style="display:none;margin-left:15px">Cancel</a>'+
+                        '<a class="btn btn-danger pull-right" id="delete-all">Delete All</a>'+
+                    '</div>';
 
             $('#existing-count').html(' ('+resources.length+')');
 
@@ -284,9 +321,9 @@ esis.existingData = (function(){
                         _updateSpectraAfterDelete(id, function(){
 
                             removeResource(id);
-                            $('#existing-resource-count').text(resources.length);
+                            $('#existing-count').text(' ('+resources.length+')');
 
-                            ele.parent().hide('slow');
+                            ele.parent().parent().hide('slow');
                             setTimeout(function(){
                                 ele.parent().remove();
                             }, 2000);

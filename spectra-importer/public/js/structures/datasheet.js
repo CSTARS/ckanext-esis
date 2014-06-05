@@ -5,7 +5,7 @@ esis.structures.Datasheet = function(parseFile) {
 	var spectra = [];
 	var joinableMetadata = null;
 	var ckanId = "";
-	var maxChartCount = 50;
+	var maxChartCount = 30;
 
 	var template = '<div class="card">' +
 		'<h4 style="color:#888;white-space:nowrap"><i class="fa {{icon}}"></i> {{title}}</h4>' +

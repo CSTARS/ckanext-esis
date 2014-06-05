@@ -167,6 +167,7 @@ esis.app = (function(){
 		    setTimeout(function(){
 		    	$('.file-select-group').show();
 	    		$('#processing').hide();
+	    		$('#file').val('');
 		    }, 300);
 	    }, 150);
 
