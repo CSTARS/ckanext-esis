@@ -49,6 +49,7 @@ esis.existingData = (function(){
 
 	function _getSpectraPackage(id) {
 		$('#existing-spectra').html('Spectra found, importing...');
+        $('#existing-count').html(' <i style="color:#888"> - loading... ');
         
 
 
@@ -73,17 +74,6 @@ esis.existingData = (function(){
                 return xhr;
             },
             mimeType:'text/plain; charset=x-user-defined',
-            onprogress : function(e) {
-
-                if (e.lengthComputable) {  
-                    console.log(e.loaded / evt.total);
-                }
-            },
-            progress : function(e) {
-                if (e.lengthComputable) {  
-                    console.log(e.loaded / evt.total);
-                }
-            },
             success: function(response) {
                 /* if we can get the zip import working;
                 var zip;
