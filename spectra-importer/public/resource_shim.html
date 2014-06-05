@@ -181,6 +181,7 @@ esis.loadScripts = function(index, scripts, callback) {
 esis.onReady = function() {
 	$('#loading').hide();
 	$('#spectra-start').show('slow');
+	$('#upload-nav').show();
 	esis.app.init();
 }
 
@@ -244,11 +245,7 @@ if (!Array.prototype.indexOf) {
 }
 </style>
 
-<div id="loading">
-	<h4>Loading...</h4>
-</div>
-
-<ul class="nav nav-pills" id="upload-nav">
+<ul class="nav nav-pills" id="upload-nav" style="display:none">
   <li class="active"><a id="nav-spectra-start">Upload</a></li>
   <li>
   	<a id="nav-existing-spectra">Current Resources<span id="existing-count"></span></a>
@@ -257,6 +254,10 @@ if (!Array.prototype.indexOf) {
   <li style="display:none"><a id="nav-join-body">Join Data<span id="join-count"></span></a></li>
   <li style="display:none"><a id="nav-resources-body">New Resources<span id="resource-count"></span></a></li>
 </ul>
+
+<div id="loading">
+	<h4>Loading...</h4>
+</div>
 
 <div class="nav-panel" id="existing-spectra"></div>
 
