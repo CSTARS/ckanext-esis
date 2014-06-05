@@ -254,33 +254,47 @@ esis.structures.importer = (function() {
 	}
 	
 	function addToCkan(btn) {
-		var resources = _getCkanResources();
+		btn.addClass('disabled').html('Preparing Upload...');
 
-		var data = _createSpectraJsonResource();
-		// verify verify everything is ok
-		// if not, quit
-		// you can't use this for upload though! it will not have the resource id assign
-		// since the resources have to be uploaded first!
+		setTimeout(function(){
+			var resources = _getCkanResources();
 
-		btn.addClass('disabled').html('Adding...');
+			var data = _createSpectraJsonResource();
+			// verify verify everything is ok
+			// if not, quit
+			// you can't use this for upload though! it will not have the resource id assign
+			// since the resources have to be uploaded first!
 
-		_addResourceToCkan(0, getPackageName(), resources, btn);
+			btn.html('Adding...');
+
+			_addResourceToCkan(0, getPackageName(), resources, btn);
+		}, 100);
 	}
 
 	function _addResourceToCkan(index, pkg, resources, btn) {
 		if( index == resources.length ) {
 
-			esis.uploader.uploadSpectraResource(pkg, _createSpectraJsonResource(true), btn, function() {
-				btn.removeClass('disabled').html('Add Resources');
-				if( window.__ckan_ ) window.location = "/dataset/new_metadata/"+pkg;
-			});
-			
+			btn.addClass('disabled').html('Creating spectra resource...');
+
+			setTimeout(function(){
+				esis.uploader.uploadSpectraResource(pkg, _createSpectraJsonResource(true), btn, function() {
+					btn.removeClass('disabled').html('Add Resources');
+					if( window.__ckan_ ) window.location = "/dataset/new_metadata/"+pkg;
+				});
+			}, 100);
+
 		} else {
-			btn.html('Uploading '+resources[index].getFilename().replace(/.*\//,'')+'... ');
+			var name = resources[index].getFilename().replace(/.*\//,'');
+			btn.html('Uploading '+name+'... ');
 	
-			esis.uploader.upload(pkg, resources[index], function() {
-				index++;
-				_addResourceToCkan(index, pkg, resources, btn);
+			esis.uploader.upload(pkg, resources[index], {
+				oncomplete: function() {
+					index++;
+					_addResourceToCkan(index, pkg, resources, btn);
+				},
+				onprogress: function(progress) {
+					btn.html('Uploading '+name+'... '+(progress*100).toFixed(0)+'%');
+				}
 			});
 		}
 	}
