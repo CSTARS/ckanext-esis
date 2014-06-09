@@ -293,9 +293,9 @@ if (!Array.prototype.indexOf) {
 
         <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px">
         	<h4>Metadata Map</h4>
-        	<span class="help-block">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.  The mapped attributes will only apply to the current spectra being uploaded.</span>
+        	<span class="help-block" id="metadata-map-block-help" style="display:none">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.</span>
 
-        	<div class="row-fluid">
+        	<div class="row-fluid" id="metadata-map-block" style="display:none">
         		<div class="span6">
         			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
         		</div>
@@ -303,9 +303,11 @@ if (!Array.prototype.indexOf) {
         			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map">
         		</div>
         	</div>
+	       	<div id="current-metadata-map"></div>
+
         </div>
 
-         <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px;display:none" id="unique-id">
+        <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px;display:none" id="unique-id">
         	<h4>Unique Identifier</h4>
         	<span class="help-block">Your spectra signatures for this dataset are not inherently unique.  Please provide a metadata field that can serve as a unique identifier.</span>
 
