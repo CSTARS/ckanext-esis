@@ -117,6 +117,8 @@ class SpectraController(PackageController):
             data = file.read()
             file.close()
 
+        response.headers["Content-Length"] = "%s" % len(data)
+
         return data
 
     def info(self):
