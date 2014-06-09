@@ -252,18 +252,61 @@ esis.structures.importer = (function() {
 	function _createPagingClick(page, total) {
 		return 'onclick="esis.structures.importer.createSpectraElement('+page+');"';
 	}
+
+	function _isDataUnique(dataset) {
+		if( !dataset ) return true;
+		if( !dataset.data ) return true;
+
+		var ids = [];
+		for( var i = 0; i < dataset.data.length; i++ ) {
+			if( ids.indexOf( dataset.data[i].spectra_id ) != -1 ) return false;
+			else ids.push( dataset.data[i].spectra_id );
+		}
+		return true;
+	}
 	
+	function _createUidSelector(dataset) {
+		var ele = $('#unique-id-input');
+
+		// find all metadata elements
+		var fields = {};
+		for( var i = 0; i < dataset.data.length; i++ ) {
+			var d = dataset.data[i];
+			for( var key in d.ecosis ) {
+				if( !fields[key] ) fields[key] = 'ecosis.'+key;
+			}
+			for( var key in d.metadata ) {
+				if( !fields[key] ) fields[key] = 'metadata.'+key;
+			}
+		}
+
+		ele.html('<option></option>');
+		for( var key in fields ) {
+			ele.append($('<option value="'+fields[key]+'">'+key+'</option>'));
+		}
+
+		$('#unique-id').show();
+	}
+
 	function addToCkan(btn) {
 		btn.addClass('disabled').html('Preparing Upload...');
 
 		setTimeout(function(){
 			var resources = _getCkanResources();
 
-			var data = _createSpectraJsonResource();
+			var data = JSON.parse(_createSpectraJsonResource().getContents());
+
 			// verify verify everything is ok
 			// if not, quit
 			// you can't use this for upload though! it will not have the resource id assign
 			// since the resources have to be uploaded first!
+			if( !_isDataUnique(data) ) {
+				alert('Your spectra signatures are not inherently unique.  Please provide a metadata '+
+					'field that can serve as a unique identifier.');
+				_createUidSelector(data);
+				btn.removeClass('disabled').html('Add Resources');
+				return;
+			}
 
 			btn.html('Adding...');
 
@@ -313,11 +356,22 @@ esis.structures.importer = (function() {
 	function _createSpectraJsonResource(zip) {
 		var spectra = _getAndJoinSpectra();
 
+
+		var uid = $('#unique-id-input').val();
+		var uidType = '';
+		if( !uid ) {
+			uid = '';
+		} else {
+			var parts = uid.split('.');
+			uidType = parts[0];
+			uid = parts[1];
+		}
+
 		var data = [];
 		for( var i = 0; i < spectra.length; i++ ) {
+
 			var d = {
 				metadata : spectra[i].getJoinedMetadata(),
-				spectra_id : md5(JSON.stringify(spectra[i].getData())),
 				spectra : spectra[i].getData(),
 				filename : spectra[i].getFilename(),
 				sheetname : spectra[i].getSheetname(),
@@ -335,6 +389,12 @@ esis.structures.importer = (function() {
 					var ecosisKey = esis.app.mapMetadata(key);
 					d.ecosis[ecosisKey] = d.metadata[key];
 				}
+			}
+
+			if( uid.length > 0 && d[uidType][uid] ) {
+				d.spectra_id = md5(JSON.stringify(d.spectra)+d[uidType][uid]);
+			} else {
+				d.spectra_id = md5(JSON.stringify(d.spectra));
 			}
 
 			data.push(d);

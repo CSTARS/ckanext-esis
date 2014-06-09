@@ -137,9 +137,9 @@
 
         <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px">
         	<h4>Metadata Map</h4>
-        	<span class="help-block">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.</span>
+        	<span class="help-block" id="metadata-map-block-help" style="display:none">If your metadata attribute names do not match <a>this</a> list, you can download this metadata map file.  Fill it out and upload in the box to the right.  You can reuse this file, so you only have to do it once for your data.</span>
 
-        	<div class="row-fluid">
+        	<div class="row-fluid" id="metadata-map-block" style="display:none">
         		<div class="span6">
         			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
         		</div>
@@ -147,9 +147,24 @@
         			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map">
         		</div>
         	</div>
-
+	       	<div id="current-metadata-map"></div>
 
         </div>
+
+        <div style="border-top:1px solid #ccc;padding-top:15px;margin-top:15px;display:none" id="unique-id">
+        	<h4>Unique Identifier</h4>
+        	<span class="help-block">Your spectra signatures for this dataset are not inherently unique.  Please provide a metadata field that can serve as a unique identifier.</span>
+
+			<div class="form-horizontal">
+			  <div class="control-group">
+			    <label class="control-label" for="unique-id-input">Unique ID</label>
+			    <div class="controls">
+			      <select style="form-control" id="unique-id-input"></select>
+			    </div>
+			  </div>			  
+			</div>
+        </div>
+
 	</div>
 
 	<a class="btn btn-primary" id="addResources" style="display:none">Add Resources</div>
