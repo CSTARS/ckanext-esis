@@ -41,8 +41,15 @@ esis.existingData = (function(){
                 	}
                     if( !found ) _done();
                 } else {
+                    $('#existing-count').html(' <i style="color:red"> - Failed</i>');
+                    $('#existing-spectra').html('Failed to load exisiting spectra');
+
                 	_done();
                 }
+            },
+            error : function() {
+                $('#existing-count').html(' <i style="color:#888"> - Failed</i>');
+                $('#existing-spectra').html('Failed to load exisiting spectra');
             }
         });
 	}
@@ -100,10 +107,12 @@ esis.existingData = (function(){
                         break;
                     }
                 }*/
+                //delete zip;
 
             	spectraPkg = JSON.parse(response);
+                console.log(spectraPkg);
 
-                delete zip;
+                
             	_done(); 
             },
             error: function() {
@@ -343,7 +352,10 @@ esis.existingData = (function(){
                 $('#delete-all').text('Delete All');
             });
 
+            esis.app.setMetadataMap(spectraPkg.map);
+
         } else {
+            esis.app.setMetadataMap({});
             $('#existing-count').html(' (0)');
             $('#existing-spectra').html('<div class="alert alert-info">No exisiting spectra found.</div>');
         }

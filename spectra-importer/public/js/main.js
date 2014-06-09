@@ -2,8 +2,12 @@ if( !window.esis ) window.esis = {};
 var data;
 
 esis.host = 'http://esis.casil.ucdavis.edu';
-//esis.host = 'http://192.168.1.109:5000';
-esis.key = '66f67802-f4b4-4f07-979b-9a22e2e193ae';
+
+if( window.location.host == 'localhost:3000' ) {
+	esis.host = 'http://192.168.1.109:5000';
+	esis.key = '66f67802-f4b4-4f07-979b-9a22e2e193ae';
+}
+
 esis.structures = {};
 
 esis.app = (function(){
@@ -134,8 +138,57 @@ esis.app = (function(){
 					if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
 				}
 			}
+			_updateMetadataMapUI();
+			$('#map').val('');
 		}
 		reader.readAsText(files[0]);
+	}
+
+	function _updateMetadataMapUI() {
+		var html = 
+			'<div class="row-fluid" style="display:block">'+
+				'<div id="cmap-col1" class="span6">'+
+				'</div>'+
+				'<div id="cmap-col2" class="span6">'+
+				'</div>'+
+			'</div>';
+
+		$('#current-metadata-map').show().html(html);
+
+		var col1 = $('#cmap-col1');
+		var col2 = $('#cmap-col2');
+		var c = 0;
+		for( var key in metadataMap ) {
+			if( metadataMap[key] && metadataMap[key] != '' ) {
+				if( c % 2 == 0 ) col1.append($('<div><b>'+key+':</b> '+metadataMap[key]+'</div>'));
+				else col2.append($('<div><b>'+key+':</b> '+metadataMap[key]+'</div>'));
+				c++;
+			}
+		}
+
+	}
+
+	function _disabledMapInput() {
+		$('#metadata-map-block').hide();
+		$('#current-metadata-map').show();
+		$('#metadata-map-block-help').hide();
+	}
+
+	function setMetadataMap(map) {
+		inverseMap = map;
+
+		for( var key in map ) {
+			metadataMap[map[key]] = key;
+		}
+
+		if( Object.keys(map).length > 0 ) {
+			_updateMetadataMapUI();
+			_disabledMapInput();
+		} else {
+			$('#metadata-map-block').show();
+			$('#current-metadata-map').hide();
+			$('#metadata-map-block-help').show();
+		}
 	}
 
 	function getMetadataMap() {
@@ -241,8 +294,6 @@ esis.app = (function(){
 	function show(index) {
 		var d = data[index].contents;
 
-
-
 		var html = '<h3>Metadata</h3>';
 		if( Object.keys(d.metadata).length == 0 ) {
 			html += '<div class="alert alert-info">No Metadata Found</div>';
@@ -336,7 +387,8 @@ esis.app = (function(){
 		render : render,
 		mapMetadata : mapMetadata,
 		isEcosisMetadata : isEcosisMetadata,
-		getMetadataMap : getMetadataMap
+		getMetadataMap : getMetadataMap,
+		setMetadataMap : setMetadataMap
 	}
 
 })();

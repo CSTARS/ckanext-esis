@@ -64,7 +64,7 @@ esis.structures.JoinableMetadata = function(file) {
 		if( row == -1 ) return;
 
 		for( var j = 0; j < metadata[0].length; j++ ) {
-			if( j == joinCol ) continue;
+			if( j == joinCol && !(filenameMatch || worksheetMatch) ) continue;
 			spectra.setMetadata('joined', metadata[0][j], metadata[row][j]);
 		}
 		return;
