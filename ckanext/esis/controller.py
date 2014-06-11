@@ -95,11 +95,6 @@ class SpectraController(PackageController):
         data = f.read()
         f.close()
 
-        response.headers["Content-Disposition"] = "attachment; filename="+pkg.get('name')+".zip"
-
-        return data
-
-
     def get(self):
         id = request.params.get('id')
         compress = request.params.get('compressed')
@@ -112,10 +107,12 @@ class SpectraController(PackageController):
             id = request.params.get('id')
             zf = zipfile.ZipFile(upload.get_path(id))
             data = zf.read('esis_spectral_data.json')
+            response.headers["Content-Type"] = "application/json"
         else:
             file = open(upload.get_path(id), 'r')
             data = file.read()
             file.close()
+            response.headers["Content-Type"] = "application/zip"
 
         response.headers["Content-Length"] = "%s" % len(data)
 
