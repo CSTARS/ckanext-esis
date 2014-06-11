@@ -21,6 +21,7 @@
 	<script src="js/extension.js"></script>
 	<script src="js/parser.js"></script>
 	<script src="js/existingData.js"></script>
+	<script src="js/groupBy.js"></script>
 	<script src="metadata.js"></script>
 
 	<script src="js/structures/import.js"></script>
@@ -98,6 +99,7 @@
   <li>
   	<a id="nav-existing-spectra">Current Resources<span id="existing-count"></span></a>
   </li>
+  <li><a id="nav-groupby-body">Group By</a></li>
   <li style="display:none"><a id="nav-data-body">Parsed Spectra<span id="parsed-count"></span></a></li>
   <li style="display:none"><a id="nav-join-body">Join Data<span id="join-count"></span></a></li>
   <li style="display:none"><a id="nav-resources-body">New Resources<span id="resource-count"></span></a></li>
@@ -182,7 +184,44 @@
 	<div id="data-body-inner"></div>
 </div>
 
-<div id="join-body" class="nav-panel"></div>
+<div id="join-body" class="nav-panel">
+	<div id="join-body-inner"></div>
+</div>
+
+<div id="groupby-body" class="nav-panel">
+	<div id="groupby-body-inner">
+		<h4>Group Data</h4>
+		<div class="help-block">
+			Group your data by a certain attribute so related spectra can easily be found in search.  Examples for this grouping include time series data, or data that is spatially related.  To group, first select the attribute in your dataset to group on.  This attribute should have the same value for all spectra in that group.  Next, provide a sort attribute.  For time, this would be the time attribute the spectra was taken at.  Finally, you can provide a description of this group to let others know what this grouping is.  Ex: "Spectra time series at 1 minute intervals"
+		</div>
+
+		<div class="form">
+			<div class="form-horizontal">
+				  <div class="control-group">
+				    <label class="control-label" for="groupby-attr-input">By: </label>
+				    <div class="controls">
+				      <select style="form-control" id="groupby-attr-input"></select>
+				    </div>
+				  </div>
+				<div class="control-group">
+				    <label class="control-label" for="groupby-sort-input">Sort On: </label>
+				    <div class="controls">
+				      <select style="form-control" id="groupby-sort-input"></select>
+				    </div>		  
+				</div>
+				<div class="control-group">
+				    <label class="control-label" for="groupby-description-input">Description: </label>
+				    <div class="controls">
+				     	<textarea id="groupby-description-input"></textarea>
+				    </div>			  
+				</div>
+			</div>
+		</div>
+
+		<div id="groupby-info"></div>
+		<a id="groupby-update-btn" class="btn btn-default" style="display:none">Update</a>
+	</div>
+</div>
 
 <div id="resources-body" class="nav-panel"></div>
 

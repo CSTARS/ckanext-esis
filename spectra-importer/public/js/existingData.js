@@ -354,10 +354,14 @@ esis.existingData = (function(){
 
             esis.app.setMetadataMap(spectraPkg.map);
 
+            esis.app.groupBy.set(spectraPkg.group_by);
+            esis.app.groupBy.showUpdateButton();
+
         } else {
             esis.app.setMetadataMap({});
             $('#existing-count').html(' (0)');
             $('#existing-spectra').html('<div class="alert alert-info">No exisiting spectra found.</div>');
+            esis.app.groupBy.hideUpdateButton();
         }
 
         $('#addResources').removeClass('disabled');

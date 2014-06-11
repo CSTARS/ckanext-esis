@@ -33,7 +33,7 @@ esis.structures.Datasheet = function(parseFile) {
 		ele = _createElement();
 
 		if( file.joindata ) {
-			$('#join-body').append(ele);
+			$('#join-body-inner').append(ele);
 		} else {
 			$('#data-body-inner').append(ele);
 		}

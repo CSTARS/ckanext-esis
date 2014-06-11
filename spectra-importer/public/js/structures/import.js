@@ -21,11 +21,11 @@ esis.structures.importer = (function() {
 	}
 
 	function showSpectra() {
-		currentSpectra = _getAndJoinSpectra();
+		currentSpectra = getAndJoinSpectra();
 		createSpectraElement(0);
 	}
 
-	function _getAndJoinSpectra() {
+	function getAndJoinSpectra() {
 		var spectra = [];
 		var joindata = [];
 
@@ -294,7 +294,7 @@ esis.structures.importer = (function() {
 		setTimeout(function(){
 			var resources = _getCkanResources();
 
-			var data = JSON.parse(_createSpectraJsonResource().getContents());
+			var data = createSpectraJsonResource(true);
 
 			// verify verify everything is ok
 			// if not, quit
@@ -320,7 +320,7 @@ esis.structures.importer = (function() {
 			btn.addClass('disabled').html('Creating spectra resource...');
 
 			setTimeout(function(){
-				esis.uploader.uploadSpectraResource(pkg, _createSpectraJsonResource(true), btn, function() {
+				esis.uploader.uploadSpectraResource(pkg, createSpectraJsonResource(), btn, function() {
 					btn.removeClass('disabled').html('Add Resources');
 					if( window.__ckan_ ) window.location = "/dataset/new_metadata/"+pkg;
 				});
@@ -353,8 +353,8 @@ esis.structures.importer = (function() {
 		return resources;				
 	}
 
-	function _createSpectraJsonResource(zip) {
-		var spectra = _getAndJoinSpectra();
+	function createSpectraJsonResource(asJson) {
+		var spectra = getAndJoinSpectra();
 
 
 		var uid = $('#unique-id-input').val();
@@ -408,11 +408,14 @@ esis.structures.importer = (function() {
 
 			var joindata = _getJoinableData();
 			for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
+
+			dataset.group_by = esis.app.groupBy.get();
 		} else {
 			dataset = {
 				data : data,
 				map  : esis.app.getMetadataMap(),
-				join : _getJoinableData()
+				join : _getJoinableData(),
+				group_by : esis.app.groupBy.get()
 			}
 		};
 
@@ -435,6 +438,8 @@ esis.structures.importer = (function() {
 				}
 			}
 		}
+
+		if( asJson ) return dataset;
 
 		// TODO: if you find spectra with the same id, user needs to 
 		// define a disambiguator field
@@ -491,6 +496,7 @@ esis.structures.importer = (function() {
 		addToCkan : addToCkan,
 		updateInfo : updateInfo,
 		createSpectraElement : createSpectraElement,
-		getPackageName : getPackageName
+		getPackageName : getPackageName,
+		createSpectraJsonResource : createSpectraJsonResource
 	}
 })();

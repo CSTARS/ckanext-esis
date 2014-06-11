@@ -4,7 +4,7 @@ var data;
 esis.host = 'http://esis.casil.ucdavis.edu';
 
 if( window.location.host == 'localhost:3000' ) {
-	esis.host = 'http://192.168.1.109:5000';
+	esis.host = 'http://192.168.43.174:5000';
 	esis.key = '66f67802-f4b4-4f07-979b-9a22e2e193ae';
 }
 
@@ -91,6 +91,10 @@ esis.app = (function(){
 		$('#file').on('change', _handleFileSelect);
 		$('#map').on('change', _setMetadataMap);
 
+		$('#nav-groupby-body').on('click', function(){
+			esis.app.groupBy.update();
+		});	
+
 		// double check this made it into the window scope
 		// if not xlsx parser will crap out
 		if( !window.jszip ) {
@@ -103,6 +107,7 @@ esis.app = (function(){
 		}
 
 		esis.existingData.init();
+		esis.app.groupBy.init();
 	}
 
 	function _initNav() {
@@ -225,8 +230,9 @@ esis.app = (function(){
 	    }, 150);
 
 	    
-
-	    //$('#spectra-modify').show();
+	    // once they add spectra, we only want them to update the spectra.json file
+	    // via the add resources button and not the special 'update group by' button.
+	    esis.app.groupBy.hideUpdateButton();
   	}
 
   	function _handleDragOver(evt) {
