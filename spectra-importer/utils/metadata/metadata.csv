@@ -165,3 +165,4 @@ attribute_id,name,category_id,name,string_val,default_unit_id,default_storage_fi
 -1,Type,3,General,,NULL,string_val,NULL,1
 -1,Class,3,General,,NULL,string_val,NULL,1
 -1,Subclass,3,General,,NULL,string_val,NULL,1
+-1,USDA Code,3,Names,,NULL,string_val,NULL,1
