@@ -216,8 +216,9 @@ esis.app = (function(){
 	    $('.file-select-group').hide();
 	    $('#processing').show();
 
+	    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
+
 	    setTimeout(function(){
-	    	var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
 		    for (var i = 0, f; f = files[i]; i++) {
 	            esis.structures.importer.addFile(f, $('#parseZip').is(':checked'));
 		    }
