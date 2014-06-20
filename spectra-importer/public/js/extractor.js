@@ -26,11 +26,13 @@ esis.extractor = (function(){
 			console.log('no start row found');
 			var flipped = isFlipped(contents);
 			if( flipped ) {
-				alert('data is flipped');
-				return callback(null, resp);
+				alert('Data appears to be flipped.  Transposing...');
+				contents = flipData(contents);
+				start = getDataStartRow(contents);
+			//	alert('data is flipped');
+			//	return callback(null, resp);
 			}
 		}
-		
 
 		var headers = [];
 		if( start > -1 ) {
@@ -223,9 +225,24 @@ esis.extractor = (function(){
 
 		var row = contents[1];
 		for( var col = 0; col < contents.length-1; col++ ) {
-			if( areCellsNumberic(row[col], row[col+1]) ) return true;
+			if( areCellsNumberic(row[col], row[col+1]) ) {
+				return true;
+			}
 		}
 		return false;
+	}
+
+	function flipData(contents) {
+		var flipped = [], row;
+		for(var i = 0; i < contents[0].length; i++ ) {
+			row = [];
+			for( var j = 0; j < contents.length; j++ ) {
+				row.push(contents[j][i]);
+			}
+			flipped.push(row);
+		}
+
+		return flipped;
 	}
 
 	function areCellsNumberic(cell1, cell2) {
