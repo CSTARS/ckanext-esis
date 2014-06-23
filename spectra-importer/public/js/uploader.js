@@ -15,7 +15,7 @@ esis.uploader = (function(){
 
         var filename = resource.getFilename().replace(/.*\//,'');
         if( filename.length == 0 ) {
-            callback();
+            _fireComplete(false, callback);
             return;
         }
 
