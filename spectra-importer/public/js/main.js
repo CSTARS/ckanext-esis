@@ -1,7 +1,7 @@
 if( !window.esis ) window.esis = {};
 var data;
 
-esis.host = 'http://esis.casil.ucdavis.edu';
+esis.host = '';
 
 if( window.location.host == 'localhost:3000' ) {
 	esis.host = 'http://192.168.43.174:5000';

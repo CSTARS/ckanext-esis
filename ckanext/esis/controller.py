@@ -130,7 +130,8 @@ class SpectraController(PackageController):
             'pkg_id' : pkg_id,
             'pkg_name' : pkg.name,
             'pkg_title' : pkg.title,
-            'resource_id' : id
+            'resource_id' : id,
+            'groups' : pkg.groups
         }
 
         return json.dumps(data)
