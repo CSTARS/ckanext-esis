@@ -4,7 +4,7 @@ var data;
 esis.host = '';
 
 if( window.location.host == 'localhost:3000' ) {
-	esis.host = 'http://192.168.1.109:5000';
+	esis.host = 'http://192.168.43.174:5000';
 	esis.key = '66f67802-f4b4-4f07-979b-9a22e2e193ae';
 }
 

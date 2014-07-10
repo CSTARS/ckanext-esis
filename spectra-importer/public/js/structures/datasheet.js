@@ -169,7 +169,7 @@ esis.structures.Datasheet = function(parseFile) {
 
 	function _getFileIcon() {
 		if( esis.extensions[file.info.ext] ) return esis.extensions[file.info.ext].icon;
-		else if ( info.isDir ) return 'fa-folder-o';
+		else if ( file.info.isDir ) return 'fa-folder-o';
 		else return 'fa-file-o';
 	}
 
