@@ -124,13 +124,14 @@ class SpectraController(PackageController):
 
         resource = model.Resource.get(id)
         pkg_id = resource.get_package_id()
-        pkg = model.Package.get(pkg_id)
+        pkg = logic.get_action('package_show')(context, {'id': pkg_id})
 
         data = {
             'pkg_id' : pkg_id,
-            'pkg_name' : pkg.name,
-            'pkg_title' : pkg.title,
-            'resource_id' : id
+            'pkg_name' : pkg.get('name'),
+            'pkg_title' : pkg.get('title'),
+            'resource_id' : id,
+            'groups' : pkg.get('groups')
         }
 
         return json.dumps(data)
