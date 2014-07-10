@@ -60,13 +60,24 @@ esis.structures.File = function(fileObj, parseZip) {
 			var linfo = _getInfo(zipEntry.name);
 
 			// ignore directories
-			if( zipEntry.options.dir ) {
+			if( zipEntry.options.dir || zipEntry.name.match(/.*\/$/) ) {
 				linfo.hasData = false;
 				linfo.isDir = true;
 			}
 
+			// ignore . files
+			var ignore = false;
+			if( zipEntry.name.replace(/.*\//,'').match(/^\..*/) ) {
+				ignore = true;
+			}
+
         	var contents = '';
-        	if( linfo.hasData ) {
+
+        	if( ignore ) {
+        		c++;
+	        	if( c == total ) _onIngestComplete(arr);
+        	} else if( linfo.hasData ) {
+
         		if( linfo.format == 'binary' ) contents = zipEntry.asBinary();
         		else contents = zipEntry.asText();
 
@@ -90,7 +101,7 @@ esis.structures.File = function(fileObj, parseZip) {
 	        		c++;
 	        		if( c == total ) _onIngestComplete(arr);
 	        	});
-        	} else if( parseZip && !info.isDir ) {
+        	} else if( parseZip && !linfo.isDir ) {
         		arr.push({
         			name : info.name,
 					info : info,

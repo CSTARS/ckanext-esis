@@ -81,7 +81,7 @@ esis.structures.Datasheet = function(parseFile) {
 		if ( file.joindata ) {
 			innerHTML += '<td><span class="label label-danger">Parsed</span></td>'+
 						'<td style="font-size:12px"><b>Linkable Metadata</b>'+_createLinkSelector()+'</td>';
-		} else if( !file.error || file.warning ) {
+		} else if( !file.error || !file.warning ) {
 			innerHTML += '<td><span class="label label-success">Parsed</span></td>'+
 						'<td><a class="btn btn-link btn-show">info</a></td>';
 		} else if( file.error ) {
