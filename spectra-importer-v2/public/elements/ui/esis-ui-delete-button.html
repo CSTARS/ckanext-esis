@@ -1,0 +1,35 @@
+<polymer-element name="esis-ui-delete-button" attributes="label">
+	<template>
+		<link rel="stylesheet" href="../../components/animate-css/animate.min.css" no-shim>
+
+		<paper-fab id="start" icon="close" style="background-color: white" class="mini float-right animated" on-tap="{{_confirm}}"></paper-fab>
+
+		<paper-button id="remove" label="Remove {{label}}" style="display:none;background-color: #d23f31" class="animated fadeInDown" raisedButton on-tap="{{_delete}}"></paper-button>
+		<paper-button id="cancel" label="Cancel" style="display:none;background-color: white" class="animated fadeInDown" raisedButton on-tap="{{_cancel}}"></paper-button>
+	</template>
+	<script>
+		Polymer('esis-ui-delete-button', {
+			_confirm : function() {
+				this.$.start.classList.add('rotateOut');
+
+				setTimeout(function(){
+					this.$.start.style.display = 'none';
+					this.$.start.classList.remove('rotateOut');
+
+					this.$.remove.style.display = 'inline-block';
+					this.$.cancel.style.display = 'inline-block';
+				}.bind(this), 500);
+			},
+
+			_cancel : function() {
+				this.$.start.style.display = 'block';
+				this.$.remove.style.display = 'none';
+				this.$.cancel.style.display = 'none';
+			},
+
+			_delete : function() {
+				this.fire('delete');
+			}
+		});
+	</script>
+</polymer-element>

@@ -1,0 +1,21 @@
+<polymer-element name="esis-attribute-map">
+	<template>
+    	<span>If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</span>
+
+    	<div horizontal layout style="margin-top:25px">
+    		<div flex>
+    			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+    		</div>
+    		<div flex>
+    			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map">
+    		</div>
+    	</div>
+       	<div id="current-metadata-map" style="display: none;"></div>
+
+	</template>
+	<script>
+		Polymer('esis-attribute-map', {
+
+		});
+	</script>
+</polymer-element>

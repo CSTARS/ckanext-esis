@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Ecosis Dataset Editor</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <script src="components/platform/platform.js"></script>
+    
+    <link rel="shortcut icon" href="http://www.polymer-project.org/images/logos/p-logo-16.png">
+
+    <script src="components/jquery/dist/jquery.min.js"></script>
+    <script src="components/jszip/dist/jszip.min.js"></script>
+    <script src="components/js-xlsx/dist/xlsx.min.js"></script>
+    <script src="components/js-xls/dist/xls.min.js"></script>
+    <script src="components/jquery-csv/src/jquery.csv.js"></script>
+    <script src="components/js-md5/js/md5.min.js"></script>
+
+    <link rel="import" href="components/core-icons/core-icons.html">
+    <link rel="import" href="components/font-roboto/roboto.html">
+    <link rel="import" href="components/core-item/core-item.html">
+    <link rel="import" href="components/core-menu/core-submenu.html">
+    <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
+    <link rel="import" href="components/paper-fab/paper-fab.html">
+
+    <link rel="import" href="elements/esis-scaffold.html">
+    <link rel="import" href="elements/esis-item.html">
+    <link rel="import" href="elements/esis-datastore.html">
+    <link rel="import" href="elements/esis-parser.html">
+
+    <style>
+
+      body {
+        font-family: RobotoDraft, sans-serif;
+        color: #333;
+        margin: 0;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-touch-callout: none;
+      }
+      html /deep/ core-toolbar {
+        background-color: #2f9b45 !important;
+      }
+      html /deep/ .element-label {
+        color: #2f9b45;
+      }
+      
+    </style>
+
+  </head>
+
+  <body unresolved>
+    <script>
+    var esis = {};
+      esis.extensions = {
+  pdf : {
+    type : 'resource',
+    icon : 'fa-file-text-o',
+    mime : 'application/pdf'
+  },
+  spectra : {
+    type : 'both',
+    parser : 'csv-tab',
+    format : 'string',
+    icon : 'fa-table',
+    mime : 'text/plain'
+  },
+  zip : {
+    type   : 'compressed',
+    format : 'binary',
+    type : 'resource',
+    isZip  : true,
+    mime : 'application/zip'
+  },
+  csv : {
+    type : 'both',
+    parser : 'csv-comma',
+    format : 'string',
+    icon : 'fa-table',
+    mime : 'text/plain'
+  },
+  xlsx : {
+    type : 'both',
+    parser : 'excel',
+    format : 'binary',
+    icon : 'fa-table',
+    mime : 'application/excel'
+  },
+  xls : {
+    type : 'both',
+    parser : 'excel',
+    format : 'binary',
+    icon : 'fa-table',
+    mime : 'application/excel'
+  },
+  kml : {
+    type : 'resource',
+    icon : 'fa-globe',
+    mime : 'application/vnd.google-earth.kml+xml'
+  },
+  kmz : {
+    type : 'resource',
+    icon : 'fa-globe',
+    kmz  : 'application/vnd.google-earth.kmz'
+  },
+  xml : {
+    type : 'resource',
+    icon : 'fa-code',
+    mime : 'text/xml'
+  },
+  html : {
+    type : 'resource',
+    icon : 'fa-code',
+    mime : 'text/html'
+  },
+  rtf : {
+    type : 'resource',
+    icon : 'fa-file-text-o',
+    mime : 'application/rtf'
+  },
+  jpg : {
+    type : 'resource',
+    icon : 'fa-picture-o',
+    mime : 'image/jpeg'
+  },
+  jpeg : {
+    type : 'resource',
+    icon : 'fa-picture-o',
+    mime : 'image/jpeg'
+  },
+  png : {
+    type : 'resource',
+    icon : 'fa-picture-o',
+    mime : 'image/png'
+  },
+  gif : {
+    type : 'resource',
+    icon : 'fa-picture-o',
+    mime : 'image/gif'
+  },
+  tiff : {
+    type : 'resource',
+    icon : 'fa-picture-o',
+    mime : 'image/tiff'
+  },
+  tif : {
+    type : 'resource',
+    icon : 'fa-picture-o',
+    mime : 'image/tiff'
+  },
+  txt : {
+    format : 'string',
+    type   : 'both',
+    parser : 'csv-tab',
+    mime   : 'text/plain'
+  },
+  doc : {
+    icon : 'fa-file-text-o',
+    mime : 'application/msword'
+  },
+  docx : {
+    icon : 'fa-file-text-o',
+    mime : 'application/msword'
+  }
+};
+    </script>
+
+    <esis-scaffold label="Ecosis Dataset Editor" fit touch-action="auto">
+
+      <paper-icon-button class="menuButton" icon="menu" ></paper-icon-button>
+      <paper-fab class="sourceButton bottom" icon="launch"></paper-fab>
+
+      <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
+      <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
+      <esis-item label="Set Attribute Map" tag="attribute-map" ele="esis-attribute-map"></esis-item>
+      <esis-item label="Parsed Spectra" tag="parsed-spectra" ele="esis-parsed-spectra"></esis-item>
+      <esis-item label="Group Dataset" tag="group-by" ele="esis-group-by"></esis-item>
+      <esis-item label="Join Metadata" tag="join" ele="esis-join"></esis-item>
+
+    </esis-scaffold>
+
+    <esis-datastore></esis-datastore>
+    <esis-parser></esis-parser>
+  
+
+  </body>
+
+</html>

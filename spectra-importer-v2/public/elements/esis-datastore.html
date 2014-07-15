@@ -1,0 +1,55 @@
+<link rel="import" href="structures/esis-file.html">
+<link rel="import" href="structures/esis-datasheet.html">
+<link rel="import" href="structures/esis-resource.html">
+
+<polymer-element name="esis-datastore" attributes="files">
+	<script>
+		Polymer('esis-datastore', {
+			files : [],
+			datasheets : [],
+			resources  : [],
+
+			addFile : function(raw, parseZip) {
+				var ele = document.createElement('esis-file');
+				ele.raw = raw;
+				ele.parseZip = parseZip;
+				this.files.push(ele);
+				return ele;
+			},
+			removeFile : function(file) {
+				var index = this.files.indexOf(file);
+				if( index > -1 ) {
+					this.files.splice(index, 1);
+
+					// remove anything from the datasheet or resource list
+					for( var i = 0; i < file.datasheets.length; i++ ) {
+						index = this.datasheets.indexOf(file.datasheets[i]);
+						if( index > -1 ) this.datasheets.splice(index, 1);
+					}
+
+					for( var i = 0; i < file.resources.length; i++ ) {
+						index = this.resources.indexOf(file.resources[i]);
+						if( index > -1 ) this.resources.splice(index, 1);
+					}
+				}
+			},
+
+			addDatasheet : function(file, parsedContents) {
+				var ele = document.createElement('esis-datasheet');
+				ele.file = file;
+				ele.contents = parsedContents;
+				this.datasheets.push(ele);
+				return ele;
+			},
+
+			addResource : function(resource, datasheets) {
+				var ele = document.createElement('esis-resource');
+				ele.filename = resource.name || resource.info.name;
+				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
+				ele.ext = resource.info.ext;
+				this.resources.push(ele);
+				return ele;
+			}
+		});
+	</script>
+</polymer-element>

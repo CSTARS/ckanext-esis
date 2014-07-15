@@ -1,0 +1,23 @@
+<polymer-element name="esis-resource">
+	<template></template>
+	<script>
+		Polymer('esis-resource', {
+			contents   : null,
+			filename   : '',
+			mimetype   : '',
+			ext        : '',
+			datasheets : [],
+			title      : '',
+
+			observe : {
+				filename : '_setTitle'
+			},
+
+			_setTitle : function() {
+				this.title = this.filename.replace(/.*\//,'');
+				if( this.title.length == 0 || this.title == ' ' ) this.title = this.filename;
+			}
+
+		});
+	</script>
+<polymer-element>

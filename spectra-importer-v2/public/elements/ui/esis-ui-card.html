@@ -1,0 +1,21 @@
+<link rel="import" href="../../components/paper-shadow/paper-shadow.html" />
+
+<polymer-element name="esis-ui-card" attributes="z">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <paper-shadow z="{{z}}">
+      <content></content>
+    </paper-shadow>
+  </template>
+  <script>
+    Polymer('esis-ui-card', {
+      publish: {
+        z: {value: 1, reflect: true}
+      }
+    });
+  </script>
+</polymer-element>

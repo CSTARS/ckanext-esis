@@ -1,0 +1,40 @@
+<link rel="import" href="panels/esis-add-resource.html" />
+<link rel="import" href="panels/esis-attribute-map.html" />
+
+<polymer-element name="esis-item" attributes="ele label">
+	<template>
+		<style>
+			:host {
+				display: block;
+				margin: 25px 15px;
+				cursor: pointer;
+			}
+			:host(.core-selected) {
+  				font-weight: bold;
+			}
+			#secondaryContent {
+				font-size: 12px;
+				font-style: italic;
+			}
+		</style>
+
+		<div class="root">
+			<div>{{label}}</div>
+			<div id="secondaryContent"></div>
+		</div>
+	</template>
+	<script>
+		Polymer('esis-item', {
+			esisComponent : {},
+
+			ready : function() {
+				this.esisComponent = document.createElement(this.ele);
+				this.esisComponent.menuItem = this;
+			},
+
+			setSecondaryHtml : function(html) {
+				this.$.secondaryContent.innerHTML(html);
+			}
+		});
+	</script>
+<polymer-element>

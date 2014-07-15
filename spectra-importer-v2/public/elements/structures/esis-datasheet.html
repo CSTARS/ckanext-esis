@@ -1,0 +1,27 @@
+<polymer-element name="esis-datasheet">
+	<template></template>
+	<script>
+		Polymer('esis-datasheet',{
+			// parent esis-file element
+			file : {},
+
+			// parsed datasheet contents
+			contents : {},
+
+			title : '',
+
+			observe : {
+				file : '_setTitle'
+			},
+
+			_setTitle : function() {
+				var name = this.file.name || this.file.info.name;
+				this.title = name.replace(/.*\//,'');
+				if( this.file.sheetName && this.file.sheetName != '' ) this.title += ' - '+this.file.sheetName;
+				if( this.title.length == 0 || this.title == ' ' ) this.title = name;
+			}
+
+
+		});
+	</script>
+</polymer-element>
