@@ -1,3 +1,6 @@
+<link rel="import" href="esis-metadata"/>
+<link rel="import" href="esis-spectra"/>
+
 <polymer-element name="esis-datasheet">
 	<template></template>
 	<script>
@@ -8,10 +11,44 @@
 			// parsed datasheet contents
 			contents : {},
 
+			spectra : [],
+			metadata : {},
+
+			// we will try and detect this flag.  but let users select if we get it wrong
+			isMetadata : false,
+
 			title : '',
 
 			observe : {
-				file : '_setTitle'
+				file : '_update'
+			},
+
+			ready : function() {
+				this.spectra = [];
+				this.metadata = [];
+			},
+
+			_update : function() {
+				this._setTitle();
+
+				if( this.file.spectra ) {
+					for( var i = 0; i < this.file.spectra.length; i++ ) {
+						var sp = document.createElement('esis-spectra');
+						sp.data = this.file.spectra[i];
+						sp.filename = this.file.info.name;
+						sp.sheetname = this.file.sheetName;
+
+						if( this.file.metadata ) {
+							for( var key in this.file.metadata ) {
+								sp.metadata.file[key] = this.file.metadata[key];
+							}
+						}
+						this.spectra.push(sp);
+					}
+				} else if( this.file.joindata ) {
+					this.metadata = document.createElement('esis-metadata');
+					this.metadata.file = this.file;
+				}
 			},
 
 			_setTitle : function() {
@@ -20,8 +57,6 @@
 				if( this.file.sheetName && this.file.sheetName != '' ) this.title += ' - '+this.file.sheetName;
 				if( this.title.length == 0 || this.title == ' ' ) this.title = name;
 			}
-
-
 		});
 	</script>
 </polymer-element>

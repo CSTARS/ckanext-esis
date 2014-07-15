@@ -1,5 +1,8 @@
 <link rel="import" href="panels/esis-add-resource.html" />
 <link rel="import" href="panels/esis-attribute-map.html" />
+<link rel="import" href="panels/esis-parsed-spectra.html" />
+<link rel="import" href="panels/esis-group-by.html" />
+<link rel="import" href="panels/esis-join.html" />
 
 <polymer-element name="esis-item" attributes="ele label">
 	<template>
@@ -15,6 +18,7 @@
 			#secondaryContent {
 				font-size: 12px;
 				font-style: italic;
+				color: #888;
 			}
 		</style>
 
@@ -30,10 +34,12 @@
 			ready : function() {
 				this.esisComponent = document.createElement(this.ele);
 				this.esisComponent.menuItem = this;
+				this.classList.add('animated');
+				this.classList.add('bounceInLeft');
 			},
 
 			setSecondaryHtml : function(html) {
-				this.$.secondaryContent.innerHTML(html);
+				this.$.secondaryContent.innerHTML = html;
 			}
 		});
 	</script>

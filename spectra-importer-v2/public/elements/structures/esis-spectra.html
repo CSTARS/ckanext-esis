@@ -1,0 +1,26 @@
+<polymer-element name="esis-spectra">
+	<template></template>
+	<script>
+		Polymer('esis-spectra', {
+			data : [],
+
+			filename : '',
+			sheetname : '',
+
+			error : null,
+			ckanId : '',
+			joinOrder : ['joined', 'file', 'spectra'],
+			metadata : {},
+
+			ready : function() {
+				this.data = [];
+				this.metadata = {
+					spectra : {},
+					file : {},
+					joined : {}
+				}
+			}
+
+		});
+	</script>
+</polymer-element>

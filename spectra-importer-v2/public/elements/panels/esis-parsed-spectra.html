@@ -1,0 +1,32 @@
+<polymer-element name="esis-parsed-spectra">
+	<template>
+    	esis-parsed-spectra
+
+	</template>
+	<script>
+		Polymer('esis-parsed-spectra', {
+			files : [],
+			menuItem : null,
+
+			observe : {
+				files : '_updateVisibility'
+			},
+
+			ready : function() {
+				 window.addEventListener('polymer-ready', function(e) {
+				 	this.async(function(){
+				 		this.files = document.querySelector('esis-datastore').files;
+				 	});
+				}.bind(this));
+			},
+
+			_updateVisibility : function() {
+				if( this.files.length > 0 ) {
+					this.menuItem.style.display = 'block';
+				} else {
+					this.menuItem.style.display = 'none';
+				}
+			}
+		});
+	</script>
+</polymer-element>

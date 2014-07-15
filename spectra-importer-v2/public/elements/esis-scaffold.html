@@ -67,13 +67,8 @@
      * @type string
      */
     responsiveWidth: '860px',
-    
-    /**
-     * Sampler label.
-     *
-     * @attribute label
-     * @type string
-     */
+
+    cEle : null,
     
     ready: function() {
       //this.boundResizeFrame = this.resizeFrame.bind(this);
@@ -107,9 +102,14 @@
         this.item.tag = this.item.getAttribute('tag');
         window.location.hash = this.item.tag;
         
-        var ele = this.item.getAttribute('ele');
-        this.$.elementRoot.innerHTML = '';
-        this.$.elementRoot.appendChild(this.item.esisComponent);
+        if( this.cEle ) this.cEle.style.display = 'none';
+        this.cEle = this.item.esisComponent;
+        this.cEle.style.display = 'block';
+        if( !this.cEle.isAttached ) {
+          this.cEle.isAttached = true;
+          this.$.elementRoot.appendChild(this.item.esisComponent);
+        }
+       
         
         if (this.narrow) {
           this.$.drawerPanel.closeDrawer();

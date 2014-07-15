@@ -82,6 +82,10 @@
 			processing : false,
 			parseZip : false,
 
+			observe : {
+				'ds.files' : '_updatePreview'
+			},
+
 			ready : function() {
 				this.ds = document.querySelector('esis-datastore');
 				this.$.dropZone.addEventListener('dragover', this._handleDragOver.bind(this), false);
@@ -118,6 +122,10 @@
 			    // once they add spectra, we only want them to update the spectra.json file
 			    // via the add resources button and not the special 'update group by' button.
 			    //esis.app.groupBy.hideUpdateButton();
+		  	},
+
+		  	_updatePreview : function() {
+		  		this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
 		  	}
 		});
 	</script>

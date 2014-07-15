@@ -8,6 +8,11 @@
 			files : [],
 			datasheets : [],
 			resources  : [],
+			attributeMap : {},
+
+			observe : {
+				attributeMap : '_onAttributeMapUpdate'
+			},
 
 			addFile : function(raw, parseZip) {
 				var ele = document.createElement('esis-file');
@@ -49,6 +54,11 @@
 				ele.ext = resource.info.ext;
 				this.resources.push(ele);
 				return ele;
+			},
+
+			_onAttributeMapUpdate : function(oldData, newData) {
+				console.log(oldData);
+				console.log(newData);
 			}
 		});
 	</script>
