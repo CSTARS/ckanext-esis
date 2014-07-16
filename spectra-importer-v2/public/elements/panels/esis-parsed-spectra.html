@@ -1,31 +1,81 @@
+<link rel="import" href="../../components/paper-tabs/paper-tabs.html" />
+<link rel="import" href="../ui/esis-ui-spectra.html" />
+<link rel="import" href="../ui/esis-ui-datasheet.html" />
+
 <polymer-element name="esis-parsed-spectra">
 	<template>
-    	esis-parsed-spectra
+		<style>
+			paper-tabs::shadow #selectionBar {
+				background-color: rgb(47, 155, 69);
+			}
+			paper-tab::shadow #ink {
+				color: rgb(47, 155, 69);
+			}
+		</style>
+
+    	<paper-tabs selected="{{selectedTab}}">
+		    <paper-tab>Datasheet View</paper-tab>
+		    <paper-tab>Spectra View</paper-tab>
+		</paper-tabs>
+
+
+		<div style="display: {{ selectedTab == 0 ? 'block' : 'none' }}">
+			<template repeat="{{datasheet in datasheets}}">
+				<esis-ui-datasheet datasheet="{{datasheet}}"></esis-ui-datasheet>
+			</template>
+		</div>
+		<div style="display: {{ selectedTab == 1 ? 'block' : 'none' }}">
+			<template repeat="{{sp in spectra}}">
+				<esis-ui-spactra spectra="{{sp}}"></esis-ui-spectra>
+			</template>
+		</div>
 
 	</template>
 	<script>
 		Polymer('esis-parsed-spectra', {
-			files : [],
+			
 			menuItem : null,
 
+			selectedTab : 0,
+
+			datasheets : [],
+			spectra    : [],
+
 			observe : {
-				files : '_updateVisibility'
+				datasheets : '_update'
 			},
 
 			ready : function() {
 				 window.addEventListener('polymer-ready', function(e) {
 				 	this.async(function(){
-				 		this.files = document.querySelector('esis-datastore').files;
+				 		this.datasheets = document.querySelector('esis-datastore').datasheets;
 				 	});
 				}.bind(this));
 			},
 
+			_update : function() {
+				this.async(function(){
+					this.spectra = [];
+
+					for( var i = 0; i < this.datasheets.length; i++ ) {
+						var f = this.datasheets[i];
+						for( var j = 0; j < f.spectra.length; j++ ) {
+							this.spectra.push(f.spectra[j]);
+						}
+					}
+
+					this._updateVisibility();
+					this.menuItem.setSecondaryHtml(this.spectra.length+' Spectra Found');
+				});
+			},
+
 			_updateVisibility : function() {
-				if( this.files.length > 0 ) {
+				if( this.datasheets.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';
 				}
+				//this.menuItem.style.display = 'block';
 			}
 		});
 	</script>

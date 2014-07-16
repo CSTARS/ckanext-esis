@@ -1,5 +1,5 @@
-<link rel="import" href="esis-metadata"/>
-<link rel="import" href="esis-spectra"/>
+<link rel="import" href="esis-metadata.html"/>
+<link rel="import" href="esis-spectra.html"/>
 
 <polymer-element name="esis-datasheet">
 	<template></template>
@@ -25,16 +25,17 @@
 
 			ready : function() {
 				this.spectra = [];
-				this.metadata = [];
+				this.metadata = {};
 			},
 
 			_update : function() {
 				this._setTitle();
 
-				if( this.file.spectra ) {
+				if( this.file.spectra && this.file.spectra.length > 0 ) {
 					for( var i = 0; i < this.file.spectra.length; i++ ) {
 						var sp = document.createElement('esis-spectra');
-						sp.data = this.file.spectra[i];
+						sp.data = this.file.spectra[i].data;
+						sp.metadata.spectra = this.file.spectra[i].metadata;
 						sp.filename = this.file.info.name;
 						sp.sheetname = this.file.sheetName;
 
@@ -45,10 +46,13 @@
 						}
 						this.spectra.push(sp);
 					}
-				} else if( this.file.joindata ) {
+				} else if( this.file.joindata && this.file.joindata.length > 0 ) {
 					this.metadata = document.createElement('esis-metadata');
 					this.metadata.file = this.file;
+					this.metadata.metadata = this.file.joindata;
+					this.isMetadata = true;
 				}
+
 			},
 
 			_setTitle : function() {

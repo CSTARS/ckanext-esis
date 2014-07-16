@@ -1,0 +1,27 @@
+<link rel="import" href="esis-ui-card.html" />
+
+<polymer-element name="esis-ui-spectra" attributes="spectra index">
+	<template>
+		<style>
+			esis-ui-card {
+				margin: 10px 5px;
+				padding: 5px;
+			}
+			table tr th {
+				text-align: left;
+			}
+			h4 {
+				margin: 5px;
+			}
+		</style>
+
+		<esis-ui-card z="1">
+			<h4 style="color: #888">{{index}}</h4>
+		</esis-ui-card>
+	</template>
+	<script>
+		Polymer('esis-ui-spectra', {
+
+		});
+	</script>
+<polymer-element>

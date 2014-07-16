@@ -2,7 +2,9 @@
 	<template></template>
 	<script>
 		Polymer('esis-extractor', {
-			run : function(contents, callback) {
+
+			// forceMetadata means just parse as metadata
+			run : function(contents, callback, forceMetadata) {
 				var resp = {
 					metadata : {},
 					spectra : []

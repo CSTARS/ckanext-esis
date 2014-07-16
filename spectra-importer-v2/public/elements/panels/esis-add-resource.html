@@ -63,13 +63,6 @@
 		    	<template repeat="{{file in ds.files}}">
 		    		<esis-ui-file file="{{file}}"></esis-ui-file>
 		    	</template>
-
-		    	<h2>New Datasheets</h2>
-		    	<template repeat="{{datasheet in ds.datasheets}}">
-		    		<div>{{datasheet.title}}
-		    			{{datasheet.file.error}}
-		    			{{datasheet.file.warning}}</div>
-		    	</template>
 		    </div>
 	    </template>
     	

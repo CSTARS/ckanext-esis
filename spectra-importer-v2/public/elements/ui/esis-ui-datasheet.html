@@ -1,0 +1,122 @@
+<link rel="import" href="esis-ui-card.html" />
+<link rel="import" href="../../components/paper-button/paper-button.html" />
+<link rel="import" href="../../components/core-collapse/core-collapse.html" />
+
+<polymer-element name="esis-ui-datasheet" attributes="datasheet">
+	<template>
+		<style>
+			esis-ui-card {
+				margin: 10px 5px;
+				padding: 5px;
+			}
+			table tr th {
+				text-align: left;
+			}
+			h4 {
+				margin: 5px;
+			}
+			.float-right {
+				position: absolute;
+				right: -20px;
+				top: -10px;
+			}
+		</style>
+
+		<esis-ui-card z="1">
+			<h4><span style="color: #888">{{datasheet.title}}</span> <span style="float: right">Parser: {{datasheet.file.info.parser}}</span></h4>
+			
+			<template bind if="{{datasheet.file.error}}">
+				<div style="color:red">Error {{datasheet.file.error}}</div>
+			</template>
+			<template bind if="{{datasheet.file.warning}}">
+				<div style="color:orange">Warning: {{datasheet.file.warning}}</div>
+			</template>
+
+
+
+			<div>
+				<paper-button on-tap="{{_toggle}}" label="More Info" style="color:blue"></paper-button>
+				<core-collapse id="collapse">
+					<template bind if="{{fileMetadata.length > 0}}">
+						<h4>File Level Metadata</h4>
+						<ul>
+							<template repeat="{{item in fileMetadata}}">
+								<li><b>{{item.key}}:</b> {{item.value}}</li>
+							</template>
+						</ul>
+					</template>
+
+					<template bind if="{{spectraMetadata.length > 0}}">
+						<h4>Spectra Level Metadata Attributes</h4>
+						<ul>
+							<template repeat="{{key in spectraMetadata}}">
+								<li>{{key}}</li>
+							</template>
+						</ul>
+					</template>
+
+					<template bind if="{{joinableMetadata.length > 0}}">
+						<h4>Joinable Metadata Attributes</h4>
+						<ul>
+							<template repeat="{{key in joinableMetadata}}">
+								<li>{{key}}</li>
+							</template>
+						</ul>
+					</template>
+
+					<template bind if="{{fileMetadata.length == 0 && spectraMetadata.length == 0 && joinableMetadata.length == 0}}">
+						No spectra or metadata parsed from this file.
+					</template>
+
+					<div id="chart"></div>
+				</core-collapse>
+			</div>
+
+		</esis-ui-card>
+	</template>
+	<script>
+		Polymer('esis-ui-datasheet', {
+			datasheet : {},
+
+			fileMetadata : [],
+			spectraMetadata : [],
+			joinableMetadata : [],
+
+			observe : {
+				datasheet : '_update'
+			},
+
+			_update : function() {
+				this.joinableMetadata = [];
+				this.spectraMetadata = [];
+				this.fileMetadata = [];
+
+				for( var key in this.datasheet.file.metadata ) {
+					this.fileMetadata.push({key:key, value:this.datasheet.file.metadata[key]});
+				}
+
+				for( var i = 0; i < this.datasheet.spectra.length; i++ ) {
+					var s = this.datasheet.spectra[0];
+					for( var key in s.metadata ) {
+						if( this.spectraMetadata.indexOf(key) == -1 ) {
+							this.spectraMetadata.push(key);
+						}
+					}
+				}
+
+				if( this.datasheet.isMetadata && this.datasheet.metadata.metadata.length > 0 ) {
+					for( var i = 0; i < this.datasheet.metadata.metadata[0].length; i++ ) {
+						var key = this.datasheet.metadata.metadata[0][i];
+						if( this.joinableMetadata.indexOf(key) == -1 ) {
+							this.joinableMetadata.push(key);
+						}
+					}
+				}
+			},
+
+			_toggle : function() {
+				this.$.collapse.toggle();
+			}
+		});
+	</script>
+<polymer-element>
