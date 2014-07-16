@@ -25,9 +25,21 @@
 			</template>
 		</div>
 		<div style="display: {{ selectedTab == 1 ? 'block' : 'none' }}">
-			<template repeat="{{sp in spectra}}">
-				<esis-ui-spactra spectra="{{sp}}"></esis-ui-spectra>
-			</template>
+			<h2>{{spectra.length}} Spectra Found</h2>
+			<div>
+				<span class="label success-label">File Level Metadata</span> 
+				<span class="label info-label">Spectra Level Metadata</span> 
+				<span class="label warning-label">Linked Metadata</span> <br>
+				<span style="color:#888;text-size:12px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out and upload a metadata map on the previous screen.</span>
+			</div>
+
+			<select id="spectraSelector" on-change="{{_selectSpectra}}">
+				<template repeat="{{sp,i in spectra}}">
+					<option value="{{i}}">{{i+1}}</option>
+				</template>
+			</select>
+
+			<esis-ui-spectra id="spectraUI" spectra="{{selectedSpectra}}"></esis-ui-spectra>
 		</div>
 
 	</template>
@@ -41,8 +53,11 @@
 			datasheets : [],
 			spectra    : [],
 
+			selectedSpectra : {},
+
 			observe : {
-				datasheets : '_update'
+				datasheets : '_update',
+				selectedTab : '_onTabChange'
 			},
 
 			ready : function() {
@@ -64,6 +79,10 @@
 						}
 					}
 
+					if( this.spectra.length > 0 ) {
+						this.selectedSpectra = this.spectra[0];
+					}
+
 					this._updateVisibility();
 					this.menuItem.setSecondaryHtml(this.spectra.length+' Spectra Found');
 				});
@@ -75,8 +94,16 @@
 				} else {
 					this.menuItem.style.display = 'none';
 				}
-				//this.menuItem.style.display = 'block';
+			},
+
+			_onTabChange : function() {
+				if( this.selectedTab == 1 ) this.$.spectraUI.show();
+			},
+
+			_selectSpectra : function() {
+				this.selectedSpectra = this.spectra[parseInt(this.$.spectraSelector.value)];
 			}
+
 		});
 	</script>
 </polymer-element>

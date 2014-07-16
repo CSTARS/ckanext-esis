@@ -26,11 +26,16 @@
     <link rel="import" href="components/core-menu/core-submenu.html">
     <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
     <link rel="import" href="components/paper-fab/paper-fab.html">
-
     <link rel="import" href="elements/esis-scaffold.html">
     <link rel="import" href="elements/esis-item.html">
     <link rel="import" href="elements/esis-datastore.html">
     <link rel="import" href="elements/esis-parser.html">
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+      google.load('visualization', '1.0', {'packages':['corechart']});
+    </script>
 
     <style>
 
@@ -51,7 +56,29 @@
       html /deep/ .element-label {
         color: #2f9b45;
       }
-      
+      html /deep/ .info-label {
+        background-color: #3a87ad;
+      }
+      html /deep/ .warning-label {
+        background-color: #f89406;
+      }
+      html /deep/ .success-label {
+        background-color: #468847;
+      }
+      html /deep/ .label {
+        display: inline-block;
+        padding: 2px 4px;
+        font-size: 11.844px;
+        font-weight: bold;
+        line-height: 14px;
+        color: #ffffff;
+        vertical-align: baseline;
+        white-space: nowrap;
+        text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+      }
     </style>
 
   </head>
