@@ -1,27 +1,42 @@
 <polymer-element name="esis-join">
 	<template>
-    	esis-join
-
+    	
 	</template>
 	<script>
 		Polymer('esis-join', {
-			files : [],
+			datasheets : [],
+			metadataDatasheets : [],
+
 			menuItem : null,
 
 			observe : {
-				files : '_updateVisibility'
+				datasheets : '_update'
 			},
 
 			ready : function() {
 				 window.addEventListener('polymer-ready', function(e) {
 				 	this.async(function(){
-				 		this.files = document.querySelector('esis-datastore').files;
+				 		this.datasheets = document.querySelector('esis-datastore').datasheets;
 				 	});
 				}.bind(this));
 			},
 
+			_update : function() {
+				this.async(function(){
+					this.metadataDatasheets = [];
+
+					for( var i = 0; i < this.datasheets.length; i++ ) {
+						if( this.datasheets[i].isMetadata ) {
+							this.metadataDatasheets.push(this.datasheets[i]);
+						}
+					}
+
+					this._updateVisibility();
+				});
+			},
+
 			_updateVisibility : function() {
-				if( this.files.length > 0 ) {
+				if( this.metadataDatasheets.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';

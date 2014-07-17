@@ -1,0 +1,189 @@
+<link rel="import" href="../../components/paper-input/paper-input.html"/>
+<link rel="import" href="../ui/esis-paper-button.html"/>
+
+<polymer-element name="esis-ui-token-input" attributes="value">
+    <template>
+        <style>
+            paper-input::shadow .focusedColor {
+                background-color: #2f9b45;
+                color: #2f9b45;
+            }
+        </style>
+        <paper-input id="input" floatingLabel label="Keywords" on-keypress="{{_onInputKey}}" inputValue="{{inputValue}}" ></paper-input>
+        
+        <div>
+            <template bind if="{{searching}}">
+                Searching...
+            </template>
+            <template bind if="{{!searching}}">
+                <template repeat="{{result in results}}">
+                    <esis-paper-button label="{{result.name}}" icon="add" on-tap="{{_addResult}}" size="14"></esis-paper-button>
+                </template>
+            </template>
+        </div>
+
+        <div id="container" on-click="{{_setFocus}}">
+            <template repeat="{{token in tokens}}">
+                <esis-paper-button style="margin:2px 0px" on-click="{{_onTokenClick}}" token="{{token._id}}" label="{{token.label}}" icon="close" size="14" raisedButton></esis-paper-button>
+            </template>
+        </div>
+    </template>
+    <script>
+        Polymer("esis-ui-token-input",{
+            highlight : false,
+            currentSpeech : '',
+
+            searching : false,
+            results   : [],
+
+            inputValue : '',
+
+            observe : {
+                inputValue : '_onInputUpdate'
+            },
+            
+            created : function() {
+                this.tokens = [];
+                this.focus = false;
+            },
+            
+            ready : function() {                
+
+            },
+            
+            _onTokenClick : function(e) {
+                var token = $(e.currentTarget).attr("token");
+                if( !token ) return;
+                this._fireRemove(token);
+                this.removeToken(token);
+
+                // don't set focus to input
+                e.stopPropagation();
+            },
+            
+            removeToken : function(id) {
+                for( var i = 0; i < this.tokens.length; i++ ) {
+                    if( id == this.tokens[i]._id ) {
+                        this.tokens.splice(i,1);
+                        return;
+                    }
+                }
+            },
+            
+            addToken : function(token) {
+                token._id = Math.random()*new Date().getTime()+"";
+                for( var i = 0; i < this.tokens.length; i++ ) {
+                    if( this.tokens[i].value == token.value ) return;
+                }
+                this.tokens.push(token);
+            },
+            
+            getTokens : function() {
+                return this.tokens;
+            },
+            
+            setTokens : function(tokens) {
+                this.tokens.splice(0,this.tokens.length);
+                for( var i = 0; i < tokens.length; i++ ) {
+                    this.addToken(tokens[i]);
+                }
+            },
+            
+            // helper method for moveLeft and moveRight
+            _getTokenElements : function() {
+                var tokenEles = $(this.$.container).find("span");
+                var selected = -1;
+                
+                for( var i = 0; i < tokenEles.length; i++ ) {
+                    if( $(tokenEles[i]).hasClass("btn-primary") ) {
+                        selected = i;
+                        break;
+                    }
+                }
+                return {eles:tokenEles,selected:selected};
+            },
+            
+            // remove the selected token
+            _deleteSelected : function() {
+                var info = this._getTokenElements();
+                if( info.selected == -1 ) return;
+                this._fireRemove(info.selected);
+                this.tokens.splice(info.selected,1);
+                
+            },
+
+            _addResult : function(e) {
+                var l = e.currentTarget.label;
+                this.addToken({label:l, value:l});
+                this.results = '';
+                this.inputValue = '';
+            },
+            
+            _onInputUpdate : function() {
+                if( this.inputValue.length == 0 ) {
+                    this.results = [];
+                } else {
+                    this._search();
+                }
+            },
+
+            // fires when text is typed input field
+            _onInputKey : function(e) {
+                if( e.which == 13 ) this._createToken();
+            },
+
+            searchTimer : -1,
+            _search : function(){
+                if( this.searchTimer != -1 ) clearTimeout(this.searchTimer);
+
+                this.searchTimer = setTimeout(function(){
+                    this.searching = true;
+                    $.get(esis.host+'/api/3/action/tag_search?limit=10&query='+this.inputValue, function(resp){
+                        this.results = resp.result.results;
+                        this.searching = false;
+                    }.bind(this));
+                }.bind(this), 500);
+            },
+
+            test : function() {
+                console.log(this.$.input.inputValue);
+            },
+
+            _createToken : function() {
+                if(this.$.input.inputValue.length == 0) return; 
+
+                var t = {
+                    label : this.$.input.inputValue,
+                    value : this.$.input.inputValue
+                }
+                this.addToken(t);
+                this._fireAdd(t);
+                this.$.input.inputValue = "";
+            },
+            
+            _setFocus : function() {
+                if( this.focus ) return;
+                this.$.input.focus();
+            },
+            
+            _fireRemove : function(id) {
+                var t = null;
+                if( typeof id == "string" ){
+                    for( var i = 0; i < this.tokens.length; i++ ) {
+                        if( id == this.tokens[i]._id ) {
+                            t = this.tokens[i];
+                            break;
+                        }
+                    }
+                } else {
+                    t = this.tokens[id];
+                }
+                this.fire('remove',t);
+            },
+            
+            _fireAdd : function(token) {
+                this.fire('add', token);
+            }
+        });
+    </script>
+</polymer-element>

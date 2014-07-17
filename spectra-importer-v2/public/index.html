@@ -85,7 +85,9 @@
 
   <body unresolved>
     <script>
-    var esis = {};
+    var esis = {
+      host : 'http://data.ecospectra.org'
+    };
       esis.extensions = {
   pdf : {
     type : 'resource',
@@ -204,8 +206,9 @@
       <paper-icon-button class="menuButton" icon="menu" ></paper-icon-button>
       <paper-fab class="sourceButton bottom" icon="launch"></paper-fab>
 
-      <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
+      <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
       <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
+      <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
       <esis-item label="Set Attribute Map" style="display:none" tag="attribute-map" ele="esis-attribute-map"></esis-item>
       <esis-item label="Parsed Spectra" tag="parsed-spectra" ele="esis-parsed-spectra"></esis-item>
       <esis-item label="Group Dataset" tag="group-by" ele="esis-group-by"></esis-item>

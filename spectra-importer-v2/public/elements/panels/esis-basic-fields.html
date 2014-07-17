@@ -1,0 +1,120 @@
+<link rel="import" href="../../components/paper-input/paper-input.html"/>
+<link rel="import" href="../ui/esis-ui-token-input.html"/>
+
+<polymer-element name="esis-basic-fields">
+	<template>
+		<style>
+			.form-wrap {
+				padding: 15px 5px;
+				margin: 15px 5px;
+			}
+			paper-input::shadow .focusedColor {
+				background-color: #2f9b45;
+				color: #2f9b45;
+			}
+		</style>
+
+		<div class="form-wrap">
+			<paper-input floatingLabel label="Title" inputValue="{{titleInput}}" required></paper-input>
+			<div style="margin-left:20px">
+				URL: {{baseUrl}}<span style="color:#888">{{titleClean}}</span>
+			</div>
+		</div>
+
+		<div class="form-wrap">
+			<paper-input multiline rows="3" floatingLabel label="Description" value="{{description}}" ></paper-input>
+		</div>
+
+		<div class="form-wrap">
+			<esis-ui-token-input></esis-ui-token-input>
+		</div>
+
+		<div class="form-wrap">
+			License: <br />
+			<template bind if="{{licenses.length == 0}}">
+				Loading...
+			</template>
+			<select id="license" hidden?="{{licenses.length == 0}}">
+       			<template repeat="{{item in licenses}}">
+       				<option value="{{item.id}}">{{item.title}}</option>
+       			</template>
+    		</select>
+		</div>
+
+		<div class="form-wrap">
+			Organization: <br />
+			<template bind if="{{organizations.length == 0}}">
+				Loading...
+			</template>
+			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{organization}}">
+       			<template repeat="{{item in organizations}}">
+       				<option value="{{item.id}}">{{item.display_name}}</option>
+       			</template>
+    		</select>
+		</div>
+
+		<div class="form-wrap" >
+			Visibility: <br />
+			<select id="visible" value="{{visible}}" disabled>
+				<option value="true">Public</option>
+				<option value="false">Private</option>
+			</select>
+		</div>
+
+	</template>
+	<script>
+		Polymer('esis-basic-fields', {
+			ds : '',
+
+			menuItem : null,
+			baseUrl : '',
+
+			titleInput : '',
+			description : '',
+			organization : '',
+			visible : true,
+
+			licenses : [],
+			organizations : [],
+
+			observe : {
+				titleInput : '_cleanTitle',
+				organization : '_onOrgChange'
+			},
+
+			ready : function() {
+				this.baseUrl = esis.host+'/dataset/';
+
+				this.ds = document.querySelector('esis-datastore');
+
+				$.get(esis.host+'/api/3/action/license_list', function(resp){
+					this.licenses = resp.result;
+				}.bind(this));
+
+				$.get(esis.host+'/api/3/action/organization_list?all_fields=true', function(resp){
+					this.organizations = resp.result;
+					this.organizations.splice(0,0, {
+						id : '',
+						display_name : 'No Organization'
+					});
+				}.bind(this));
+			},
+
+			_cleanTitle : function() {
+				this.titleClean = this.titleInput.toLowerCase().replace(/[^a-z0-9]/g,'-');
+				this.menuItem.setSecondaryHtml('<b>Dataset:</b> '+this.titleInput);
+				this.ds.datasetTitle = this.titleInput;
+			},
+
+			_onOrgChange : function() {
+				if( this.organization == '' ) {
+					this.visible = true;
+					this.$.visible.setAttribute('disabled','disabled');
+				} else {
+					this.$.visible.removeAttribute('disabled');
+				}
+			}
+
+		});
+	</script>
+</polymer-element>
