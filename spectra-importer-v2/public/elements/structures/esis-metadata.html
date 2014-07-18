@@ -8,7 +8,52 @@
 			joinCol  : 0,
 			filenameMatch : false,
 			worksheetMatch : false,
-			ckanId : ''
+			ckanId : '',
+
+			_updateJoinRow : function() {
+				if( this.metadata.length == 0 ) return;
+		
+				for( var i = 0; i < this.metadata[0].length; i++ ) {
+					if( this.metadata[0][i] == this.joinId ) {
+						this.joinCol = i;
+						return;
+					}
+				}
+			},
+
+			join : function(spectra) {
+				this._updateJoinRow();
+
+				var row = this._getRow(spectra);
+				if( row == -1 ) return;
+
+				for( var j = 0; j < this.metadata[0].length; j++ ) {
+					if( j == this.joinCol && !(this.filenameMatch || this.worksheetMatch) ) continue;
+					spectra.metadata.joined[this.metadata[0][j]] = this.metadata[row][j];
+				}
+				return;
+			},
+
+			_getRow : function(spectra) {
+				if( this.filenameMatch || this.worksheetMatch ) {
+					var regex;
+					for( var i = 1; i < this.metadata.length; i++ ) {
+						var name = this.filenameMatch ? spectra.filename : spectra.sheetname;
+
+						regex = new RegExp('.*'+this.metadata[i][this.joinCol]+'.*');
+						if( regex.test(name) ) {
+							return i;
+						}
+					}
+				} else {
+					for( var i = 1; i < this.metadata.length; i++ ) {
+						if( this.metadata[i][this.joinCol] == spectra.metadata.spectra[this.joinId] ) {
+							return i;
+						}
+					}
+				}
+				return -1;
+			}
 		});
 	</script>
 </polymer-element>

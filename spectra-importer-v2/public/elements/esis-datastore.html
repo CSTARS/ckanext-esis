@@ -15,6 +15,10 @@
 				attributeMap : '_onAttributeMapUpdate'
 			},
 
+			ready : function() {
+				if( this.datasetTitle == '' ) window.location.hash = '#basic-fields';
+			},
+
 			addFile : function(raw, parseZip) {
 				var ele = document.createElement('esis-file');
 				ele.raw = raw;
@@ -55,6 +59,16 @@
 				ele.ext = resource.info.ext;
 				this.resources.push(ele);
 				return ele;
+			},
+
+			join : function(metadata) {
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( this.datasheets[i].isMetadata ) continue;
+
+					for( var j = 0; j < this.datasheets[i].spectra.length; j++ ) {
+						metadata.join(this.datasheets[i].spectra[j]);
+					}
+				}
 			},
 
 			_onAttributeMapUpdate : function(oldData, newData) {

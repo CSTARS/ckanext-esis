@@ -1,11 +1,14 @@
+<link rel="import" href="../../components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../components/paper-icon-button/paper-button.html">
+
 <polymer-element name="esis-ui-delete-button" attributes="label">
 	<template>
 		<link rel="stylesheet" href="../../components/animate-css/animate.min.css" no-shim>
 
-		<paper-fab id="start" icon="close" style="background-color: white" class="mini float-right animated" on-tap="{{_confirm}}"></paper-fab>
+		<paper-icon-button id="start" icon="close" class="animated" on-tap="{{_confirm}}"></paper-icon-button>
 
-		<paper-button id="remove" label="Remove {{label}}" style="display:none;background-color: #d23f31" class="animated fadeInDown" raisedButton on-tap="{{_delete}}"></paper-button>
-		<paper-button id="cancel" label="Cancel" style="display:none;background-color: white" class="animated fadeInDown" raisedButton on-tap="{{_cancel}}"></paper-button>
+		<paper-button id="remove" label="Remove {{label}}" style="display:none;background-color: #d23f31" class="animated flipInX" raisedButton on-tap="{{_delete}}"></paper-button>
+		<paper-button id="cancel" label="Cancel" style="display:none;background-color: white" class="animated flipInX" raisedButton on-tap="{{_cancel}}"></paper-button>
 	</template>
 	<script>
 		Polymer('esis-ui-delete-button', {

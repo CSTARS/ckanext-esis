@@ -1,4 +1,4 @@
-<link rel="import" href="esis-ui-card"/>
+<link rel="import" href="esis-ui-card.html"/>
 <link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
 
 <polymer-element name="esis-ui-metadata" attributes="metadata">
@@ -13,8 +13,9 @@
 
 			<div>
 				Join On:
-				<select>
-					<template repeat="{{attr in joinAttrs}}">
+				<select value="{{metadata.joinId}}">
+					<option value=""></option>
+					<template repeat="{{attr in joinAttrs}}" >
 						<option value="{{attr}}">{{attr}}</option>
 					</template>
 				</select>
@@ -42,7 +43,8 @@
 			joinAttrs : [],
 
 			observe : {
-				metadata : '_update'
+				metadata : '_update',
+				'metadata.joinId' : '_updateDatastore',
 			},
 
 			_update : function() {
@@ -54,12 +56,23 @@
 				}
 			},
 
+			_updateDatastore : function() {
+				if( this.metadata.joinId == '' ) return;
+				document.querySelector('esis-datastore').join(this.metadata);
+			},
+
 			_onWorksheetMatch : function() {
+				this.filenameMatch = false;
 				this.$.filenameMatch.removeAttribute('checked');
+				this.worksheetMatch = this.worksheetMatch.hasAttribute('checked');
+				this._updateDatastore();
 			},
 
 			_onFilenameMatch : function() {
+				this.worksheetMatch = false;
 				this.$.worksheetMatch.removeAttribute('checked');
+				this.filenameMatch = this.worksheetMatch.hasAttribute('checked');
+				his._updateDatastore();
 			}
 
 		});

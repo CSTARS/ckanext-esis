@@ -20,7 +20,7 @@
 
 
 		<div style="display: {{ selectedTab == 0 ? 'block' : 'none' }}">
-			<template repeat="{{datasheet in datasheets}}">
+			<template repeat="{{datasheet in spectraDatasheets}}">
 				<esis-ui-datasheet datasheet="{{datasheet}}"></esis-ui-datasheet>
 			</template>
 		</div>
@@ -30,14 +30,17 @@
 				<span class="label success-label">File Level Metadata</span> 
 				<span class="label info-label">Spectra Level Metadata</span> 
 				<span class="label warning-label">Linked Metadata</span> <br>
-				<span style="color:#888;text-size:12px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out and upload a metadata map on the previous screen.</span>
+				<span style="color:#888;font-size:12px;padding:5px;font-style:italic">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out and upload a metadata map on the previous screen.</span>
 			</div>
 
-			<select id="spectraSelector" on-change="{{_selectSpectra}}">
-				<template repeat="{{sp,i in spectra}}">
-					<option value="{{i}}">{{i+1}}</option>
-				</template>
-			</select>
+			<div style="margin-top:20px">
+				Select Spectra: 
+				<select id="spectraSelector" on-change="{{_selectSpectra}}">
+					<template repeat="{{sp,i in spectra}}">
+						<option value="{{i}}">{{i+1}}</option>
+					</template>
+				</select>
+			</div>
 
 			<esis-ui-spectra id="spectraUI" spectra="{{selectedSpectra}}"></esis-ui-spectra>
 		</div>
@@ -50,6 +53,7 @@
 
 			selectedTab : 0,
 
+			spectraDatasheets : [],
 			datasheets : [],
 			spectra    : [],
 
@@ -66,14 +70,25 @@
 				 		this.datasheets = document.querySelector('esis-datastore').datasheets;
 				 	});
 				}.bind(this));
+
+				// see if we need to poke the spectra UI panel
+				$(window).on('hashchange', function(){
+					if( window.location.hash.replace(/#/g,'') == 'parsed-spectra' ) {
+						this._onTabChange();
+					}
+				}.bind(this));
 			},
 
 			_update : function() {
 				this.async(function(){
 					this.spectra = [];
+					this.spectraDatasheets = [];
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						var f = this.datasheets[i];
+						if( !f.isMetadata ) {
+							this.spectraDatasheets.push(f);
+						}
 						for( var j = 0; j < f.spectra.length; j++ ) {
 							this.spectra.push(f.spectra[j]);
 						}

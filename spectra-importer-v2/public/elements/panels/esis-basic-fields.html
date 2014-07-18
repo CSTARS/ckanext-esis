@@ -12,6 +12,10 @@
 				background-color: #2f9b45;
 				color: #2f9b45;
 			}
+			a {
+				color : #2f9b45;
+				cursor: pointer;
+			}
 		</style>
 
 		<div class="form-wrap">
@@ -60,6 +64,28 @@
 				<option value="false">Private</option>
 			</select>
 		</div>
+
+		<div class="form-wrap">
+			<paper-input floatingLabel label="Source"></paper-input>
+		</div>
+
+		<div class="form-wrap">
+			<paper-input floatingLabel label="Version"></paper-input>
+		</div>
+
+		<div class="form-wrap">
+			<paper-input floatingLabel label="Author"></paper-input>
+			<paper-input floatingLabel label="Author Email"></paper-input>
+		</div>
+
+		<div class="form-wrap">
+			<paper-input floatingLabel label="Maintainer"></paper-input>
+			<paper-input floatingLabel label="Maintainer Email"></paper-input>
+		</div>
+
+		<template bind if="{{titleInput != ''}}">
+			Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
+		</template>
 
 	</template>
 	<script>
@@ -113,6 +139,10 @@
 				} else {
 					this.$.visible.removeAttribute('disabled');
 				}
+			},
+
+			_addResources : function() {
+				window.location.hash = "#new-resources";
 			}
 
 		});

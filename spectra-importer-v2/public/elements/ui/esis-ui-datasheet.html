@@ -23,7 +23,7 @@
 		</style>
 
 		<esis-ui-card z="1">
-			<h4><span style="color: #888">{{datasheet.title}}</span> <span style="float: right">Parser: {{datasheet.file.info.parser}}</span></h4>
+			<h4><span style="color: #888">{{datasheet.label}}</span> <span style="float: right">Parser: {{datasheet.file.info.parser}}</span></h4>
 			
 			<template bind if="{{datasheet.file.error}}">
 				<div style="color:red">Error {{datasheet.file.error}}</div>
@@ -35,7 +35,7 @@
 
 
 			<div>
-				<paper-button on-tap="{{_toggle}}" label="More Info" style="color:blue"></paper-button>
+				<paper-button on-tap="{{_toggle}}" label="More Info" style="color:#2f9b45"></paper-button>
 				<core-collapse id="collapse">
 					<template bind if="{{fileMetadata.length > 0}}">
 						<h4>File Level Metadata</h4>
@@ -69,6 +69,12 @@
 					</template>
 
 					<div id="chart"></div>
+
+					<template bind if="{{datasheet.spectra.length > maxLineCount}}">
+						<div style="padding: 15px; color: #888; font-size: 12px; font-style: italic">
+							*Note: only {{maxLineCount}} of {{datasheet.spectra.length}} spectra drawn.
+						</div>
+					</template>
 				</core-collapse>
 			</div>
 
@@ -104,7 +110,7 @@
 
 				for( var i = 0; i < this.datasheet.spectra.length; i++ ) {
 					var s = this.datasheet.spectra[0];
-					for( var key in s.metadata ) {
+					for( var key in s.metadata.spectra ) {
 						if( this.spectraMetadata.indexOf(key) == -1 ) {
 							this.spectraMetadata.push(key);
 						}

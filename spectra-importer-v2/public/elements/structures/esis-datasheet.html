@@ -17,7 +17,7 @@
 			// we will try and detect this flag.  but let users select if we get it wrong
 			isMetadata : false,
 
-			title : '',
+			label : '',
 
 			observe : {
 				file : '_update'
@@ -26,6 +26,7 @@
 			ready : function() {
 				this.spectra = [];
 				this.metadata = {};
+				this.file = {};
 			},
 
 			_update : function() {
@@ -57,9 +58,9 @@
 
 			_setTitle : function() {
 				var name = this.file.name || this.file.info.name;
-				this.title = name.replace(/.*\//,'');
-				if( this.file.sheetName && this.file.sheetName != '' ) this.title += ' - '+this.file.sheetName;
-				if( this.title.length == 0 || this.title == ' ' ) this.title = name;
+				this.label = name.replace(/.*\//,'');
+				if( this.file.sheetName && this.file.sheetName != '' ) this.label += ' - '+this.file.sheetName;
+				if( this.label.length == 0 || this.label == ' ' ) this.label = name;
 			}
 		});
 	</script>

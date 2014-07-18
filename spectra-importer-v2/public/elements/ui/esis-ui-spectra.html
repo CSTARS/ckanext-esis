@@ -53,7 +53,7 @@
 			chart : null,
 
 			observe : {
-				spectra : '_update'
+				spectra : '_update',
 			},
 
 			ready : function() {
@@ -69,14 +69,18 @@
 				if( !this.spectra ) return;
 				if( !this.spectra.metadata ) return;
 
-				for( var key in this.spectra.metadata.file ) {
-					this.metadata.file.push({key:key, value:this.spectra.metadata.file[key]});
+				var label, key;
+				for( key in this.spectra.metadata.file ) {
+					label = esis.metadata[key] ? key : '*'+key;
+					this.metadata.file.push({key:label, value:this.spectra.metadata.file[key]});
 				}
-				for( var key in this.spectra.metadata.joined ) {
-					this.metadata.joined.push({key:key, value:this.spectra.metadata.joined[key]});
+				for( key in this.spectra.metadata.joined ) {
+					label = esis.metadata[key] ? key : '*'+key;
+					this.metadata.joined.push({key:label, value:this.spectra.metadata.joined[key]});
 				}
-				for( var key in this.spectra.metadata.spectra ) {
-					this.metadata.spectra.push({key:key, value:this.spectra.metadata.spectra[key]});
+				for( key in this.spectra.metadata.spectra ) {
+					label = esis.metadata[key] ? key : '*'+key;
+					this.metadata.spectra.push({key:label, value:this.spectra.metadata.spectra[key]});
 				}
 
 				this.dt = new google.visualization.DataTable();
@@ -106,9 +110,7 @@
 			},
 
 			show : function() {
-				setTimeout(function(){
-		      		this._drawChart();
-		      	}.bind(this), 200);
+				this._update();
 			},
 
 			_drawChart : function() {
