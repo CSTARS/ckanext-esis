@@ -1,6 +1,10 @@
+<link rel="import" href="../ui/esis-ui-metadata.html"/>
+
 <polymer-element name="esis-join">
 	<template>
-    	
+    	<template repeat="{{metadata in metadataDatasheets}}">
+    		<esis-ui-metadata metadata="{{metadata}}"></esis-ui-metadata>
+    	</template>
 	</template>
 	<script>
 		Polymer('esis-join', {
@@ -27,7 +31,7 @@
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						if( this.datasheets[i].isMetadata ) {
-							this.metadataDatasheets.push(this.datasheets[i]);
+							this.metadataDatasheets.push(this.datasheets[i].metadata);
 						}
 					}
 

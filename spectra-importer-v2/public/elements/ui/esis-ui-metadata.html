@@ -1,0 +1,67 @@
+<link rel="import" href="esis-ui-card"/>
+<link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
+
+<polymer-element name="esis-ui-metadata" attributes="metadata">
+	<template>
+		<esis-ui-card z="1" style="padding: 1px 20px 10px 20px">
+			<h4>
+				{{metadata.file.info.name}}
+				<template bind if="{{metadata.file.sheetName != ''}}">
+					- {{metadata.file.sheetName}}
+				</template>
+			</h4>
+
+			<div>
+				Join On:
+				<select>
+					<template repeat="{{attr in joinAttrs}}">
+						<option value="{{attr}}">{{attr}}</option>
+					</template>
+				</select>
+
+				<div horizontal layout style="margin: 30px 15px">
+				    <paper-checkbox id="filenameMatch" on-tap="{{_onFilenameMatch}}"></paper-checkbox>
+				    <div style="padding-left: 20px">
+				     	Match on Filename
+				    </div>
+				</div>
+
+				<div horizontal layout style="margin: 30px 15px" hidden?="{{metadata.file.sheetName == ''}}" >
+				    <paper-checkbox id="worksheetMatch" on-tap="{{_onWorksheetMatch}}"></paper-checkbox>
+				    <div style="padding-left: 20px">
+				     	Match on Worksheet Name
+				    </div>
+				</div>
+
+			</div> 
+		</esis-ui-card>
+	</template>
+	<script>
+		Polymer('esis-ui-metadata', {
+			metadata : {},
+			joinAttrs : [],
+
+			observe : {
+				metadata : '_update'
+			},
+
+			_update : function() {
+				this.joinAttrs = [];
+				if( this.metadata.metadata.length == 0 ) return;
+
+				for( var i = 0; i < this.metadata.metadata[0].length; i++ ) {
+					this.joinAttrs.push(this.metadata.metadata[0][i]);
+				}
+			},
+
+			_onWorksheetMatch : function() {
+				this.$.filenameMatch.removeAttribute('checked');
+			},
+
+			_onFilenameMatch : function() {
+				this.$.worksheetMatch.removeAttribute('checked');
+			}
+
+		});
+	</script>
+</polymer-element>
