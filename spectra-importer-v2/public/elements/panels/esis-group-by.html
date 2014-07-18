@@ -1,32 +1,100 @@
 <polymer-element name="esis-group-by">
 	<template>
-    	esis-group-by
+		<style>
+			.input-wrapper {
+				margin: 20px;
+			}
+		</style>
+
+		<div style="font-size: 14px; color: #888">
+			Group your data by a certain attribute so related spectra within this dataset can easily be found in search.  Examples for this grouping include time series data, or data that is spatially related.  To group, first select the attribute in your dataset to group on.  This attribute should have the same value for all spectra in that group.  Next, provide a sort attribute.  For time, this would be the time attribute the spectra was taken at.  Finally, you can provide a description of this group to let others know what this grouping is.  Ex: "Spectra time series at 1 minute intervals"
+		</div>
+
+		<div class="input-wrapper">
+			Group By:
+			<select value="{{groupBy}}" on-change="{{_group}}">
+				<option value=""></option>
+				<template repeat="{{attr in ds.knownAttributes}}">
+					<option value="{{attr}}">{{attr}}</option>
+				</template>
+			</select>
+		</div>
+
+		<div class="input-wrapper">
+			Sort On:
+			<select value="{{sortOn}}">
+				<option value=""></option>
+				<template repeat="{{attr in ds.knownAttributes}}">
+					<option value="{{attr}}">{{attr}}</option>
+				</template>
+			</select>
+		</div>
+
+		<div class="input-wrapper">
+			<paper-input multiline rows="3" floatingLabel label="Description" value="{{description}}" ></paper-input>
+		</div>
+
+		<template bind if="{{groups.length > 0}}">
+			<div style="padding-bottom: 10px">Grouping Results: </div>
+			<template repeat="{{group in groups}}">
+				<div style="padding-left: 15px"><b>{{group.key}}:</b> {{group.value}}</div>
+			</template>
+		</template>
+
 
 	</template>
 	<script>
 		Polymer('esis-group-by', {
 			files : [],
 			menuItem : null,
+			ds : {},
+
+			groupBy : '',
+			sortOn : '',
+			description : '',
+
+			groups : [],
 
 			observe : {
-				files : '_updateVisibility'
+				'ds.files' : '_updateVisibility'
 			},
 
 			ready : function() {
 				 window.addEventListener('polymer-ready', function(e) {
 				 	this.async(function(){
-				 		this.files = document.querySelector('esis-datastore').files;
+				 		this.ds = document.querySelector('esis-datastore');
 				 	});
 				}.bind(this));
 			},
 
 			_updateVisibility : function() {
-				if( this.files.length > 0 ) {
+				if( this.ds.files.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';
 				}
-			}
+			},
+
+			_group : function() {
+				var result = {};
+				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+					if( this.ds.datasheets[i].isMetadata ) continue;
+					var sheet = this.ds.datasheets[i];
+
+					for( var i = 0; i < sheet.spectra.length; i++ ) {
+						var attr = sheet.spectra[i].getMetadataAttr(this.groupBy);
+						if( !attr ) continue;
+						if( result[attr] ) result[attr] += 1;
+						else result[attr] = 1;
+					}
+				}
+
+				this.groups = [];
+				for( var key in result ) {
+					this.groups.push({key: key, value: result[key]});
+				}
+			},
+
 		});
 	</script>
 </polymer-element>

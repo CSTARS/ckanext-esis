@@ -23,6 +23,8 @@
 				file : '_update'
 			},
 
+			knownAttributes : [],
+
 			ready : function() {
 				this.spectra = [];
 				this.metadata = {};
@@ -45,15 +47,33 @@
 								sp.metadata.file[key] = this.file.metadata[key];
 							}
 						}
+
+						this._updateKnownAttributes(sp);
 						this.spectra.push(sp);
 					}
+
+					this.fire('spectra-updated', this.knownAttributes);
 				} else if( this.file.joindata && this.file.joindata.length > 0 ) {
 					this.metadata = document.createElement('esis-metadata');
 					this.metadata.file = this.file;
 					this.metadata.metadata = this.file.joindata;
 					this.isMetadata = true;
 				}
+			},
 
+			_updateKnownAttributes : function(spectra) {
+				var list = spectra.getAttributes();
+
+				for( var i = 0; i < list.length; i++ ) {
+					if( this.knownAttributes.indexOf(list[i]) == -1 ) {
+						this.knownAttributes.push(list[i]);
+					}
+				}
+			},
+
+			joinAttributes : function() {
+				if( !this.isMetadata ) return [];
+				return this.metadata.joinAttributes();
 			},
 
 			_setTitle : function() {

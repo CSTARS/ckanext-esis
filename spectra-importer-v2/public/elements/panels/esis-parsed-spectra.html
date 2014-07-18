@@ -11,6 +11,10 @@
 			paper-tab::shadow #ink {
 				color: rgb(47, 155, 69);
 			}
+			a {
+				color : #2f9b45;
+				cursor: pointer;
+			}
 		</style>
 
     	<paper-tabs selected="{{selectedTab}}">
@@ -30,10 +34,11 @@
 				<span class="label success-label">File Level Metadata</span> 
 				<span class="label info-label">Spectra Level Metadata</span> 
 				<span class="label warning-label">Linked Metadata</span> <br>
-				<span style="color:#888;font-size:12px;padding:5px;font-style:italic">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out and upload a metadata map on the previous screen.</span>
+				<div style="color:#888;padding:8px;font-size:14px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out and upload a attribute map by <a on-tap="{{_gotoAttrMap}}">clicking here</a></div>
+				<div style="color:#888;padding:8px;font-size:14px">Need to join auxiliary metadata file? <a on-tap="{{_gotoJoin}}">Click Here.</a></div>
 			</div>
 
-			<div style="margin-top:20px">
+			<div style="margin-top:25px">
 				Select Spectra: 
 				<select id="spectraSelector" on-change="{{_selectSpectra}}">
 					<template repeat="{{sp,i in spectra}}">
@@ -117,6 +122,14 @@
 
 			_selectSpectra : function() {
 				this.selectedSpectra = this.spectra[parseInt(this.$.spectraSelector.value)];
+			},
+
+			_gotoAttrMap : function() {
+				window.location.hash = '#attribute-map';
+			},
+
+			_gotoJoin : function() {
+				window.location.hash = '#join';
 			}
 
 		});

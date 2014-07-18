@@ -19,14 +19,14 @@
 		</style>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Title" inputValue="{{titleInput}}" required></paper-input>
+			<paper-input floatingLabel label="Title" inputValue="{{ds.data.title}}"></paper-input>
 			<div style="margin-left:20px">
-				URL: {{baseUrl}}<span style="color:#888">{{titleClean}}</span>
+				URL: {{baseUrl}}<span style="color:#888">{{ds.data.name}}</span>
 			</div>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input multiline rows="3" floatingLabel label="Description" value="{{description}}" ></paper-input>
+			<paper-input multiline rows="3" floatingLabel label="Description" value="{{ds.data.notes}}" ></paper-input>
 		</div>
 
 		<div class="form-wrap">
@@ -38,7 +38,7 @@
 			<template bind if="{{licenses.length == 0}}">
 				Loading...
 			</template>
-			<select id="license" hidden?="{{licenses.length == 0}}">
+			<select id="license" hidden?="{{licenses.length == 0}}" value="{{ds.data.license_id}}">
        			<template repeat="{{item in licenses}}">
        				<option value="{{item.id}}">{{item.title}}</option>
        			</template>
@@ -50,7 +50,7 @@
 			<template bind if="{{organizations.length == 0}}">
 				Loading...
 			</template>
-			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{organization}}">
+			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
        			<template repeat="{{item in organizations}}">
        				<option value="{{item.id}}">{{item.display_name}}</option>
        			</template>
@@ -59,53 +59,46 @@
 
 		<div class="form-wrap" >
 			Visibility: <br />
-			<select id="visible" value="{{visible}}" disabled>
-				<option value="true">Public</option>
-				<option value="false">Private</option>
+			<select id="visible" value="{{ds.data.private}}" disabled>
+				<option value="false">Public</option>
+				<option value="true">Private</option>
 			</select>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Source"></paper-input>
+			<paper-input floatingLabel label="Version" value="{{ds.data.version}}"></paper-input>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Version"></paper-input>
+			<paper-input floatingLabel label="Author" value="{{ds.data.author}}"></paper-input>
+			<paper-input floatingLabel label="Author Email" value="{{ds.data.author_email}}"></paper-input>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Author"></paper-input>
-			<paper-input floatingLabel label="Author Email"></paper-input>
+			<paper-input floatingLabel label="Maintainer" value="{{ds.data.maintainer}}"></paper-input>
+			<paper-input floatingLabel label="Maintainer Email" value="{{ds.data.maintainer_email}}"></paper-input>
 		</div>
 
-		<div class="form-wrap">
-			<paper-input floatingLabel label="Maintainer"></paper-input>
-			<paper-input floatingLabel label="Maintainer Email"></paper-input>
-		</div>
-
-		<template bind if="{{titleInput != ''}}">
+		<template bind if="{{ds.data.title != ''}}">
 			Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
 		</template>
 
 	</template>
 	<script>
 		Polymer('esis-basic-fields', {
-			ds : '',
+			ds : {},
 
 			menuItem : null,
 			baseUrl : '',
 
-			titleInput : '',
-			description : '',
-			organization : '',
 			visible : true,
 
 			licenses : [],
 			organizations : [],
 
 			observe : {
-				titleInput : '_cleanTitle',
-				organization : '_onOrgChange'
+				'ds.data.title' : '_cleanTitle',
+				'ds.data.owner_org' : '_onOrgChange'
 			},
 
 			ready : function() {
@@ -127,14 +120,13 @@
 			},
 
 			_cleanTitle : function() {
-				this.titleClean = this.titleInput.toLowerCase().replace(/[^a-z0-9]/g,'-');
-				this.menuItem.setSecondaryHtml('<b>Dataset:</b> '+this.titleInput);
-				this.ds.datasetTitle = this.titleInput;
+				this.ds.data.name = this.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
+				this.menuItem.setSecondaryHtml('<b>Dataset:</b> '+this.ds.data.title);
 			},
 
 			_onOrgChange : function() {
 				if( this.organization == '' ) {
-					this.visible = true;
+					this.ds.data.private = false;
 					this.$.visible.setAttribute('disabled','disabled');
 				} else {
 					this.$.visible.removeAttribute('disabled');

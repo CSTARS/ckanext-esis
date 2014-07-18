@@ -5,18 +5,43 @@
 <polymer-element name="esis-datastore" attributes="files">
 	<script>
 		Polymer('esis-datastore', {
-			datasetTitle : '',
+			// is this an existing dataset
+			existing : false,
+
+			data : {
+				title : '',
+				name : '',
+				notes : '',
+				author : '',
+				author_email : '',
+				license_id : '',
+				license_title : '',
+				maintainer : '',
+				maintainer_email : '',
+				version : '',
+				owner_org : ''
+			},
+
+			// list of all new files
 			files : [],
+			// list of all new datasheets
 			datasheets : [],
+			// list of all new resources
 			resources  : [],
+
+			// list of current attribute map
 			attributeMap : {},
+
+			// list of currently known attributes for this dataset
+			knownAttributes : [],
+
 
 			observe : {
 				attributeMap : '_onAttributeMapUpdate'
 			},
 
 			ready : function() {
-				if( this.datasetTitle == '' ) window.location.hash = '#basic-fields';
+				if( this.data.title == '' ) window.location.hash = '#basic-fields';
 			},
 
 			addFile : function(raw, parseZip) {
@@ -46,8 +71,16 @@
 
 			addDatasheet : function(file, parsedContents) {
 				var ele = document.createElement('esis-datasheet');
+
+				// attach listener for when attributes have been aggregated
+				// add to known list when done
+				ele.addEventListener('spectra-updated', function(e){
+					this._addKnownAttributes(e.detail);
+				}.bind(this));
+
 				ele.file = file;
 				ele.contents = parsedContents;
+
 				this.datasheets.push(ele);
 				return ele;
 			},
@@ -62,11 +95,24 @@
 			},
 
 			join : function(metadata) {
+				var count = 0;
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					if( this.datasheets[i].isMetadata ) continue;
 
 					for( var j = 0; j < this.datasheets[i].spectra.length; j++ ) {
-						metadata.join(this.datasheets[i].spectra[j]);
+						if( metadata.join(this.datasheets[i].spectra[j]) ) count++;
+					}
+				}
+				metadata.matchCount = count;
+
+				// make sure to add new metadata attribute to known list
+				this._addKnownAttributes(metadata.joinAttributes());
+			},
+
+			_addKnownAttributes : function(attrList) {
+				for( var i = 0; i < attrList.length; i++ ) {
+					if( this.knownAttributes.indexOf(attrList[i]) == -1 ) {
+						this.knownAttributes.push(attrList[i]);
 					}
 				}
 			},

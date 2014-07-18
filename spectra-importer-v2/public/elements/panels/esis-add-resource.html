@@ -27,6 +27,10 @@
 			.fileinput.processing {
 				visibility: hidden;
 			}
+			a {
+				color : #2f9b45;
+				cursor: pointer;
+			}
 		</style>
 
 		<div horizontal layout>
@@ -64,6 +68,8 @@
 		    		<esis-ui-file file="{{file}}"></esis-ui-file>
 		    	</template>
 		    </div>
+
+		    Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
 	    </template>
     	
 		
@@ -77,7 +83,7 @@
 
 			observe : {
 				'ds.files' : '_updatePreview',
-				'ds.datasetTitle' : '_updateVisibility'
+				'ds.data.title' : '_updateVisibility'
 			},
 
 			ready : function() {
@@ -87,7 +93,7 @@
 			},
 
 			_updateVisibility : function() {
-				if( this.ds.datasetTitle.length > 0 ) {
+				if( this.ds.data.title.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';
@@ -124,6 +130,10 @@
 			    // once they add spectra, we only want them to update the spectra.json file
 			    // via the add resources button and not the special 'update group by' button.
 			    //esis.app.groupBy.hideUpdateButton();
+		  	},
+
+		  	_gotoInspect : function() {
+		  		window.location.hash = '#parsed-spectra';
 		  	},
 
 		  	_updatePreview : function() {

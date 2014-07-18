@@ -8,6 +8,7 @@
 			joinCol  : 0,
 			filenameMatch : false,
 			worksheetMatch : false,
+			matchCount : null,
 			ckanId : '',
 
 			_updateJoinRow : function() {
@@ -25,23 +26,49 @@
 				this._updateJoinRow();
 
 				var row = this._getRow(spectra);
-				if( row == -1 ) return;
+				if( row == -1 ) {
+					// remove any known attribute from the join
+					for( var j = 0; j < this.metadata[0].length; j++ ) {
+						if( spectra.metadata.joined[this.metadata[0][j]] != null ) {
+							delete spectra.metadata.joined[this.metadata[0][j]];
+						}
+					}
+					return false;
+				}
 
 				for( var j = 0; j < this.metadata[0].length; j++ ) {
 					if( j == this.joinCol && !(this.filenameMatch || this.worksheetMatch) ) continue;
 					spectra.metadata.joined[this.metadata[0][j]] = this.metadata[row][j];
 				}
-				return;
+				return true;
+			},
+
+			joinAttributes : function() {
+				if( this.metadata.length == 0 ) return [];
+
+				var list = [];
+				for( var i = 0; i < this.metadata[0].length; i++ ) {
+					list.push(this.metadata[0][i]);
+				}
+				return list;
 			},
 
 			_getRow : function(spectra) {
 				if( this.filenameMatch || this.worksheetMatch ) {
-					var regex;
+					var regex, val, name;
 					for( var i = 1; i < this.metadata.length; i++ ) {
-						var name = this.filenameMatch ? spectra.filename : spectra.sheetname;
+						name = this.filenameMatch ? spectra.filename : spectra.sheetname;
+						val = this.metadata[i][this.joinCol];
 
-						regex = new RegExp('.*'+this.metadata[i][this.joinCol]+'.*');
-						if( regex.test(name) ) {
+						// if the value doesn't have a period, assume we want to strip any extension on a filename match
+						if( val.indexOf('.') == -1 && this.filenameMatch ) {
+							name = name.replace(/\..*/,'');
+						}
+
+						//this can match too much
+						//regex = new RegExp('^'+this.metadata[i][this.joinCol]+'.*');
+						//if( regex.test(name) ) {
+						if( val == name ) {
 							return i;
 						}
 					}

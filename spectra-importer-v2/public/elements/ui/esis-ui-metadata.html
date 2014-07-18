@@ -34,6 +34,10 @@
 				    </div>
 				</div>
 
+				<template bind if="{{metadata.matchCount != null}}">
+					<div>Matched to {{metadata.matchCount}} spectra</div>
+				</template>
+
 			</div> 
 		</esis-ui-card>
 	</template>
@@ -62,17 +66,21 @@
 			},
 
 			_onWorksheetMatch : function() {
-				this.filenameMatch = false;
-				this.$.filenameMatch.removeAttribute('checked');
-				this.worksheetMatch = this.worksheetMatch.hasAttribute('checked');
-				this._updateDatastore();
+				this.async(function(){
+					this.metadata.filenameMatch = false;
+					this.$.filenameMatch.removeAttribute('checked');
+					this.metadata.worksheetMatch = this.$.worksheetMatch.checked;
+					this._updateDatastore();
+				});
 			},
 
 			_onFilenameMatch : function() {
-				this.worksheetMatch = false;
-				this.$.worksheetMatch.removeAttribute('checked');
-				this.filenameMatch = this.worksheetMatch.hasAttribute('checked');
-				his._updateDatastore();
+				this.async(function(){
+					this.metadata.worksheetMatch = false;
+					this.$.worksheetMatch.removeAttribute('checked');
+					this.metadata.filenameMatch = this.$.filenameMatch.checked;
+					this._updateDatastore();
+				});	
 			}
 
 		});

@@ -19,6 +19,29 @@
 					file : {},
 					joined : {}
 				}
+			},
+
+			getAttributes : function() {
+				var attrs = [], type, i, key;
+
+				for( i = 0; i < this.joinOrder.length; i++ ) {
+					type = this.metadata[this.joinOrder[i]];
+					for( key in type ) {
+						if( attrs.indexOf(key) == -1 ) attrs.push(key);
+					}
+				}
+
+				return attrs;
+			},
+
+			// shortend so we don't colid on ns
+			getMetadataAttr : function(attr) {
+				for( var i = 0; i < this.joinOrder.length; i++ ) {
+					if( this.metadata[this.joinOrder[i]][attr] ) {
+						return this.metadata[this.joinOrder[i]][attr];
+					}
+				}
+				return null;
 			}
 
 		});

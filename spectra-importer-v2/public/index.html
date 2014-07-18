@@ -31,6 +31,7 @@
     <link rel="import" href="elements/esis-item.html">
     <link rel="import" href="elements/esis-datastore.html">
     <link rel="import" href="elements/esis-parser.html">
+    <link rel="import" href="elements/esis-dataset-loader.html">
 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
@@ -208,7 +209,7 @@
       <paper-fab class="sourceButton bottom" icon="launch"></paper-fab>
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
-      <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
+      <!--<esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>-->
       <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
       <esis-item label="Set Attribute Map" style="display:none" tag="attribute-map" ele="esis-attribute-map"></esis-item>
       <esis-item label="Parsed Spectra" tag="parsed-spectra" ele="esis-parsed-spectra"></esis-item>
@@ -219,6 +220,7 @@
 
     <esis-datastore></esis-datastore>
     <esis-parser></esis-parser>
+    <esis-dataset-loader></esis-dataset-load>
   
 
   </body>
