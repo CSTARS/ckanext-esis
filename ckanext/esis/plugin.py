@@ -72,7 +72,8 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         map.connect('get_spectra_package_info', '/spectra/info', controller=controller, action='info')
 
-        map.connect('download_spectra_package', '/spectra/download', controller=controller, action='download')
+
+        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackage')
 
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
