@@ -11,6 +11,7 @@
 			ckanId : '',
 			joinOrder : ['joined', 'file', 'spectra'],
 			metadata : {},
+			spectra_id : '',
 
 			ready : function() {
 				this.data = [];
@@ -52,6 +53,26 @@
 					}
 				}
 				return md;
+			},
+
+			updateUid : function()  {
+				var uid = document.querySelector('esis-datastore').spectraDisambiguator;
+
+				var field = '';
+				if( uid && uid.length > 0 ) {
+					for( var i = 0; i < this.joinOrder.length; i++ ) {
+						if( this.metadata[this.joinOrder[i]][field] ) {
+							field = this.metadata[this.joinOrder[i]][field];
+							break;
+						}
+					}
+				}
+
+				if( uid.length > 0 ) {
+					this.spectra_id = md5(JSON.stringify(this.data)+field);
+				} else {
+					this.spectra_id = md5(JSON.stringify(this.data));
+				}
 			}
 
 		});

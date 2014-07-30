@@ -110,10 +110,7 @@
 			},
 
 			_addResources : function(pkg) {
-				this.statusText = 'Preparing Resources...';
-
-				var resources = this.ds.resources;
-				
+				this.statusText = 'Preparing Resources...';				
 
 				// verify verify everything is ok
 				// if not, quit
@@ -133,22 +130,46 @@
 				_addResourceToCkan(0, pkg.name);
 			},
 
+			_addResourceToCkan: function(index, pkgid) {
+				if( this.ds.resources.length >= index ) {
+					this._uploadSpectraResource();
+				} else {
+					this.statusText = 'Uploading '+this.ds.resources[index].filename+'...';
+					this.ckan.addResource(
+						pkgid, 
+						this.ds.resources[index], 
+						false, 
+						function(err, resp){
+							if( err ) {
+								this.uploading = false;
+								return alert('Error creating ckan resource');
+							}
+
+							index++;
+							this._addResourceToCkan(index, pkgid);
+						}.bind(this), 
+						function(progress){
+							this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+progress+'%)...';
+						}.bind(this)
+					);
+				}
+			},
+
 			_isDataUnique: function() {
 				var spectra = [];
+				var ids = [];
 
 				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
 					var f = this.ds.datasheets[i];
 					for( var j = 0; j < f.spectra.length; j++ ) {
-						this.spectra.push(f.spectra[j]);
+						// make sure the latest uid for the spectra is generated
+						f.spectra[j].updateUid();
+
+						if( ids.indexOf( f.spectra[j].spectra_id ) != -1 ) return false;
+						else ids.push( f.spectra[j].spectra_id );
 					}
 				}
 
-
-				var ids = [];
-				for( var i = 0; i < dataset.data.length; i++ ) {
-					if( ids.indexOf( dataset.data[i].spectra_id ) != -1 ) return false;
-					else ids.push( dataset.data[i].spectra_id );
-				}
 				return true;
 			},
 
@@ -158,7 +179,7 @@
 				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
 					var f = this.ds.datasheets[i];
 					for( var j = 0; j < f.spectra.length; j++ ) {
-						this.spectra.push(f.spectra[j]);
+						spectra.push(f.spectra[j]);
 					}
 				}
 
@@ -195,12 +216,6 @@
 						}
 					}
 
-					if( uid.length > 0 && d[uidType][uid] ) {
-						d.spectra_id = md5(JSON.stringify(d.spectra)+d[uidType][uid]);
-					} else {
-						d.spectra_id = md5(JSON.stringify(d.spectra));
-					}
-
 					data.push(d);
 				}
 
@@ -223,8 +238,6 @@
 					}
 				};
 
-				
-
 				// we need to clean all of the attribute here ...
 				for( var i = 0; i < dataset.data.length; i++ ) {
 					var metadata = dataset.data[i].metadata;
@@ -243,51 +256,57 @@
 					}
 				}
 
-				if( asJson ) return dataset;
-
-				// TODO: if you find spectra with the same id, user needs to 
-				// define a disambiguator field
-
 				var resource = new esis.structures.Resource();
 				resource.setContents(JSON.stringify(dataset));
 				resource.setFilename('esis_spectral_data.json');
 				resource.setMimetype('application/json');
 				return resource;
-			}
+			},
 
-			
+	    	_uploadSpectraResource : function(pkg, callback) {
+		        this._cleanOldSpectralResource(pkg.id, function(){
+		        	this.statusText = 'Uploading spectral data resource...';
+			        this.ckan.addResource(
+						pkg.id, 
+						this._createSpectraJsonResource(), 
+						false, 
+						function(err, resp){
+							if( err ) {
+								this.uploading = false;
+								return alert('Error creating ckan resource');
+							}
 
-		    _fireComplete : function(error, callback) {
-		        if( typeof callback == 'object' && callback.oncomplete ) {
-		            callback.oncomplete(error);
-		        } else {
-		            callback(error);
-		        }
+							index++;
+							this._addResourceToCkan(index, pkgid);
+						}.bind(this), 
+						function(progress){
+							this.statusText = 'Uploading spectral data resource ('+progress+'%)...';
+						}.bind(this)
+					);
+		        }.bind(this));
 		    },
 
-	    	// clean spectra first
-	    	uploadSpectraResource : function(pkg, resource, btn, callback) {
-		        if( btn ) btn.html('Cleaning old spectral data...');
-		        $.ajax({
-		            url: esis.host + '/api/action/package_show?id='+pkg,
-		            beforeSend: function (request) {
-		                request.setRequestHeader('Authorization', _getKey());
-		            },
-		            success: function(response) {
-		                _removeSpectraResources(0, response.result.resources, function(){
-		                    if( btn ) btn.html('Uploading new spectral data...');
+		    _cleanOldSpectralResource : function(pkgid, callback) {
+		    	this.statusText = 'Cleaning old spectral data';
 
-		                    // now upload
-		                    upload(pkg, resource, {
-		                        oncomplete : function() { callback() },
-		                        onprogress : function(progress) {
-		                            if( btn ) btn.html('Uploading new spectral data... '+(progress*100).toFixed(0)+'%');
-		                        }
-		                    }, true);
-		                });
-		            }
-		        });
-		    },
+		    	this.ckan.getPackage(pkgid, function(err, pkg){
+		    		if( err ) return callback(err);
+
+		    		if( !pkg.resources ) return callback();
+		    		for( var i = 0; i < pkg.resources.length; i++ ) {
+		    			if( pkg.resources[i].name == 'esis_spectral_data.zip' ) {
+
+		    				this.ckan.removeResource(pkg.resources[i].id, function(err, resp){
+		    					if( err ) return callback(err);
+		    					callback();
+		    				});
+		    				return;
+		    			}
+		    		}
+		    	}.bind(this));
+		    }
+
+
 
 		    
 		});
