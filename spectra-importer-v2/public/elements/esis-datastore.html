@@ -35,7 +35,6 @@
 			// list of currently known attributes for this dataset
 			knownAttributes : [],
 
-
 			observe : {
 				attributeMap : '_onAttributeMapUpdate'
 			},
@@ -117,9 +116,9 @@
 				}
 			},
 
-			_onAttributeMapUpdate : function(oldData, newData) {
+			_onAttributeMapUpdate : function(oldMap, newMap) {
 				//console.log(oldData);
-				//console.log(newData);
+				this.attributeMap = newMap;
 			}
 		});
 	</script>

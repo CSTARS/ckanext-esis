@@ -1,0 +1,67 @@
+<link rel="import" href="../../components/paper-shadow/paper-shadow.html" />
+
+<polymer-element name="esis-verify-dataset" attributes="ds counts">
+	<template>
+		<style>
+			table {
+				border-spacing: 0px;
+				width: 100%;
+			}
+			table tr td {
+				padding: 5px;
+			}
+			table tr td:nth-child(2) {
+				color: #888;
+			}
+			table tr:nth-child(odd) {
+				background-color: #f8f8f8;
+			}
+			h4 {
+				color: #888;
+			}
+			h2 {
+				color: #2f9b45;
+			}
+			.card {
+				padding: 15px;
+				margin: 15px;
+				min-width: 350px;
+			}
+		</style>
+
+		<h2>Verify Dataset</h2>
+		<div>
+			Please verify all information looks correct before finalizing and uploading your data.
+		</div>
+
+		<div class="card">
+			<paper-shadow></paper-shadow>
+			
+			<h4>Basic Information</h4>
+			<table>
+				<tr><td>Name</td><td>{{ds.data.name}}</td></tr>
+				<tr><td>Description</td><td>{{ds.data.notes}}</td></tr>
+				<tr><td>License</td><td>{{ds.data.license_title}}</td></tr>
+				<tr><td>Organization</td><td>{{ds.data.owner_org}}</td></tr>
+				<tr><td>Visibility</td><td>{{ds.data.visibility}}</td></tr>
+				<tr><td>Version</td><td>{{ds.data.version}}</td></tr>
+				<tr><td>Author</td><td>{{ds.data.author}} {{data.ds.author_email}}</td></tr>
+				<tr><td>Maintainer</td><td>{{ds.data.maintainer}} {{data.ds.maintainer_email}}</td></tr>
+			</table>
+		</div>
+
+		<div class="card">
+			<paper-shadow z="1"></paper-shadow>
+			<h4>Resource Information</h4>
+			<table>
+				<tr><td>Total Resources</td><td>{{ds.files.length}}</td></tr>
+				<tr><td>Metadata Resources</td><td>{{counts.metadataResources}}</td></tr>
+				<tr><td>Spectra Resources</td><td>{{counts.spectraResources}}</td></tr>
+				<tr><td># Parsed Spectra</td><td>{{counts.spectra}}</td></tr>
+			</table>
+		</div>
+	</template>
+	<script>
+		Polymer('esis-verify-dataset', {});
+	</script>
+</polymer-element>

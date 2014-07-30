@@ -56,7 +56,9 @@
 			groups : [],
 
 			observe : {
-				'ds.files' : '_updateVisibility'
+				'ds.knownAttributes' : '_updateVisibility',
+				groupBy : '_updateButton',
+				sortOn : '_updateButton'
 			},
 
 			ready : function() {
@@ -68,7 +70,7 @@
 			},
 
 			_updateVisibility : function() {
-				if( this.ds.files.length > 0 ) {
+				if( this.ds.knownAttributes.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';
@@ -81,8 +83,8 @@
 					if( this.ds.datasheets[i].isMetadata ) continue;
 					var sheet = this.ds.datasheets[i];
 
-					for( var i = 0; i < sheet.spectra.length; i++ ) {
-						var attr = sheet.spectra[i].getMetadataAttr(this.groupBy);
+					for( var j = 0; j < sheet.spectra.length; j++ ) {
+						var attr = sheet.spectra[j].getMetadataAttr(this.groupBy);
 						if( !attr ) continue;
 						if( result[attr] ) result[attr] += 1;
 						else result[attr] = 1;
@@ -94,6 +96,10 @@
 					this.groups.push({key: key, value: result[key]});
 				}
 			},
+
+			_updateButton : function() {
+				this.menuItem.setSecondaryHtml('Group By: '+this.groupBy+'<br /> Sort On: '+this.sortOn);
+			}
 
 		});
 	</script>

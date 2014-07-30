@@ -26,12 +26,13 @@
     <link rel="import" href="components/core-item/core-item.html">
     <link rel="import" href="components/core-menu/core-submenu.html">
     <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
-    <link rel="import" href="components/paper-fab/paper-fab.html">
     <link rel="import" href="elements/esis-scaffold.html">
     <link rel="import" href="elements/esis-item.html">
     <link rel="import" href="elements/esis-datastore.html">
     <link rel="import" href="elements/esis-parser.html">
     <link rel="import" href="elements/esis-dataset-loader.html">
+    <link rel="import" href="elements/esis-dataset-creator.html">
+    <link rel="import" href="elements/esis-ckan.html">
 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
@@ -206,13 +207,15 @@
     <esis-scaffold label="Ecosis Dataset Editor" fit touch-action="auto">
 
       <paper-icon-button class="menuButton" icon="menu" ></paper-icon-button>
-      <paper-fab class="sourceButton bottom" icon="launch"></paper-fab>
+      <esis-dataset-creator class="sourceButton bottom"></esis-dataset-creator>
+
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
       <!--<esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>-->
       <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
-      <esis-item label="Set Attribute Map" style="display:none" tag="attribute-map" ele="esis-attribute-map"></esis-item>
+      
       <esis-item label="Parsed Spectra" tag="parsed-spectra" ele="esis-parsed-spectra"></esis-item>
+      <esis-item label="Set Attribute Map" tag="attribute-map" ele="esis-attribute-map"></esis-item>
       <esis-item label="Group Dataset" tag="group-by" ele="esis-group-by"></esis-item>
       <esis-item label="Join Metadata" tag="join" ele="esis-join"></esis-item>
 
@@ -221,6 +224,7 @@
     <esis-datastore></esis-datastore>
     <esis-parser></esis-parser>
     <esis-dataset-loader></esis-dataset-load>
+    <esis-ckan></esis-ckan>
   
 
   </body>

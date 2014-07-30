@@ -1,0 +1,134 @@
+<polymer-element name="esis-ckan">
+	<template></template>
+	<script>
+		Polymer('esis-ckan',{
+
+			/**
+			 * Create a ckan package
+			 *
+			 * pkg: object respresenting the package to be uploaded
+			 * callback: callback handler
+			 **/
+			createPackage : function(pkg, callback) {
+				$.ajax({
+					url : esis.host+'/api/3/action/package_create',
+					type : 'POST',
+					data : pkg,
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, response.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
+			/**
+			 * Get a ckan package by id
+			 *
+			 * pkgid: package id
+			 * callback: callback handler
+			 **/
+			getPackage : function(pkgid, callback) {
+				$.ajax({
+		            url: esis.host + '/api/action/package_show?id='+pkgid,
+		            //beforeSend: function (request) {
+		            //    request.setRequestHeader('Authorization', _getKey());
+		            //},
+		            success: function(response) {
+		                if( !response.success ) return callback(response);
+		                callback(null, response.result);
+		            },
+		            error: function() {
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
+			/**
+			 * Add a resource to a package using the browsers FormData object
+			 *
+			 * pkgid: id of the package to add to 
+			 * resource: esis-resource element representing the to resource to upload
+			 * isSpectra: is the resource the special ecosis spectral package
+			 * callback: callback handler
+			 * progress: callback for progress update
+			 **/
+			addResource : function(pkgid, resource, isSpectra, callback, progress) {
+		        // TODO: if this fails, we have an issue on our hands
+		    	var formData = new FormData();
+
+		        var filename = resource.filename.replace(/.*\//,'');
+		        if( filename.length == 0 ) {
+		            return callback({error:true,message:'Invalid filename: '+resource.filename});
+		        }
+
+		    	formData.append('package_id', pkgid);
+		    	formData.append('mimetype',resource.mimetype);
+		    	formData.append('name', filename);
+		    	formData.append('upload', new Blob([resource.contents], {type: resource.mimetype}), filename);
+
+		        var xhr = $.ajaxSettings.xhr();
+		        // attach progress handler to the XMLHttpRequest Object
+		        try {
+		            if( progress ) {
+		                xhr.upload.addEventListener("progress", function(evt){
+		                    if (evt.lengthComputable) {  
+		                        var percentComplete = evt.loaded / evt.total;
+		                        progress(percentComplete);
+		                    }
+		                }, false); 
+		            }
+		        } catch(e) {}
+
+		    	$.ajax({
+				    url: esis.host + (isSpectra ? '/spectra/add' : '/api/action/resource_create'),
+				    type: "POST",
+				    data: formData,
+				    processData: false,
+				    contentType: false,
+		            xhr : function() {
+		                return xhr;
+		            },
+				    // Assuming you are logged in via cookies
+				    //beforeSend: function (request, t1, t2) {
+		            //    request.setRequestHeader('Authorization', _getKey());
+		          	//},
+				    success: function(response, status) {
+		                if( response.success ) {
+		                    if( response.result.name != 'esis_spectral_data.zip' ) {
+		                        resource.ckanId = response.result.id;
+		                    }
+				            _fireComplete(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function() {
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
+			removeResource: function(resourceId, callback) {
+		        $.ajax({
+	                type: 'POST',
+	                url: esis.host + '/api/action/resource_delete',
+	                data : JSON.stringify({id : resourcesId }),
+	                //should be logged in via cookie
+	                //beforeSend: function (request) {
+	                //    request.setRequestHeader('Authorization', _getKey());
+	                //},
+	                success: function(response) {
+	                    if( !response.success ) return callback(response);
+	                    callback(null, response);
+	                },
+	                error : function(){
+	                	callback({error:true,message:'Request Error'});
+	                }
+		        });
+		    }
+		});
+	</script>
+</polymer-element>	

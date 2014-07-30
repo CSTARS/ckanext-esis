@@ -3,10 +3,17 @@
 
 <polymer-element name="esis-ui-metadata" attributes="metadata">
 	<template>
+		<style>
+			:host {
+				display: block;
+				margin-bottom: 20px;
+			}
+		</style>
+
 		<esis-ui-card z="1" style="padding: 1px 20px 10px 20px">
 			<h4>
-				{{metadata.file.info.name}}
-				<template bind if="{{metadata.file.sheetName != ''}}">
+				{{label}}
+				<template bind if="{{metadata.file.sheetName.length > 0}}">
 					- {{metadata.file.sheetName}}
 				</template>
 			</h4>
@@ -26,6 +33,16 @@
 				     	Match on Filename
 				    </div>
 				</div>
+				<div horizontal layout style="margin: 30px 45px" hidden?="{{!metadata.filenameMatch}}" >
+				    <paper-checkbox id="looseMatch" on-tap="{{_onLooseMatch}}0" checked></paper-checkbox>
+				    <div style="padding-left: 20px">
+				     	<div>Exact match</div>
+				     	<div style="font-size:12px;color:#888">
+				     		If checked, the attribute value must match the filename exactly.  Otherwise, the filename just needs to contain the attribute value to match.
+				     	</div>
+				    </div>
+				</div>
+
 
 				<div horizontal layout style="margin: 30px 15px" hidden?="{{metadata.file.sheetName == ''}}" >
 				    <paper-checkbox id="worksheetMatch" on-tap="{{_onWorksheetMatch}}"></paper-checkbox>
@@ -45,6 +62,7 @@
 		Polymer('esis-ui-metadata', {
 			metadata : {},
 			joinAttrs : [],
+			label : '',
 
 			observe : {
 				metadata : '_update',
@@ -58,6 +76,8 @@
 				for( var i = 0; i < this.metadata.metadata[0].length; i++ ) {
 					this.joinAttrs.push(this.metadata.metadata[0][i]);
 				}
+
+				this.label = this.metadata.file.info.name.replace(/.*\//,'');
 			},
 
 			_updateDatastore : function() {
@@ -79,6 +99,13 @@
 					this.metadata.worksheetMatch = false;
 					this.$.worksheetMatch.removeAttribute('checked');
 					this.metadata.filenameMatch = this.$.filenameMatch.checked;
+					this._updateDatastore();
+				});	
+			},
+
+			_onLooseMatch : function() {
+				this.async(function(){
+					this.metadata.looseMatch = !this.$.looseMatch.checked;
 					this._updateDatastore();
 				});	
 			}

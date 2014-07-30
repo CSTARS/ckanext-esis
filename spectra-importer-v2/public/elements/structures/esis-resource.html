@@ -8,6 +8,7 @@
 			ext        : '',
 			datasheets : [],
 			title      : '',
+			ckanId     : '',
 
 			observe : {
 				filename : '_setTitle'
@@ -16,6 +17,13 @@
 			_setTitle : function() {
 				this.title = this.filename.replace(/.*\//,'');
 				if( this.title.length == 0 || this.title == ' ' ) this.title = this.filename;
+			},
+
+			setCkanId : function(ckanId) {
+				this.ckanId = ckanId;
+				for( var i = 0; i < datasheets.length; i++ ) {
+					this.datasheets.setCkanId(ckanId);
+				}
 			}
 
 		});

@@ -15,40 +15,68 @@
 				color : #2f9b45;
 				cursor: pointer;
 			}
+			.next {
+				margin-top: 10px;
+				padding: 10px;
+				background-color: #f8f8f8;
+				border-radius: 6px;
+			}
+			.s-selector {
+				margin: 25px 0 10px 0;
+				padding: 5px;
+			}
+			ul li {
+				padding: 3px;
+			}
 		</style>
 
-    	<paper-tabs selected="{{selectedTab}}">
-		    <paper-tab>Datasheet View</paper-tab>
-		    <paper-tab>Spectra View</paper-tab>
-		</paper-tabs>
+		<div style="color:#888;font-size:14px;margin-bottom:40px">
+			<div>This panel shows the current state of your newely added spectra.  Please verify your spectral data looks correct.</div>
 
-
-		<div style="display: {{ selectedTab == 0 ? 'block' : 'none' }}">
-			<template repeat="{{datasheet in spectraDatasheets}}">
-				<esis-ui-datasheet datasheet="{{datasheet}}"></esis-ui-datasheet>
-			</template>
-		</div>
-		<div style="display: {{ selectedTab == 1 ? 'block' : 'none' }}">
-			<h2>{{spectra.length}} Spectra Found</h2>
-			<div>
-				<span class="label success-label">File Level Metadata</span> 
-				<span class="label info-label">Spectra Level Metadata</span> 
-				<span class="label warning-label">Linked Metadata</span> <br>
-				<div style="color:#888;padding:8px;font-size:14px">* = Custom field, custom fields will still be stored, but if the field maps to an Ecosis Attribute, please fill out and upload a attribute map by <a on-tap="{{_gotoAttrMap}}">clicking here</a></div>
-				<div style="color:#888;padding:8px;font-size:14px">Need to join auxiliary metadata file? <a on-tap="{{_gotoJoin}}">Click Here.</a></div>
+			<div class="next">
+				<h4>Possible next steps include:</h4>
+				<ul>
+					<li><a on-tap="{{_gotoAttrMap}}">Set Attribute Map</a> - If you have custom fields below (marked with an '*') that map to Ecosis metadata fields, please upload a attribute map file.</li>
+					<li><a on-tap="{{_gotoJoin}}">Join Auxiliary Metadata</a> - If you uploaded your metadata in a separate file you will need to join the metadata to your spectra.</li>
+					<li><a on-tap="{{_gotoGroup}}">Set Dataset Group</a> - If your dataset has logical groups users should know about (ex: time series, spatially related) you can define those groups here.</li>
+				</ul>
 			</div>
-
-			<div style="margin-top:25px">
-				Select Spectra: 
-				<select id="spectraSelector" on-change="{{_selectSpectra}}">
-					<template repeat="{{sp,i in spectra}}">
-						<option value="{{i}}">{{i+1}}</option>
-					</template>
-				</select>
-			</div>
-
-			<esis-ui-spectra id="spectraUI" spectra="{{selectedSpectra}}"></esis-ui-spectra>
 		</div>
+
+
+		<esis-ui-card style="padding:15px">
+	    	<paper-tabs selected="{{selectedTab}}">
+			    <paper-tab>Spectra View</paper-tab>
+			    <paper-tab>Datasheet View</paper-tab>
+			</paper-tabs>
+
+
+			<div hidden?="{{selectedTab == 0}}">
+				<template repeat="{{datasheet in spectraDatasheets}}">
+					<esis-ui-datasheet datasheet="{{datasheet}}"></esis-ui-datasheet>
+				</template>
+			</div>
+			<div hidden?="{{selectedTab == 1}}">
+				<h2>{{spectra.length}} Spectra Found</h2>
+				<div>
+					<span class="label success-label">File Level Metadata</span> 
+					<span class="label info-label">Spectra Level Metadata</span> 
+					<span class="label warning-label">Linked Metadata</span> <br>
+					<div style="color:#888;padding:8px;font-size:14px">* Custom non-ecosis field</div>
+				</div>
+
+				<div class="s-selector">
+					Select Spectra: 
+					<select id="spectraSelector" on-change="{{_selectSpectra}}">
+						<template repeat="{{sp,i in spectra}}">
+							<option value="{{i}}">{{i+1}}</option>
+						</template>
+					</select>
+				</div>
+
+				<esis-ui-spectra id="spectraUI" spectra="{{selectedSpectra}}"></esis-ui-spectra>
+			</div>
+		</esis-ui-card>
 
 	</template>
 	<script>
@@ -130,6 +158,10 @@
 
 			_gotoJoin : function() {
 				window.location.hash = '#join';
+			},
+
+			_gotoGroup : function() {
+				window.location.hash = '#group-by';
 			}
 
 		});

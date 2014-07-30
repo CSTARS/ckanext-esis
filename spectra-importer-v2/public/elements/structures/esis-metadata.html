@@ -6,8 +6,11 @@
 			metadata : [],
 			joinId   : '',
 			joinCol  : 0,
+
 			filenameMatch : false,
+			looseMatch : false,
 			worksheetMatch : false,
+			
 			matchCount : null,
 			ckanId : '',
 
@@ -65,10 +68,10 @@
 							name = name.replace(/\..*/,'');
 						}
 
-						//this can match too much
-						//regex = new RegExp('^'+this.metadata[i][this.joinCol]+'.*');
-						//if( regex.test(name) ) {
-						if( val == name ) {
+						// this can match too much
+						if( this.looseMatch && name.indexOf(val) > -1 ) {
+							return i;
+						} else if( val == name ) {
 							return i;
 						}
 					}

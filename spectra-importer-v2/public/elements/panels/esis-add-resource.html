@@ -31,7 +31,32 @@
 				color : #2f9b45;
 				cursor: pointer;
 			}
+			.new-resources {
+				margin: 50px 0;
+				padding: 10px;
+				background-color: #eee;
+				border-radius: 3px;
+			}
+			.new-resources h4 {
+				color: #888;
+			}
+			.next {
+				opacity: 0;
+				transition: opacity 500ms linear;
+				-webkit-transition: opacity 500ms linear;
+				-moz-transition: opacity 500ms linear;
+			}
+			.next.ready {
+				opacity: 1;
+			}
 		</style>
+
+		<div style="font-size:14px;color:#888">
+			<span>Add new files below by using the file selector or drag files over the drop zone.</span><br />
+			<span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
+		    	Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
+		    </span>
+		</div>
 
 		<div horizontal layout>
 		    <paper-checkbox checked="{{parseZip}}"></paper-checkbox>
@@ -63,14 +88,16 @@
 
 	    <template bind if="{{ds.files.length > 0}}">
 	    	<div class="new-resources">
-		    	<h2>New Files</h2>
+		    	<h4>New Files</h4>
 		    	<template repeat="{{file in ds.files}}">
 		    		<esis-ui-file file="{{file}}"></esis-ui-file>
 		    	</template>
 		    </div>
-
-		    Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
 	    </template>
+
+	    <span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
+	    	Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
+	    </span>
     	
 		
 	</template>

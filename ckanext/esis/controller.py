@@ -29,6 +29,7 @@ class SpectraController(PackageController):
         for item in params.multi.dicts:
             if hasattr(item, '_items'):
                 if len(item._items) > 0:
+                    # for an update proly need to splice in here
                     resource = self._create_resource(item._items)
                     return json.dumps(resource)
 
@@ -98,6 +99,7 @@ class SpectraController(PackageController):
     def get(self):
         id = request.params.get('id')
         compress = request.params.get('compressed')
+        metadataOnly = request.params.get('metadataOnly')
 
         context = {'model': model, 'user': c.user}
         upload = uploader.ResourceUpload(logic.get_action('resource_show')(context, {'id': id}))
@@ -107,6 +109,12 @@ class SpectraController(PackageController):
             id = request.params.get('id')
             zf = zipfile.ZipFile(upload.get_path(id))
             data = zf.read('esis_spectral_data.json')
+
+            if metadataOnly == 'true':
+                # need to splice out the spectra
+                tmp = 1
+
+
             response.headers["Content-Type"] = "application/json"
         else:
             file = open(upload.get_path(id), 'r')

@@ -5,9 +5,11 @@
 <polymer-element name="esis-ui-datasheet" attributes="datasheet">
 	<template>
 		<style>
-			esis-ui-card {
+			.card {
 				margin: 10px 5px;
 				padding: 5px;
+				border: 1px solid #ccc;
+				border-radius: 3px;
 			}
 			table tr th {
 				text-align: left;
@@ -22,7 +24,7 @@
 			}
 		</style>
 
-		<esis-ui-card z="1">
+		<div class="card">
 			<h4><span style="color: #888">{{datasheet.label}}</span> <span style="float: right">Parser: {{datasheet.file.info.parser}}</span></h4>
 			
 			<template bind if="{{datasheet.file.error}}">
@@ -65,7 +67,10 @@
 					</template>
 
 					<template bind if="{{fileMetadata.length == 0 && spectraMetadata.length == 0 && joinableMetadata.length == 0}}">
-						No spectra or metadata parsed from this file.
+						No metadata parsed from this file.
+					</template>
+					<template bind if="{{datasheet.spectra.length == 0}}">
+						No spectra parsed from this file.
 					</template>
 
 					<div id="chart"></div>
@@ -78,7 +83,7 @@
 				</core-collapse>
 			</div>
 
-		</esis-ui-card>
+		</div>
 	</template>
 	<script>
 		Polymer('esis-ui-datasheet', {

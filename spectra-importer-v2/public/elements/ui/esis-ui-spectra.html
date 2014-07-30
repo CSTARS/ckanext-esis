@@ -3,9 +3,11 @@
 <polymer-element name="esis-ui-spectra" attributes="spectra">
 	<template>
 		<style>
-			esis-ui-card {
+			.card {
 				margin: 10px 5px;
 				padding: 5px;
+				border: 1px solid #ccc;
+				border-radius: 3px;
 			}
 			table tr th {
 				text-align: left;
@@ -21,7 +23,7 @@
 			}
 		</style>
 
-		<esis-ui-card z="1">
+		<div class="card">
 			<h4 style="color: #888">From - {{spectra.filename}}</h4>
 
 			<table style="width:100%">
@@ -37,7 +39,7 @@
 			</table>
 
 			<div id="chart" style="height:400px"></div>
-		</esis-ui-card>
+		</div>
 	</template>
 	<script>
 		Polymer('esis-ui-spectra', {
@@ -69,18 +71,22 @@
 				if( !this.spectra ) return;
 				if( !this.spectra.metadata ) return;
 
-				var label, key;
+				var attrMap = document.querySelector('esis-datastore').attributeMap;
+				var flipMap = {};
+				// flip the map;
+				for( var key in attrMap ) {
+					if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
+				}
+
+				var key;
 				for( key in this.spectra.metadata.file ) {
-					label = esis.metadata[key] ? key : '*'+key;
-					this.metadata.file.push({key:label, value:this.spectra.metadata.file[key]});
+					this.metadata.file.push({key:this._getLabel(key, flipMap), value:this.spectra.metadata.file[key]});
 				}
 				for( key in this.spectra.metadata.joined ) {
-					label = esis.metadata[key] ? key : '*'+key;
-					this.metadata.joined.push({key:label, value:this.spectra.metadata.joined[key]});
+					this.metadata.joined.push({key:this._getLabel(key, flipMap), value:this.spectra.metadata.joined[key]});
 				}
 				for( key in this.spectra.metadata.spectra ) {
-					label = esis.metadata[key] ? key : '*'+key;
-					this.metadata.spectra.push({key:label, value:this.spectra.metadata.spectra[key]});
+					this.metadata.spectra.push({key:this._getLabel(key, flipMap), value:this.spectra.metadata.spectra[key]});
 				}
 
 				this.dt = new google.visualization.DataTable();
@@ -107,6 +113,14 @@
 		      	setTimeout(function(){
 		      		this._drawChart();
 		      	}.bind(this), 200);
+			},
+
+			_getLabel : function(key, attrMap) {
+				if( attrMap[key] ) {
+					 return (esis.metadata[attrMap[key]] ? attrMap[key] : '*'+attrMap[key]) + ' (' +
+					 		(esis.metadata[key] ? key : '*'+key) + ')';
+				}
+				return esis.metadata[key] ? key : '*'+key;
 			},
 
 			show : function() {

@@ -1,0 +1,295 @@
+<link rel="import" href="../components/paper-fab/paper-fab.html">
+<link rel="import" href="panels/esis-verify-dataset.html" />
+
+<polymer-element name="esis-dataset-creator">
+	<template>
+		<link rel="stylesheet" href="../components/animate-css/animate.min.css">
+		<style>
+			paper-fab {
+				color: #2f9b45;
+				background-color: white;
+				position: absolute;
+				right: 10px;
+				top: -55px;
+				cursor: pointer;
+			}
+			paper-fab:hover {
+				background-color: #eee;
+			}
+		</style>
+
+		<paper-fab icon="check-circle-outline" on-tap="{{show}}" hidden?="{{hide}}" class="animated rollIn"></paper-fab>
+		
+		<paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom">
+			<div hidden?="{{uploading}}">
+				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}"></esis-verify-dataset>
+
+				<paper-button label="Finalize"><paper-button>
+			</div>
+			<div hidden?="{{!uploading}}">
+				<h4>Creating Dataset...</h4>
+				<div>{{statusText}}</div>
+			</div>
+		</paper-dialog>
+	</template>
+	<script>
+		Polymer('esis-dataset-creator', {
+			hide : true,
+			ds : {},
+			ckan : {},
+
+			counts : {
+				spectraResources : 0,
+				metadataResources : 0,
+				spectra : 0
+			},
+
+			observe : {
+				'ds.data.name' : '_updateVisibility',
+				'ds.files' : '_filesUpdated'
+			},
+
+			uploading : false,
+			statusText : '',
+
+			ready : function() {
+				this.ds = document.querySelector('esis-datastore');
+				this.ckan = document.querySelector('esis-ckan');
+			},
+
+			show : function() {
+				this.$.dialog.toggle();
+			},
+
+			_filesUpdated : function() {
+				this.async(function(){
+					this.counts = {
+						spectraResources : 0,
+						metadataResources : 0,
+						spectra : 0
+					};
+
+					for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+						if( this.ds.datasheets[i].isMetadata ) {
+							this.counts.metadataResources++;
+						} else if ( this.ds.datasheets[i].spectra.length > 0 ) {
+							this.counts.spectraResources++;
+							this.counts.spectra += this.ds.datasheets[i].spectra.length;
+						}
+						
+					}
+				});
+				
+
+				this._updateVisibility();
+			},
+
+			_updateVisibility : function() {
+				if( this.ds.data.name != '' && this.ds.files.length > 0 ) {
+					this.hide = false;
+				} else {
+					this.hide = true;
+				}
+			},
+
+			// create a new ckan package
+			create : function() {
+				var pkg = $.extend(true, {}, this.ds.data);
+				
+				this.uploading = true,
+				this.statusText = 'Creating initial dataset package...';
+
+				this.ckan.createPackage(pkg, function(err, resp){
+					if( err ) {
+						alert('Error creating dataset');
+						this.uploading = false;
+					}
+
+					this._addResources(resp);
+				}.bind(this));
+			},
+
+			_addResources : function(pkg) {
+				this.statusText = 'Preparing Resources...';
+
+				var resources = this.ds.resources;
+				
+
+				// verify verify everything is ok
+				// if not, quit
+				// you can't use this for upload though! it will not have the resource id assign
+				// since the resources have to be uploaded first!
+				if( !this._isDataUnique() ) {
+					alert('Your spectra signatures are not inherently unique.  Please provide a metadata '+
+						'field that can serve as a unique identifier.');
+					//_createUidSelector(data);
+					//btn.removeClass('disabled').html('Add Resources');
+					this.uploading = false;
+					return;
+				}
+
+				this.statusText = 'Adding...';
+
+				_addResourceToCkan(0, pkg.name);
+			},
+
+			_isDataUnique: function() {
+				var spectra = [];
+
+				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+					var f = this.ds.datasheets[i];
+					for( var j = 0; j < f.spectra.length; j++ ) {
+						this.spectra.push(f.spectra[j]);
+					}
+				}
+
+
+				var ids = [];
+				for( var i = 0; i < dataset.data.length; i++ ) {
+					if( ids.indexOf( dataset.data[i].spectra_id ) != -1 ) return false;
+					else ids.push( dataset.data[i].spectra_id );
+				}
+				return true;
+			},
+
+			_createSpectraJsonResource : function() {
+				var spectra = [];
+
+				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+					var f = this.ds.datasheets[i];
+					for( var j = 0; j < f.spectra.length; j++ ) {
+						this.spectra.push(f.spectra[j]);
+					}
+				}
+
+				var uid = $('#unique-id-input').val();
+				var uidType = '';
+				if( !uid ) {
+					uid = '';
+				} else {
+					var parts = uid.split('.');
+					uidType = parts[0];
+					uid = parts[1];
+				}
+
+				var data = [];
+				for( var i = 0; i < spectra.length; i++ ) {
+					var d = {
+						metadata : spectra[i].mergeMetadata(),
+						spectra : spectra[i].data,
+						filename : spectra[i].filename,
+						sheetname : spectra[i].sheetname,
+						resource_id : spectra[i].ckanId,
+						ecosis : {}
+					};
+
+					// now set the ecosis attributes
+					for( var key in d.metadata ) {
+						if( esis.app.isEcosisMetadata(key) ) {
+							d.ecosis[key] = d.metadata[key];
+							// in this case their value is our value, so delete their value
+							delete d.metadata[key];
+						} else if( esis.app.mapMetadata(key) ) {
+							var ecosisKey = esis.app.mapMetadata(key);
+							d.ecosis[ecosisKey] = d.metadata[key];
+						}
+					}
+
+					if( uid.length > 0 && d[uidType][uid] ) {
+						d.spectra_id = md5(JSON.stringify(d.spectra)+d[uidType][uid]);
+					} else {
+						d.spectra_id = md5(JSON.stringify(d.spectra));
+					}
+
+					data.push(d);
+				}
+
+				var dataset;
+				if( esis.existingData.hasData() ) {
+					dataset = esis.existingData.get();
+
+					for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
+
+					var joindata = _getJoinableData();
+					for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
+
+					dataset.group_by = esis.app.groupBy.get();
+				} else {
+					dataset = {
+						data : data,
+						map  : esis.app.getMetadataMap(),
+						join : _getJoinableData(),
+						group_by : esis.app.groupBy.get()
+					}
+				};
+
+				
+
+				// we need to clean all of the attribute here ...
+				for( var i = 0; i < dataset.data.length; i++ ) {
+					var metadata = dataset.data[i].metadata;
+					for( var key in metadata ) {
+						var tmp = key.replace(/[^A-Za-z0-9\s_-]/g, '');
+						if( tmp != key ) {
+							if( metadata[tmp] ) {
+								alert('Metadata Error: the attribute "'+key+'" has illegal characters.  Attempted to clean up key to "'+
+									tmp+'" but this key already exists.');
+								return;
+							}
+
+							metadata[tmp] = metadata[key];
+							delete metadata[key];
+						}
+					}
+				}
+
+				if( asJson ) return dataset;
+
+				// TODO: if you find spectra with the same id, user needs to 
+				// define a disambiguator field
+
+				var resource = new esis.structures.Resource();
+				resource.setContents(JSON.stringify(dataset));
+				resource.setFilename('esis_spectral_data.json');
+				resource.setMimetype('application/json');
+				return resource;
+			}
+
+			
+
+		    _fireComplete : function(error, callback) {
+		        if( typeof callback == 'object' && callback.oncomplete ) {
+		            callback.oncomplete(error);
+		        } else {
+		            callback(error);
+		        }
+		    },
+
+	    	// clean spectra first
+	    	uploadSpectraResource : function(pkg, resource, btn, callback) {
+		        if( btn ) btn.html('Cleaning old spectral data...');
+		        $.ajax({
+		            url: esis.host + '/api/action/package_show?id='+pkg,
+		            beforeSend: function (request) {
+		                request.setRequestHeader('Authorization', _getKey());
+		            },
+		            success: function(response) {
+		                _removeSpectraResources(0, response.result.resources, function(){
+		                    if( btn ) btn.html('Uploading new spectral data...');
+
+		                    // now upload
+		                    upload(pkg, resource, {
+		                        oncomplete : function() { callback() },
+		                        onprogress : function(progress) {
+		                            if( btn ) btn.html('Uploading new spectral data... '+(progress*100).toFixed(0)+'%');
+		                        }
+		                    }, true);
+		                });
+		            }
+		        });
+		    },
+
+		    
+		});
+	</script>
+</polymer-element>
