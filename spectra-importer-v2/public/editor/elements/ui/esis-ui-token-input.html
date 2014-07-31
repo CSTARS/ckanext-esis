@@ -8,6 +8,10 @@
                 background-color: #2f9b45;
                 color: #2f9b45;
             }
+            esis-paper-button[raisedButton] {
+                background-color: #2f9b45;
+                color: white;
+            }
         </style>
         <paper-input id="input" floatingLabel label="Keywords" on-keypress="{{_onInputKey}}" inputValue="{{inputValue}}" ></paper-input>
         
@@ -35,11 +39,13 @@
 
             searching : false,
             results   : [],
+            tokens    : [],
 
             inputValue : '',
 
             observe : {
-                inputValue : '_onInputUpdate'
+                inputValue : '_onInputUpdate',
+                tokens     : '_onTokensUpdate'
             },
             
             created : function() {
@@ -70,11 +76,16 @@
                 }
             },
             
+
+
             addToken : function(token) {
+                if( !token.value || token.value == '' ) return;
+
                 token._id = Math.random()*new Date().getTime()+"";
                 for( var i = 0; i < this.tokens.length; i++ ) {
                     if( this.tokens[i].value == token.value ) return;
                 }
+                token.label = token.value;
                 this.tokens.push(token);
             },
             
@@ -135,9 +146,10 @@
             searchTimer : -1,
             _search : function(){
                 if( this.searchTimer != -1 ) clearTimeout(this.searchTimer);
+                this.searching = true;
 
                 this.searchTimer = setTimeout(function(){
-                    this.searching = true;
+                    
                     $.get(esis.host+'/api/3/action/tag_search?limit=10&query='+this.inputValue, function(resp){
                         this.results = resp.result.results;
                         this.searching = false;
@@ -183,6 +195,14 @@
             
             _fireAdd : function(token) {
                 this.fire('add', token);
+            },
+
+            _onTokensUpdate : function() {
+                var keywords = [];
+                for( var i = 0; i < this.tokens.length; i++ ) {
+                    keywords.push({name:this.tokens[i].label});
+                }
+                this.fire('update', keywords);
             }
         });
     </script>

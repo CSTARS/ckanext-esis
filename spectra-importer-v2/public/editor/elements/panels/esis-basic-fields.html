@@ -23,21 +23,32 @@
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Title" inputValue="{{ds.data.title}}"></paper-input>
-			<div hidden?="{{validName}}" style="color:red;margin-left:20px;font-size:12px;padding:5px">
-				Invalid name.  A dataset with this name already exists.
+			<div hidden?="{{!ds.editMode}}">
+				<div><b>Title:</b> {{ds.data.title}}</div>
+				<div style="font-size:12px;color:#888;font-style:italic">
+					URL: {{baseUrl}}{{ds.data.name}}
+				</div>
 			</div>
-			<div style="margin-left:20px">
-				URL: {{baseUrl}}<span style="color: {{validName ? '#2f9b45' : 'red'}}">{{ds.data.name}}</span>
+			<div hidden?="{{ds.editMode}}" > 
+				<paper-input floatingLabel label="Title" inputValue="{{ds.data.title}}"></paper-input>
+				<div hidden?="{{!verifingName}}" style="color:#888;margin-left:20px;font-size:12px;padding:5px">
+					Verifying name...
+				</div>
+				<div hidden?="{{validName}}" style="color:red;margin-left:20px;font-size:12px;padding:5px">
+					Invalid name.  A dataset with this name already exists.
+				</div>
+				<div style="margin-left:20px">
+					URL: {{baseUrl}}<span style="color: {{validName ? '#2f9b45' : 'red'}}">{{ds.data.name}}</span>
+				</div>
 			</div>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input multiline rows="3" floatinglabel label="Description" ></paper-input>
+			<paper-input multiline rows="3" floatinglabel label="Description" value="{{ds.data.notes}}" ></paper-input>
 		</div>
 
 		<div class="form-wrap">
-			<esis-ui-token-input></esis-ui-token-input>
+			<esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
 		</div>
 
 		<div class="form-wrap">
@@ -66,7 +77,7 @@
 
 		<div class="form-wrap" >
 			Visibility: <br />
-			<select id="visible" value="{{ds.data.private}}" disabled>
+			<select id="visible" on-change="{{_updateVisibility}}" disabled>
 				<option value="false">Public</option>
 				<option value="true">Private</option>
 			</select>
@@ -97,6 +108,7 @@
 			ckan : {},
 
 			validName : true,
+			verifingName : false,
 
 			menuItem : null,
 			baseUrl : '',
@@ -111,7 +123,10 @@
 			observe : {
 				'ds.data.title' : '_cleanTitle',
 				'ds.data.owner_org' : '_onOrgChange',
-				'ds.data.name' : '_verifyName'
+				'ds.data.name' : '_verifyName',
+				'ds.data.license_id' : '_updateLicenseName',
+				'ds.data.hidden' : '_setVisibility',
+				'ds.data.tags' : '_updateTokens'
 			},
 
 			ready : function() {
@@ -137,17 +152,18 @@
 				if( this.ds.data.name == '' ) return;
 
 				if( this.verifyNameTimer != -1 ) clearTimeout(this.verifyNameTimer);
-				this.verifyNameTimer = setTimeout(function(){
-					this.verifyNameTimer = -1;
+				this.verifingName = true;
 
+				this.verifyNameTimer = setTimeout(function(){
 					this.ckan.getPackage(this.ds.data.name, function(err, resp){
+						this.verifingName = false;
 						if( err && err.error && err.error.message == "Not found" ) {
 							this.validName = true;
 						} else {
 							this.validName = false;
 						}
 					}.bind(this));
-				}.bind(this), 300);
+				}.bind(this), 500);
 			},
 
 			_cleanTitle : function() {
@@ -157,16 +173,45 @@
 			},
 
 			_onOrgChange : function() {
-				if( this.organization == '' ) {
+				if( this.ds.data.owner_org == '' ) {
+					this.ds.owner_org_name = '';
 					this.ds.data.private = false;
 					this.$.visible.setAttribute('disabled','disabled');
 				} else {
 					this.$.visible.removeAttribute('disabled');
+
+					var opt = this.$.organizations.querySelector('option:checked');
+					if( opt ) this.ds.owner_org_name = opt.innerHTML;	
 				}
 			},
 
 			_addResources : function() {
 				window.location.hash = "#new-resources";
+			},
+
+			_setKeywords : function(e) {
+				this.ds.data.tags = e.detail;
+			},
+
+			_updateTokens : function() {
+				//this.$.keywords.tokens = [];
+				for( var i = 0; i < this.ds.data.tags.length; i++ ) {
+					this.$.keywords.addToken({value:this.ds.data.tags[i].display_name});
+				}
+			},
+
+			_updateLicenseName : function() {
+				var opt = this.$.license.querySelector('option:checked');
+				if( opt ) this.ds.data.license_title = opt.innerHTML;
+			},
+
+			_updateVisibility : function() {
+				if( this.$.visible.value == 'false' ) this.ds.data.hidden = true;
+				else this.ds.data.hidden = false;
+			},
+
+			_setVisibility : function() {
+				this.$.visible.value = (this.ds.hidden)+'';
 			}
 
 		});

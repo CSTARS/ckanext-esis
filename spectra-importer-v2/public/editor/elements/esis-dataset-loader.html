@@ -17,16 +17,21 @@
 
 				this.ds = document.querySelector('esis-datastore');
 
-				this.$.dialog.toggle();
-				$.get(esis.host+'/api/3/action/package_show?id='+id, function(resp){
-					this.data = resp.result;
-					console.log(this.data);
+				//this.$.dialog.toggle();
+				window.addEventListener('polymer-ready', function(e) {
+				var ckan = document.querySelector('esis-ckan');
+				ckan.getPackage(id, function(err, pkg){
+					if( err || pkg.error ) return alert('Error loading dataset.');
+
+					this.data = pkg;
 					this._setData();
-					this.$.dialog.toggle();
+					//this.$.dialog.toggle();
+				}.bind(this));
 				}.bind(this));
 			},
 
 			_setData : function() {
+				this.ds.editMode = true;
 				for( var key in this.ds.data ) {
 					if( this.data[key] ) this.ds.data[key] = this.data[key];
 				}

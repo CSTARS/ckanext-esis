@@ -6,7 +6,7 @@
 	<script>
 		Polymer('esis-datastore', {
 			// is this an existing dataset
-			existing : false,
+			editMode : false,
 
 			data : {
 				title : '',
@@ -19,8 +19,11 @@
 				maintainer : '',
 				maintainer_email : '',
 				version : '',
-				owner_org : ''
+				owner_org : '',
+				tags : [],
+				private : false
 			},
+			owner_org_name : '',
 
 			group : {
 				by : '',
