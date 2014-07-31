@@ -12,7 +12,7 @@
 
 		<div class="input-wrapper">
 			Group By:
-			<select value="{{groupBy}}" on-change="{{_group}}">
+			<select value="{{ds.group.by}}" on-change="{{_group}}">
 				<option value=""></option>
 				<template repeat="{{attr in ds.knownAttributes}}">
 					<option value="{{attr}}">{{attr}}</option>
@@ -22,7 +22,7 @@
 
 		<div class="input-wrapper">
 			Sort On:
-			<select value="{{sortOn}}">
+			<select value="{{ds.group.sortOn}}">
 				<option value=""></option>
 				<template repeat="{{attr in ds.knownAttributes}}">
 					<option value="{{attr}}">{{attr}}</option>
@@ -31,7 +31,7 @@
 		</div>
 
 		<div class="input-wrapper">
-			<paper-input multiline rows="3" floatingLabel label="Description" value="{{description}}" ></paper-input>
+			<paper-input multiline rows="3" floatingLabel label="Description" value="{{ds.group.description}}" ></paper-input>
 		</div>
 
 		<template bind if="{{groups.length > 0}}">
@@ -49,16 +49,12 @@
 			menuItem : null,
 			ds : {},
 
-			groupBy : '',
-			sortOn : '',
-			description : '',
-
 			groups : [],
 
 			observe : {
 				'ds.knownAttributes' : '_updateVisibility',
-				groupBy : '_updateButton',
-				sortOn : '_updateButton'
+				'ds.group.by' : '_updateButton',
+				'ds.group.sortOn' : '_updateButton'
 			},
 
 			ready : function() {
@@ -84,7 +80,7 @@
 					var sheet = this.ds.datasheets[i];
 
 					for( var j = 0; j < sheet.spectra.length; j++ ) {
-						var attr = sheet.spectra[j].getMetadataAttr(this.groupBy);
+						var attr = sheet.spectra[j].getMetadataAttr(this.ds.group.by);
 						if( !attr ) continue;
 						if( result[attr] ) result[attr] += 1;
 						else result[attr] = 1;
@@ -98,7 +94,7 @@
 			},
 
 			_updateButton : function() {
-				this.menuItem.setSecondaryHtml('Group By: '+this.groupBy+'<br /> Sort On: '+this.sortOn);
+				this.menuItem.setSecondaryHtml('Group By: '+this.ds.group.by+'<br /> Sort On: '+this.ds.group.sortOn);
 			}
 
 		});

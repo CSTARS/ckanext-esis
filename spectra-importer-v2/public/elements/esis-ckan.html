@@ -13,10 +13,13 @@
 				$.ajax({
 					url : esis.host+'/api/3/action/package_create',
 					type : 'POST',
-					data : pkg,
+					data : JSON.stringify(pkg),
+					xhrFields: {
+				      withCredentials: true
+				    },
 					success : function(resp) {
 						if( !resp.success ) return callback(resp);						
-						callback(null, response.result);
+						callback(null, resp.result);
 					},
 					error : function() {
 						callback({error:true, message:'Request Error'});
@@ -33,6 +36,9 @@
 			getPackage : function(pkgid, callback) {
 				$.ajax({
 		            url: esis.host + '/api/action/package_show?id='+pkgid,
+		            xhrFields: {
+				      withCredentials: true
+				    },
 		            //beforeSend: function (request) {
 		            //    request.setRequestHeader('Authorization', _getKey());
 		            //},
@@ -40,7 +46,8 @@
 		                if( !response.success ) return callback(response);
 		                callback(null, response.result);
 		            },
-		            error: function() {
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
 		            	callback({error:true, message:'Request Error'});
 		            }
 		        });
@@ -88,6 +95,9 @@
 				    data: formData,
 				    processData: false,
 				    contentType: false,
+				    xhrFields: {
+				      withCredentials: true
+				    },
 		            xhr : function() {
 		                return xhr;
 		            },
@@ -100,7 +110,7 @@
 		                    if( response.result.name != 'esis_spectral_data.zip' ) {
 		                        resource.ckanId = response.result.id;
 		                    }
-				            _fireComplete(null, response);
+				            callback(null, response);
 		                } else {
 		                    callback(response);
 		                }
@@ -116,6 +126,9 @@
 	                type: 'POST',
 	                url: esis.host + '/api/action/resource_delete',
 	                data : JSON.stringify({id : resourcesId }),
+	                xhrFields: {
+				      withCredentials: true
+				    },
 	                //should be logged in via cookie
 	                //beforeSend: function (request) {
 	                //    request.setRequestHeader('Authorization', _getKey());

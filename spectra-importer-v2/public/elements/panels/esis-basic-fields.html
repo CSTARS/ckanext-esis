@@ -23,9 +23,12 @@
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Title" inputValue="{{ds.data.title}}" required error="Required"></paper-input>
+			<paper-input floatingLabel label="Title" inputValue="{{ds.data.title}}"></paper-input>
+			<div hidden?="{{validName}}" style="color:red;margin-left:20px;font-size:12px;padding:5px">
+				Invalid name.  A dataset with this name already exists.
+			</div>
 			<div style="margin-left:20px">
-				URL: {{baseUrl}}<span style="color:#2f9b45">{{ds.data.name}}</span>
+				URL: {{baseUrl}}<span style="color: {{validName ? '#2f9b45' : 'red'}}">{{ds.data.name}}</span>
 			</div>
 		</div>
 
@@ -91,6 +94,9 @@
 	<script>
 		Polymer('esis-basic-fields', {
 			ds : {},
+			ckan : {},
+
+			validName : true,
 
 			menuItem : null,
 			baseUrl : '',
@@ -100,15 +106,19 @@
 			licenses : [],
 			organizations : [],
 
+			verifyNameTimer : -1,
+
 			observe : {
 				'ds.data.title' : '_cleanTitle',
-				'ds.data.owner_org' : '_onOrgChange'
+				'ds.data.owner_org' : '_onOrgChange',
+				'ds.data.name' : '_verifyName'
 			},
 
 			ready : function() {
 				this.baseUrl = esis.host+'/dataset/';
 
 				this.ds = document.querySelector('esis-datastore');
+				this.ckan = document.querySelector('esis-ckan');
 
 				$.get(esis.host+'/api/3/action/license_list', function(resp){
 					this.licenses = resp.result;
@@ -121,6 +131,23 @@
 						display_name : 'No Organization'
 					});
 				}.bind(this));
+			},
+
+			_verifyName : function() {
+				if( this.ds.data.name == '' ) return;
+
+				if( this.verifyNameTimer != -1 ) clearTimeout(this.verifyNameTimer);
+				this.verifyNameTimer = setTimeout(function(){
+					this.verifyNameTimer = -1;
+
+					this.ckan.getPackage(this.ds.data.name, function(err, resp){
+						if( err && err.error && err.error.message == "Not found" ) {
+							this.validName = true;
+						} else {
+							this.validName = false;
+						}
+					}.bind(this));
+				}.bind(this), 300);
 			},
 
 			_cleanTitle : function() {

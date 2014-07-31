@@ -22,6 +22,15 @@
 				owner_org : ''
 			},
 
+			group : {
+				by : '',
+				sortOn : '',
+				description : '',
+			},
+
+			// field that should be used to create uids for spectra
+			spectraDisambiguator : '',
+
 			// list of all new files
 			files : [],
 			// list of all new datasheets
@@ -31,6 +40,7 @@
 
 			// list of current attribute map
 			attributeMap : {},
+			inverseAttributeMap : {},
 
 			// list of currently known attributes for this dataset
 			knownAttributes : [],
@@ -118,7 +128,11 @@
 
 			_onAttributeMapUpdate : function(oldMap, newMap) {
 				//console.log(oldData);
-				this.attributeMap = newMap;
+
+				this.inverseAttributeMap = {};
+				for( var key in newMap ) {
+					if( newMap[key] != '' ) this.inverseAttributeMap[newMap[key]] = key;
+				}
 			}
 		});
 	</script>

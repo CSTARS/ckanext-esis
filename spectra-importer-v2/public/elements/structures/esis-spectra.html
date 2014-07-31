@@ -48,7 +48,7 @@
 			mergeMetadata : function() {
 				var md = {};
 				for( var i = 0; i < this.joinOrder.length; i++ ) {
-					for( var key in this.metadata[joinOrder[i]] ) {
+					for( var key in this.metadata[this.joinOrder[i]] ) {
 						md[key] = this.metadata[this.joinOrder[i]][key];
 					}
 				}

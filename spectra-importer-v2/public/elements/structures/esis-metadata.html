@@ -14,6 +14,19 @@
 			matchCount : null,
 			ckanId : '',
 
+			getJoinType : function() {
+				if( this.filenameMatch ) {
+					return {
+						type : 'filename',
+						loose : this.looseMatch
+					};
+				} else if ( this.worksheetMatch ) {
+					return { type : 'worksheet' }
+				} else {
+					return { type : 'attribute' }
+				}
+			},
+
 			_updateJoinRow : function() {
 				if( this.metadata.length == 0 ) return;
 		
