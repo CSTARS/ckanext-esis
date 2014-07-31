@@ -144,4 +144,8 @@ class SpectraController(PackageController):
 
         return json.dumps(data)
 
+    def createPackage(self):
+        response.status_int = 307
+        response.headers["Location"] = "/editor.html"
+        return "Redirecting"
 
