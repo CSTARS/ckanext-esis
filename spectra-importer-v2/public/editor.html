@@ -89,7 +89,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = (window.location.match(/.*localhost.*/) ) ? 'http://data.ecospectra.org' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://data.ecospectra.org' : '';
 
       esis.extensions = {
   pdf : {
