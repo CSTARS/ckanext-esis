@@ -22,9 +22,7 @@
 		
 		<paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom">
 			<div hidden?="{{uploading}}">
-				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}"></esis-verify-dataset>
-
-				<paper-button label="Finalize"><paper-button>
+				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}"></esis-verify-dataset>
 			</div>
 			<div hidden?="{{!uploading}}">
 				<h4>Creating Dataset...</h4>

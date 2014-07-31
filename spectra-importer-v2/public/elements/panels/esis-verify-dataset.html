@@ -27,6 +27,10 @@
 				margin: 15px;
 				min-width: 350px;
 			}
+			.colored {
+				background-color: #2f9b45;
+				color: white;
+			}
 		</style>
 
 		<h2>Verify Dataset</h2>
@@ -39,6 +43,7 @@
 			
 			<h4>Basic Information</h4>
 			<table>
+				<tr><td>Title</td><td>{{ds.data.title}}</td></tr>
 				<tr><td>Name</td><td>{{ds.data.name}}</td></tr>
 				<tr><td>Description</td><td>{{ds.data.notes}}</td></tr>
 				<tr><td>License</td><td>{{ds.data.license_title}}</td></tr>
@@ -60,8 +65,14 @@
 				<tr><td># Parsed Spectra</td><td>{{counts.spectra}}</td></tr>
 			</table>
 		</div>
+
+		<paper-button raisedButton label="Finalize" class="colored" on-tap="{{finalize}}"><paper-button>
 	</template>
 	<script>
-		Polymer('esis-verify-dataset', {});
+		Polymer('esis-verify-dataset', {
+			finalize : function(){
+				this.fire('finalize');
+			}
+		});
 	</script>
 </polymer-element>
