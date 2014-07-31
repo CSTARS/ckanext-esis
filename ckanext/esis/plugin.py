@@ -75,6 +75,14 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackage')
 
+        # route all resource edit screens to main ecosis dataset editor
+        # TODO: can we get fancy and point at specific action or resource?
+        map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackage')
+        map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackage')
+        map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackage')
+        map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackage')
+
+
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
         #map.connect('spectralSearch', '/spectral', controller='package', action='search')
