@@ -149,3 +149,7 @@ class SpectraController(PackageController):
         response.headers["Location"] = "/editor.html"
         return "Redirecting"
 
+    def editPackage(self, id):
+        response.status_int = 307
+        response.headers["Location"] = "/editor.html?id=%s" % id
+        return "Redirecting"
