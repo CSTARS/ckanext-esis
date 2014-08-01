@@ -106,9 +106,9 @@
 		            //    request.setRequestHeader('Authorization', _getKey());
 		          	//},
 				    success: function(response, status) {
-		                if( response.success ) {
-		                    if( response.result.name != 'esis_spectral_data.zip' ) {
-		                        resource.ckanId = response.result.id;
+		                if( response.success || !response.error ) {
+		                    if( !isSpectra ) {
+		                        resource.setId(response.result.id);
 		                    }
 				            callback(null, response);
 		                } else {
@@ -120,6 +120,43 @@
 				    }
 				});
 			},
+
+			/**
+			 * Get the ecosis resource
+			 **/
+			getSpectraResource : function(id, callback, progress) { 
+				var xhr = $.ajaxSettings.xhr();
+
+		        // attach progress handler to the XMLHttpRequest Object
+		        if( progress ) {
+			        try {
+			            xhr.addEventListener("progress", function(evt){
+			                if (evt.lengthComputable) {  
+			                	if( progress ) progress(((evt.loaded / evt.total)*100).toFixed(0));
+			                }
+			            }.bind(this), false); 
+			        } catch(e) {}
+		    	}
+
+
+				$.ajax({
+		            url: esis.host + '/spectra/get?compressed=false&id='+id,
+		            xhr : function() {
+		                return xhr;
+		            },
+		            xhrFields: {
+				      withCredentials: true
+				    },
+				    // don't let jquery muck with response
+		            mimeType:'text/plain; charset=x-user-defined',
+		            success: function(response) {
+		            	callback(null, JSON.parse(response));
+		            },
+		            error: function() {
+		            	callback({error:true,message:'failed to load resource'});
+		            }
+		        });
+		    },
 
 			removeResource: function(resourceId, callback) {
 		        $.ajax({

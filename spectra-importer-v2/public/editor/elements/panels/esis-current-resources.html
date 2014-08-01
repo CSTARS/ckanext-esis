@@ -1,0 +1,48 @@
+<polymer-element name="esis-current-resources">
+	<template>
+		hello world
+	</template>
+	<script>
+		Polymer('esis-current-resources',{
+			menuItem : null,
+			ds : {},
+			loader : {},
+
+			observe : {
+				'ds.existing.dataset' : '_updateVisibility',
+				'ds.editMode' : '_updateVisibility'
+			},
+
+			ready : function() {
+				this.ds = document.querySelector('esis-datastore');
+				this.loader = document.querySelector('esis-dataset-loader');
+				this.loader.addEventListener('get-spectral-resource-progress', function(e){
+					this._updatePreview(e.detail);
+				}.bind(this));
+			},
+
+			_updateVisibility : function() {
+				this._updatePreview();
+				if( !this.ds.editMode ) {
+					this.menuItem.style.display = 'none';
+					return;
+				}
+
+				if( Object.keys(this.ds.existing.dataset).length > 0 ) {
+					this.menuItem.style.display = 'block';
+				} else {
+					this.menuItem.style.display = 'none';
+				}
+			},
+
+			_updatePreview : function(progress) {
+				var html = this.ds.existing.resources.length+' Resource(s)';
+				if( progress != null ) {
+					html += '<br />Loading spectra package... '+progress+'%';
+				}
+
+		  		this.menuItem.setSecondaryHtml(html);
+		  	}
+		});
+	</script>
+<polymer-element>

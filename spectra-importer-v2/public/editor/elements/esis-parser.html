@@ -13,51 +13,78 @@
 
 				if( info.ext == 'xlsx' ) {
 					try {
-						wb = XLSX.read(contents, {type: 'binary'});
-						var count = 0;
 
-						console.log(wb.SheetNames);
-						wb.SheetNames.forEach(function(sheetName) {
-							var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-							$.csv.toArrays(csv, {}, function(err, data){
-								if( err ) {
-									count++;
-									this.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
-									return;
-								}
+						var ref = this;
+						function onComplete(wb){
+							var count = 0;
+							wb.SheetNames.forEach(function(sheetName) {
+								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
+								$.csv.toArrays(csv, {}, function(err, data){
+									if( err ) {
+										count++;
+										ref.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
+										return;
+									}
 
-								this.$.extractor.run(data, function(err, resp){
-									count++;
-									resp.sheetName = sheetName;
-									this.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-								}.bind(this));
-							}.bind(this));
-						}.bind(this));
+									ref.$.extractor.run(data, function(err, resp){
+										count++;
+										resp.sheetName = sheetName;
+										ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+									});
+								});
+							});
+						}
+
+						var worker = new Worker('components/js-xlsx/xlsxworker.js');
+						worker.onmessage = function(e) {
+							switch(e.data.t) {
+								case 'ready': break;
+								case 'e': console.error(e.data.d); break;
+								case 'xlsx': onComplete(JSON.parse(e.data.d)); break;
+							}
+						};
+						worker.postMessage({d:contents,b:true});
+
 					} catch(e) {
 						debugger;
 						this.onComplete(e, null, info, 1, 1, arr, callback);
 					}
 				} else if( info.ext == 'xls' ) {
 					try {
-						wb = XLS.read(contents, {type: 'binary'});
 
-						var count = wb.SheetNames.length;
-						wb.SheetNames.forEach(function(sheetName) {
-							var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-							$.csv.toArrays(csv, {}, function(err, data){
-								if( err ) {
-									count++;
-									this.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
-									return;
-								}
+						var ref = this;
+						function onComplete(wb){
+							wb = XLS.read(contents, {type: 'binary'});
 
-								this.$.extractor.run(data, function(err, resp){
-									count++;
-									resp.sheetName = sheetName;
-									this.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-								}.bind(this));
-							}.bind(this));
-						}.bind(this));
+							var count = wb.SheetNames.length;
+							wb.SheetNames.forEach(function(sheetName) {
+								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
+								$.csv.toArrays(csv, {}, function(err, data){
+									if( err ) {
+										count++;
+										ref.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
+										return;
+									}
+
+									ref.$.extractor.run(data, function(err, resp){
+										count++;
+										resp.sheetName = sheetName;
+										ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+									});
+								});
+							});
+						}
+
+						var worker = new Worker('components/js-xls/xlsworker.js');
+						worker.onmessage = function(e) {
+							switch(e.data.t) {
+								case 'ready': break;
+								case 'e': console.error(e.data.d); break;
+								case 'xlsx': onComplete(JSON.parse(e.data.d)); break;
+							}
+						};
+						worker.postMessage({d:contents,b:true});
+
 					} catch(e) {
 						debugger;
 						this.onComplete(e, null, info, 1, 1, arr, callback);

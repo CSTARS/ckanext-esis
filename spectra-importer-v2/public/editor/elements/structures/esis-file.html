@@ -170,6 +170,7 @@
 			},
 
 			_onIngestComplete : function(files) {
+				console.log(files);
 
 				// do we need to add the zip file?
 				if( (!this.parseZip && this.info.isZip) || !this.info.isZip ) {
@@ -195,6 +196,9 @@
 							else map[resourceName].push(datasheet);
 						}
 						this.datasheets.push(datasheet);
+
+						// set reference for next loop
+						f.datasheet = datasheet;
 					} 
 				}
 
@@ -202,6 +206,7 @@
 					var f = files[i];
 					if( f.info.type == 'resource' || f.info.type == 'both' ) {
 						var resource = ds.addResource(f, map[f.info.name]);
+						if( f.datasheet ) resource.datasheets.push(f.datasheet);
 						this.resources.push(resource);
 					}
 				}

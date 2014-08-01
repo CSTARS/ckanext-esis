@@ -40,7 +40,7 @@
       google.load('visualization', '1.0', {'packages':['corechart']});
     </script>
 
-    <style>
+    <style shim-shadowdom>
 
       body {
         font-family: sans-serif;
@@ -53,6 +53,7 @@
         -webkit-tap-highlight-color: rgba(0,0,0,0);
         -webkit-touch-callout: none;
       }
+
       html /deep/ core-toolbar {
         background-color: #2f9b45 !important;
       }
@@ -211,7 +212,7 @@
 
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
-      <!--<esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>-->
+      <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
       <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
       
       <esis-item label="Parsed Spectra" tag="parsed-spectra" ele="esis-parsed-spectra"></esis-item>

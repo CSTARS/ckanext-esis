@@ -204,7 +204,8 @@
 						spectra : spectra[i].data,
 						filename : spectra[i].filename,
 						sheetname : spectra[i].sheetname,
-						resource_id : spectra[i].ckanId,
+						resource_id : spectra[i].resourceId,
+						spectra_id : spectra[i].spectra_id,
 						ecosis : {}
 					};
 
@@ -279,7 +280,7 @@
 						metadata : jd.metadata,
 						filename : jd.filename,
 						join_id : jd.joinId,
-						joinon : jd.getJoinType(),
+						join_on : jd.getJoinType(),
 						resource_id : jd.ckanId
 					});
 				}
@@ -293,7 +294,7 @@
 			        this.ckan.addResource(
 						pkgId, 
 						this._createSpectraJsonResource(), 
-						false, 
+						true, 
 						function(err, resp){
 							if( err ) {
 								this.uploading = false;
