@@ -114,6 +114,10 @@ class SpectraController(PackageController):
                 # need to splice out the spectra
                 tmp = 1
 
+                dataset = json.loads(data)
+                for item in dataset['data']:
+                    del item['spectra']
+                data = json.dumps(dataset)
 
             response.headers["Content-Type"] = "application/json"
         else:
@@ -146,10 +150,10 @@ class SpectraController(PackageController):
 
     def createPackage(self):
         response.status_int = 307
-        response.headers["Location"] = "/editor.html"
+        response.headers["Location"] = "/editor/"
         return "Redirecting"
 
     def editPackage(self, id):
         response.status_int = 307
-        response.headers["Location"] = "/editor.html?id=%s" % id
+        response.headers["Location"] = "/editor/?id=%s" % id
         return "Redirecting"
