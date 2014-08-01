@@ -42,7 +42,13 @@
 		            //beforeSend: function (request) {
 		            //    request.setRequestHeader('Authorization', _getKey());
 		            //},
+		            // f me... no idea... JSON.parse is setting the id to 'undefined'.  I have never
+		            // see this before... using mimeType to tell jquery not to parse, then using 
+		            // js eval instead of a normal JSON.parse()
+		            //mimeType:'text/plain; charset=x-user-defined',
 		            success: function(response) {
+		            	console.log(response);
+		            	
 		                if( !response.success ) return callback(response);
 		                callback(null, response.result);
 		            },

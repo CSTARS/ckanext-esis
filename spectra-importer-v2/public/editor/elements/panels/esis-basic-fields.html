@@ -34,11 +34,14 @@
 				<div hidden?="{{!verifingName}}" style="color:#888;margin-left:20px;font-size:12px;padding:5px">
 					Verifying name...
 				</div>
-				<div hidden?="{{validName}}" style="color:red;margin-left:20px;font-size:12px;padding:5px">
+				<div hidden?="{{validName || verifingName}}" style="color:red;margin-left:20px;font-size:12px;padding:5px">
 					Invalid name.  A dataset with this name already exists.
 				</div>
-				<div style="margin-left:20px">
+				<div style="margin-left:20px" hidden?="{{verifingName}}" >
 					URL: {{baseUrl}}<span style="color: {{validName ? '#2f9b45' : 'red'}}">{{ds.data.name}}</span>
+				</div>
+				<div style="margin-left:20px" hidden?="{{!verifingName}}" >
+					URL: {{baseUrl}}<span style="color: #888">{{ds.data.name}}</span>
 				</div>
 			</div>
 		</div>
@@ -149,7 +152,7 @@
 			},
 
 			_verifyName : function() {
-				if( this.ds.data.name == '' ) return;
+				if( this.ds.data.name == '' || this.ds.editMode ) return;
 
 				if( this.verifyNameTimer != -1 ) clearTimeout(this.verifyNameTimer);
 				this.verifingName = true;

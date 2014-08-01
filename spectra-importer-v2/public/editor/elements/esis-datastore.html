@@ -107,6 +107,7 @@
 				ele.filename = resource.name || resource.info.name;
 				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
 				ele.ext = resource.info.ext;
+				ele.datasheets = datasheets;
 				this.resources.push(ele);
 				return ele;
 			},

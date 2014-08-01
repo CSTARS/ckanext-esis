@@ -44,6 +44,7 @@
             		if( this.data.resources[i].name == 'esis_spectral_data.zip' ) {
             			this._getSpectraPackage(this.data.resources[i].id);
             		} else {
+            			console.log(this.data.resources[i]);
                         this.ds.existing.resources.push(this.data.resources[i]);
                     }
             	}

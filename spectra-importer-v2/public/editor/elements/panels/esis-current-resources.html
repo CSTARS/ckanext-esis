@@ -1,6 +1,8 @@
 <polymer-element name="esis-current-resources">
 	<template>
-		hello world
+		<template repeat="{{res in resources}}">
+			<div>{{res.id}} {{res.name}} {{res.type}} {{res.count}}</div>
+		</template>
 	</template>
 	<script>
 		Polymer('esis-current-resources',{
@@ -8,8 +10,10 @@
 			ds : {},
 			loader : {},
 
+			resources : [],
+
 			observe : {
-				'ds.existing.dataset' : '_updateVisibility',
+				'ds.existing.dataset' : '_update',
 				'ds.editMode' : '_updateVisibility'
 			},
 
@@ -19,6 +23,47 @@
 				this.loader.addEventListener('get-spectral-resource-progress', function(e){
 					this._updatePreview(e.detail);
 				}.bind(this));
+			},
+
+			_update : function() {
+				this._updateVisibility();
+
+				this.async(function(){
+					this._updateUI();
+				});
+			},
+
+			_updateUI : function() {
+				this.resources = [];
+
+				for( var i = 0; i < this.ds.existing.resources.length; i++ ) {
+					this.resources.push(this._groupData(this.ds.existing.resources[i]));
+				}
+			},
+
+			_groupData : function(res) {
+				var ui = {
+					name : res.name,
+					id   : res.id
+				};
+
+				for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
+					var join = this.ds.existing.dataset.join[i];
+					if( res.id == join.resource_id ) {
+						ui.type = 'Metadata';
+						return ui;
+					}
+				}
+
+
+				for( var i = 0; i < this.ds.existing.dataset.data.length; i++ ) {
+					if( this.ds.existing.dataset.data[i].resource_id == res.id ) {
+						ui.type = 'Spectra';
+						if( ui.count == null ) ui.count = 1;
+						else ui.count++;
+					}
+				}
+				return ui;
 			},
 
 			_updateVisibility : function() {
