@@ -8,7 +8,7 @@
 			ext        : '',
 			datasheets : [],
 			title      : '',
-			ckanId     : '',
+			resourceId     : '',
 
 			observe : {
 				filename : '_setTitle'
@@ -19,10 +19,11 @@
 				if( this.title.length == 0 || this.title == ' ' ) this.title = this.filename;
 			},
 
-			setCkanId : function(ckanId) {
-				this.ckanId = ckanId;
-				for( var i = 0; i < datasheets.length; i++ ) {
-					this.datasheets.setCkanId(ckanId);
+			setId : function(resourceId) {
+				this.resourceId = resourceId;
+				debugger;
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					this.datasheets[i].setResourceId(resourceId);
 				}
 			}
 

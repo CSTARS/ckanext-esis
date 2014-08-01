@@ -65,12 +65,13 @@
 				}
 			},
 
-			setCkanId : function(ckanId) {
-				this.ckanId = ckanId;
+			setResourceId : function(resourceId) {
+				debugger;
+				this.resourceId = resourceId;
 				for( var i = 0; i < this.spectra.length; i++ ) {
-					this.spectra[i].ckanId = ckanId;
+					this.spectra[i].resourceId = resourceId;
 				}
-				this.metadata = ckanId;
+				this.metadata.resourceId = resourceId;
 			},
 
 			_updateKnownAttributes : function(spectra) {

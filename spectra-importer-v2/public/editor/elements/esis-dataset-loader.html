@@ -10,12 +10,14 @@
 		Polymer('esis-dataset-loader', {
 			data : {},
 			ds : {},
+			ckan : {},
 
 			ready : function() {
 				var id = this._getVar('id');
 				if( id == null ) return;
 
 				this.ds = document.querySelector('esis-datastore');
+				this.ckan = document.querySelector('esis-ckan');
 
 				//this.$.dialog.toggle();
 				window.addEventListener('polymer-ready', function(e) {
@@ -35,6 +37,29 @@
 				for( var key in this.ds.data ) {
 					if( this.data[key] ) this.ds.data[key] = this.data[key];
 				}
+
+				if( !this.data.resources ) return;
+
+				for( var i = 0; i < this.data.resources.length; i++ ) {
+            		if( this.data.resources[i].name == 'esis_spectral_data.zip' ) {
+            			this._getSpectraPackage(this.data.resources[i].id);
+            		} else {
+                        this.ds.existing.resources.push(this.data.resources[i]);
+                    }
+            	}
+			},
+
+			_getSpectraPackage: function(id) {
+				this.ckan.getSpectraResource(
+					id, 
+					function(err, dataset){
+						if( err ) return alert('Failed to load Ecosis spectra resource package');
+						this.ds.existing.dataset = dataset;
+					}.bind(this),
+					function(progress){
+						this.fire('get-spectral-resource-progress', progress);
+					}.bind(this)
+				);
 			},
 
 			_getVar : function(variable) {
