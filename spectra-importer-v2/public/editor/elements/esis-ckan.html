@@ -1,7 +1,7 @@
 <polymer-element name="esis-ckan">
 	<template></template>
 	<script>
-		Polymer('esis-ckan',{
+		Polymer('esis-ckan', {
 
 			/**
 			 * Create a ckan package
@@ -12,6 +12,24 @@
 			createPackage : function(pkg, callback) {
 				$.ajax({
 					url : esis.host+'/api/3/action/package_create',
+					type : 'POST',
+					data : JSON.stringify(pkg),
+					xhrFields: {
+				      withCredentials: true
+				    },
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, resp.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
+			updatePackage : function(pkg, callback) {
+				$.ajax({
+					url : esis.host+'/api/3/action/package_update',
 					type : 'POST',
 					data : JSON.stringify(pkg),
 					xhrFields: {
@@ -39,13 +57,6 @@
 		            xhrFields: {
 				      withCredentials: true
 				    },
-		            //beforeSend: function (request) {
-		            //    request.setRequestHeader('Authorization', _getKey());
-		            //},
-		            // f me... no idea... JSON.parse is setting the id to 'undefined'.  I have never
-		            // see this before... using mimeType to tell jquery not to parse, then using 
-		            // js eval instead of a normal JSON.parse()
-		            //mimeType:'text/plain; charset=x-user-defined',
 		            success: function(response) {
 		            	console.log(response);
 		            	
@@ -95,8 +106,16 @@
 		            }
 		        } catch(e) {}
 
+		        var path;
+		        if( isSpectra ) {
+		        	if( document.querySelector('esis-datastore').editMode ) path = '/spectra/update';
+		        	else path = '/spectra/add';
+		        } else {
+		        	path = '/api/action/resource_create';
+		        }
+
 		    	$.ajax({
-				    url: esis.host + (isSpectra ? '/spectra/add' : '/api/action/resource_create'),
+				    url: esis.host + path,
 				    type: "POST",
 				    data: formData,
 				    processData: false,
@@ -107,10 +126,6 @@
 		            xhr : function() {
 		                return xhr;
 		            },
-				    // Assuming you are logged in via cookies
-				    //beforeSend: function (request, t1, t2) {
-		            //    request.setRequestHeader('Authorization', _getKey());
-		          	//},
 				    success: function(response, status) {
 		                if( response.success || !response.error ) {
 		                    if( !isSpectra ) {
@@ -146,7 +161,7 @@
 
 
 				$.ajax({
-		            url: esis.host + '/spectra/get?compressed=false&id='+id,
+		            url: esis.host + '/spectra/get?metadataOnly=true&compressed=false&id='+id,
 		            xhr : function() {
 		                return xhr;
 		            },
@@ -172,10 +187,6 @@
 	                xhrFields: {
 				      withCredentials: true
 				    },
-	                //should be logged in via cookie
-	                //beforeSend: function (request) {
-	                //    request.setRequestHeader('Authorization', _getKey());
-	                //},
 	                success: function(response) {
 	                    if( !response.success ) return callback(response);
 	                    callback(null, response);

@@ -41,6 +41,9 @@
 			join : function(spectra) {
 				this._updateJoinRow();
 
+				// set for existing data
+				if( !spectra.metadata.joined ) spectra.metadata.joined = [];
+
 				var row = this._getRow(spectra);
 				if( row == -1 ) {
 					// remove any known attribute from the join

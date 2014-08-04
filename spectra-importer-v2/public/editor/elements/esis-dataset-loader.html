@@ -19,15 +19,16 @@
 				this.ds = document.querySelector('esis-datastore');
 				this.ckan = document.querySelector('esis-ckan');
 
-				//this.$.dialog.toggle();
+				this.$.dialog.toggle();
 				window.addEventListener('polymer-ready', function(e) {
 				var ckan = document.querySelector('esis-ckan');
 				ckan.getPackage(id, function(err, pkg){
+					this.$.dialog.toggle();
 					if( err || pkg.error ) return alert('Error loading dataset.');
 
 					this.data = pkg;
 					this._setData();
-					//this.$.dialog.toggle();
+					
 				}.bind(this));
 				}.bind(this));
 			},

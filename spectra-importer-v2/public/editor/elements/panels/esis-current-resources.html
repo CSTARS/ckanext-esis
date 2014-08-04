@@ -1,8 +1,32 @@
 <polymer-element name="esis-current-resources">
 	<template>
-		<template repeat="{{res in resources}}">
-			<div>{{res.id}} {{res.name}} {{res.type}} {{res.count}}</div>
-		</template>
+		<style>
+			table {
+				width: 100%;
+				border-spacing: 0px;
+			}
+			table th {
+				text-align: left;
+				border-bottom: 1px solid #ccc;
+			}
+			table tr:nth-child(even) {
+				background-color: #eee;
+			}
+			table td {
+				padding: 5px;
+			}
+		</style>
+		<table>
+			<tr>
+				<th>Filename</th><th>Resource Type</th><th>Parsed Spectra</th><th></th>
+			</tr>
+			<tr template repeat="{{res in resources}}">
+				<td>{{res.name}}</td>
+				<td>{{res.type}}</td>
+				<td>{{res.count}}</td>
+				<td><esis-ui-delete-button rid="{{res.id}}" label="{{res.name}}" on-delete="{{_deleteResource}}"></esis-ui-delete-button></td>
+			</tr>
+		</table>
 	</template>
 	<script>
 		Polymer('esis-current-resources',{
@@ -13,6 +37,7 @@
 			resources : [],
 
 			observe : {
+				'ds.deleted' : '_update',
 				'ds.existing.dataset' : '_update',
 				'ds.editMode' : '_updateVisibility'
 			},
@@ -44,7 +69,8 @@
 			_groupData : function(res) {
 				var ui = {
 					name : res.name,
-					id   : res.id
+					id   : res.id,
+					type : ''
 				};
 
 				for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
@@ -63,6 +89,9 @@
 						else ui.count++;
 					}
 				}
+
+				if( ui.type == '' ) ui.type = 'Generic';
+
 				return ui;
 			},
 
@@ -87,6 +116,11 @@
 				}
 
 		  		this.menuItem.setSecondaryHtml(html);
+		  	},
+
+		  	_deleteResource : function(e) {
+		  		var id = e.currentTarget.getAttribute('rid');
+		  		this.ds.removeResource(id);
 		  	}
 		});
 	</script>
