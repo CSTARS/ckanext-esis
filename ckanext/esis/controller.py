@@ -99,29 +99,19 @@ class SpectraController(PackageController):
                 filename = data.filename
             else:
                 data_dict[key[0]] = key[1]
-        data_dict['url'] = filename.replace('json', 'zip')
-        data_dict['mimetype'] = data_dict.get('mimetype').replace('json', 'zip')
-        data_dict['name'] = filename.replace('json', 'zip')
-        data_dict['url_type'] = 'upload'
 
-        context = {'model': model, 'user': c.user}
-        resource = logic.get_action('resource_show')(context, {'id': data_dict['id']})
 
-        upload = uploader.ResourceUpload(resource)
-        upload.filename = munge.munge_filename(filename.replace('json', 'zip'))
-
-        f = tempfile.TemporaryFile()
-        zf = zipfile.ZipFile(f, mode="w")
         newDataset = json.loads(file.read())
-        zf.close()
+
 
         # grab the old file
         context = {'model': model, 'user': c.user}
+        resource = logic.get_action('resource_show')(context, {'id': data_dict['id']})
         upload = uploader.ResourceUpload(resource)
 
         oldData = ''
-        oldFileName = upload.get_path(data_dict['id'])
-        zf = zipfile.ZipFile(oldFileName)
+        zipfilename = upload.get_path(data_dict['id'])
+        zf = zipfile.ZipFile(zipfilename)
         oldData = zf.read('esis_spectral_data.json')
         oldDataset = json.loads(oldData)
         zf.close()
@@ -129,17 +119,13 @@ class SpectraController(PackageController):
         # now merge the file data
         self._merge_dataset(oldDataset, newDataset)
 
-        zf = zipfile.ZipFile(f, mode="w")
+        # write new data
+        zf = zipfile.ZipFile(zipfilename, mode="w")
         zf.writestr(filename, json.dumps(newDataset), zipfile.ZIP_DEFLATED)
 
         file.close()
         zf.close()
 
-        #f.seek(0)
-        #upload.upload_file = f
-        #upload.upload(resource.get('id'), uploader.get_max_resource_size())
-
-        f.close()
 
         return resource
 
