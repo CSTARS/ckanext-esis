@@ -55,8 +55,8 @@
 
 		<div style="font-size:14px;color:#888">
 			<span>Add new files below by using the file selector or drag files over the drop zone.</span><br /><br />
-			<span class="next {{ds.files.length > 0 ? 'ready' : ''}}" style="font-weight:bold">
-		    	Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
+			<span class="next {{ds.files.length > 0 ? 'ready' : ''}}" style="font-weight:bold; background-color:#f8f8f8; padding:5px; border-radius: 3px">
+		    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:middle"></core-icon> Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
 		    </span>
 		</div>
 
@@ -98,7 +98,7 @@
 	    </template>
 
 	    <span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
-	    	Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
+	    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
 	    </span>
     	
 		

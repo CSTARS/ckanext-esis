@@ -108,8 +108,12 @@
 
 		        var path;
 		        if( isSpectra ) {
-		        	if( document.querySelector('esis-datastore').editMode ) path = '/spectra/update';
-		        	else path = '/spectra/add';
+		        	if( resource.resourceId && resource.resourceId != '' ) {
+		        		path = '/spectra/update';
+		        		formData.append('id', resource.resourceId);
+		        	} else {
+		        		path = '/spectra/add';
+		        	}
 		        } else {
 		        	path = '/api/action/resource_create';
 		        }
@@ -183,7 +187,7 @@
 		        $.ajax({
 	                type: 'POST',
 	                url: esis.host + '/api/action/resource_delete',
-	                data : JSON.stringify({id : resourcesId }),
+	                data : JSON.stringify({id : resourceId }),
 	                xhrFields: {
 				      withCredentials: true
 				    },

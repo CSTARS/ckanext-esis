@@ -39,6 +39,7 @@
 			observe : {
 				'ds.deleted' : '_update',
 				'ds.existing.dataset' : '_update',
+				'ds.existing.resources' : '_update',
 				'ds.editMode' : '_updateVisibility'
 			},
 
@@ -73,20 +74,23 @@
 					type : ''
 				};
 
-				for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
-					var join = this.ds.existing.dataset.join[i];
-					if( res.id == join.resource_id ) {
-						ui.type = 'Metadata';
-						return ui;
+				if( this.ds.existing.dataset.join ) {
+					for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
+						var join = this.ds.existing.dataset.join[i];
+						if( res.id == join.resource_id ) {
+							ui.type = 'Metadata';
+							return ui;
+						}
 					}
 				}
 
-
-				for( var i = 0; i < this.ds.existing.dataset.data.length; i++ ) {
-					if( this.ds.existing.dataset.data[i].resource_id == res.id ) {
-						ui.type = 'Spectra';
-						if( ui.count == null ) ui.count = 1;
-						else ui.count++;
+				if( this.ds.existing.dataset.data ){
+					for( var i = 0; i < this.ds.existing.dataset.data.length; i++ ) {
+						if( this.ds.existing.dataset.data[i].resource_id == res.id ) {
+							ui.type = 'Spectra';
+							if( ui.count == null ) ui.count = 1;
+							else ui.count++;
+						}
 					}
 				}
 
@@ -102,7 +106,7 @@
 					return;
 				}
 
-				if( Object.keys(this.ds.existing.dataset).length > 0 ) {
+				if( Object.keys(this.ds.existing.dataset).length > 0 || this.ds.existing.resources.length > 0) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';

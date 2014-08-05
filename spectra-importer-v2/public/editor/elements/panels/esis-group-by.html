@@ -4,6 +4,10 @@
 			.input-wrapper {
 				margin: 20px;
 			}
+			paper-input::shadow .focusedColor {
+				background-color: #2f9b45;
+				color: #2f9b45;
+			}
 		</style>
 
 		<div style="font-size: 14px; color: #888">
@@ -22,7 +26,7 @@
 
 		<div class="input-wrapper">
 			Sort On:
-			<select value="{{ds.group.sortOn}}">
+			<select value="{{ds.group.sort_on}}">
 				<option value=""></option>
 				<template repeat="{{attr in ds.knownAttributes}}">
 					<option value="{{attr}}">{{attr}}</option>
@@ -54,7 +58,7 @@
 			observe : {
 				'ds.knownAttributes' : '_updateVisibility',
 				'ds.group.by' : '_updateButton',
-				'ds.group.sortOn' : '_updateButton'
+				'ds.group.sort_on' : '_updateButton'
 			},
 
 			ready : function() {
@@ -94,7 +98,8 @@
 			},
 
 			_updateButton : function() {
-				this.menuItem.setSecondaryHtml('Group By: '+this.ds.group.by+'<br /> Sort On: '+this.ds.group.sortOn);
+				if( this.ds.group.by == '' && this.ds.group.sort_on == '' ) return;
+				this.menuItem.setSecondaryHtml('Group By: '+this.ds.group.by+'<br /> Sort On: '+this.ds.group.sort_on);
 			}
 
 		});

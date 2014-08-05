@@ -23,7 +23,7 @@
 		
 		<paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom">
 			<div hidden?="{{uploading}}">
-				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}"></esis-verify-dataset>
+				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
 			</div>
 			<div hidden?="{{!uploading}}">
 				<h4>{{ds.editMode ? 'Updating' : 'Creating'}} Dataset...</h4>
@@ -46,7 +46,7 @@
 			observe : {
 				'ds.data.name' : '_updateVisibility',
 				'ds.deleted' : '_updateVisibility',
-				'ds.files' : '_filesUpdated'
+				'ds.datasheets' : '_filesUpdated'
 			},
 
 			uploading : false,
@@ -85,11 +85,15 @@
 			},
 
 			_updateVisibility : function() {
-				if( (this.ds.data.name != '' && this.ds.files.length > 0) || this.ds.deleted.length > 0 ) {
+				if( (this.ds.data.name != '' && this.ds.files.length > 0) || this.ds.editMode ) {
 					this.hide = false;
 				} else {
 					this.hide = true;
 				}
+			},
+
+			_cancel : function() {
+				this.$.dialog.toggle();
 			},
 
 			// create a new ckan package
@@ -98,6 +102,11 @@
 				
 				this.uploading = true,
 				this.statusText = (this.ds.editMode ? 'Updating' : 'Creating initial') + ' dataset package...';
+
+				var pkg = document.querySelector('esis-dataset-loader').data;
+				for( var key in this.ds.data ) {
+					pkg[key] = this.ds.data[key];
+				}
 
 				var action = this.ds.editMode ? this.ckan.updatePackage : this.ckan.createPackage;
 				action(pkg, function(err, resp){
@@ -140,7 +149,7 @@
 							setTimeout(function(){
 								window.location = esis.host+'/dataset/'+pkgid;
 							}, 500);
-						});
+						}.bind(this));
 					}.bind(this));
 				} else {
 					this.statusText = 'Uploading '+this.ds.resources[index].filename+'...';
@@ -158,7 +167,7 @@
 							this._addResourceToCkan(index, pkgid);
 						}.bind(this), 
 						function(progress){
-							this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+progress+'%)...';
+							this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+(progress*100)+'%)...';
 						}.bind(this)
 					);
 				}
@@ -168,7 +177,7 @@
 				if( !this.ds.editMode || this.ds.deleted.length == 0 || this.ds.deleted.length == index ) return callback();
 
 				this.statusText = 'Removing deleted resources '+(index+1)+'/'+this.ds.deleted.length;
-				this.ckan.deleteResource(this.ds.deleted[i], function(err, resp){
+				this.ckan.removeResource(this.ds.deleted[index], function(err, resp){
 					// TODO: add error checking
 
 					index++;
@@ -242,8 +251,13 @@
 				}
 
 				var dataset;
-				if( this.ds.existingData ) {
-					dataset = this.ds.existingData;
+				if( this.ds.editMode ) {
+					dataset = this.ds.existing.dataset;
+
+					if( !dataset.data ) dataset.data = [];
+					if( !dataset.join ) dataset.join = [];
+					if( !dataset.group_by ) dataset.group_by = this.ds.group;
+					if( !dataset.map ) dataset.map = this.ds.inverseAttributeMap;
 
 					// move all newly joined data
 					for( var i = 0; i < dataset.data.length; i++ ){
@@ -270,7 +284,7 @@
 					var joindata = this._getJoinableData();
 					for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
 
-					dataset.group_by = esis.app.groupBy.get();
+					//dataset.group_by = esis.app.groupBy.get();
 				} else {
 					dataset = {
 						data : data,
@@ -302,6 +316,19 @@
 				resource.contents = JSON.stringify(dataset);
 				resource.filename = 'esis_spectral_data.json';
 				resource.mimetype ='application/json';
+
+				// if we are editing make sure we set the resource id so this performs and update if spectra
+				// resource already exists
+				if( this.ds.editMode ) {
+					var resources = document.querySelector('esis-dataset-loader').data.resources;
+					for( var i = 0; i < resources.length; i++ ) {
+						if( resources[i].name == 'esis_spectral_data.') {
+							resource.resourceId = resources[i].id;
+							break;
+						}
+					}					
+				}
+
 				return resource;
 			},
 
@@ -325,7 +352,7 @@
 			},
 
 	    	_uploadSpectraResource : function(pkgId, callback) {
-		        this._cleanOldSpectralResource(pkgId, function(){
+		        //this._cleanOldSpectralResource(pkgId, function(){
 		        	this.statusText = 'Uploading spectral data resource...';
 
 			        this.ckan.addResource(
@@ -341,13 +368,13 @@
 							callback();
 						}.bind(this), 
 						function(progress){
-							this.statusText = 'Uploading spectral data resource ('+progress+'%)...';
+							this.statusText = 'Uploading spectral data resource ('+(progress*100)+'%)...';
 						}.bind(this)
 					);
-		        }.bind(this));
+		        //}.bind(this));
 		    },
 
-		    _cleanOldSpectralResource : function(pkgid, callback) {
+		    /*_cleanOldSpectralResource : function(pkgid, callback) {
 		    	this.statusText = 'Cleaning old spectral data';
 
 		    	this.ckan.getPackage(pkgid, function(err, pkg){
@@ -366,7 +393,7 @@
 		    		}
 		    		callback();
 		    	}.bind(this));
-		    },
+		    },*/
 
 		    _isEcosisMetadata : function(key) {
 		    	if( esis.metadata[key] != null ) return true;

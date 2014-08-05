@@ -56,14 +56,6 @@
 
   Polymer('esis-scaffold', {
     
-    /**
-     * When the browser window size is smaller than the `responsiveWidth`, 
-     * `sampler-scaffold` changes to a narrow layout. In narrow layout, 
-     * the drawer will be stacked on top of the main panel.
-     *
-     * @attribute responsiveWidth
-     * @type string
-     */
     responsiveWidth: '860px',
 
     cEle : null,
@@ -91,14 +83,30 @@
     },
     
     menuSelect: function(e, detail) {
+      // check for back button
+      if (detail.isSelected) {
+        var tag = detail.item.getAttribute('tag');
+
+        if( tag == 'back' ) {
+          if( confirm('Are you sure you want to exit the dataset editor?') ) {
+            var url = '/dataset';
+            if( document.querySelector('esis-dataset-loader').pkgid ) {
+              url += '/'+document.querySelector('esis-dataset-loader').pkgid;
+            }
+            window.location = url;
+          } else {
+            return;
+          }
+        }
+      }
 
       if (detail.isSelected) {
         this.item = detail.item;
+
         if (this.item.children.length) {
           this.item.selected = 0;
         }
         this.item.tag = this.item.getAttribute('tag');
-        window.location.hash = this.item.tag;
         
         if( this.cEle ) this.cEle.style.display = 'none';
         this.cEle = this.item.esisComponent;

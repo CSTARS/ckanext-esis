@@ -66,7 +66,10 @@
 			</table>
 		</div>
 
+		<paper-button label="Cancel" style="float:right" on-tap="{{cancel}}"></paper-button>
 		<paper-button raisedButton label="{{ds.editMode ? 'Update' : 'Finalize'}}" class="colored" on-tap="{{finalize}}"><paper-button>
+
+
 	</template>
 	<script>
 		Polymer('esis-verify-dataset', {
@@ -76,6 +79,9 @@
 			},
 			finalize : function(){
 				this.fire('finalize');
+			},
+			cancel : function(){
+				this.fire('cancel');
 			}
 		});
 	</script>

@@ -11,10 +11,11 @@
 			data : {},
 			ds : {},
 			ckan : {},
+			pkgid : '',
 
 			ready : function() {
-				var id = this._getVar('id');
-				if( id == null ) return;
+				this.pkgid = this._getVar('id');
+				if( this.pkgid == null ) return;
 
 				this.ds = document.querySelector('esis-datastore');
 				this.ckan = document.querySelector('esis-ckan');
@@ -22,7 +23,7 @@
 				this.$.dialog.toggle();
 				window.addEventListener('polymer-ready', function(e) {
 				var ckan = document.querySelector('esis-ckan');
-				ckan.getPackage(id, function(err, pkg){
+				ckan.getPackage(this.pkgid, function(err, pkg){
 					this.$.dialog.toggle();
 					if( err || pkg.error ) return alert('Error loading dataset.');
 
@@ -45,7 +46,6 @@
             		if( this.data.resources[i].name == 'esis_spectral_data.zip' ) {
             			this._getSpectraPackage(this.data.resources[i].id);
             		} else {
-            			console.log(this.data.resources[i]);
                         this.ds.existing.resources.push(this.data.resources[i]);
                     }
             	}

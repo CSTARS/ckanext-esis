@@ -34,7 +34,7 @@
 			<div>This panel shows the current state of your newely added spectra.  Please verify your spectral data looks correct.</div>
 
 			<div class="next">
-				<h4>Possible next steps include:</h4>
+				<h4><core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Possible next steps include:</h4>
 				<ul>
 					<li><a on-tap="{{_gotoAttrMap}}">Set Attribute Map</a> - If you have custom fields below (marked with an '*') that map to Ecosis metadata fields, please upload a attribute map file.</li>
 					<li><a on-tap="{{_gotoJoin}}">Join Auxiliary Metadata</a> - If you uploaded your metadata in a separate file you will need to join the metadata to your spectra.</li>
@@ -145,7 +145,7 @@
 			},
 
 			_onTabChange : function() {
-				if( this.selectedTab == 1 ) this.$.spectraUI.show();
+				if( this.selectedTab == 0 ) this.$.spectraUI.show();
 			},
 
 			_selectSpectra : function() {
