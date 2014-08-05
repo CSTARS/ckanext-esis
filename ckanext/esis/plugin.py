@@ -68,6 +68,8 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         map.connect('add_spectra_package', '/spectra/add', controller=controller, action='add')
 
+        map.connect('update_spectra_package', '/spectra/update', controller=controller, action='update')
+
         map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
 
         map.connect('get_spectra_package_info', '/spectra/info', controller=controller, action='info')
