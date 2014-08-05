@@ -9,6 +9,7 @@ from ckan.common import request, response
 import ckan.lib.uploader as uploader
 
 from ckan.controllers.package import PackageController
+from paste.httpheaders import _AcceptLanguage
 
 
 log = logging.getLogger(__name__)
@@ -74,6 +75,83 @@ class SpectraController(PackageController):
 
         return resource
 
+    def update(self):
+        params = request.params
+
+        for item in params.multi.dicts:
+            if hasattr(item, '_items'):
+                if len(item._items) > 0:
+                    # for an update proly need to splice in here
+                    resource = self._update_resource(item._items)
+                    return json.dumps(resource)
+
+        return json.dumps({'success':'false', 'error':'true'})
+
+    def _update_resource(self, tuple):
+        data_dict = {}
+        file = ''
+        filename = ''
+
+        for key in tuple:
+            if key[0] == 'upload':
+                data = key[1]
+                file = data.file
+                filename = data.filename
+            else:
+                data_dict[key[0]] = key[1]
+        data_dict['url'] = filename.replace('json', 'zip')
+        data_dict['mimetype'] = data_dict.get('mimetype').replace('json', 'zip')
+        data_dict['name'] = filename.replace('json', 'zip')
+        data_dict['url_type'] = 'upload'
+
+        context = {'model': model, 'user': c.user}
+        resource = logic.get_action('resource_show')(context, {'id': data_dict['id']})
+
+        upload = uploader.ResourceUpload(resource)
+        upload.filename = munge.munge_filename(filename.replace('json', 'zip'))
+
+        f = tempfile.TemporaryFile()
+        zf = zipfile.ZipFile(f, mode="w")
+        newDataset = json.loads(file.read())
+        zf.close()
+
+        # grab the old file
+        context = {'model': model, 'user': c.user}
+        upload = uploader.ResourceUpload(resource)
+
+        oldData = ''
+        oldFileName = upload.get_path(data_dict['id'])
+        zf = zipfile.ZipFile(oldFileName)
+        oldData = zf.read('esis_spectral_data.json')
+        oldDataset = json.loads(oldData)
+        zf.close()
+
+        # now merge the file data
+        self._merge_dataset(oldDataset, newDataset)
+
+        zf = zipfile.ZipFile(f, mode="w")
+        zf.writestr(filename, json.dumps(newDataset), zipfile.ZIP_DEFLATED)
+
+        file.close()
+        zf.close()
+
+        #f.seek(0)
+        #upload.upload_file = f
+        #upload.upload(resource.get('id'), uploader.get_max_resource_size())
+
+        f.close()
+
+        return resource
+
+    # loop through all of the old data fields,  old data fields will not have spectra, so reassociate
+    # based on spectra id
+    def _merge_dataset(self, old, new):
+        for oldData in old['data']:
+            for newData in new['data']:
+                if oldData['spectra_id'] == newData['spectra_id']:
+                    newData['spectra'] = oldData['spectra']
+                    break
+
     # download all package resources
     def download(self):
         id = request.params.get('id')
@@ -116,7 +194,7 @@ class SpectraController(PackageController):
 
                 dataset = json.loads(data)
                 for item in dataset['data']:
-                    del item['spectra']
+                    item.pop("spectra", None)
                 data = json.dumps(dataset)
 
             response.headers["Content-Type"] = "application/json"
