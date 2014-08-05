@@ -34,6 +34,7 @@
 			esisComponent : {},
 
 			ready : function() {
+				if( !this.ele ) return;
 				this.esisComponent = document.createElement(this.ele);
 				this.esisComponent.menuItem = this;
 				this.classList.add('animated');
