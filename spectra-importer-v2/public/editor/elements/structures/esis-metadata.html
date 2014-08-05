@@ -92,8 +92,11 @@
 						}
 					}
 				} else {
+					var spMetadata = spectra.metadata.spectra; // case for new metadata
+					if( !spMetadata ) spMetadata = spectra.metadata; // case for existing spectra
+
 					for( var i = 1; i < this.metadata.length; i++ ) {
-						if( this.metadata[i][this.joinCol] == spectra.metadata.spectra[this.joinId] ) {
+						if( this.metadata[i][this.joinCol] == spMetadata[this.joinId] ) {
 							return i;
 						}
 					}
