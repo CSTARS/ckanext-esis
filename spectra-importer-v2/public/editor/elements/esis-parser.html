@@ -15,7 +15,7 @@
 					try {
 
 						var ref = this;
-						function onComplete(wb){
+						function onXlsxComplete(wb){
 							var count = 0;
 							wb.SheetNames.forEach(function(sheetName) {
 								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
@@ -40,7 +40,7 @@
 							switch(e.data.t) {
 								case 'ready': break;
 								case 'e': console.error(e.data.d); break;
-								case 'xlsx': onComplete(JSON.parse(e.data.d)); break;
+								case 'xlsx': onXlsxComplete(JSON.parse(e.data.d)); break;
 							}
 						};
 						worker.postMessage({d:contents,b:true});
@@ -53,7 +53,7 @@
 					try {
 
 						var ref = this;
-						function onComplete(wb){
+						function onXlsComplete(wb){
 							wb = XLS.read(contents, {type: 'binary'});
 
 							var count = wb.SheetNames.length;
@@ -80,7 +80,7 @@
 							switch(e.data.t) {
 								case 'ready': break;
 								case 'e': console.error(e.data.d); break;
-								case 'xlsx': onComplete(JSON.parse(e.data.d)); break;
+								case 'xlsx': onXlsComplete(JSON.parse(e.data.d)); break;
 							}
 						};
 						worker.postMessage({d:contents,b:true});
@@ -139,7 +139,7 @@
 				data.info = {};
 				for( key in info ) data.info[key] = info[key];
 
-				// don't want to add worksheets as resources
+				// don't want to add datasheets as resources
 				data.info.type = 'data';
 
 				arr.push(data);

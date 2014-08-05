@@ -53,6 +53,9 @@
 			// list of currently known attributes for this dataset
 			knownAttributes : [],
 
+			// list of resources that are scheduled to be deleted
+			deleted : [],
+
 			observe : {
 				attributeMap : '_onAttributeMapUpdate'
 			},
@@ -68,6 +71,7 @@
 				this.files.push(ele);
 				return ele;
 			},
+
 			removeFile : function(file) {
 				var index = this.files.indexOf(file);
 				if( index > -1 ) {
@@ -107,12 +111,41 @@
 				ele.filename = resource.name || resource.info.name;
 				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
 				ele.ext = resource.info.ext;
+				ele.datasheets = datasheets;
 				this.resources.push(ele);
 				return ele;
 			},
 
+			removeResource : function(id) {
+				// remove resource
+				for( var i = 0; i < this.existing.resources.length; i++ ) {
+					if( this.existing.resources[i].id == id ) {
+						this.existing.resources.splice(i,1);
+						break;
+					}
+				}
+
+				// remove any spectra associated with this resource
+				for( var i = this.existing.dataset.data.length-1; i >= 0; i-- ) {
+					if( this.existing.dataset.data[i].resource_id == id ) {
+						this.existing.dataset.data.splice(i,1);
+					}
+				}
+
+				// remove any metadata associated with this resource
+				for( var i = this.existing.dataset.join.length-1; i >= 0; i-- ) {
+					if( this.existing.dataset.join[i].resource_id == id ) {
+						this.existing.dataset.join.splice(i, 1);
+					}
+				}
+
+				this.deleted.push(id);
+			},
+
 			join : function(metadata) {
 				var count = 0;
+				
+				// join on new spectra
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					if( this.datasheets[i].isMetadata ) continue;
 
@@ -120,6 +153,14 @@
 						if( metadata.join(this.datasheets[i].spectra[j]) ) count++;
 					}
 				}
+
+				// join on existing spectra
+				if( this.existing.dataset.data ) {
+					for( var i = 0; i < this.existing.dataset.data.length; i++ ) {
+						if( metadata.join(this.existing.dataset.data[i]) ) count++;
+					}
+				}
+
 				metadata.matchCount = count;
 
 				// make sure to add new metadata attribute to known list
@@ -135,8 +176,6 @@
 			},
 
 			_onAttributeMapUpdate : function(oldMap, newMap) {
-				//console.log(oldData);
-
 				this.inverseAttributeMap = {};
 				for( var key in newMap ) {
 					if( newMap[key] != '' ) this.inverseAttributeMap[newMap[key]] = key;

@@ -33,9 +33,9 @@
 			}
 		</style>
 
-		<h2>Verify Dataset</h2>
+		<h2>{{ds.editMode ? 'Update' : 'Verify'}} Dataset</h2>
 		<div>
-			Please verify all information looks correct before finalizing and uploading your data.
+			Please verify all information looks correct before {{ds.editMode ? 'updating' : 'finalizing and uploading'}} your data.
 		</div>
 
 		<div class="card">
@@ -66,10 +66,14 @@
 			</table>
 		</div>
 
-		<paper-button raisedButton label="Finalize" class="colored" on-tap="{{finalize}}"><paper-button>
+		<paper-button raisedButton label="{{ds.editMode ? 'Update' : 'Finalize'}}" class="colored" on-tap="{{finalize}}"><paper-button>
 	</template>
 	<script>
 		Polymer('esis-verify-dataset', {
+			ds : {},
+			ready : function() {
+				this.ds = document.querySelector('esis-dataset');
+			},
 			finalize : function(){
 				this.fire('finalize');
 			}

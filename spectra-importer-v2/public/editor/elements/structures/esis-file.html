@@ -73,6 +73,18 @@
 				}]);
 			},
 
+			/*_unzip : function(callback) {
+				var worker = new Worker('workers/jszipWorker.js');
+				var ref = this;
+				worker.onmessage = function(e) {
+					if( e.data.zip ) {
+						console.log(e.data.zip);
+						ref._parseUnzipped(e.data.zip);
+					}
+				};
+				worker.postMessage({contents: this.contents});
+			},*/
+
 			_unzip : function() {
 				var zip = new JSZip(this.contents);
 				var arr = [];

@@ -1,6 +1,32 @@
 <polymer-element name="esis-current-resources">
 	<template>
-		hello world
+		<style>
+			table {
+				width: 100%;
+				border-spacing: 0px;
+			}
+			table th {
+				text-align: left;
+				border-bottom: 1px solid #ccc;
+			}
+			table tr:nth-child(even) {
+				background-color: #eee;
+			}
+			table td {
+				padding: 5px;
+			}
+		</style>
+		<table>
+			<tr>
+				<th>Filename</th><th>Resource Type</th><th>Parsed Spectra</th><th></th>
+			</tr>
+			<tr template repeat="{{res in resources}}">
+				<td>{{res.name}}</td>
+				<td>{{res.type}}</td>
+				<td>{{res.count}}</td>
+				<td><esis-ui-delete-button rid="{{res.id}}" label="{{res.name}}" on-delete="{{_deleteResource}}"></esis-ui-delete-button></td>
+			</tr>
+		</table>
 	</template>
 	<script>
 		Polymer('esis-current-resources',{
@@ -8,8 +34,11 @@
 			ds : {},
 			loader : {},
 
+			resources : [],
+
 			observe : {
-				'ds.existing.dataset' : '_updateVisibility',
+				'ds.deleted' : '_update',
+				'ds.existing.dataset' : '_update',
 				'ds.editMode' : '_updateVisibility'
 			},
 
@@ -19,6 +48,51 @@
 				this.loader.addEventListener('get-spectral-resource-progress', function(e){
 					this._updatePreview(e.detail);
 				}.bind(this));
+			},
+
+			_update : function() {
+				this._updateVisibility();
+
+				this.async(function(){
+					this._updateUI();
+				});
+			},
+
+			_updateUI : function() {
+				this.resources = [];
+
+				for( var i = 0; i < this.ds.existing.resources.length; i++ ) {
+					this.resources.push(this._groupData(this.ds.existing.resources[i]));
+				}
+			},
+
+			_groupData : function(res) {
+				var ui = {
+					name : res.name,
+					id   : res.id,
+					type : ''
+				};
+
+				for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
+					var join = this.ds.existing.dataset.join[i];
+					if( res.id == join.resource_id ) {
+						ui.type = 'Metadata';
+						return ui;
+					}
+				}
+
+
+				for( var i = 0; i < this.ds.existing.dataset.data.length; i++ ) {
+					if( this.ds.existing.dataset.data[i].resource_id == res.id ) {
+						ui.type = 'Spectra';
+						if( ui.count == null ) ui.count = 1;
+						else ui.count++;
+					}
+				}
+
+				if( ui.type == '' ) ui.type = 'Generic';
+
+				return ui;
 			},
 
 			_updateVisibility : function() {
@@ -42,6 +116,11 @@
 				}
 
 		  		this.menuItem.setSecondaryHtml(html);
+		  	},
+
+		  	_deleteResource : function(e) {
+		  		var id = e.currentTarget.getAttribute('rid');
+		  		this.ds.removeResource(id);
 		  	}
 		});
 	</script>
