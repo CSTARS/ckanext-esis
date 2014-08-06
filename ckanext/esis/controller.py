@@ -158,25 +158,22 @@ class SpectraController(PackageController):
         context = {'model': model, 'user': c.user}
         upload = uploader.ResourceUpload(logic.get_action('resource_show')(context, {'id': id}))
 
-        data = ''
-
-        id = request.params.get('id')
+        dataset = {}
         f = open(upload.get_path(id), 'r')
-        data = f.read()
 
         if metadataOnly == 'true':
             # need to splice out the spectra
-            dataset = json.loads(data)
+            dataset = json.load(f)
             for item in dataset['data']:
                 item.pop("spectra", None)
-            data = json.dumps(dataset)
 
         f.close()
 
+        dataset = json.dumps(dataset)
         response.headers["Content-Type"] = "application/json"
-        response.headers["Content-Length"] = "%s" % len(data)
+        response.headers["Content-Length"] = "%s" % len(dataset)
 
-        return data
+        return dataset
 
     def info(self):
         id = request.params.get('id')
