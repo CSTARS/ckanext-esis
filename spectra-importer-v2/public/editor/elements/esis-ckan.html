@@ -99,8 +99,7 @@
 		            if( progress ) {
 		                xhr.upload.addEventListener("progress", function(evt){
 		                    if (evt.lengthComputable) {  
-		                        var percentComplete = evt.loaded / evt.total;
-		                        progress(percentComplete);
+		                        progress(((evt.loaded / evt.total)*100).toFixed(0));
 		                    }
 		                }, false); 
 		            }

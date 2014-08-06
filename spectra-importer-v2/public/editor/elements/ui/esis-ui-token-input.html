@@ -21,7 +21,7 @@
             </template>
             <template bind if="{{!searching}}">
                 <template repeat="{{result in results}}">
-                    <esis-paper-button label="{{result.name}}" icon="add" on-tap="{{_addResult}}" size="14"></esis-paper-button>
+                    <esis-paper-button label="{{result.name}}" icon="add" on-click="{{_addResult}}" size="14"></esis-paper-button>
                 </template>
             </template>
         </div>
