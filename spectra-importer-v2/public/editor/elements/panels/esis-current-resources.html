@@ -16,6 +16,12 @@
 				padding: 5px;
 			}
 		</style>
+
+		<div hidden?="{{!loading}}" style="margin-bottom:25px">
+			Loading spectral package...<br />
+			<span style="font-size:12px;color:#888">Resource Type and Parsed Spectra below will be incomplete till package is loaded.</span>
+		</div>
+
 		<table>
 			<tr>
 				<th>Filename</th><th>Resource Type</th><th>Parsed Spectra</th><th></th>
@@ -36,6 +42,8 @@
 
 			resources : [],
 
+			loading : false,
+
 			observe : {
 				'ds.deleted' : '_update',
 				'ds.existing.dataset' : '_update',
@@ -46,9 +54,19 @@
 			ready : function() {
 				this.ds = document.querySelector('esis-datastore');
 				this.loader = document.querySelector('esis-dataset-loader');
-				this.loader.addEventListener('get-spectral-resource-progress', function(e){
-					this._updatePreview(e.detail);
-				}.bind(this));
+
+
+				if( !this.loader.spectraPackageLoaded ) {
+					this.loader.addEventListener('get-spectral-resource-progress', function(e){
+						this.loading = true;
+						this._updatePreview(e.detail);
+					}.bind(this));
+
+					this.loader.addEventListener('get-spectral-resource-complete', function(e){
+						this.loading = false;
+					}.bind(this));
+				}
+				
 			},
 
 			_update : function() {

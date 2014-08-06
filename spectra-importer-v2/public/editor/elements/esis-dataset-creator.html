@@ -21,11 +21,11 @@
 
 		<paper-fab icon="check-circle-outline" on-tap="{{show}}" hidden?="{{hide}}" class="animated rollIn"></paper-fab>
 		
-		<paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom">
+		<paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom" autoCloseDisabled="true">
 			<div hidden?="{{uploading}}">
 				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
 			</div>
-			<div hidden?="{{!uploading}}">
+			<div hidden?="{{!uploading}}" style="min-width: 300px; min-height:250px">
 				<h4>{{ds.editMode ? 'Updating' : 'Creating'}} Dataset...</h4>
 				<div>{{statusText}}</div>
 			</div>
@@ -322,7 +322,7 @@
 				if( this.ds.editMode ) {
 					var resources = document.querySelector('esis-dataset-loader').data.resources;
 					for( var i = 0; i < resources.length; i++ ) {
-						if( resources[i].name == 'esis_spectral_data.zip') {
+						if( resources[i].name == 'esis_spectral_data.json') {
 							resource.resourceId = resources[i].id;
 							break;
 						}
@@ -352,48 +352,25 @@
 			},
 
 	    	_uploadSpectraResource : function(pkgId, callback) {
-		        //this._cleanOldSpectralResource(pkgId, function(){
-		        	this.statusText = 'Uploading spectral data resource...';
+	        	this.statusText = 'Uploading spectral data resource...';
 
-			        this.ckan.addResource(
-						pkgId, 
-						this._createSpectraJsonResource(), 
-						true, 
-						function(err, resp){
-							if( err ) {
-								this.uploading = false;
-								return alert('Error creating ckan resource');
-							}
+		        this.ckan.addResource(
+					pkgId, 
+					this._createSpectraJsonResource(), 
+					true, 
+					function(err, resp){
+						if( err ) {
+							this.uploading = false;
+							return alert('Error creating ckan resource');
+						}
 
-							callback();
-						}.bind(this), 
-						function(progress){
-							this.statusText = 'Uploading spectral data resource ('+(progress*100)+'%)...';
-						}.bind(this)
-					);
-		        //}.bind(this));
+						callback();
+					}.bind(this), 
+					function(progress){
+						this.statusText = 'Uploading spectral data resource ('+(progress*100)+'%)...';
+					}.bind(this)
+				);
 		    },
-
-		    /*_cleanOldSpectralResource : function(pkgid, callback) {
-		    	this.statusText = 'Cleaning old spectral data';
-
-		    	this.ckan.getPackage(pkgid, function(err, pkg){
-		    		if( err ) return callback(err);
-
-		    		if( !pkg.resources ) return callback();
-		    		for( var i = 0; i < pkg.resources.length; i++ ) {
-		    			if( pkg.resources[i].name == 'esis_spectral_data.zip' ) {
-
-		    				this.ckan.removeResource(pkg.resources[i].id, function(err, resp){
-		    					if( err ) return callback(err);
-		    					callback();
-		    				});
-		    				return;
-		    			}
-		    		}
-		    		callback();
-		    	}.bind(this));
-		    },*/
 
 		    _isEcosisMetadata : function(key) {
 		    	if( esis.metadata[key] != null ) return true;
