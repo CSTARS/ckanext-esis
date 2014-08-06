@@ -1,5 +1,5 @@
 import logging
-import json, re, zlib, StringIO, zipfile, tempfile
+import json, re, zlib, StringIO
 
 import ckan.lib.munge as munge
 
@@ -48,30 +48,22 @@ class SpectraController(PackageController):
                 filename = data.filename
             else:
                 data_dict[key[0]] = key[1]
-        data_dict['url'] = filename.replace('json', 'zip')
-        data_dict['mimetype'] = data_dict.get('mimetype').replace('json', 'zip')
-        data_dict['name'] = filename.replace('json', 'zip')
+        data_dict['url'] = filename
+        data_dict['mimetype'] = data_dict.get('mimetype')
+        data_dict['name'] = filename
         data_dict['url_type'] = 'upload'
 
         context = {'model': model, 'user': c.user}
         resource = logic.get_action('resource_create')(context, data_dict)
 
         upload = uploader.ResourceUpload(resource)
-        upload.filename = munge.munge_filename(filename.replace('json', 'zip'))
+        upload.filename = munge.munge_filename(filename)
 
-        f = tempfile.TemporaryFile()
-        zf = zipfile.ZipFile(f, mode="w")
-
-        zf.writestr(filename, file.read(), zipfile.ZIP_DEFLATED)
-
-        file.close()
-        zf.close()
-
-        f.seek(0)
-        upload.upload_file = f
+        file.seek(0)
+        upload.upload_file = file
         upload.upload(resource.get('id'), uploader.get_max_resource_size())
 
-        f.close()
+        file.close()
 
         return resource
 
@@ -109,23 +101,22 @@ class SpectraController(PackageController):
         resource = logic.get_action('resource_show')(context, {'id': data_dict['id']})
         upload = uploader.ResourceUpload(resource)
 
-        oldData = ''
-        zipfilename = upload.get_path(data_dict['id'])
-        zf = zipfile.ZipFile(zipfilename)
-        oldData = zf.read('esis_spectral_data.json')
-        oldDataset = json.loads(oldData)
-        zf.close()
+
+        oldfilename = upload.get_path(data_dict['id'])
+        oldfile = open(oldfilename, 'r')
+        oldDataset = json.loads(oldfile.read())
+
+        oldfile.close()
 
         # now merge the file data
         self._merge_dataset(oldDataset, newDataset)
 
         # write new data
-        zf = zipfile.ZipFile(zipfilename, mode="w")
-        zf.writestr(filename, json.dumps(newDataset), zipfile.ZIP_DEFLATED)
+        oldfile = open(oldfilename, 'w')
+        oldfile.write(json.dumps(newDataset))
 
         file.close()
-        zf.close()
-
+        oldfile.close()
 
         return resource
 
@@ -139,7 +130,7 @@ class SpectraController(PackageController):
                     break
 
     # download all package resources
-    def download(self):
+    '''def download(self):
         id = request.params.get('id')
         context = {'model': model, 'user': c.user}
         pkg = logic.get_action('package_show')(context, {'id': id})
@@ -148,7 +139,7 @@ class SpectraController(PackageController):
         zf = zipfile.ZipFile(f, mode="w", compression=zipfile.ZIP_DEFLATED)
 
         for resource in pkg.get('resources'):
-            if resource.get('name') == 'esis_spectral_data.zip':
+            if resource.get('name') == 'esis_spectral_data.json':
                 continue
 
             upload = uploader.ResourceUpload(resource)
@@ -158,38 +149,31 @@ class SpectraController(PackageController):
         f.seek(0)
 
         data = f.read()
-        f.close()
+        f.close()'''
 
     def get(self):
         id = request.params.get('id')
-        compress = request.params.get('compressed')
         metadataOnly = request.params.get('metadataOnly')
 
         context = {'model': model, 'user': c.user}
         upload = uploader.ResourceUpload(logic.get_action('resource_show')(context, {'id': id}))
 
         data = ''
-        if compress == 'false':
-            id = request.params.get('id')
-            zf = zipfile.ZipFile(upload.get_path(id))
-            data = zf.read('esis_spectral_data.json')
 
-            if metadataOnly == 'true':
-                # need to splice out the spectra
-                tmp = 1
+        id = request.params.get('id')
+        f = open(upload.get_path(id), 'r')
+        data = f.read()
 
-                dataset = json.loads(data)
-                for item in dataset['data']:
-                    item.pop("spectra", None)
-                data = json.dumps(dataset)
+        if metadataOnly == 'true':
+            # need to splice out the spectra
+            dataset = json.loads(data)
+            for item in dataset['data']:
+                item.pop("spectra", None)
+            data = json.dumps(dataset)
 
-            response.headers["Content-Type"] = "application/json"
-        else:
-            file = open(upload.get_path(id), 'r')
-            data = file.read()
-            file.close()
-            response.headers["Content-Type"] = "application/zip"
+        f.close()
 
+        response.headers["Content-Type"] = "application/json"
         response.headers["Content-Length"] = "%s" % len(data)
 
         return data
