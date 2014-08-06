@@ -167,7 +167,7 @@
 							this._addResourceToCkan(index, pkgid);
 						}.bind(this), 
 						function(progress){
-							this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+(progress*100)+'%)...';
+							this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+progress+'%)...';
 						}.bind(this)
 					);
 				}
@@ -367,7 +367,7 @@
 						callback();
 					}.bind(this), 
 					function(progress){
-						this.statusText = 'Uploading spectral data resource ('+(progress*100)+'%)...';
+						this.statusText = 'Uploading spectral data resource ('+progress+'%)...';
 					}.bind(this)
 				);
 		    },
