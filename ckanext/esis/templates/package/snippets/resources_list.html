@@ -1,6 +1,7 @@
 {% ckan_extends %}
 
 {% block resource_list_inner %}
+        test
     {% for resource in resources %}
         {% if resource.name != 'esis_spectral_data.json' %}
             {% snippet 'package/snippets/resource_item.html', pkg=pkg, res=resource %}
