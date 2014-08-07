@@ -9,7 +9,7 @@ from ckan.common import request, response
 import ckan.lib.uploader as uploader
 
 from ckan.controllers.package import PackageController
-from paste.httpheaders import _AcceptLanguage
+from multiprocessing import Process, Queue
 
 
 log = logging.getLogger(__name__)
@@ -19,10 +19,10 @@ class SpectraController(PackageController):
     def all(self):
         context = {'model': model, 'user': c.user}
         data_dict = {
-            'query': 'name:esis_spectral_data.zip'
+            'query': 'name:esis_spectral_data.json'
         }
         query = logic.get_action('resource_search')(context, data_dict)
-        return json.dumps(query)
+        return self.stringify_json(query)
 
     def add(self):
         params = request.params
@@ -32,9 +32,9 @@ class SpectraController(PackageController):
                 if len(item._items) > 0:
                     # for an update proly need to splice in here
                     resource = self._create_resource(item._items)
-                    return json.dumps(resource)
+                    return self.stringify_json(resource)
 
-        return json.dumps({'success':'false', 'error':'true'})
+        return self.stringify_json({'success':'false', 'error':'true'})
 
     def _create_resource(self, tuple):
         data_dict = {}
@@ -75,9 +75,9 @@ class SpectraController(PackageController):
                 if len(item._items) > 0:
                     # for an update proly need to splice in here
                     resource = self._update_resource(item._items)
-                    return json.dumps(resource)
+                    return self.stringify_json(resource)
 
-        return json.dumps({'success':'false', 'error':'true'})
+        return self.stringify_json({'success':'false', 'error':'true'})
 
     def _update_resource(self, tuple):
         data_dict = {}
@@ -93,7 +93,7 @@ class SpectraController(PackageController):
                 data_dict[key[0]] = key[1]
 
 
-        newDataset = json.loads(file.read())
+        newDataset = self.parse_json(file.read())
 
 
         # grab the old file
@@ -104,7 +104,7 @@ class SpectraController(PackageController):
 
         oldfilename = upload.get_path(data_dict['id'])
         oldfile = open(oldfilename, 'r')
-        oldDataset = json.loads(oldfile.read())
+        oldDataset = self.parse_json(oldfile.read())
 
         oldfile.close()
 
@@ -158,18 +158,19 @@ class SpectraController(PackageController):
         context = {'model': model, 'user': c.user}
         upload = uploader.ResourceUpload(logic.get_action('resource_show')(context, {'id': id}))
 
-        dataset = {}
+        dataset = ''
         f = open(upload.get_path(id), 'r')
+        dataset = f.read()
 
         if metadataOnly == 'true':
             # need to splice out the spectra
-            dataset = json.load(f)
+            dataset = self.parse_json(dataset)
             for item in dataset['data']:
                 item.pop("spectra", None)
+            dataset = self.stringify_json(dataset)
 
         f.close()
 
-        dataset = json.dumps(dataset)
         response.headers["Content-Type"] = "application/json"
         response.headers["Content-Length"] = "%s" % len(dataset)
 
@@ -191,7 +192,7 @@ class SpectraController(PackageController):
             'groups' : pkg.get('groups')
         }
 
-        return json.dumps(data)
+        return self.stringify_json(data)
 
     def createPackage(self):
         response.status_int = 307
@@ -202,3 +203,29 @@ class SpectraController(PackageController):
         response.status_int = 307
         response.headers["Location"] = "/editor/?id=%s" % id.encode('ascii','ignore')
         return "Redirecting"
+
+    def parse_json(self, jsonstr):
+        q = Queue()
+        p = Process(target=sub_parse_json, args=(q, jsonstr,))
+        p.start()
+        json = q.get()
+        p.join()
+        p.terminate()
+        return json
+
+    def stringify_json(self, json):
+        q = Queue()
+        p = Process(target=sub_stringify_json, args=(q, json,))
+        p.start()
+        jsonstr = q.get()
+        p.join()
+        p.terminate()
+        return jsonstr
+
+
+def sub_parse_json(q, jsonstr):
+        t = json.loads(jsonstr)
+        q.put(t)
+
+def sub_stringify_json(q, jsonobj):
+        q.put(json.dumps(jsonobj))
