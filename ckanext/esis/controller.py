@@ -1,6 +1,7 @@
 import logging
 import re, zlib, StringIO
-import simplejson as json
+#import simplejson as json
+import ujson as json
 
 import ckan.lib.munge as munge
 
