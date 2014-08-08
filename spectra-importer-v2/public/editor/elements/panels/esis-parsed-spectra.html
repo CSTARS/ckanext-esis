@@ -137,11 +137,14 @@
 			},
 
 			_updateVisibility : function() {
-				if( this.datasheets.length > 0 ) {
-					this.menuItem.style.display = 'block';
-				} else {
-					this.menuItem.style.display = 'none';
+				var display = 'none';
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( this.datasheets[i].spectra.length > 0 ) {
+						display = 'block';
+						break;
+					}
 				}
+				this.menuItem.style.display = display;
 			},
 
 			_onTabChange : function() {

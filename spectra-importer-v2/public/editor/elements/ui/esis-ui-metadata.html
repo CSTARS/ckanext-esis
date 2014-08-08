@@ -8,10 +8,19 @@
 				display: block;
 				margin-bottom: 20px;
 			}
+			.resource-type {
+				border-bottom: 1px solid #2f9b45;
+				color: #2f9b45;
+				margin-bottom: 8px;
+				padding-bottom: 3px;
+			}
 		</style>
 
 		<esis-ui-card z="1" style="padding: 1px 20px 10px 20px">
 			<h4>
+				<div hidden?="{{metadata.isExisting}}" class="resource-type">New Resource</div>
+				<div hidden?="{{!metadata.isExisting}}" class="resource-type">Existing Resource</div>
+
 				{{label}}
 				<template bind if="{{metadata.file.sheetName.length > 0}}">
 					- {{metadata.file.sheetName}}
@@ -20,7 +29,7 @@
 
 			<div>
 				Join On:
-				<select value="{{metadata.joinId}}">
+				<select id="joinId" value="{{metadata.joinId}}">
 					<option value=""></option>
 					<template repeat="{{attr in joinAttrs}}" >
 						<option value="{{attr}}">{{attr}}</option>
@@ -77,7 +86,15 @@
 					this.joinAttrs.push(this.metadata.metadata[0][i]);
 				}
 
-				this.label = this.metadata.file.info.name.replace(/.*\//,'');
+				if( this.metadata.file && this.metadata.file.info ) {
+					this.label = this.metadata.file.info.name.replace(/.*\//,'');
+				} else {
+					this.label = this.metadata.filename;
+				}
+
+				this.async(function(){
+					this.$.joinId.value = this.metadata.joinId;
+				});
 			},
 
 			_updateDatastore : function() {
