@@ -45,12 +45,10 @@
 				if( !this.data.resources ) return;
 
 				for( var i = 0; i < this.data.resources.length; i++ ) {
-            		if( this.data.resources[i].name == 'esis_spectral_data.json' ) {
-            			this._getSpectraPackage(this.data.resources[i].id);
-            		} else {
-                        this.ds.existing.resources.push(this.data.resources[i]);
-                    }
+            		this.ds.existing.resources.push(this.data.resources[i]);
             	}
+
+            	this._getSpectraPackage(this.data.name);
 			},
 
 			_getSpectraPackage: function(id) {

@@ -52,6 +52,9 @@
 			uploading : false,
 			statusText : '',
 
+			// make number of spectra to upload at one time
+			MAX_DATA_UPLOAD_COUNT : 100,
+
 			ready : function() {
 				this.ds = document.querySelector('esis-datastore');
 				this.ckan = document.querySelector('esis-ckan');
@@ -155,8 +158,7 @@
 					this.statusText = 'Uploading '+this.ds.resources[index].filename+'...';
 					this.ckan.addResource(
 						pkgid, 
-						this.ds.resources[index], 
-						false, 
+						this.ds.resources[index],
 						function(err, resp){
 							if( err ) {
 								this.uploading = false;
@@ -174,7 +176,7 @@
 			},
 
 			_removeDeletedResources : function(index, callback) {
-				if( !this.ds.editMode || this.ds.deleted.length == 0 || this.ds.deleted.length == index ) return callback();
+				if( !this.ds.editMode || this.ds.deleted.length == index ) return callback();
 
 				this.statusText = 'Removing deleted resources '+(index+1)+'/'+this.ds.deleted.length;
 				this.ckan.removeResource(this.ds.deleted[index], function(err, resp){
@@ -203,7 +205,7 @@
 				return true;
 			},
 
-			_createSpectraJsonResource : function() {
+			_createSpectraJsonResource : function(pkgid) {
 				var spectra = [];
 
 				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
@@ -226,26 +228,14 @@
 				var data = [];
 				for( var i = 0; i < spectra.length; i++ ) {
 					var d = {
-						metadata : spectra[i].mergeMetadata(),
+						metadata : spectra[i].metadata,
 						spectra : spectra[i].data,
 						filename : spectra[i].filename,
 						sheetname : spectra[i].sheetname,
 						resource_id : spectra[i].resourceId,
 						spectra_id : spectra[i].spectra_id,
-						ecosis : {}
+						package_id : pkgid
 					};
-
-					// now set the ecosis attributes
-					for( var key in d.metadata ) {
-						if( this._isEcosisMetadata(key) ) {
-							d.ecosis[key] = d.metadata[key];
-							// in this case their value is our value, so delete their value
-							delete d.metadata[key];
-						} else if( this.ds.inverseAttributeMap[key] ) {
-							var ecosisKey = this.ds.inverseAttributeMap[key];
-							d.ecosis[ecosisKey] = d.metadata[key];
-						}
-					}
 
 					data.push(d);
 				}
@@ -290,7 +280,8 @@
 						data : data,
 						map  : this.ds.inverseAttributeMap,
 						join : this._getJoinableData(),
-						group_by : this.ds.group
+						group_by : this.ds.group,
+						package_id : pkgid
 					}
 				};
 
@@ -312,24 +303,7 @@
 					}
 				}
 
-				var resource = document.createElement('esis-resource');
-				resource.contents = JSON.stringify(dataset);
-				resource.filename = 'esis_spectral_data.json';
-				resource.mimetype ='application/json';
-
-				// if we are editing make sure we set the resource id so this performs and update if spectra
-				// resource already exists
-				if( this.ds.editMode ) {
-					var resources = document.querySelector('esis-dataset-loader').data.resources;
-					for( var i = 0; i < resources.length; i++ ) {
-						if( resources[i].name == 'esis_spectral_data.json') {
-							resource.resourceId = resources[i].id;
-							break;
-						}
-					}					
-				}
-
-				return resource;
+				return dataset;
 			},
 
 			_getJoinableData: function() {
@@ -354,22 +328,42 @@
 	    	_uploadSpectraResource : function(pkgId, callback) {
 	        	this.statusText = 'Uploading spectral data resource...';
 
-		        this.ckan.addResource(
-					pkgId, 
-					this._createSpectraJsonResource(), 
-					true, 
-					function(err, resp){
-						if( err ) {
-							this.uploading = false;
-							return alert('Error creating ckan resource');
-						}
+	        	var dataset = this._createSpectraJsonResource(pkgId);
+	        	// split out data and upload in set chunks
 
-						callback();
-					}.bind(this), 
-					function(progress){
-						this.statusText = 'Uploading spectral data resource ('+progress+'%)...';
-					}.bind(this)
-				);
+	        	var data = dataset.data;
+	        	delete dataset.data;
+
+	        	var chunks = [];
+	        	var chunk = [];
+	        	for( var i = 0; i < data.length; i++ ) {
+	        		chunk.push(data[i]);
+	        		if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
+	        			chunks.push(chunk);
+	        			chunk = [];
+	        		}
+	        	}
+	        	if( chunk.length > 0 ) chunks.push(chunk);
+
+	        	debugger;
+	        	this.ckan.addSpectraInfo(dataset, function(){
+	        		this._addSpectraData(pkgId, 0, data.length, chunks, function(){
+	        			debugger;
+	        			callback();
+	        		}.bind(this));
+	        	}.bind(this));
+		    },
+
+		    _addSpectraData : function(pkgId, index, total, chunks, callback) {
+		    	if( index == chunks.length ) return callback();
+
+		    	var count = (index > 0) ? (index * this.MAX_DATA_UPLOAD_COUNT) + chunks[index].length : chunks[index].length;
+
+		    	this.statusText = 'Uploading spectral data ('+count+'/'+total+')...';
+		    	this.ckan.addSpectraData(pkgId, chunks[index], function(){
+		    		index++;
+		    		this._addSpectraData(pkgId, index, total, chunks, callback);
+		    	}.bind(this));
 		    },
 
 		    _isEcosisMetadata : function(key) {

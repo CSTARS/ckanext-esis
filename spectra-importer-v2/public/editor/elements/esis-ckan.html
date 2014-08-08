@@ -75,11 +75,10 @@
 			 *
 			 * pkgid: id of the package to add to 
 			 * resource: esis-resource element representing the to resource to upload
-			 * isSpectra: is the resource the special ecosis spectral package
 			 * callback: callback handler
 			 * progress: callback for progress update
 			 **/
-			addResource : function(pkgid, resource, isSpectra, callback, progress) {
+			addResource : function(pkgid, resource, callback, progress) {
 		        // TODO: if this fails, we have an issue on our hands
 		    	var formData = new FormData();
 
@@ -105,20 +104,8 @@
 		            }
 		        } catch(e) {}
 
-		        var path;
-		        if( isSpectra ) {
-		        	if( resource.resourceId && resource.resourceId != '' ) {
-		        		path = '/spectra/update';
-		        		formData.append('id', resource.resourceId);
-		        	} else {
-		        		path = '/spectra/add';
-		        	}
-		        } else {
-		        	path = '/api/action/resource_create';
-		        }
-
 		    	$.ajax({
-				    url: esis.host + path,
+				    url: esis.host + '/api/action/resource_create',
 				    type: "POST",
 				    data: formData,
 				    processData: false,
@@ -131,9 +118,57 @@
 		            },
 				    success: function(response, status) {
 		                if( response.success || !response.error ) {
-		                    if( !isSpectra ) {
-		                        resource.setId(response.result.id);
-		                    }
+		                    resource.setId(response.result.id);
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function() {
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
+			addSpectraInfo : function(info, callback) {
+				$.ajax({
+				    url: esis.host + '/spectra/addInfo',
+				    type: "POST",
+				    data: {
+				    	info : JSON.stringify(info)
+				    },
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function(err) {
+				    	debugger;
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
+			addSpectraData : function(pkgid, spectra, callback) {
+				$.ajax({
+				    url: esis.host + '/spectra/addData',
+				    type: "POST",
+				    data: {
+				    	data : JSON.stringify({
+				    		package_id : pkgid,
+				    		spectra : spectra
+				    	})
+				    },
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
 				            callback(null, response);
 		                } else {
 		                    callback(response);
@@ -164,7 +199,7 @@
 
 
 				$.ajax({
-		            url: esis.host + '/spectra/get?metadataOnly=true&compressed=false&id='+id,
+		            url: esis.host + '/spectra/get?metadataOnly=true&id='+id,
 		            xhr : function() {
 		                return xhr;
 		            },
