@@ -40,7 +40,10 @@ class SpectraController(PackageController):
         if cInfo != None:
             info['_id'] = cInfo['_id']
 
-        infoCollection.insert(info)
+        if '_id' in info:
+            infoCollection.update({'_id':info['_id']}, info)
+        else:
+            infoCollection.insert(info)
 
         return self.stringify_json({'success':True})
 
@@ -71,23 +74,40 @@ class SpectraController(PackageController):
                 item['_id'] = cItem['_id']
                 break
 
-        dataCollection.insert(item)
+        if '_id' in item:
+            dataCollection.update({'_id':item['_id']}, item)
+        else:
+            dataCollection.insert(item)
 
     def deletePackage(self):
         id = request.params.get('id')
-        dataCollection.remove({'package_id':id})
-        infoCollection.remove({'package_id':id})
+
+        context = {'model': model, 'user': c.user}
+        resp = logic.get_action('package_delete')(context, {'id': id})
+
+        if resp.success:
+            dataCollection.remove({'package_id':id})
+            infoCollection.remove({'package_id':id})
+
+        return resp
 
     def deleteResource(self):
         id = request.params.get('id')
-        dataCollection.remove({'resource_id':id})
+
+        context = {'model': model, 'user': c.user}
+        resp = logic.get_action('resource_delete')(context, {'id': id})
+
+        if resp.success:
+            dataCollection.remove({'resource_id':id})
+
+        return resp
 
 
     def get(self):
         id = request.params.get('id')
         metadataOnly = request.params.get('metadataOnly')
 
-        dataset = infoCollection.find_one({'package_id':id},{'_id':0})
+        dataset = infoCollection.find_one({'package_id':id}, {'_id':0})
 
         cur = ''
         dataset['data'] = []

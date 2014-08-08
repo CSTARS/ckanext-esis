@@ -81,6 +81,9 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackageRedirect')
         map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
+        # override the routes to delete packages and resources
+        map.connect('delete_package', '/api/3/action/package_delete', controller=controller, action='deletePackage')
+        map.connect('delete_resource', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
 
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
