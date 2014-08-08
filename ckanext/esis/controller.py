@@ -4,11 +4,13 @@ import re, zlib, StringIO
 import ujson as json
 from pymongo import MongoClient
 from pylons import config
+import urllib
 
 import ckan.lib.munge as munge
 
 from ckan.lib.base import c, model, BaseController
 import ckan.logic as logic
+import ckan.lib.helpers as h
 from ckan.common import request, response
 import ckan.lib.uploader as uploader
 
@@ -80,27 +82,49 @@ class SpectraController(PackageController):
             dataCollection.insert(item)
 
     def deletePackage(self):
-        id = request.params.get('id')
+        params = self._get_request_data(request)
 
         context = {'model': model, 'user': c.user}
-        resp = logic.get_action('package_delete')(context, {'id': id})
+        logic.get_action('package_delete')(context, params)
 
-        if resp.success:
-            dataCollection.remove({'package_id':id})
-            infoCollection.remove({'package_id':id})
+        dataCollection.remove({'package_id':params['id']})
+        infoCollection.remove({'package_id':params['id']})
 
-        return resp
+        return {'success': True}
 
     def deleteResource(self):
-        id = request.params.get('id')
+        params = self._get_request_data(request)
 
         context = {'model': model, 'user': c.user}
-        resp = logic.get_action('resource_delete')(context, {'id': id})
+        logic.get_action('resource_delete')(context, params)
 
-        if resp.success:
-            dataCollection.remove({'resource_id':id})
+        dataCollection.remove({'resource_id':params['id']})
 
-        return resp
+        return {'success': True}
+
+    # replicating default param parsing in ckan... really python... really...
+    def _get_request_data(self, request):
+        try:
+            keys = request.POST.keys()
+            # Parsing breaks if there is a = in the value, so for now
+            # we will check if the data is actually all in a single key
+            if keys and request.POST[keys[0]] in [u'1', u'']:
+                request_data = keys[0]
+            else:
+                request_data = urllib.unquote_plus(request.body)
+        except Exception, inst:
+            msg = "Could not find the POST data: %r : %s" % \
+                  (request.POST, inst)
+            raise ValueError(msg)
+
+        try:
+            request_data = h.json.loads(request_data, encoding='utf8')
+        except ValueError, e:
+            raise ValueError('Error decoding JSON data. '
+                             'Error: %r '
+                             'JSON data extracted from the request: %r' %
+                              (e, request_data))
+        return request_data
 
 
     def get(self):
