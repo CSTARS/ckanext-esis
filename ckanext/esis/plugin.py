@@ -66,23 +66,20 @@ class EsisPlugin(plugins.SingletonPlugin,
         # list all packages with spectra.json files
         map.connect('all_spectra_packages', '/spectra/all', controller=controller, action='all')
 
-        map.connect('add_spectra_package', '/spectra/add', controller=controller, action='add')
+        map.connect('add_spectra_package', '/spectra/addInfo', controller=controller, action='addInfo')
 
-        map.connect('update_spectra_package', '/spectra/update', controller=controller, action='update')
+        map.connect('update_spectra_package', '/spectra/addData', controller=controller, action='addData')
 
         map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
 
-        map.connect('get_spectra_package_info', '/spectra/info', controller=controller, action='info')
-
-
-        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackage')
+        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
 
         # route all resource edit screens to main ecosis dataset editor
         # TODO: can we get fancy and point at specific action or resource?
-        map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackage')
-        map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackage')
-        map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackage')
-        map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackage')
+        map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackageRedirect')
+        map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackageRedirect')
+        map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackageRedirect')
+        map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
 
         # just use the basic package controller for this on, there is a js hack
