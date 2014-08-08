@@ -41,7 +41,7 @@
 
 			// list of all new files
 			files : [],
-			// list of all new datasheets
+			// list of all datasheets
 			datasheets : [],
 			// list of all new resources
 			resources  : [],
@@ -97,12 +97,14 @@
 				// add to known list when done
 				ele.addEventListener('spectra-updated', function(e){
 					this._addKnownAttributes(e.detail);
+					this.datasheetJoin(ele);
 				}.bind(this));
 
 				ele.file = file;
 				ele.contents = parsedContents;
 
 				this.datasheets.push(ele);
+				
 				return ele;
 			},
 
@@ -141,6 +143,23 @@
 
 				this.deleted.push(id);
 			},
+
+			// when a datasheet is first added, make sure all metadata is properly joined in
+			datasheetJoin : function(datasheet) {
+				if( datasheet.isMetadata ) return;
+
+				// make sure currently joined (new) metadata is joined
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( !this.datasheets[i].isMetadata ) continue;
+
+					var count = 0;
+					for( var j = 0; j < datasheet.spectra.length; j++ ) {
+						if( this.datasheets[i].metadata.join(datasheet.spectra[j]) ) count++;
+					}
+					this.datasheets[i].metadata.matchCount += count;
+				}
+			},
+
 
 			join : function(metadata) {
 				var count = 0;

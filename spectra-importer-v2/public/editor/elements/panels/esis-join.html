@@ -40,7 +40,14 @@
 			},
 
 			_updateVisibility : function() {
+				var count = 0;
+				for( var i = 0; i < this.metadataDatasheets.length; i++ ) {
+					if( this.metadataDatasheets[i].joinId != '' ) count++;
+				}
+
 				if( this.metadataDatasheets.length > 0 ) {
+					// how do we keep this in sync?
+					//this.menuItem.setSecondaryHtml(count+' of '+this.metadataDatasheets.length+' sheets joined');
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';

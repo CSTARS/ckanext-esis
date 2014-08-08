@@ -250,7 +250,7 @@
 					if( !dataset.map ) dataset.map = this.ds.inverseAttributeMap;
 
 					// move all newly joined data
-					for( var i = 0; i < dataset.data.length; i++ ){
+					/*for( var i = 0; i < dataset.data.length; i++ ){
 						var d = dataset.data[i];
 						if( !d.metadata.joined ) continue;
 
@@ -267,14 +267,14 @@
 							}
 						}
 						delete d.metadata.joined;
-					}
+					}*/
 
 					for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
 
-					var joindata = this._getJoinableData();
-					for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
+					//var joindata = this._getJoinableData();
+					//for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
+					dataset.join = this._getJoinableData();
 
-					//dataset.group_by = esis.app.groupBy.get();
 				} else {
 					dataset = {
 						data : data,
@@ -345,10 +345,8 @@
 	        	}
 	        	if( chunk.length > 0 ) chunks.push(chunk);
 
-	        	debugger;
 	        	this.ckan.addSpectraInfo(dataset, function(){
 	        		this._addSpectraData(pkgId, 0, data.length, chunks, function(){
-	        			debugger;
 	        			callback();
 	        		}.bind(this));
 	        	}.bind(this));

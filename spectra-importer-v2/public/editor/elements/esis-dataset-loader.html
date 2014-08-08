@@ -42,13 +42,13 @@
 					if( this.data[key] ) this.ds.data[key] = this.data[key];
 				}
 
+				this._getSpectraPackage(this.data.name);
+
 				if( !this.data.resources ) return;
 
 				for( var i = 0; i < this.data.resources.length; i++ ) {
             		this.ds.existing.resources.push(this.data.resources[i]);
             	}
-
-            	this._getSpectraPackage(this.data.name);
 			},
 
 			_getSpectraPackage: function(id) {
@@ -58,6 +58,10 @@
 					function(err, dataset){
 						if( err ) return alert('Failed to load Ecosis spectra resource package');
 						this.ds.existing.dataset = dataset;
+
+						// set existing metadata
+						this._setExistingMetadata();
+
 						this.fire('get-spectral-resource-complete');
 						this.spectraPackageLoaded = true;
 					}.bind(this),
@@ -65,6 +69,47 @@
 						this.fire('get-spectral-resource-progress', progress);
 					}.bind(this)
 				);
+			},
+
+			// create metadata elements for the resources that already exist
+			_setExistingMetadata : function() {
+				if( !this.ds.existing.dataset ) return;
+				if( !this.ds.existing.dataset.join ) return;
+
+				for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
+					var mdObj = this.ds.existing.dataset.join[i];
+
+					var datasheet = document.createElement('esis-datasheet');
+					datasheet.isMetadata = true;
+					datasheet.isExisting = true;
+
+					var metadata = document.createElement('esis-metadata');
+					metadata.metadata = mdObj.metadata;
+					metadata.joinId = mdObj.join_id;
+					metadata.resourceId = mdObj.resource_id;
+					metadata.isExisting = true;
+
+					// set filename
+					if( this.data.resources ) {
+						for( var i = 0; i < this.data.resources.length; i++ ) {
+							if( this.data.resources[i].id = metadata.resourceId ) {
+								metadata.filename = this.data.resources[i].name;
+								break;
+							}
+						}
+					}
+
+					// set join information
+					if( mdObj.join_on.type == 'filename' ) {
+						metadata.filenameMatch = true;
+						if( mdObj.join_on.loose ) metadata.looseMatch = true;
+					} else if ( mdObj.join_on.type == 'worksheet' ) {
+						metadata.worksheetMatch = true;
+					}
+
+					datasheet.metadata = metadata;
+					this.ds.datasheets.push(datasheet);
+				}
 			},
 
 			_getVar : function(variable) {

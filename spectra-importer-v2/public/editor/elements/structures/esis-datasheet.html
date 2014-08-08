@@ -19,6 +19,9 @@
 			// we will try and detect this flag.  but let users select if we get it wrong
 			isMetadata : false,
 
+			// was this generated from existing datasheet (one that has already been added)
+			isExisting : false,
+
 			editMode : false,
 
 			label : '',
@@ -89,6 +92,9 @@
 			},
 
 			_setTitle : function() {
+				if( !this.file ) return;
+				if( Object.keys(this.file).length == 0 ) return;
+
 				var name = this.file.name || this.file.info.name;
 				this.label = name.replace(/.*\//,'');
 				if( this.file.sheetName && this.file.sheetName != '' ) this.label += ' - '+this.file.sheetName;
