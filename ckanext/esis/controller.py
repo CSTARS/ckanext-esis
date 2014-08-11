@@ -136,7 +136,11 @@ class SpectraController(PackageController):
         id = request.params.get('id')
         metadataOnly = request.params.get('metadataOnly')
 
-        dataset = self._sub_get(id, metadataOnly)
+        # now add some package information
+        context = {'model': model, 'user': c.user}
+        pkg = logic.get_action('package_show')(context, {'id': id})
+
+        dataset = self._sub_get(pkg, id, metadataOnly)
 
         response.headers["Content-Type"] = "application/json"
         response.headers["Content-Length"] = "%s" % len(dataset)
@@ -171,9 +175,9 @@ class SpectraController(PackageController):
         p.terminate()
         return jsonstr
 
-    def _sub_get(self, id, metadataOnly):
+    def _sub_get(self, pkg, id, metadataOnly):
         q = Queue()
-        p = Process(target=sub_get, args=(q, id, metadataOnly,))
+        p = Process(target=sub_get, args=(q, pkg, id, metadataOnly,))
         p.start()
         jsonstr = q.get()
         p.join()
@@ -189,7 +193,7 @@ def sub_parse_json(q, jsonstr):
 def sub_stringify_json(q, jsonobj):
         q.put(json.dumps(jsonobj))
 
-def sub_get(q, id, metadataOnly):
+def sub_get(q, pkg, id, metadataOnly):
         dataset = {}
         try:
             dataset = infoCollection.find_one({'package_id':id}, {'_id':0})
@@ -204,9 +208,6 @@ def sub_get(q, id, metadataOnly):
             for item in cur:
                 dataset['data'].append(item)
 
-            # now add some package information
-            context = {'model': model, 'user': c.user}
-            pkg = logic.get_action('package_show')(context, {'id': id})
             dataset['package_name'] = pkg.get('name')
             dataset['package_title'] = pkg.get('title')
             dataset['package_id'] = pkg.get('id')
