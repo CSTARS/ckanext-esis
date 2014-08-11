@@ -6,7 +6,6 @@ from pymongo import MongoClient
 from pylons import config
 import urllib
 
-import ckan.lib.munge as munge
 
 from ckan.lib.base import c, model, BaseController
 import ckan.logic as logic
@@ -30,7 +29,12 @@ infoCollection = db[config._process_configs[1]['esis.mongo.info_collection']]
 class SpectraController(PackageController):
 
     def all(self):
-        return self.stringify_json(infoCollection.find({},{'package_id':1}))
+        list = []
+        cur = infoCollection.find({},{'package_id':1,'_id':0})
+        for item in cur:
+            list.append(item['package_id'])
+
+        return json.dumps(list)
 
     def addInfo(self):
         info = request.params.get('info')
@@ -47,7 +51,7 @@ class SpectraController(PackageController):
         else:
             infoCollection.insert(info)
 
-        return self.stringify_json({'success':True})
+        return json.dumps({'success':True})
 
     def addData(self):
         data = self.parse_json(request.params.get('data'))
@@ -60,14 +64,15 @@ class SpectraController(PackageController):
              return self.stringify_json({'error':True, 'message':'No package spectra found'})
 
         # get current spectra for possible merge
-        currentData = dataCollection.find({'package_id': data['package_id']})
-        if currentData == None:
-            currentData = []
+        currentData = []
+        cur = dataCollection.find({'package_id': data['package_id']})
+        for item in cur:
+            currentData.append(item)
 
         for item in data['spectra']:
             self._merge_and_insert(item, currentData)
 
-        return self.stringify_json({'success':True})
+        return json.dumps({'success':True})
 
     def _merge_and_insert(self, item, currentData):
         for cItem in currentData:
@@ -90,7 +95,7 @@ class SpectraController(PackageController):
         dataCollection.remove({'package_id':params['id']})
         infoCollection.remove({'package_id':params['id']})
 
-        return {'success': True}
+        return json.dumps({'success': True})
 
     def deleteResource(self):
         params = self._get_request_data(request)
@@ -100,7 +105,7 @@ class SpectraController(PackageController):
 
         dataCollection.remove({'resource_id':params['id']})
 
-        return {'success': True}
+        return json.dumps({'success': True})
 
     # replicating default param parsing in ckan... really python... really...
     def _get_request_data(self, request):
@@ -131,19 +136,7 @@ class SpectraController(PackageController):
         id = request.params.get('id')
         metadataOnly = request.params.get('metadataOnly')
 
-        dataset = infoCollection.find_one({'package_id':id}, {'_id':0})
-
-        cur = ''
-        dataset['data'] = []
-        if metadataOnly == 'true':
-            cur = dataCollection.find({'package_id':id}, {'spectra':0,'_id':0})
-        else:
-            cur = dataCollection.find({'package_id':id})
-
-        for item in cur:
-            dataset['data'].append(item)
-
-        dataset = self.stringify_json(dataset)
+        dataset = self._sub_get(id, metadataOnly)
 
         response.headers["Content-Type"] = "application/json"
         response.headers["Content-Length"] = "%s" % len(dataset)
@@ -178,6 +171,16 @@ class SpectraController(PackageController):
         p.terminate()
         return jsonstr
 
+    def _sub_get(self, id, metadataOnly):
+        q = Queue()
+        p = Process(target=sub_get, args=(q, id, metadataOnly,))
+        p.start()
+        jsonstr = q.get()
+        p.join()
+        p.terminate()
+        return jsonstr
+
+
 
 def sub_parse_json(q, jsonstr):
         t = json.loads(jsonstr)
@@ -185,3 +188,30 @@ def sub_parse_json(q, jsonstr):
 
 def sub_stringify_json(q, jsonobj):
         q.put(json.dumps(jsonobj))
+
+def sub_get(q, id, metadataOnly):
+        dataset = {}
+        try:
+            dataset = infoCollection.find_one({'package_id':id}, {'_id':0})
+
+            cur = ''
+            dataset['data'] = []
+            if metadataOnly == 'true':
+                cur = dataCollection.find({'package_id':id}, {'spectra':0,'_id':0})
+            else:
+                cur = dataCollection.find({'package_id':id},{'_id':0})
+
+            for item in cur:
+                dataset['data'].append(item)
+
+            # now add some package information
+            context = {'model': model, 'user': c.user}
+            pkg = logic.get_action('package_show')(context, {'id': id})
+            dataset['package_name'] = pkg.get('name')
+            dataset['package_title'] = pkg.get('title')
+            dataset['package_id'] = pkg.get('id')
+            dataset['groups'] = pkg.get('groups')
+        except Exception as e:
+            print e
+
+        q.put(json.dumps(dataset))
