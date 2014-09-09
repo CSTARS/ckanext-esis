@@ -32,6 +32,10 @@
 						alert('Data appears to be flipped.  Transposing...');
 						contents = this._flipData(contents);
 						start = this._getDataStartRow(contents);
+
+
+						console.log(contents);
+					
 					//	alert('data is flipped');
 					//	return callback(null, resp);
 					}
@@ -100,6 +104,8 @@
 						} 
 					}
 				}
+
+				resp.raw = contents;
 
 				callback(null, resp);
 			},

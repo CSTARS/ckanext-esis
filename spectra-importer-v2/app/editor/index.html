@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="components/animate-css/animate.min.css" shim-shadowdom>
 
-
+    <!-- build:js scripts/build.js -->
     <script src="components/jquery/dist/jquery.min.js"></script>
     <script src="components/jszip/dist/jszip.min.js"></script>
     <script src="components/js-xlsx/dist/xlsx.min.js"></script>
@@ -20,6 +20,7 @@
     <script src="components/jquery-csv/src/jquery.csv.js"></script>
     <script src="components/js-md5/js/md5.min.js"></script>
     <script src="../metadata.js"></script>
+    <!-- endbuild -->
 
     <link rel="import" href="components/core-icons/core-icons.html">
     <link rel="import" href="components/font-roboto/roboto.html">
@@ -60,16 +61,16 @@
       html /deep/ .element-label {
         color: #2f9b45;
       }
-      html /deep/ .info-label {
+      html /deep/ .bs-label.info-label {
         background-color: #3a87ad;
       }
-      html /deep/ .warning-label {
+      html /deep/ .bs-label.warning-label {
         background-color: #f89406;
       }
-      html /deep/ .success-label {
+      html /deep/ .bs-label.success-label {
         background-color: #468847;
       }
-      html /deep/ .label {
+      html /deep/ .bs-label {
         display: inline-block;
         padding: 2px 4px;
         font-size: 11.844px;
@@ -90,7 +91,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.2.109:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.134:5000' : '';
 
       esis.extensions = {
   pdf : {
@@ -228,6 +229,11 @@
     <esis-dataset-loader></esis-dataset-load>
     <esis-ckan></esis-ckan>
   
+    <script>
+      window.addEventListener('polymer-ready', function(){
+        CoreStyle.g.paperInput.focusedColor = '#2f9b45';
+      });
+    </script>
 
   </body>
 

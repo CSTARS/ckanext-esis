@@ -28,13 +28,13 @@
 
 			<table style="width:100%">
 				<tr template repeat="{{item in metadata.file}}">
-					<td><span class="label success-label">{{item.key}}</span></td><td>{{item.value}}</td>
+					<td><span class="bs-label success-label">{{item.key}}</span></td><td>{{item.value}}</td>
 				</tr>
 				<tr template repeat="{{item in metadata.joined}}">
-					<td><span class="label warning-label">{{item.key}}</span></td><td>{{item.value}}</td>
+					<td><span class="bs-label warning-label">{{item.key}}</span></td><td>{{item.value}}</td>
 				</tr>
 				<tr template repeat="{{item in metadata.spectra}}">
-					<td><span class="label info-label">{{item.key}}</span></td><td>{{item.value}}</td>
+					<td><span class="bs-label info-label">{{item.key}}</span></td><td>{{item.value}}</td>
 				</tr>
 			</table>
 

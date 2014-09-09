@@ -15,10 +15,10 @@
 				-webkit-border-radius: 5px;
 				border-radius: 5px;
 				padding: 25px;
-				text-align: center;
 				font-size: 20pt;
 				color: #bbb;
 				background-color: white;
+				margin: 20px 0 0 50px;
 			}
 			.processing-label {
 				position: absolute;
@@ -64,7 +64,7 @@
 		    <paper-checkbox checked="{{parseZip}}"></paper-checkbox>
 		    <div vertical layout>
 		     	<h4>Extract Zip Files</h4>
-		     	<div>If a zip file is found, should its contents be imported as individual resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</div>
+		     	<div style="color:#888">If a zip file is found, should its contents be imported as individual resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</div>
 		    </div>
 		</div>
 
@@ -78,13 +78,12 @@
 
 		<div class="fileinput {{processing ? 'processing' : ''}}">
 			<div style="margin-left: 20px">
-				<h4>Select a files to be imported</h4>
+				<h4>Select files to be imported</h4>
 				<input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}">
 			</div>
 
-			<div class="file-select-group">
-	        	<h4 style="text-align:center">- OR -</h4>
-	        	<div id="dropZone">Drop files here</div>
+			<div class="file-select-group" >
+	        	<div id="dropZone"><b>OR</b> drag and drop files here</div>
 	    	</div>
 	    </div>
 
