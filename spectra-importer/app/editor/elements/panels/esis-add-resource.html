@@ -1,4 +1,7 @@
 <link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
+<link rel="import" href="../../components/paper-radio-group/paper-radio-group.html" />
+<link rel="import" href="../../components/core-collapse/core-collapse.html" />
+<link rel="import" href="../../components/paper-button/paper-button.html" />
 <link rel="import" href="../ui/esis-ui-file.html" />
 
 <polymer-element name="esis-add-resource">
@@ -51,6 +54,10 @@
 				display: block;
 				opacity: 1;
 			}
+			.options-card {
+				margin: 10px;
+				padding: 5px;
+			}
 		</style>
 
 		<div style="font-size:14px;color:#888">
@@ -60,13 +67,26 @@
 		    </span>
 		</div>
 
-		<div horizontal layout>
-		    <paper-checkbox checked="{{parseZip}}"></paper-checkbox>
-		    <div vertical layout>
-		     	<h4>Extract Zip Files</h4>
-		     	<div style="color:#888">If a zip file is found, should its contents be imported as individual resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</div>
-		    </div>
-		</div>
+		<paper-button label="File Import Options" on-tap="{{toggleOptions}}" raisedButton></paper-button>
+		<core-collapse opened="{{showOptions}}">
+			<esis-ui-card class="options-card">
+				<div horizontal layout>
+				    <paper-checkbox checked="{{parseZip}}"></paper-checkbox>
+				    <div vertical layout>
+				     	<h4>Extract Zip Files</h4>
+				     	<div style="color:#888">If a zip file is found, should its contents be imported as individual file resources?  By default the spectra will be parsed, but the zip will be uploaded intact.</div>
+				    </div>
+				</div>
+
+				<div style="margin-left: 20px">
+					<h4>Tabular data layout</h4>
+					<paper-radio-group class="blue" selected="auto" role="radiogroup" style="margin-left: 10px">
+				     	<paper-radio-button name="auto" label="Horizontal" role="radio" tabindex="0" aria-checked="true" aria-label="Auto" class="core-selected" checked=""></paper-radio-button>
+				    	<paper-radio-button name="5ghz" label="Vertical" role="radio" tabindex="0" aria-checked="false" aria-label="5 GHz only" class=""></paper-radio-button>
+				    </paper-radio-group>
+				</div>
+			</esis-ui-card>
+		</core-collapse>
 
 		<template bind if="{{processing}}">
 	    	<div style="position:relative; text-align:center">
@@ -108,6 +128,8 @@
 			ds : null,
 			processing : false,
 			parseZip : false,
+
+			showOptions : false,
 
 			observe : {
 				'ds.files' : '_updatePreview',
@@ -166,6 +188,10 @@
 
 		  	_updatePreview : function() {
 		  		this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
+		  	},
+
+		  	toggleOptions : function() {
+		  		this.showOptions = !this.showOptions;
 		  	}
 		});
 	</script>
