@@ -41,18 +41,18 @@
 				}
 			},
 
-			join : function(spectra) {
+			join : function(measurement) {
 				this._updateJoinRow();
 
 				// set for existing data
-				if( !spectra.metadata.joined ) spectra.metadata.joined = [];
+				if( !measurement.metadata.joined ) measurement.metadata.joined = [];
 
-				var row = this._getRow(spectra);
+				var row = this._getRow(measurement);
 				if( row == -1 ) {
 					// remove any known attribute from the join
 					for( var j = 0; j < this.metadata[0].length; j++ ) {
-						if( spectra.metadata.joined[this.metadata[0][j]] != null ) {
-							delete spectra.metadata.joined[this.metadata[0][j]];
+						if( measurement.metadata.joined[this.metadata[0][j]] != null ) {
+							delete measurement.metadata.joined[this.metadata[0][j]];
 						}
 					}
 					return false;
@@ -60,7 +60,7 @@
 
 				for( var j = 0; j < this.metadata[0].length; j++ ) {
 					if( j == this.joinCol && !(this.filenameMatch || this.worksheetMatch) ) continue;
-					spectra.metadata.joined[this.metadata[0][j]] = this.metadata[row][j];
+					measurement.metadata.joined[this.metadata[0][j]] = this.metadata[row][j];
 				}
 				return true;
 			},
@@ -75,11 +75,11 @@
 				return list;
 			},
 
-			_getRow : function(spectra) {
+			_getRow : function(measurement) {
 				if( this.filenameMatch || this.worksheetMatch ) {
 					var regex, val, name;
 					for( var i = 1; i < this.metadata.length; i++ ) {
-						name = this.filenameMatch ? spectra.filename : spectra.sheetname;
+						name = this.filenameMatch ? measurement.filename : measurement.sheetname;
 						val = this.metadata[i][this.joinCol];
 
 						// if the value doesn't have a period, assume we want to strip any extension on a filename match
@@ -95,8 +95,8 @@
 						}
 					}
 				} else {
-					var spMetadata = spectra.metadata.spectra; // case for new metadata
-					if( !spMetadata ) spMetadata = spectra.metadata; // case for existing spectra
+					var spMetadata = measurement.metadata.measurement; // case for new metadata
+					if( !spMetadata ) spMetadata = measurement.metadata; // case for existing spectra
 
 					for( var i = 1; i < this.metadata.length; i++ ) {
 						if( this.metadata[i][this.joinCol] == spMetadata[this.joinId] ) {

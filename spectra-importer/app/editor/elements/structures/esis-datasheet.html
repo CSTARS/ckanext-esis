@@ -1,20 +1,22 @@
 <link rel="import" href="esis-metadata.html"/>
-<link rel="import" href="esis-spectra.html"/>
+<link rel="import" href="esis-measurement.html"/>
 
 <polymer-element name="esis-datasheet">
 	<template></template>
 	<script>
 		Polymer('esis-datasheet',{
 			// parent esis-file element
-			file : {},
+			//file : {},
 
 			// parsed datasheet contents
 			contents : {},
 
-			spectra : [],
+			measurements : [],
 			metadata : {},
 
 			ckanId : '',
+
+			dataType : '',
 
 			// we will try and detect this flag.  but let users select if we get it wrong
 			isMetadata : false,
@@ -27,57 +29,77 @@
 			label : '',
 
 			observe : {
-				file : '_update'
+				contents : '_update',
+				dataType : '_extract'
 			},
 
 			knownAttributes : [],
 
 			ready : function() {
-				this.spectra = [];
+				this.measurements = [];
 				this.metadata = {};
-				this.file = {};
+				this.contents = {};
+			},
+
+			// run the extractor again
+			_extract : function(oldVal, newVal) {
+				if( oldVal == '' ) return;
+
+				setTimeout(function(){
+					var extractor = document.querySelector('esis-extractor');
+					var resp = extractor.run((this.isMetadata ? 'metadata' : this.dataType), this.contents.array);
+					
+					this.contents.metadata = resp.metadata;
+					this.contents.measurements = resp.measurements;
+					this._update();
+				}.bind(this), 250);
 			},
 
 			_update : function() {
 				this._setTitle();
 
-				if( this.file.spectra && this.file.spectra.length > 0 ) {
-					for( var i = 0; i < this.file.spectra.length; i++ ) {
-						var sp = document.createElement('esis-spectra');
-						sp.data = this.file.spectra[i].data;
-						sp.metadata.spectra = this.file.spectra[i].metadata;
-						sp.filename = this.file.info.name.replace(/.*\//,'');
-						sp.sheetname = this.file.sheetName;
+				this.measurements = [];
 
-						if( this.file.metadata ) {
-							for( var key in this.file.metadata ) {
-								sp.metadata.file[key] = this.file.metadata[key];
+				if( this.contents.measurements && this.contents.measurements.length > 0 ) {
+					for( var i = 0; i < this.contents.measurements.length; i++ ) {
+
+						var sp = document.createElement('esis-measurement');
+
+						sp.datapoints = this.contents.measurements[i].data;
+						sp.metadata.measurement = this.contents.measurements[i].metadata;
+						sp.filename = this.contents.info.name.replace(/.*\//,'');
+						sp.sheetname = this.contents.sheetName;
+
+						if( this.contents.metadata ) {
+							for( var key in this.contents.metadata ) {
+								sp.metadata.contents[key] = this.contents.metadata[key];
 							}
 						}
 
 						this._updateKnownAttributes(sp);
-						this.spectra.push(sp);
+						this.measurements.push(sp);
 					}
 
-					this.fire('spectra-updated', this.knownAttributes);
-				} else if( this.file.joindata && this.file.joindata.length > 0 ) {
+					this.fire('measurement-updated', this.knownAttributes);
+				} else if( this.contents.joindata && this.contents.joindata.length > 0 ) {
+					
 					this.metadata = document.createElement('esis-metadata');
-					this.metadata.file = this.file;
-					this.metadata.metadata = this.file.joindata;
+					this.metadata.contents = this.contents;
+					this.metadata.metadata = this.contents.joindata;
 					this.isMetadata = true;
 				}
 			},
 
 			setResourceId : function(resourceId) {
 				this.resourceId = resourceId;
-				for( var i = 0; i < this.spectra.length; i++ ) {
-					this.spectra[i].resourceId = resourceId;
+				for( var i = 0; i < this.measurements.length; i++ ) {
+					this.measurements[i].resourceId = resourceId;
 				}
 				this.metadata.resourceId = resourceId;
 			},
 
-			_updateKnownAttributes : function(spectra) {
-				var list = spectra.getAttributes();
+			_updateKnownAttributes : function(measurement) {
+				var list = measurement.getAttributes();
 
 				for( var i = 0; i < list.length; i++ ) {
 					if( this.knownAttributes.indexOf(list[i]) == -1 ) {
@@ -92,12 +114,12 @@
 			},
 
 			_setTitle : function() {
-				if( !this.file ) return;
-				if( Object.keys(this.file).length == 0 ) return;
+				if( !this.contents ) return;
+				if( Object.keys(this.contents).length == 0 ) return;
 
-				var name = this.file.name || this.file.info.name;
+				var name = this.contents.name || this.contents.info.name;
 				this.label = name.replace(/.*\//,'');
-				if( this.file.sheetName && this.file.sheetName != '' ) this.label += ' - '+this.file.sheetName;
+				if( this.contents.sheetName && this.contents.sheetName != '' ) this.label += ' - '+this.contents.sheetName;
 				if( this.label.length == 0 || this.label == ' ' ) this.label = name;
 			}
 		});

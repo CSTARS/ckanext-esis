@@ -36,8 +36,8 @@
 				description : '',
 			},
 
-			// field that should be used to create uids for spectra
-			spectraDisambiguator : '',
+			// field that should be used to create uids for measurements
+			measurementDisambiguator : '',
 
 			// list of all new files
 			files : [],
@@ -53,6 +53,8 @@
 			// list of currently known attributes for this dataset
 			knownAttributes : [],
 
+			attributes : {},
+
 			// list of resources that are scheduled to be deleted
 			deleted : [],
 
@@ -64,10 +66,11 @@
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
 			},
 
-			addFile : function(raw, parseZip) {
+			addFile : function(raw, parseZip, defaultDataType) {
 				var ele = document.createElement('esis-file');
 				ele.raw = raw;
 				ele.parseZip = parseZip;
+				ele.defaultDataType = defaultDataType;
 				this.files.push(ele);
 				return ele;
 			},
@@ -90,18 +93,17 @@
 				}
 			},
 
-			addDatasheet : function(file, parsedContents) {
+			addDatasheet : function(contents) {
 				var ele = document.createElement('esis-datasheet');
 
 				// attach listener for when attributes have been aggregated
 				// add to known list when done
-				ele.addEventListener('spectra-updated', function(e){
+				ele.addEventListener('measurement-updated', function(e){
 					this._addKnownAttributes(e.detail);
 					this.datasheetJoin(ele);
 				}.bind(this));
 
-				ele.file = file;
-				ele.contents = parsedContents;
+				ele.contents = contents;
 
 				this.datasheets.push(ele);
 				
@@ -127,7 +129,7 @@
 					}
 				}
 
-				// remove any spectra associated with this resource
+				// remove any measurements associated with this resource
 				for( var i = this.existing.dataset.data.length-1; i >= 0; i-- ) {
 					if( this.existing.dataset.data[i].resource_id == id ) {
 						this.existing.dataset.data.splice(i,1);
@@ -164,7 +166,7 @@
 			join : function(metadata) {
 				var count = 0;
 				
-				// join on new spectra
+				// join on new measurements
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					if( this.datasheets[i].isMetadata ) continue;
 
@@ -173,7 +175,7 @@
 					}
 				}
 
-				// join on existing spectra
+				// join on existing measurements
 				if( this.existing.dataset.data ) {
 					for( var i = 0; i < this.existing.dataset.data.length; i++ ) {
 						if( metadata.join(this.existing.dataset.data[i]) ) count++;
@@ -188,8 +190,11 @@
 
 			_addKnownAttributes : function(attrList) {
 				for( var i = 0; i < attrList.length; i++ ) {
-					if( this.knownAttributes.indexOf(attrList[i]) == -1 ) {
-						this.knownAttributes.push(attrList[i]);
+					if( this.attributes[attrList[i]] ) continue;
+
+					this.knownAttributes.push(attrList[i]);
+					this.attributes[attrList[i]] = {
+						
 					}
 				}
 			},

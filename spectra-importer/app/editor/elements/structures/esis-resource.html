@@ -8,10 +8,15 @@
 			ext        : '',
 			datasheets : [],
 			title      : '',
-			resourceId     : '',
+			resourceId  : '',
+
+			dataType : '',
+
+			knownAttributes : {},
 
 			observe : {
-				filename : '_setTitle'
+				filename : '_setTitle',
+				datasheets : '_updateAttributes'
 			},
 
 			_setTitle : function() {
@@ -24,6 +29,31 @@
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					this.datasheets[i].setResourceId(resourceId);
 				}
+			},
+
+			// update what attributes exist inside this resources datasheets and what we think they are
+			_updateAttributes : function() {
+				 for( var i = 0; i < this.datasheets.length; i++ ) {
+				 	if( this.datasheets[i].measurements.length == 0 ) continue;
+
+                    var m = this.datasheets[i].measurements[0];
+
+                    for( var j = 0; j < m.data.length; j++ ) {
+                    	this._addKnownAttribute(m.data[j].key, 'data');
+                    }
+
+                    for( var key in m.metadata ) {
+                    	for( var mkey in m.metadata[key] ){
+                    		this._addKnownAttribute(mkey, 'metadata');
+                    	}	
+                    }
+                }
+			},
+
+			_addKnownAttribute : function(key, type) {
+				if( !this.knownAttributes[key] ) {
+                    this.knownAttributes[key] = type;
+                }
 			}
 
 		});

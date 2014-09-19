@@ -38,9 +38,9 @@
 			ckan : {},
 
 			counts : {
-				spectraResources : 0,
+				measurementResources : 0,
 				metadataResources : 0,
-				spectra : 0
+				measurement : 0
 			},
 
 			observe : {
@@ -67,17 +67,17 @@
 			_filesUpdated : function() {
 				this.async(function(){
 					this.counts = {
-						spectraResources : 0,
+						measurementResources : 0,
 						metadataResources : 0,
-						spectra : 0
+						measurement : 0
 					};
 
 					for( var i = 0; i < this.ds.datasheets.length; i++ ) {
 						if( this.ds.datasheets[i].isMetadata ) {
 							this.counts.metadataResources++;
-						} else if ( this.ds.datasheets[i].spectra.length > 0 ) {
-							this.counts.spectraResources++;
-							this.counts.spectra += this.ds.datasheets[i].spectra.length;
+						} else if ( this.ds.datasheets[i].measurements.length > 0 ) {
+							this.counts.measurementResources++;
+							this.counts.measurement += this.ds.datasheets[i].measurements.length;
 						}
 						
 					}
@@ -131,7 +131,7 @@
 				// you can't use this for upload though! it will not have the resource id assign
 				// since the resources have to be uploaded first!
 				if( !this._isDataUnique() ) {
-					alert('Your spectra signatures are not inherently unique.  Please provide a metadata '+
+					alert('Your measurement signatures are not inherently unique.  Please provide a metadata '+
 						'field that can serve as a unique identifier.');
 					//_createUidSelector(data);
 					//btn.removeClass('disabled').html('Add Resources');
@@ -147,7 +147,7 @@
 			_addResourceToCkan: function(index, pkgid) {
 				if( this.ds.resources.length == index ) {
 					this._removeDeletedResources(0, function(){
-						this._uploadSpectraResource(pkgid, function(){
+						this._uploadMeasurementResource(pkgid, function(){
 							this.statusText = 'Complete';
 							setTimeout(function(){
 								window.location = esis.host+'/dataset/'+pkgid;
@@ -188,30 +188,30 @@
 			},
 
 			_isDataUnique: function() {
-				var spectra = [];
+				var measurements = [];
 				var ids = [];
 
 				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
 					var f = this.ds.datasheets[i];
-					for( var j = 0; j < f.spectra.length; j++ ) {
+					for( var j = 0; j < f.measurements.length; j++ ) {
 						// make sure the latest uid for the spectra is generated
-						f.spectra[j].updateUid();
+						f.measurements[j].updateUid();
 
-						if( ids.indexOf( f.spectra[j].spectra_id ) != -1 ) return false;
-						else ids.push( f.spectra[j].spectra_id );
+						if( ids.indexOf( f.measurements[j].measurement_id ) != -1 ) return false;
+						else ids.push( f.measurements[j].measurement_id );
 					}
 				}
 
 				return true;
 			},
 
-			_createSpectraJsonResource : function(pkgid) {
-				var spectra = [];
+			_createMeasurementJsonResource : function(pkgid) {
+				var measurements = [];
 
 				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
 					var f = this.ds.datasheets[i];
-					for( var j = 0; j < f.spectra.length; j++ ) {
-						spectra.push(f.spectra[j]);
+					for( var j = 0; j < f.measurements.length; j++ ) {
+						measurements.push(f.measurements[j]);
 					}
 				}
 
@@ -226,14 +226,14 @@
 				}
 
 				var data = [];
-				for( var i = 0; i < spectra.length; i++ ) {
+				for( var i = 0; i < measurements.length; i++ ) {
 					var d = {
-						metadata : spectra[i].metadata,
-						spectra : spectra[i].data,
-						filename : spectra[i].filename,
-						sheetname : spectra[i].sheetname,
-						resource_id : spectra[i].resourceId,
-						spectra_id : spectra[i].spectra_id,
+						metadata : measurements[i].metadata,
+						datapoints : measurements[i].data,
+						filename : measurements[i].filename,
+						sheetname : measurements[i].sheetname,
+						resource_id : measurements[i].resourceId,
+						measurement_id : measurements[i].measurement_id,
 						package_id : pkgid
 					};
 
@@ -325,10 +325,10 @@
 				return arr;
 			},
 
-	    	_uploadSpectraResource : function(pkgId, callback) {
-	        	this.statusText = 'Uploading spectral data resource...';
+	    	_uploadMeasurementsResource : function(pkgId, callback) {
+	        	this.statusText = 'Uploading measurement data resource...';
 
-	        	var dataset = this._createSpectraJsonResource(pkgId);
+	        	var dataset = this._createMeasurementsJsonResource(pkgId);
 	        	// split out data and upload in set chunks
 
 	        	var data = dataset.data;
@@ -346,21 +346,21 @@
 	        	if( chunk.length > 0 ) chunks.push(chunk);
 
 	        	this.ckan.addSpectraInfo(dataset, function(){
-	        		this._addSpectraData(pkgId, 0, data.length, chunks, function(){
+	        		this._addMeasurementData(pkgId, 0, data.length, chunks, function(){
 	        			callback();
 	        		}.bind(this));
 	        	}.bind(this));
 		    },
 
-		    _addSpectraData : function(pkgId, index, total, chunks, callback) {
+		    _addMeasurementData : function(pkgId, index, total, chunks, callback) {
 		    	if( index == chunks.length ) return callback();
 
 		    	var count = (index > 0) ? (index * this.MAX_DATA_UPLOAD_COUNT) + chunks[index].length : chunks[index].length;
 
-		    	this.statusText = 'Uploading spectral data ('+count+'/'+total+')...';
+		    	this.statusText = 'Uploading measurements ('+count+'/'+total+')...';
 		    	this.ckan.addSpectraData(pkgId, chunks[index], function(){
 		    		index++;
-		    		this._addSpectraData(pkgId, index, total, chunks, callback);
+		    		this._addMeasurementData(pkgId, index, total, chunks, callback);
 		    	}.bind(this));
 		    },
 

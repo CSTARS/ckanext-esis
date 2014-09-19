@@ -1,5 +1,5 @@
 <link rel="import" href="../../components/paper-tabs/paper-tabs.html" />
-<link rel="import" href="../ui/esis-ui-spectra.html" />
+<link rel="import" href="../ui/esis-ui-measurement.html" />
 <link rel="import" href="../ui/esis-ui-datasheet.html" />
 
 <polymer-element name="esis-parsed-spectra">
@@ -114,32 +114,32 @@
 
 			_update : function() {
 				this.async(function(){
-					this.spectra = [];
-					this.spectraDatasheets = [];
+					this.measurements = [];
+					this.measurementDatasheets = [];
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						var f = this.datasheets[i];
 						if( !f.isMetadata ) {
-							this.spectraDatasheets.push(f);
+							this.measurementDatasheets.push(f);
 						}
-						for( var j = 0; j < f.spectra.length; j++ ) {
-							this.spectra.push(f.spectra[j]);
+						for( var j = 0; j < f.measurements.length; j++ ) {
+							this.measurements.push(f.measurements[j]);
 						}
 					}
 
-					if( this.spectra.length > 0 ) {
-						this.selectedSpectra = this.spectra[0];
+					if( this.measurements.length > 0 ) {
+						this.selectedSpectra = this.measurements[0];
 					}
 
 					this._updateVisibility();
-					this.menuItem.setSecondaryHtml(this.spectra.length+' Spectra Found');
+					this.menuItem.setSecondaryHtml(this.measurements.length+' Spectra Found');
 				});
 			},
 
 			_updateVisibility : function() {
 				var display = 'none';
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].spectra.length > 0 ) {
+					if( this.datasheets[i].measurements.length > 0 ) {
 						display = 'block';
 						break;
 					}
@@ -152,7 +152,7 @@
 			},
 
 			_selectSpectra : function() {
-				this.selectedSpectra = this.spectra[parseInt(this.$.spectraSelector.value)];
+				this.selectedSpectra = this.measurements[parseInt(this.$.spectraSelector.value)];
 			},
 
 			_gotoAttrMap : function() {

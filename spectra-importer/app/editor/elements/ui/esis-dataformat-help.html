@@ -1,0 +1,188 @@
+<polymer-element name="esis-dataformat-help" attributes="type" noscript>
+    <template>
+        <style>
+            table.preview {
+                width: 100%;
+                border-spacing: 0px;
+                border-collapse: separate;
+                border-top: 1px solid #ddd;
+                border-left: 1px solid #ddd;
+            }
+            table.preview td {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+            table.preview td.attr {
+                font-weight: bold;
+            }
+            .file {
+                background-color: #dff0d8;
+            }
+            .spectra {
+                background-color: #fcf8e3;
+            }
+            .data {
+                background-color: #d9edf7;
+            }
+            .note {
+                padding: 10px;
+                color: #777;
+                font-size: 13px;
+            }
+            .note-label {
+                padding: 3px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+        </style>
+
+        <div hidden?="{{type != 'spectra'}}">
+            <b>Spectra Data Format</b>
+            <table class="preview">
+                <tr>
+                    <td class="file attr">File metadata 1</td>
+                    <td class="file">My Attribute value</td>
+                    <td></td>
+                    <td></td>
+                </tr>   
+                <tr>
+                    <td class="file attr">File metadata 2</td>
+                    <td class="file">My other value</td>
+                    <td></td>
+                    <td></td>
+                </td>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </td>
+                <tr>
+                    <td class="spectra attr">Spectra Attribute</td>
+                    <td class="spectra">Spectra 1 value</td>
+                    <td class="spectra">Spectra 2 value</td>
+                    <td class="spectra">Spectra 3 value</td>
+                </tr>
+                <tr>
+                    <td class="spectra attr">Another Spectra Attribute</td>
+                    <td class="spectra">Spectra 1 other val</td>
+                    <td class="spectra">Spectra 2 other val</td>
+                    <td class="spectra">Spectra 3 other val</td>
+                </tr>
+                <tr>
+                    <td class="spectra attr">id</td>
+                    <td class="spectra">id1</td>
+                    <td class="spectra">id2</td>
+                    <td class="spectra">id3</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </td>
+                <tr>
+                    <td class="data attr">400<span style="color:red">*</span></td>
+                    <td class="data">.34</td>
+                    <td class="data">.345</td>
+                    <td class="data">.454</td>
+                </tr>
+                <tr>
+                    <td class="data attr">410<span style="color:red">*</span></td>
+                    <td class="data">.400</td>
+                    <td class="data">.430</td>
+                    <td class="data">.568</td>
+                </tr>
+                <tr>
+                    <td class="data attr">NDVI</td>
+                    <td class="data">.53</td>
+                    <td class="data">.5</td>
+                    <td class="data">.48</td>
+                </tr>
+            </table>
+
+            <div class="note">
+                The row break between the <span class="spectra note-label">metadata</span> and <span class="data note-label">data</span> fields is not required but automatically tells the importer what is data and what is metadata.  You will be able to manually specify the difference later on as well.
+            </div>
+        </div>
+
+        <div hidden?="{{type != 'timeseries'}}">
+            <b>Time Series Data Format</b>
+            <table class="preview">
+                <tr>
+                    <td class="file attr">File metadata 1</td>
+                    <td class="file">My Attribute value</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>   
+                <tr>
+                    <td class="file attr">File metadata 2</td>
+                    <td class="file">My other value</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </td>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </td>
+                <tr>
+                    <td class="spectra attr">datetime</td>
+                    <td class="spectra attr">id</td>
+                    <td class="spectra attr">Metadata Attribute</td>
+                    <td class="spectra attr">Another Attribute</td>
+                    <td></td>
+                    <td class="data attr">PAR</td>
+                    <td class="data attr">NDVI</td>
+                    <td class="data attr">400<span style="color:red">*</span></td>
+                </tr>
+                <tr>
+                    <td class="spectra attr">2008-07-24</td>
+                    <td class="spectra">id1</td>
+                    <td class="spectra">metadata value 1</td>
+                    <td class="spectra">another value 1</td>
+                    <td></td>
+                    <td class="data">688.34</td>
+                    <td class="data">.53</td>
+                    <td class="data">.487</td>
+                </tr>
+                <tr>
+                    <td class="spectra attr">2008-07-25</td>
+                    <td class="spectra">id2</td>
+                    <td class="spectra">metadata value 2</td>
+                    <td class="spectra">another value 2</td>
+                    <td></td>
+                    <td class="data">566.17</td>
+                    <td class="data">.50</td>
+                    <td class="data">.400</td>
+                </tr>
+            </table>
+
+            <div class="note">
+                The column break between the <span class="spectra note-label">metadata</span> and <span class="data note-label">data</span> fields is not required but automatically tells the importer what is data and what is metadata.  You will be able to manually specify the difference later on as well.
+            </div>
+        </div>
+
+        <div class="note">
+            <span class="file note-label">Global File Metadata</span> is applied to everything in the file and is completely <b>optional</b>.  You can also upload a seperate metadata file which can be joined to your data later on in the import process.
+        </div>
+
+        <div class="note">
+            <span style="color:red">*</span> The name for data attributes that are wavelengths should always be the wavelengths numberic value.
+        </div>
+    </template>
+</polymer-element>

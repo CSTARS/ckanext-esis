@@ -1,6 +1,6 @@
 <link rel="import" href="esis-ui-card.html" />
 
-<polymer-element name="esis-ui-spectra" attributes="spectra">
+<polymer-element name="esis-ui-measurement" attributes="measurement">
 	<template>
 		<style>
 			.card {
@@ -24,7 +24,7 @@
 		</style>
 
 		<div class="card">
-			<h4 style="color: #888">From - {{spectra.filename}}</h4>
+			<h4 style="color: #888">From - {{measurement.filename}}</h4>
 
 			<table style="width:100%">
 				<tr template repeat="{{item in metadata.file}}">
@@ -33,7 +33,7 @@
 				<tr template repeat="{{item in metadata.joined}}">
 					<td><span class="bs-label warning-label">{{item.key}}</span></td><td>{{item.value}}</td>
 				</tr>
-				<tr template repeat="{{item in metadata.spectra}}">
+				<tr template repeat="{{item in metadata.measurement}}">
 					<td><span class="bs-label info-label">{{item.key}}</span></td><td>{{item.value}}</td>
 				</tr>
 			</table>
@@ -42,20 +42,20 @@
 		</div>
 	</template>
 	<script>
-		Polymer('esis-ui-spectra', {
-			spectra : {},
+		Polymer('esis-ui-measurement', {
+			measurement : {},
 
 			metadata : {
 				file : [],
 				joined : [],
-				spectra : []
+				measurement : []
 			},
 
 			dt : null,
 			chart : null,
 
 			observe : {
-				spectra : '_update',
+				measurement : '_update',
 			},
 
 			ready : function() {
@@ -66,10 +66,10 @@
 				this.metadata = {
 					file : [],
 					joined : [],
-					spectra : []
+					measurement : []
 				}
-				if( !this.spectra ) return;
-				if( !this.spectra.metadata ) return;
+				if( !this.measurement ) return;
+				if( !this.measurement.metadata ) return;
 
 				var attrMap = document.querySelector('esis-datastore').attributeMap;
 				var flipMap = {};
@@ -79,14 +79,14 @@
 				}
 
 				var key;
-				for( key in this.spectra.metadata.file ) {
-					this.metadata.file.push({key:this._getLabel(key, flipMap), value:this.spectra.metadata.file[key]});
+				for( key in this.measurement.metadata.file ) {
+					this.metadata.file.push({key:this._getLabel(key, flipMap), value:this.measurement.metadata.file[key]});
 				}
-				for( key in this.spectra.metadata.joined ) {
-					this.metadata.joined.push({key:this._getLabel(key, flipMap), value:this.spectra.metadata.joined[key]});
+				for( key in this.measurement.metadata.joined ) {
+					this.metadata.joined.push({key:this._getLabel(key, flipMap), value:this.measurement.metadata.joined[key]});
 				}
-				for( key in this.spectra.metadata.spectra ) {
-					this.metadata.spectra.push({key:this._getLabel(key, flipMap), value:this.spectra.metadata.spectra[key]});
+				for( key in this.measurement.metadata.measurement ) {
+					this.metadata.measurement.push({key:this._getLabel(key, flipMap), value:this.measurement.metadata.measurement[key]});
 				}
 
 				this.dt = new google.visualization.DataTable();
@@ -95,10 +95,10 @@
 				this.dt.addColumn('number', 'Wavelength');
 				this.dt.addColumn('number', '')
 
-				for( var i = 0; i < this.spectra.data.length; i++ ) {
+				for( var i = 0; i < this.measurement.data.length; i++ ) {
 			  		rows.push([
-			  			parseFloat(this.spectra.data[i][0]),
-			  			parseFloat(this.spectra.data[i][1])
+			  			parseFloat(this.measurement.data[i][0]),
+			  			parseFloat(this.measurement.data[i][1])
 			  		]);
 				}
 

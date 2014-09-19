@@ -1,0 +1,45 @@
+<polymer-element name="esis-ui-resource" attributes="resource showName">
+    <template>
+        <style>
+            ::host{
+                display: block;
+            }
+        </style>
+
+        <div hidden?="{{!showName}}">
+            {{resource.title}}
+        </div>
+
+    </template>
+    <script>
+        Polymer('esis-ui-resource', {
+            showName : false,
+            showAttributes : false,
+
+            /*knownMetadata : [],
+            knownData : [],
+
+            observe : {
+                resource : '_update'
+            },
+
+            _update : function() {
+                this.knownMetadata = [];
+                this.knownData = [];
+
+                for( var key in this.resource.knownAttributes ) {
+                    if( this.resource.knownAttributes[key] == 'metadata' ) {
+                        this.knownMetadata.push(key);
+                    } else {
+                        this.knownData.push(key);
+                    }
+                }
+            },
+
+            toggleAttributes : function() {
+                this.showAttributes = !this.showAttributes;
+            }*/
+
+        });
+    </script>
+</polymer-element>

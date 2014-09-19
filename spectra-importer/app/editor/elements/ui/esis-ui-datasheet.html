@@ -5,12 +5,7 @@
 <polymer-element name="esis-ui-datasheet" attributes="datasheet">
 	<template>
 		<style>
-			.card {
-				margin: 10px 5px;
-				padding: 5px;
-				border: 1px solid #ccc;
-				border-radius: 3px;
-			}
+
 			table tr th {
 				text-align: left;
 			}
@@ -22,77 +17,155 @@
 				right: -20px;
 				top: -10px;
 			}
+			paper-radio-button[disabled] {
+                color: #888;
+            }
+            paper-radio-group[disabled] {
+                opacity: .5;
+            }
+            .attribute-panel {
+                border-top: 1px dashed #eee;
+                padding: 10px 10px 0 20px;
+                font-size: 13px;
+            }
+            a {
+                color: #2f9b45;
+                cursor: pointer;
+            }
+            .note {
+                color: #777;
+                font-size: 13px;
+            }
 		</style>
 
-		<div class="card">
-			<h4><span style="color: #888">{{datasheet.label}}</span> <span style="float: right">Parser: {{datasheet.file.info.parser}}</span></h4>
+		<esis-ui-card style="padding:10px">
+			<h4 style="border-bottom: 1px solid #eee;margin-bottom:25px;padding-bottom:5px">
+                <div>{{datasheet.contents.name}}</div>
+                <div style="font-size:14px; color: #888" hidden?="{{!datasheet.contents.sheetName || datasheet.contents.sheetName == ''}}">
+                    {{datasheet.contents.sheetName}}
+                </div>
+            </h4>
+
+            <span style="float: right">Parser: {{datasheet.contents.info.parser}}</span>
 			
-			<template bind if="{{datasheet.file.error}}">
-				<div style="color:red">Error {{datasheet.file.error}}</div>
+			<template bind if="{{datasheet.contents.error}}">
+				<div style="color:red">Error {{datasheet.contents.error}}</div>
 			</template>
-			<template bind if="{{datasheet.file.warning}}">
-				<div style="color:orange">Warning: {{datasheet.file.warning}}</div>
+			<template bind if="{{datasheet.contents.warning}}">
+				<div style="color:orange">Warning: {{datasheet.contents.warning}}</div>
+			</template>
+
+            <div horizontal layout style="margin: 10px 0 20px 20px">
+                <paper-checkbox checked="{{datasheet.isMetadata}}" style="margin-right:10px"></paper-checkbox>
+                <div vertical layout>
+                    <div>Joinable Metadata File</div>
+                    <div style="color:#888; font-size: 13px">This file only contains metadata to be joined on given data.</div>
+                </div>
+            </div>
+
+            <div>
+                <paper-radio-group selected="{{datasheet.dataType}}" role="radiogroup" style="margin-left: 10px" disabled?="{{datasheet.isMetadata}}">
+                    <paper-radio-button 
+                        name="spectra" 
+                        label="Spectra Data Format" 
+                        role="radio" 
+                        tabindex="0" 
+                        aria-checked="true" 
+                        aria-label="Spectra Data Format" 
+                        class="core-selected" 
+                        disabled?="{{datasheet.isMetadata}}">
+                    </paper-radio-button>
+                    <paper-radio-button 
+                        name="timeseries" 
+                        label="Time Series Data Format" 
+                        role="radio" 
+                        tabindex="0" 
+                        aria-checked="false" 
+                        aria-label="Time Series Data Format"
+                        disabled?="{{datasheet.isMetadata}}">
+                    </paper-radio-button>
+                </paper-radio-group>
+
+                <div style="margin-left:55px" hidden?="{{datasheet.isMetadata}}">
+                    <div class="note" hidden?="{{datasheet.dataType != 'spectra'}}">
+                        View datasheet per spectra measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
+                    </div>
+                    <div class="note" hidden?="{{datasheet.dataType != 'timeseries'}}">
+                        View datasheet data per time measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
+                    </div>
+                </div>
+
+                <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.isMetadata}}">
+                    <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
+                        <esis-dataformat-help type="{{datasheet.dataType}}"></esis-dataformat-help>
+                    </div>
+                </core-collapse>
+            </div>
+
+
+			<div horizontal layout style="margin-top:25px;padding-top:5px;border-top:1px solid #eee">
+                <div>Parsed Attributes</div> 
+                <div style="text-align:right" flex>
+                   <a>Configure Attributes</a>
+                </div>
+            </div>
+
+			<template bind if="{{fileMetadata.length > 0}}">
+				<h4>File Level Metadata</h4>
+				<ul>
+					<template repeat="{{item in fileMetadata}}">
+						<li><b>{{item.key}}:</b> {{item.value}}</li>
+					</template>
+				</ul>
+			</template>
+
+			<template bind if="{{measurementMetadata.length > 0}}">
+				<h4>Measurement Level Metadata Attributes</h4>
+				<ul>
+					<template repeat="{{key in measurementMetadata}}">
+						<li>{{key}}</li>
+					</template>
+				</ul>
+			</template>
+
+			<template bind if="{{joinableMetadata.length > 0}}">
+				<h4>Joinable Metadata Attributes</h4>
+				<ul>
+					<template repeat="{{key in joinableMetadata}}">
+						<li>{{key}}</li>
+					</template>
+				</ul>
+			</template>
+
+			<template bind if="{{fileMetadata.length == 0 && measurementMetadata.length == 0 && joinableMetadata.length == 0}}">
+				No metadata parsed from this file.
+			</template>
+			<template bind if="{{datasheet.measurements.length == 0}}">
+				No data points parsed from this file.
+			</template>
+
+			<div id="chart"></div>
+
+			<!-- TODO: this needs to change now -->
+			<template bind if="{{datasheet.measurements.length > maxLineCount}}">
+				<div style="padding: 15px; color: #888; font-size: 12px; font-style: italic">
+					*Note: only {{maxLineCount}} of {{datasheet.measurements.length}} measurements drawn.
+				</div>
 			</template>
 
 
-
-			<div>
-				<paper-button on-tap="{{_toggle}}" label="More Info" style="color:#2f9b45"></paper-button>
-				<core-collapse id="collapse">
-					<template bind if="{{fileMetadata.length > 0}}">
-						<h4>File Level Metadata</h4>
-						<ul>
-							<template repeat="{{item in fileMetadata}}">
-								<li><b>{{item.key}}:</b> {{item.value}}</li>
-							</template>
-						</ul>
-					</template>
-
-					<template bind if="{{spectraMetadata.length > 0}}">
-						<h4>Spectra Level Metadata Attributes</h4>
-						<ul>
-							<template repeat="{{key in spectraMetadata}}">
-								<li>{{key}}</li>
-							</template>
-						</ul>
-					</template>
-
-					<template bind if="{{joinableMetadata.length > 0}}">
-						<h4>Joinable Metadata Attributes</h4>
-						<ul>
-							<template repeat="{{key in joinableMetadata}}">
-								<li>{{key}}</li>
-							</template>
-						</ul>
-					</template>
-
-					<template bind if="{{fileMetadata.length == 0 && spectraMetadata.length == 0 && joinableMetadata.length == 0}}">
-						No metadata parsed from this file.
-					</template>
-					<template bind if="{{datasheet.spectra.length == 0}}">
-						No spectra parsed from this file.
-					</template>
-
-					<div id="chart"></div>
-
-					<template bind if="{{datasheet.spectra.length > maxLineCount}}">
-						<div style="padding: 15px; color: #888; font-size: 12px; font-style: italic">
-							*Note: only {{maxLineCount}} of {{datasheet.spectra.length}} spectra drawn.
-						</div>
-					</template>
-				</core-collapse>
-			</div>
-
-		</div>
+		</esis-ui-card>
 	</template>
 	<script>
 		Polymer('esis-ui-datasheet', {
-			datasheet : {},
+			datasheet : null,
 
 			open : false,
 
+            showHelp : false,
+
 			fileMetadata : [],
-			spectraMetadata : [],
+			measurementMetadata : [],
 			joinableMetadata : [],
 
 			// chart vars
@@ -105,37 +178,45 @@
 			},
 
 			_update : function() {
-				this.joinableMetadata = [];
-				this.spectraMetadata = [];
-				this.fileMetadata = [];
-
-				for( var key in this.datasheet.file.metadata ) {
-					this.fileMetadata.push({key:key, value:this.datasheet.file.metadata[key]});
-				}
-
-				for( var i = 0; i < this.datasheet.spectra.length; i++ ) {
-					var s = this.datasheet.spectra[0];
-					for( var key in s.metadata.spectra ) {
-						if( this.spectraMetadata.indexOf(key) == -1 ) {
-							this.spectraMetadata.push(key);
-						}
-					}
-				}
-
-				if( this.datasheet.isMetadata && this.datasheet.metadata.metadata.length > 0 ) {
-					for( var i = 0; i < this.datasheet.metadata.metadata[0].length; i++ ) {
-						var key = this.datasheet.metadata.metadata[0][i];
-						if( this.joinableMetadata.indexOf(key) == -1 ) {
-							this.joinableMetadata.push(key);
-						}
-					}
-				}
+                console.log(this.datasheet.contents);
+                this._setAttributes();
+                this.datasheet.addEventListener('measurement-updated', this._setAttributes.bind(this));
 			},
+
+            _setAttributes : function() {
+
+                this.joinableMetadata = [];
+                this.measurementMetadata = [];
+                this.fileMetadata = [];
+
+
+                for( var key in this.datasheet.contents.metadata ) {
+                    this.fileMetadata.push({key:key, value:this.datasheet.contents.metadata[key]});
+                }
+
+                for( var i = 0; i < this.datasheet.measurements.length; i++ ) {
+                    var s = this.datasheet.measurements[0];
+                    for( var key in s.metadata.measurement ) {
+                        if( this.measurementMetadata.indexOf(key) == -1 ) {
+                            this.measurementMetadata.push(key);
+                        }
+                    }
+                }
+
+                if( this.datasheet.isMetadata && this.datasheet.metadata.metadata.length > 0 ) {
+                    for( var i = 0; i < this.datasheet.metadata.metadata[0].length; i++ ) {
+                        var key = this.datasheet.metadata.metadata[0][i];
+                        if( this.joinableMetadata.indexOf(key) == -1 ) {
+                            this.joinableMetadata.push(key);
+                        }
+                    }
+                }
+            },
 
 			_toggle : function() {
 				this.open = !this.open;
 
-				if( this.open && this.datasheet.spectra.length > 0 ) {
+				if( this.open && this.datasheet.measurements.length > 0 ) {
 					this.$.chart.style.height = '400px';
 					setTimeout(function(){
 						this._createChart();
@@ -154,21 +235,21 @@
 			  		var rows = [];
 
 					this.dt.addColumn('number', 'Wavelength');
-					for( var i = 0; i < this.datasheet.spectra.length; i++ ) {
+					for( var i = 0; i < this.datasheet.measurements.length; i++ ) {
 					  	if( i == this.maxLineCount ) break;
 					    this.dt.addColumn('number', ''+i);
 					}
 
-					for( var i = 0; i < this.datasheet.spectra[0].data.length; i++ ) {
+					for( var i = 0; i < this.datasheet.measurements[0].data.length; i++ ) {
 
 					  	// add the wavelength
-					  	var row = [parseFloat(this.datasheet.spectra[0].data[i][0])];
+					  	var row = [parseFloat(this.datasheet.measurements[0].data[i][0])];
 					  	var addRow = true;
 
-					  	for( var j = 0; j < this.datasheet.spectra.length; j++ ) {
+					  	for( var j = 0; j < this.datasheet.measurements.length; j++ ) {
 					  		if( j == this.maxLineCount ) break;
 
-					  		var f = parseFloat(this.datasheet.spectra[j].data[i][1]);
+					  		var f = parseFloat(this.datasheet.measurements[j].data[i][1]);
 					  		if( isNaN(f) ) f = 0;
 					  		if(  j == 0 && f == 0 ) {
 					  			addRow = false;
@@ -204,7 +285,11 @@
 			      // Instantiate and draw our chart, passing in some options.
 			    if( !this.chart ) this.chart = new google.visualization.LineChart(this.$.chart);
 			    this.chart.draw(this.dt, options);
-			}
+			},
+
+            _toggleHelp : function() {
+                this.showHelp = !this.showHelp;
+            }
 		});
 	</script>
 <polymer-element>
