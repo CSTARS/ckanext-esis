@@ -36,9 +36,31 @@
                 color: #777;
                 font-size: 13px;
             }
+
+            .options {
+                background-color: #eee;
+                border-radius: 4px;
+                padding: 15px 10px;
+            }
+
+            esis-ui-card {
+                position: relative;
+            }
+            .processing {
+                z-index: 100;
+                position: absolute;
+                width:100%;
+                height: 100%;
+                text-align: center;
+                padding-top: 100px;
+                font-size: 20px;
+                color: #333;
+                background-color: rgba(255,255,255,.7);
+            }
 		</style>
 
-		<esis-ui-card style="padding:10px">
+		<esis-ui-card style="padding:10px"  class="{{datasheet.updating ? 'updating' : ''}}">
+            <div class="processing" hidden?="{{!datasheet.updating}}">Processing...</div>
 			<h4 style="border-bottom: 1px solid #eee;margin-bottom:25px;padding-bottom:5px">
                 <div>{{datasheet.contents.name}}</div>
                 <div style="font-size:14px; color: #888" hidden?="{{!datasheet.contents.sheetName || datasheet.contents.sheetName == ''}}">
@@ -46,65 +68,74 @@
                 </div>
             </h4>
 
-            <span style="float: right">Parser: {{datasheet.contents.info.parser}}</span>
-			
-			<template bind if="{{datasheet.contents.error}}">
-				<div style="color:red">Error {{datasheet.contents.error}}</div>
-			</template>
-			<template bind if="{{datasheet.contents.warning}}">
-				<div style="color:orange">Warning: {{datasheet.contents.warning}}</div>
-			</template>
+            <div class="options">
+                <span style="float: right">Parser: {{datasheet.contents.info.parser}}</span>
+    			
+    			<template bind if="{{datasheet.contents.error}}">
+    				<div style="color:red">Error {{datasheet.contents.error}}</div>
+    			</template>
+    			<template bind if="{{datasheet.contents.warning}}">
+    				<div style="color:orange">Warning: {{datasheet.contents.warning}}</div>
+    			</template>
 
-            <div horizontal layout style="margin: 10px 0 20px 20px">
-                <paper-checkbox checked="{{datasheet.isMetadata}}" style="margin-right:10px"></paper-checkbox>
-                <div vertical layout>
-                    <div>Joinable Metadata File</div>
-                    <div style="color:#888; font-size: 13px">This file only contains metadata to be joined on given data.</div>
-                </div>
-            </div>
-
-            <div>
-                <paper-radio-group selected="{{datasheet.dataType}}" role="radiogroup" style="margin-left: 10px" disabled?="{{datasheet.isMetadata}}">
-                    <paper-radio-button 
-                        name="spectra" 
-                        label="Spectra Data Format" 
-                        role="radio" 
-                        tabindex="0" 
-                        aria-checked="true" 
-                        aria-label="Spectra Data Format" 
-                        class="core-selected" 
-                        disabled?="{{datasheet.isMetadata}}">
-                    </paper-radio-button>
-                    <paper-radio-button 
-                        name="timeseries" 
-                        label="Time Series Data Format" 
-                        role="radio" 
-                        tabindex="0" 
-                        aria-checked="false" 
-                        aria-label="Time Series Data Format"
-                        disabled?="{{datasheet.isMetadata}}">
-                    </paper-radio-button>
-                </paper-radio-group>
-
-                <div style="margin-left:55px" hidden?="{{datasheet.isMetadata}}">
-                    <div class="note" hidden?="{{datasheet.dataType != 'spectra'}}">
-                        View datasheet per spectra measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
-                    </div>
-                    <div class="note" hidden?="{{datasheet.dataType != 'timeseries'}}">
-                        View datasheet data per time measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
+                <div horizontal layout style="margin: 10px 0 20px 20px">
+                    <paper-checkbox checked="{{datasheet.isMetadata}}" style="margin-right:10px"></paper-checkbox>
+                    <div vertical layout>
+                        <div>Joinable Metadata File</div>
+                        <div style="color:#888; font-size: 13px">This file only contains metadata to be joined on given data.</div>
                     </div>
                 </div>
 
-                <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.isMetadata}}">
-                    <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
-                        <esis-dataformat-help type="{{datasheet.dataType}}"></esis-dataformat-help>
-                    </div>
-                </core-collapse>
-            </div>
+                <div>
+                    <paper-radio-group selected="{{datasheet.dataType}}" role="radiogroup" style="margin-left: 10px" disabled?="{{datasheet.isMetadata}}">
+                        <paper-radio-button 
+                            name="spectra" 
+                            label="Spectra Data Format" 
+                            role="radio" 
+                            tabindex="0" 
+                            aria-checked="true" 
+                            aria-label="Spectra Data Format" 
+                            class="core-selected" 
+                            disabled?="{{datasheet.isMetadata}}">
+                        </paper-radio-button>
+                        <paper-radio-button 
+                            name="timeseries" 
+                            label="Time Series Data Format" 
+                            role="radio" 
+                            tabindex="0" 
+                            aria-checked="false" 
+                            aria-label="Time Series Data Format"
+                            disabled?="{{datasheet.isMetadata}}">
+                        </paper-radio-button>
+                    </paper-radio-group>
 
+                    <div style="margin-left:55px" hidden?="{{datasheet.isMetadata}}">
+                        <div class="note" hidden?="{{datasheet.dataType != 'spectra'}}">
+                            View datasheet per spectra measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
+                        </div>
+                        <div class="note" hidden?="{{datasheet.dataType != 'timeseries'}}">
+                            View datasheet data per time measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
+                        </div>
+                    </div>
+
+                    <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.isMetadata}}">
+                        <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
+                            <esis-dataformat-help type="{{datasheet.dataType}}"></esis-dataformat-help>
+                        </div>
+                    </core-collapse>
+                </div>
+            </div>
 
 			<div horizontal layout style="margin-top:25px;padding-top:5px;border-top:1px solid #eee">
-                <div>Parsed Attributes</div> 
+                <div>
+                    Parsed Attributes<br />
+
+                    <ul>
+                        <template repeat="{{key in attributeTypesArray}}">
+                            <li>{{key}}</li>
+                        </template>
+                    </ul>
+                </div> 
                 <div style="text-align:right" flex>
                    <a>Configure Attributes</a>
                 </div>
@@ -113,8 +144,8 @@
 			<template bind if="{{fileMetadata.length > 0}}">
 				<h4>File Level Metadata</h4>
 				<ul>
-					<template repeat="{{item in fileMetadata}}">
-						<li><b>{{item.key}}:</b> {{item.value}}</li>
+					<template repeat="{{key in fileMetadata}}">
+						<li>{{key}}</li>
 					</template>
 				</ul>
 			</template>
@@ -136,6 +167,25 @@
 					</template>
 				</ul>
 			</template>
+
+            <template bind if="{{fileData.length > 0}}">
+                <h4>Data Attributes</h4>
+                <ul>
+                    <template repeat="{{key in fileData}}">
+                        <li>{{fileData}}</li>
+                    </template>
+                </ul>
+            </template>
+
+            <template bind if="{{wavelengths.length > 0}}">
+                <h4>Wavelengths: {{wavelengths.length}} <small><a on-tap="{{toggleWavelengths}}">show</a></small></h4>
+                
+                <div hidden?="{{!showWavelengths}}">
+                    <template repeat="{{key in wavelengths}}">
+                        <span>{{key}}</span>
+                    </template>
+                </div>
+            </template>
 
 			<template bind if="{{fileMetadata.length == 0 && measurementMetadata.length == 0 && joinableMetadata.length == 0}}">
 				No metadata parsed from this file.
@@ -167,6 +217,12 @@
 			fileMetadata : [],
 			measurementMetadata : [],
 			joinableMetadata : [],
+            fileData : [],
+            wavelengths : [],
+
+            showWavelengths : false,
+
+            ds : null,
 
 			// chart vars
 			dt : null,
@@ -177,10 +233,14 @@
 				datasheet : '_update'
 			},
 
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+            },
+
 			_update : function() {
-                console.log(this.datasheet.contents);
                 this._setAttributes();
-                this.datasheet.addEventListener('measurement-updated', this._setAttributes.bind(this));
+                this.showWavelengths = false;
+                this.datasheet.addEventListener('datasheet-updated', this._setAttributes.bind(this));
 			},
 
             _setAttributes : function() {
@@ -188,29 +248,39 @@
                 this.joinableMetadata = [];
                 this.measurementMetadata = [];
                 this.fileMetadata = [];
+                this.fileData = [];
+                this.wavelengths = [];
 
+                for( var key in this.datasheet.attributeTypes ) {
+                    var info = this.datasheet.attributeTypes[key];
 
-                for( var key in this.datasheet.contents.metadata ) {
-                    this.fileMetadata.push({key:key, value:this.datasheet.contents.metadata[key]});
-                }
-
-                for( var i = 0; i < this.datasheet.measurements.length; i++ ) {
-                    var s = this.datasheet.measurements[0];
-                    for( var key in s.metadata.measurement ) {
-                        if( this.measurementMetadata.indexOf(key) == -1 ) {
-                            this.measurementMetadata.push(key);
-                        }
-                    }
-                }
-
-                if( this.datasheet.isMetadata && this.datasheet.metadata.metadata.length > 0 ) {
-                    for( var i = 0; i < this.datasheet.metadata.metadata[0].length; i++ ) {
-                        var key = this.datasheet.metadata.metadata[0][i];
-                        if( this.joinableMetadata.indexOf(key) == -1 ) {
+                    switch(info.flag) {
+                        case this.ds.ATTR_FLAGS.FROM_METADATA:
                             this.joinableMetadata.push(key);
-                        }
+                            break;
+
+                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
+                            if( info.type == 'metadata' ) this.measurementMetadata.push(key);
+                            else this.fileData.push(key);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
+                            this.wavelengths.push(key);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
+                            this.fileMetadata.push(key);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
+                            this.measurementMetadata.push(key);
+                            break;
+
+                        default:
+                            break;
                     }
                 }
+
             },
 
 			_toggle : function() {
@@ -228,6 +298,10 @@
 
 				this.$.collapse.toggle();
 			},
+
+            toggleWavelengths : function() {
+                this.showWavelengths = !this.showWavelengths;
+            },
 
 			_createChart : function() {
 				if( !this.dt ) {

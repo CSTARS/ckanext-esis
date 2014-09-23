@@ -16,6 +16,7 @@
 
 			ckanId : '',
 
+			// spectra or timeseries... really this is what format the data is presented in
 			dataType : '',
 
 			// we will try and detect this flag.  but let users select if we get it wrong
@@ -24,38 +25,58 @@
 			// was this generated from existing datasheet (one that has already been added)
 			isExisting : false,
 
+			// map of known attribute names to the attribute type and flag
+			attributeTypes : null,
+
 			editMode : false,
+
+			// bindable flag for UI
+			updating : true,
 
 			label : '',
 
 			observe : {
 				contents : '_update',
-				dataType : '_extract'
+				dataType : '_extract',
+				isMetadata : '_extract'
 			},
 
-			knownAttributes : [],
+			// what information needs to be stored here?
+			// we need to be able to know what data attributes are file and what 
+			// are part of tabular context...
+			attributeTypes : null,
 
 			ready : function() {
 				this.measurements = [];
 				this.metadata = {};
 				this.contents = {};
+				this.attributeTypes = {};
 			},
 
 			// run the extractor again
+			// most likely called when the dataType changes
 			_extract : function(oldVal, newVal) {
-				if( oldVal == '' ) return;
+				if( oldVal === '' ) return;
+				this.updating = true;
 
 				setTimeout(function(){
 					var extractor = document.querySelector('esis-extractor');
 					var resp = extractor.run((this.isMetadata ? 'metadata' : this.dataType), this.contents.array);
 					
+					// TODO: how do we want to handle resp.error?
+
 					this.contents.metadata = resp.metadata;
 					this.contents.measurements = resp.measurements;
+					this.attributeTypes = resp.attributeTypes;
+					this.contents.joindata = resp.joindata;
+
 					this._update();
 				}.bind(this), 250);
 			},
 
+
 			_update : function() {
+				this.updating = true;
 				this._setTitle();
 
 				this.measurements = [];
@@ -76,11 +97,10 @@
 							}
 						}
 
-						this._updateKnownAttributes(sp);
 						this.measurements.push(sp);
 					}
 
-					this.fire('measurement-updated', this.knownAttributes);
+					//
 				} else if( this.contents.joindata && this.contents.joindata.length > 0 ) {
 					
 					this.metadata = document.createElement('esis-metadata');
@@ -88,6 +108,9 @@
 					this.metadata.metadata = this.contents.joindata;
 					this.isMetadata = true;
 				}
+
+				this.updating = false;
+				this.fire('datasheet-updated');
 			},
 
 			setResourceId : function(resourceId) {
@@ -96,16 +119,6 @@
 					this.measurements[i].resourceId = resourceId;
 				}
 				this.metadata.resourceId = resourceId;
-			},
-
-			_updateKnownAttributes : function(measurement) {
-				var list = measurement.getAttributes();
-
-				for( var i = 0; i < list.length; i++ ) {
-					if( this.knownAttributes.indexOf(list[i]) == -1 ) {
-						this.knownAttributes.push(list[i]);
-					}
-				}
 			},
 
 			joinAttributes : function() {

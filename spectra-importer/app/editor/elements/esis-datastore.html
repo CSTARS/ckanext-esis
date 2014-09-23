@@ -51,8 +51,26 @@
 			inverseAttributeMap : {},
 
 			// list of currently known attributes for this dataset
+			//   - this is a list of objects.  each object has the structure
+			//       |- name : attribute name
+			//       |- type : (data | metadata)
+			//       \- flag : (1, 2) 
 			knownAttributes : [],
 
+			ATTR_FLAGS : {
+				// the attribute is from a joined metadata file, always metadata
+				FROM_METADATA : 1,
+				// the attribute type could be data or metadata
+				FROM_MIXED_FILE : 2,
+				// the attribute name is numberic and is there for a wavelength
+				IS_WAVELENGTH : 3,
+				// the attribute is from global metadata
+				IS_FILE_METADATA : 4,
+				// the attribute is measurement level metadata
+				IS_MEASUREMENT_METADATA : 5
+			},
+
+			// the key is the attribute name, the value is 
 			attributes : {},
 
 			// list of resources that are scheduled to be deleted
@@ -104,6 +122,12 @@
 				}.bind(this));
 
 				ele.contents = contents;
+
+				// move attributeTypes to first class citizen 
+				if( ele.contents.attributeTypes ) {
+					ele.attributeTypes = ele.contents.attributeTypes;
+					delete ele.contents.attributeTypes;
+				}
 
 				this.datasheets.push(ele);
 				
@@ -185,18 +209,41 @@
 				metadata.matchCount = count;
 
 				// make sure to add new metadata attribute to known list
-				this._addKnownAttributes(metadata.joinAttributes());
+				var attrs = metadata.joinAttributes();
+				for( var i = 0; i < attrs.length; i++ ) {
+					var index = this._hasAttribute(attrs[i]);
+
+					if( index == -1 ) {
+						this.knownAttributes.push({
+							name : attrs[i],
+							type : 'metadata',
+							flag : ATTR_FLAGS.FROM_METADATA
+						});
+					} else {
+						var item = this.knownAttributes[index];
+						item.type = 'metadata';
+						item.flag = ATTR_FLAGS.FROM_METADATA;
+					}
+				}
 			},
 
-			_addKnownAttributes : function(attrList) {
+			_updateKnownAttributes : function() {
+				//for( var i = 0; i < )
+
 				for( var i = 0; i < attrList.length; i++ ) {
 					if( this.attributes[attrList[i]] ) continue;
 
 					this.knownAttributes.push(attrList[i]);
-					this.attributes[attrList[i]] = {
-						
-					}
+					this.attributes[attrList[i]] = {}
 				}
+			},
+
+			// acts like index of for known attributes array of objects
+			_hasAttribute : function(name) {
+				for( var i = 0; i < this.knownAttributes.length; i++ ) {
+					if( this.knownAttributes[i].name == name ) return i;
+				}
+				return -1;
 			},
 
 			_onAttributeMapUpdate : function(oldMap, newMap) {

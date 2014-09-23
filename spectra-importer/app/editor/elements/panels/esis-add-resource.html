@@ -245,17 +245,23 @@
 			    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
 
 			    setTimeout(function(){
+				    var file;
 				    for (var i = 0, f; f = files[i]; i++) {
+				    	file = this.ds.addFile(f, this.parseZip, this.options.type);
 
-				    	this.ds.addFile(f, this.parseZip, this.options.type);
+				    	if( i == 0 ) {
+				    		file.addEventListener('ingest-complete', function() {
+				    			this.processing = false;
+				    			this.selectedTab = 2;
+				    		}.bind(this));
+				    	}
 				    }
 
 				    setTimeout(function(){
-			    		this.processing = false;
 			    		this.$.file.value = '';
 				    }.bind(this), 500);
 
-				    this.selectedTab = 2;
+				    
 			    }.bind(this), 150);
 
 			    
