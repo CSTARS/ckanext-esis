@@ -68,6 +68,12 @@
                 color: #777;
                 font-size: 13px;
             }
+            .options {
+            	background-color: #eee;
+            	padding: 15px 10px;
+            	border-radius: 3px;
+            	margin-bottom: 10px;
+            }
 		</style>
 
 		<paper-tabs selected="{{selectedTab}}" hidden?="{{ds.files.length == 0}}">
@@ -77,13 +83,11 @@
 		</paper-tabs>
 
 		<div hidden?="{{selectedTab != 0}}">
-			<div style="font-size:14px;color:#888">
-				<span>Add new files below by using the file selector or drag files over the drop zone.</span><br /><br />
-			</div>
 
-			<h4 style="color:#888; margin: 10px 0 0 15px">File Import Options</h4>
+
+			<h4 style="color:#888; margin: 10px 0 -9px 15px">File Import Options</h4>
 			
-			<esis-ui-card class="options-card" style="margin-bottom: 20px">
+			<div class="options">
 				<div horizontal layout>
 				    <paper-checkbox checked="{{parseZip}}"></paper-checkbox>
 				    <div vertical layout>
@@ -130,7 +134,7 @@
 						<esis-dataformat-help type="{{options.type}}"></esis-dataformat-help>
 					</div>
 				</core-collapse>
-			</esis-ui-card>
+			</div>
 
 
 			<template bind if="{{processing}}">
@@ -143,7 +147,10 @@
 
 			<div class="fileinput {{processing ? 'processing' : ''}}">
 				<div>
-					<h4>Select files to be imported</h4>
+					<h4 style="margin-bottom: 0">Select files to be imported</h4>
+					<div style="font-size:12px;color:#888; margin-bottom: 15px">
+						<span>Add new files below by using the file selector or drag files over the drop zone.</span>
+					</div>
 					<input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}">
 				</div>
 
@@ -181,7 +188,7 @@
 		    	</paper-button>
 			</div>
 
-			<esis-ui-datasheet datasheet="{{selectedSheet}}" ></esis-ui-datasheet>
+			<esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}" ></esis-ui-datasheet>
 		</div>
 
 	    <span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
@@ -217,6 +224,11 @@
 				this.ds = document.querySelector('esis-datastore');
 				this.$.dropZone.addEventListener('dragover', this._handleDragOver.bind(this), false);
 				this.$.dropZone.addEventListener('drop', this._handleFileSelect.bind(this), false);
+			},
+
+			// redraw current datasheet if there is one selected
+			onShow : function() {
+				this.$.dataSheetUI.update();
 			},
 
 			_updateVisibility : function() {

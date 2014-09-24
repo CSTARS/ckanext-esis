@@ -115,6 +115,7 @@
           this.cEle.isAttached = true;
           this.$.elementRoot.appendChild(this.item.esisComponent);
         }
+        if( this.cEle.onShow ) this.cEle.onShow();
         
         window.location.hash = this.item.tag;
        

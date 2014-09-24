@@ -49,8 +49,6 @@
 						this._unzip();
 					} else {
 						document.querySelector('esis-parser').parse(this, function(arr){
-							console.log(arr);
-							
 							this._onIngestComplete(arr);
 		        		}.bind(this));
 					}

@@ -33,6 +33,15 @@
                 resp.metadata = this._getFileMetadata(contents, hRanges);
                 var data = this._getMeasurements(contents, type, hRanges, vRanges);
 
+                // add the file level metadata to the attribute type list
+                for( var key in resp.metadata ) {
+                    data.attributeTypes[key] = { 
+                        guess : false,
+                        type : 'metadata',
+                        flag : this.ds.ATTR_FLAGS.IS_FILE_METADATA
+                    }
+                }
+
                 if( data.error ) {
                     resp.error = true;
                 } else {
@@ -208,11 +217,8 @@
 
                     if( !dataRange ) return {error : true};
 
-                    var dataRows = {};
                     // find what rows are thought to be data (match numberic value) or metadata (doesn't)
-                    if( guess ) {
-                        dataRows = this._findDataRows(contents, dataRange.start);
-                    }
+                    var dataRows = this._findDataRows(contents, dataRange.start);
 
                     var len = contents[dataRange.start].length, i, j;
                     for( i = 1; i < len; i++ ) {
@@ -232,7 +238,7 @@
                                     attributeTypes[contents[j][0]] = { 
                                         guess : false,
                                         type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_FILE_METADATA
+                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
@@ -255,8 +261,8 @@
                                     attributeTypes[key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : (guess && dataRows[key]) ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
-                                                                          this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
                                 }
 
@@ -333,7 +339,7 @@
                                     attributeTypes[contents[j][0]] = { 
                                         guess : false,
                                         type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_FILE_METADATA
+                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
@@ -355,8 +361,8 @@
                                     attributeTypes[key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : (guess && dataRows[key]) ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
-                                                                          this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
                                 }
 

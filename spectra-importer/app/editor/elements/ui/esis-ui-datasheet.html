@@ -126,18 +126,9 @@
                 </div>
             </div>
 
-			<div horizontal layout style="margin-top:25px;padding-top:5px;border-top:1px solid #eee">
-                <div>
-                    Parsed Attributes<br />
-
-                    <ul>
-                        <template repeat="{{key in attributeTypesArray}}">
-                            <li>{{key}}</li>
-                        </template>
-                    </ul>
-                </div> 
+			<div style="margin-top:25px;padding-top:5px;border-top:1px solid #eee">
                 <div style="text-align:right" flex>
-                   <a>Configure Attributes</a>
+                   <a on-tap="{{goToAttrSettings}}"><core-icon icon="settings"></core-icon> Configure Attributes</a>
                 </div>
             </div>
 
@@ -172,7 +163,7 @@
                 <h4>Data Attributes</h4>
                 <ul>
                     <template repeat="{{key in fileData}}">
-                        <li>{{fileData}}</li>
+                        <li>{{key}}</li>
                     </template>
                 </ul>
             </template>
@@ -230,14 +221,16 @@
 			maxLineCount : 30,
 
 			observe : {
-				datasheet : '_update'
+				datasheet : 'update'
 			},
 
             ready : function() {
                 this.ds = document.querySelector('esis-datastore');
             },
 
-			_update : function() {
+			update : function() {
+                if( !this.datasheet ) return;
+
                 this._setAttributes();
                 this.showWavelengths = false;
                 this.datasheet.addEventListener('datasheet-updated', this._setAttributes.bind(this));
@@ -251,8 +244,9 @@
                 this.fileData = [];
                 this.wavelengths = [];
 
+                var info;
                 for( var key in this.datasheet.attributeTypes ) {
-                    var info = this.datasheet.attributeTypes[key];
+                    info = this.datasheet.attributeTypes[key];
 
                     switch(info.flag) {
                         case this.ds.ATTR_FLAGS.FROM_METADATA:
@@ -260,7 +254,10 @@
                             break;
 
                         case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
-                            if( info.type == 'metadata' ) this.measurementMetadata.push(key);
+                            var type = info.type;
+                            if( this.ds.attributeModifications[key] ) type = this.ds.attributeModifications[key];
+
+                            if( type == 'metadata' ) this.measurementMetadata.push(key);
                             else this.fileData.push(key);
                             break;
 
@@ -363,6 +360,10 @@
 
             _toggleHelp : function() {
                 this.showHelp = !this.showHelp;
+            },
+
+            goToAttrSettings : function() {
+                window.location.hash = 'attribute-settings';
             }
 		});
 	</script>

@@ -67,8 +67,13 @@
 				// the attribute is from global metadata
 				IS_FILE_METADATA : 4,
 				// the attribute is measurement level metadata
-				IS_MEASUREMENT_METADATA : 5
+				IS_MEASUREMENT_METADATA : 5,
+				// the attribute is measurement level data, from the data section of the file
+				IS_FILE_DATA : 6
 			},
+
+			// attributes who's infered type has been overridden by the user
+			attributeModifications : {},
 
 			// the key is the attribute name, the value is 
 			attributes : {},
@@ -186,6 +191,15 @@
 				}
 			},
 
+			getAllAttributeTypes : function() {
+				var attrTypes = {};
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					for( var key in this.datasheets[i].attributeTypes ) {
+						attrTypes[key] = this.datasheets[i].attributeTypes[key];
+					}
+				}
+				return attrTypes;
+			},
 
 			join : function(metadata) {
 				var count = 0;
@@ -251,6 +265,7 @@
 				for( var key in newMap ) {
 					if( newMap[key] != '' ) this.inverseAttributeMap[newMap[key]] = key;
 				}
+				console.log(this.inverseAttributeMap);
 			}
 		});
 	</script>
