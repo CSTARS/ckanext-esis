@@ -1,25 +1,28 @@
 <link rel="import" href="esis-ui-card.html"/>
 <link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
 
-<polymer-element name="esis-ui-metadata" attributes="metadata">
+<polymer-element name="esis-ui-metadata" attributes="metadata attributeTypes">
 	<template>
 		<style>
 			:host {
 				display: block;
-				margin-bottom: 20px;
+				margin-top: 5px;
+				background-color: white;
 			}
 			.resource-type {
 				border-bottom: 1px solid #2f9b45;
 				color: #2f9b45;
-				margin-bottom: 8px;
+				margin-top: 8px;
 				padding-bottom: 3px;
 			}
 		</style>
 
 		<esis-ui-card z="1" style="padding: 1px 20px 10px 20px">
 			<h4>
+				<!-- TODO: move this to the datasheet UI 
 				<div hidden?="{{metadata.isExisting}}" class="resource-type">New Resource</div>
 				<div hidden?="{{!metadata.isExisting}}" class="resource-type">Existing Resource</div>
+				-->
 
 				{{label}}
 				<template bind if="{{metadata.file.sheetName.length > 0}}">
@@ -74,16 +77,16 @@
 			label : '',
 
 			observe : {
-				metadata : '_update',
 				'metadata.joinId' : '_updateDatastore',
 			},
 
-			_update : function() {
-				this.joinAttrs = [];
-				if( this.metadata.metadata.length == 0 ) return;
+			update : function() {
+				if( this.metadata == null ) return;
 
-				for( var i = 0; i < this.metadata.metadata[0].length; i++ ) {
-					this.joinAttrs.push(this.metadata.metadata[0][i]);
+				this.joinAttrs = [];
+
+				for( var key in this.attributeTypes ) {
+					this.joinAttrs.push(key);
 				}
 
 				if( this.metadata.file && this.metadata.file.info ) {

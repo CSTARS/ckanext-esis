@@ -2,7 +2,7 @@
 <link rel="import" href="../ui/esis-ui-measurement.html" />
 <link rel="import" href="../ui/esis-ui-datasheet.html" />
 
-<polymer-element name="esis-parsed-spectra">
+<polymer-element name="esis-inspect">
 	<template>
 		<style>
 			paper-tabs::shadow #selectionBar {
@@ -46,22 +46,27 @@
 
 		<esis-ui-card style="padding:15px">
 			<div>
-				<h2>{{measurements.length}} Spectra Found</h2>
-				<div>
-					<span class="bs-label success-label">File Level Metadata</span> 
-					<span class="bs-label info-label">Spectra Level Metadata</span> 
-					<span class="bs-label warning-label">Linked Metadata</span> <br>
-					<div style="color:#888;padding:8px;font-size:14px">* Custom non-ecosis field</div>
-				</div>
+				<h2>
+					<div layout horizontal>
+						<div>
+							{{measurements.length}} Spectra Found
+						</div>
+						<div flex style="text-align:right">
+							<span class="s-selector">
+								Select Spectra: 
+								<select id="spectraSelector" on-change="{{_selectSpectra}}">
+									<template repeat="{{sp,i in measurements}}">
+										<option value="{{i}}">{{i+1}}</option>
+									</template>
+								</select>
+							</span>
+						</div>
+					</div>
+				</h2>
 
-				<div class="s-selector">
-					Select Spectra: 
-					<select id="spectraSelector" on-change="{{_selectSpectra}}">
-						<template repeat="{{sp,i in measurements}}">
-							<option value="{{i}}">{{i+1}}</option>
-						</template>
-					</select>
-				</div>
+				<a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
+                    <core-icon icon="settings"></core-icon> Configure Attributes
+                </a>
 
 				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}"></esis-ui-measurement>
 			</div>
@@ -69,7 +74,7 @@
 
 	</template>
 	<script>
-		Polymer('esis-parsed-spectra', {
+		Polymer('esis-inspect', {
 			
 			menuItem : null,
 
@@ -156,6 +161,10 @@
 
 			_gotoGroup : function() {
 				window.location.hash = '#group-by';
+			},
+
+			_goToAttrSettings : function() {
+				window.location.hash = 'attribute-settings'
 			}
 
 		});

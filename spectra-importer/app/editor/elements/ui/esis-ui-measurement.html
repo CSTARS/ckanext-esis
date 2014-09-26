@@ -9,44 +9,96 @@
 				border: 1px solid #ccc;
 				border-radius: 3px;
 			}
-			table tr th {
-				text-align: left;
-			}
+			
 			h4 {
 				margin: 5px;
 			}
+
 			table {
-				width: 100%;
-			}
-			table td {
-				padding: 6px 2px;
-			}
+                width: 100%;
+                border-spacing: 0px;
+                border-collapse: separate;
+                border-top: 1px solid #ddd;
+                border-left: 1px solid #ddd;
+                background-color: white;
+            }
+            table td {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+            table th {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+
+			.file {
+                background-color: #dff0d8;
+            }
+            .spectra {
+                background-color: #fcf8e3;
+            }
+            .data {
+                background-color: #d9edf7;
+            }
 		</style>
 
 		<div class="card">
 			<h4 style="color: #888">From - {{measurement.filename}}</h4>
 
-			<table style="width:100%">
-				<tr template repeat="{{item in metadata.file}}">
-					<td><span class="bs-label success-label">{{item.key}}</span></td><td>{{item.value}}</td>
-				</tr>
-				<tr template repeat="{{item in metadata.joined}}">
-					<td><span class="bs-label warning-label">{{item.key}}</span></td><td>{{item.value}}</td>
-				</tr>
-				<tr template repeat="{{item in metadata.measurement}}">
-					<td><span class="bs-label info-label">{{item.key}}</span></td><td>{{item.value}}</td>
-				</tr>
-			</table>
+			<h4>
+				<paper-icon-button 
+                	icon="hardware:{{showMetadata ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                	on-tap="{{_toggleMetadata}}">
+            	</paper-icon-button>
+				Metadata
+			</h4>
+			<core-collapse opened="{{showMetadata}}">
+				<table>
+					<tr>
+						<th>Attribute</th>
+						<th>Value</th>
+						<th>Type</th>
+					</tr>
+					<tr template repeat="{{item in metadata.file}}">
+						<td class="file">{{item.key}}</td>
+						<td class="file">{{item.value}}</td>
+						<td class="file">File Metadata</td>
+					</tr>
+					<tr template repeat="{{item in metadata.joined}}">
+						<td>{{item.key}}</td>
+						<td>{{item.value}}</td>
+						<td>Joined Metadata</td>
+					</tr>
+					<tr template repeat="{{item in metadata.measurement}}">
+						<td class="spectra">{{item.key}}</td>
+						<td class="spectra">{{item.value}}</td>
+						<td class="spectra">Measurement Metadata</td>
+					</tr>
+				</table>
+			</core-collapse>
 
-			<h4>Derived Data Points</h4>
-			<table style="width:100%">
-				<tr template repeat="{{p in data}}">
-					<td><b>{{p.key}}</b></td>
-					<td>{{p.value}}</td>
-				</tr>
-			</table>
+			<template bind if="{{data.length > 0}}">
+				<h4>
+					<paper-icon-button 
+                		icon="hardware:{{showData ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                		on-tap="{{_toggleData}}">
+            		</paper-icon-button>
+					Data
+				</h4>
+				<core-collapse opened="{{showData}}">
+					<table style="width:100%">
+						<tr template repeat="{{p in data}}">
+							<td class="data"><b>{{p.key}}</b></td>
+							<td class="data">{{p.value}}</td>
+						</tr>
+					</table>
+				</core-collapse>
+			</template>
 
-			<div id="chart" style="height:400px"></div>
+			<h4>Wavelengths: {{wavelengthCount}}</h4>
+			<div id="chart" style="height:400px" hidden?="{{wavelengthCount == 0}}"></div>
 		</div>
 	</template>
 	<script>
@@ -59,6 +111,11 @@
 				measurement : []
 			},
 			data : [],
+		
+			wavelengthCount : 0,
+
+			showMetadata : true,
+			showData : true,
 
 			dt : null,
 			chart : null,
@@ -83,13 +140,14 @@
 				}
 
 				this.data = [];
+				this.wavelengthCount = 0;
 
 				if( !this.measurement ) return;
 				if( !this.measurement.metadata ) return;
 
 				var attrMap = document.querySelector('esis-datastore').attributeMap;
 				var flipMap = {};
-				
+
 				// flip the map;
 				for( var key in attrMap ) {
 					if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
@@ -143,6 +201,7 @@
 		       		return 0;
 		    	});
 
+				this.wavelengthCount = rows.length;
 		      	this.dt.addRows(rows);
 
 		      	setTimeout(function(){
@@ -180,6 +239,14 @@
 
 		    	// Instantiate and draw our chart, passing in some options.
 		    	this.chart.draw(this.dt, options);
+			},
+
+			_toggleMetadata : function() {
+				this.showMetadata = !this.showMetadata;
+			},
+
+			_toggleData : function() {
+				this.showData = !this.showData;
 			}
 		});
 	</script>

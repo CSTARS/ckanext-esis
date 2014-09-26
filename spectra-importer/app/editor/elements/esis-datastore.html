@@ -208,8 +208,8 @@
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					if( this.datasheets[i].isMetadata ) continue;
 
-					for( var j = 0; j < this.datasheets[i].spectra.length; j++ ) {
-						if( metadata.join(this.datasheets[i].spectra[j]) ) count++;
+					for( var j = 0; j < this.datasheets[i].measurements.length; j++ ) {
+						if( metadata.join(this.datasheets[i].measurements[j]) ) count++;
 					}
 				}
 
