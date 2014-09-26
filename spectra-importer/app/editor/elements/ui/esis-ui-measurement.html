@@ -38,6 +38,14 @@
 				</tr>
 			</table>
 
+			<h4>Derived Data Points</h4>
+			<table style="width:100%">
+				<tr template repeat="{{p in data}}">
+					<td><b>{{p.key}}</b></td>
+					<td>{{p.value}}</td>
+				</tr>
+			</table>
+
 			<div id="chart" style="height:400px"></div>
 		</div>
 	</template>
@@ -50,6 +58,7 @@
 				joined : [],
 				measurement : []
 			},
+			data : [],
 
 			dt : null,
 			chart : null,
@@ -60,6 +69,10 @@
 
 			ready : function() {
 				this.chart = new google.visualization.LineChart(this.$.chart);
+
+				$(window).on('resize', function(){
+					this._drawChart();
+				}.bind(this));
 			},
 
 			_update : function() {
@@ -68,11 +81,15 @@
 					joined : [],
 					measurement : []
 				}
+
+				this.data = [];
+
 				if( !this.measurement ) return;
 				if( !this.measurement.metadata ) return;
 
 				var attrMap = document.querySelector('esis-datastore').attributeMap;
 				var flipMap = {};
+				
 				// flip the map;
 				for( var key in attrMap ) {
 					if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
@@ -80,26 +97,44 @@
 
 				var key;
 				for( key in this.measurement.metadata.file ) {
-					this.metadata.file.push({key:this._getLabel(key, flipMap), value:this.measurement.metadata.file[key]});
+					this.metadata.file.push({
+						key : this._getLabel(key, flipMap), 
+						value : this.measurement.metadata.file[key]
+					});
 				}
 				for( key in this.measurement.metadata.joined ) {
-					this.metadata.joined.push({key:this._getLabel(key, flipMap), value:this.measurement.metadata.joined[key]});
+					this.metadata.joined.push({
+						key : this._getLabel(key, flipMap), 
+						value : this.measurement.metadata.joined[key]
+					});
 				}
 				for( key in this.measurement.metadata.measurement ) {
-					this.metadata.measurement.push({key:this._getLabel(key, flipMap), value:this.measurement.metadata.measurement[key]});
+					this.metadata.measurement.push({
+						key : this._getLabel(key, flipMap), 
+						value : this.measurement.metadata.measurement[key]
+					});
 				}
 
 				this.dt = new google.visualization.DataTable();
-				var rows = [];
+				var rows = [], point;
 
 				this.dt.addColumn('number', 'Wavelength');
-				this.dt.addColumn('number', '')
+				this.dt.addColumn('number', '');
 
-				for( var i = 0; i < this.measurement.data.length; i++ ) {
-			  		rows.push([
-			  			parseFloat(this.measurement.data[i][0]),
-			  			parseFloat(this.measurement.data[i][1])
-			  		]);
+				var re1 = /^-?\d+\.?\d*$/;
+                var re2 = /^-?\d*\.\d+$/;
+
+				for( var i = 0; i < this.measurement.datapoints.length; i++ ) {
+					point = this.measurement.datapoints[i];
+
+					if( re1.exec(point.key) || re1.exec(point.key) ) {
+						rows.push([
+				  			parseFloat(point.key),
+				  			parseFloat(point.value)
+				  		]);
+					} else {
+						this.data.push(point); 
+					}
 				}
 
 				rows.sort(function(a, b){
@@ -128,9 +163,10 @@
 			},
 
 			_drawChart : function() {
+				if( !this.dt || !this.chart ) return;
 
-		      // Set chart options
-		      var options = {
+		    	// Set chart options
+		    	var options = {
 		            width : $(this.$.chart).width(),
 		            height : 400,
 		            legend : {
@@ -140,10 +176,10 @@
 				        duration: 1000,
 				        easing: 'out'
 				    }
-		      };
+		    	};
 
-		      // Instantiate and draw our chart, passing in some options.
-		      this.chart.draw(this.dt, options);
+		    	// Instantiate and draw our chart, passing in some options.
+		    	this.chart.draw(this.dt, options);
 			}
 		});
 	</script>

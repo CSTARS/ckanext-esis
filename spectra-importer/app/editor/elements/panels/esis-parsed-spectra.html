@@ -45,19 +45,8 @@
 
 
 		<esis-ui-card style="padding:15px">
-	    	<paper-tabs selected="{{selectedTab}}">
-			    <paper-tab>Spectra View</paper-tab>
-			    <paper-tab>Datasheet View</paper-tab>
-			</paper-tabs>
-
-
-			<div hidden?="{{selectedTab == 0}}">
-				<template repeat="{{datasheet in spectraDatasheets}}">
-					<esis-ui-datasheet datasheet="{{datasheet}}"></esis-ui-datasheet>
-				</template>
-			</div>
-			<div hidden?="{{selectedTab == 1}}">
-				<h2>{{spectra.length}} Spectra Found</h2>
+			<div>
+				<h2>{{measurements.length}} Spectra Found</h2>
 				<div>
 					<span class="bs-label success-label">File Level Metadata</span> 
 					<span class="bs-label info-label">Spectra Level Metadata</span> 
@@ -68,13 +57,13 @@
 				<div class="s-selector">
 					Select Spectra: 
 					<select id="spectraSelector" on-change="{{_selectSpectra}}">
-						<template repeat="{{sp,i in spectra}}">
+						<template repeat="{{sp,i in measurements}}">
 							<option value="{{i}}">{{i+1}}</option>
 						</template>
 					</select>
 				</div>
 
-				<esis-ui-spectra id="spectraUI" spectra="{{selectedSpectra}}"></esis-ui-spectra>
+				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}"></esis-ui-measurement>
 			</div>
 		</esis-ui-card>
 
@@ -84,17 +73,15 @@
 			
 			menuItem : null,
 
-			selectedTab : 0,
-
 			spectraDatasheets : [],
 			datasheets : [],
-			spectra    : [],
+			measurements    : [],
+			attachedHandlers : [],
 
 			selectedSpectra : {},
 
 			observe : {
-				datasheets : '_update',
-				selectedTab : '_onTabChange'
+				datasheets : '_update'
 			},
 
 			ready : function() {
@@ -102,13 +89,6 @@
 				 	this.async(function(){
 				 		this.datasheets = document.querySelector('esis-datastore').datasheets;
 				 	});
-				}.bind(this));
-
-				// see if we need to poke the spectra UI panel
-				$(window).on('hashchange', function(){
-					if( window.location.hash.replace(/#/g,'') == 'parsed-spectra' ) {
-						this._onTabChange();
-					}
 				}.bind(this));
 			},
 
@@ -119,9 +99,19 @@
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						var f = this.datasheets[i];
+
+						// listen for updates, make sure we only attach once
+						if( this.attachedHandlers.indexOf(f) == -1 ) {
+							this.attachedHandlers.push(f);
+							f.addEventListener('datasheet-updated', function(){
+								this._update();
+							}.bind(this));
+						}
+
 						if( !f.isMetadata ) {
 							this.measurementDatasheets.push(f);
 						}
+
 						for( var j = 0; j < f.measurements.length; j++ ) {
 							this.measurements.push(f.measurements[j]);
 						}
@@ -147,8 +137,9 @@
 				this.menuItem.style.display = display;
 			},
 
-			_onTabChange : function() {
-				if( this.selectedTab == 0 ) this.$.spectraUI.show();
+			onShow : function() {
+				this._update();
+				this.$.measurementUI.show();
 			},
 
 			_selectSpectra : function() {

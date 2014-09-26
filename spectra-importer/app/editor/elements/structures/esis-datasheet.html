@@ -86,7 +86,7 @@
 
 						var sp = document.createElement('esis-measurement');
 
-						sp.datapoints = this.contents.measurements[i].data;
+						sp.datapoints = this.contents.measurements[i].datapoints;
 						sp.metadata.measurement = this.contents.measurements[i].metadata;
 						sp.filename = this.contents.info.name.replace(/.*\//,'');
 						sp.sheetname = this.contents.sheetName;

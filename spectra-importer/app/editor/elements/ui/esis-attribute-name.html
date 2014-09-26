@@ -1,0 +1,19 @@
+<polymer-element name="esis-attribute-name" attributes="name mappedName" noscript>
+    <template>
+        <style>
+            .original {
+                color: #888;
+                font-size: 12px;
+                font-style: italic;
+            }
+        </style>
+
+        <template bind if="{{mappedName}}">
+            <div>{{mappedName}}</div>
+            <div class="original">{{name}}</div>
+        </template>
+        <template bind if="{{!mappedName}}">
+            {{name}}
+        </template>
+    </template>
+</polymer-element>

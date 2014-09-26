@@ -2,7 +2,7 @@
 	<template></template>
 	<script>
 		Polymer('esis-measurement', {
-			datapoints : {},
+			datapoints : [],
 			metadata : {},
 
 			filename : '',
@@ -22,6 +22,34 @@
 					joined : {}
 				}
 			},
+
+			// newType should be 'data' or 'metadata'
+			switchAttributeType : function(attr, newType) {
+				// move from metadata to datapoints array
+				if( newType == 'data' && this.metadata.measurement && this.metadata.measurement[attr] ) {
+					this.datapoints.push({
+						key : attr,
+						value : this.metadata.measurement[attr]
+					});
+					delete this.metadata.measurement[attr];
+
+				// move from datapoints array to metadata
+				} else {
+					var index = this.getDataPointIndex(attr);
+					if( index == -1 ) return;
+
+					if( !this.metadata.measurement ) this.measurement.measurement = {};
+					this.measurement.measurement[this.datapoints[index].key] = this.datapoints[index].value;
+					this.datapoints.splice(index, 1);
+				}
+			},
+
+			getDataPointIndex : function(attr) {
+                for( var i = 0; i < this.datapoints.length; i++ ) {
+                    if( this.datapoints[i].key == attr ) return i;
+                }
+                return -1;
+            },
 
 			getAttributes : function() {
 				var attrs = [], type, i, key;

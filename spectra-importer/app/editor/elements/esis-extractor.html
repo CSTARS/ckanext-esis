@@ -415,11 +415,13 @@
             // the user doesn't add the second break to their file
             _findDataRows : function(content, startRow) {
                 var data = {};
+                var re1 = /^-?\d+\.?\d*$/;
+                var re2 = /^-?\d*\.\d+$/;
 
                 for( var i = startRow; i < content.length; i++ ) {
                     var key = content[i][0];
 
-                    if( key.match(/^-?\d+\.?\d*$/) || key.match(/^-?\d*\.\d+$/) ) {
+                    if( re1.exec(key) || re2.exec(key) ) {
                         data[key] = true;
                     } else {
                         data[key] = false;

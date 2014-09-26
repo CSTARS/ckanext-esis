@@ -6,6 +6,35 @@
 	<template>
 		<style>
 
+            table {
+                width: 100%;
+                border-spacing: 0px;
+                border-collapse: separate;
+                border-top: 1px solid #ddd;
+                border-left: 1px solid #ddd;
+                background-color: white;
+            }
+            table td {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+            table th {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .file {
+                background-color: #dff0d8;
+            }
+            .spectra {
+                background-color: #fcf8e3;
+            }
+            .data {
+                background-color: #d9edf7;
+            }
+
 			table tr th {
 				text-align: left;
 			}
@@ -46,6 +75,10 @@
             esis-ui-card {
                 position: relative;
             }
+            paper-icon-button {
+                color: #2f9b45;
+            }
+
             .processing {
                 z-index: 100;
                 position: absolute;
@@ -126,73 +159,50 @@
                 </div>
             </div>
 
-			<div style="margin-top:25px;padding-top:5px;border-top:1px solid #eee">
-                <div style="text-align:right" flex>
-                   <a on-tap="{{goToAttrSettings}}"><core-icon icon="settings"></core-icon> Configure Attributes</a>
+            <h4>
+                <div layout horizontal>
+                    <div>
+                        <paper-icon-button 
+                            icon="hardware:{{showAttrs ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                            on-tap="{{_toggleAttrs}}">
+                        </paper-icon-button>
+                        Parsed Attributes: {{parsedAttributes.length}}
+                    </div>
+                    <div flex style="text-align:right">
+                        <a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
+                            <core-icon icon="settings"></core-icon> Configure Attributes
+                        </a>
+                    </div>
                 </div>
+            </h4>
+            <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                    </tr>
+                    <tr template repeat="{{info in parsedAttributes}}">
+                        <td class="{{info.class}}"><esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name></td>
+                        <td class="{{info.class}}">{{info.type}}</td>
+                    </tr>
+                </table>
+            </core-collapse>
+
+            <h4>Wavelengths: {{wavelengths.length}} <small><a on-tap="{{_toggleWavelengths}}">show</a></small></h4>
+            <div hidden?="{{!showWavelengths}}">
+                <template repeat="{{key in wavelengths}}">
+                    <span>{{key}}</span>
+                </template>
             </div>
 
-			<template bind if="{{fileMetadata.length > 0}}">
-				<h4>File Level Metadata</h4>
-				<ul>
-					<template repeat="{{key in fileMetadata}}">
-						<li>{{key}}</li>
-					</template>
-				</ul>
-			</template>
+			<!--<div id="chart"></div>-->
 
-			<template bind if="{{measurementMetadata.length > 0}}">
-				<h4>Measurement Level Metadata Attributes</h4>
-				<ul>
-					<template repeat="{{key in measurementMetadata}}">
-						<li>{{key}}</li>
-					</template>
-				</ul>
-			</template>
-
-			<template bind if="{{joinableMetadata.length > 0}}">
-				<h4>Joinable Metadata Attributes</h4>
-				<ul>
-					<template repeat="{{key in joinableMetadata}}">
-						<li>{{key}}</li>
-					</template>
-				</ul>
-			</template>
-
-            <template bind if="{{fileData.length > 0}}">
-                <h4>Data Attributes</h4>
-                <ul>
-                    <template repeat="{{key in fileData}}">
-                        <li>{{key}}</li>
-                    </template>
-                </ul>
-            </template>
-
-            <template bind if="{{wavelengths.length > 0}}">
-                <h4>Wavelengths: {{wavelengths.length}} <small><a on-tap="{{toggleWavelengths}}">show</a></small></h4>
-                
-                <div hidden?="{{!showWavelengths}}">
-                    <template repeat="{{key in wavelengths}}">
-                        <span>{{key}}</span>
-                    </template>
-                </div>
-            </template>
-
-			<template bind if="{{fileMetadata.length == 0 && measurementMetadata.length == 0 && joinableMetadata.length == 0}}">
-				No metadata parsed from this file.
-			</template>
-			<template bind if="{{datasheet.measurements.length == 0}}">
-				No data points parsed from this file.
-			</template>
-
-			<div id="chart"></div>
-
-			<!-- TODO: this needs to change now -->
+			<!-- TODO: this needs to change now
 			<template bind if="{{datasheet.measurements.length > maxLineCount}}">
 				<div style="padding: 15px; color: #888; font-size: 12px; font-style: italic">
 					*Note: only {{maxLineCount}} of {{datasheet.measurements.length}} measurements drawn.
 				</div>
-			</template>
+			</template> -->
 
 
 		</esis-ui-card>
@@ -205,13 +215,11 @@
 
             showHelp : false,
 
-			fileMetadata : [],
-			measurementMetadata : [],
-			joinableMetadata : [],
-            fileData : [],
+            parsedAttributes : [],
             wavelengths : [],
 
             showWavelengths : false,
+            showAttrs : true,
 
             ds : null,
 
@@ -238,10 +246,7 @@
 
             _setAttributes : function() {
 
-                this.joinableMetadata = [];
-                this.measurementMetadata = [];
-                this.fileMetadata = [];
-                this.fileData = [];
+                this.parsedAttributes = [];
                 this.wavelengths = [];
 
                 var info;
@@ -250,15 +255,30 @@
 
                     switch(info.flag) {
                         case this.ds.ATTR_FLAGS.FROM_METADATA:
-                            this.joinableMetadata.push(key);
+                            this.parsedAttributes.push({
+                                name : key,
+                                type : 'Joinable Metadata',
+                                class : '',
+                            });
                             break;
 
                         case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
                             var type = info.type;
                             if( this.ds.attributeModifications[key] ) type = this.ds.attributeModifications[key];
 
-                            if( type == 'metadata' ) this.measurementMetadata.push(key);
-                            else this.fileData.push(key);
+                            if( type == 'metadata' ) {
+                                this.parsedAttributes.push({
+                                    name : key,
+                                    type : 'Spectra Metadata',
+                                    class : 'spectra'
+                                });
+                            } else {
+                                this.parsedAttributes.push({
+                                    name : key,
+                                    type : 'Data',
+                                    class : 'data'
+                                });
+                            }
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
@@ -266,11 +286,27 @@
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
-                            this.fileMetadata.push(key);
+                            this.parsedAttributes.push({
+                                name : key,
+                                type : 'File Metadata',
+                                class : 'file'
+                            });
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
-                            this.measurementMetadata.push(key);
+                            this.parsedAttributes.push({
+                                name : key,
+                                type : 'Spectra Metadata',
+                                class : 'spectra'
+                            });
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
+                            this.parsedAttributes.push({
+                                name : key,
+                                type : 'Derived Data',
+                                class : 'data'
+                            });
                             break;
 
                         default:
@@ -296,8 +332,12 @@
 				this.$.collapse.toggle();
 			},
 
-            toggleWavelengths : function() {
+            _toggleWavelengths : function() {
                 this.showWavelengths = !this.showWavelengths;
+            },
+
+            _toggleAttrs : function() {
+                this.showAttrs = !this.showAttrs;
             },
 
 			_createChart : function() {
