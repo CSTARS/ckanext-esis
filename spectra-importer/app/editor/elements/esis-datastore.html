@@ -50,6 +50,8 @@
 			attributeMap : {},
 			inverseAttributeMap : {},
 
+			metadataDefinitions : {},
+
 			// list of currently known attributes for this dataset
 			//   - this is a list of objects.  each object has the structure
 			//       |- name : attribute name
@@ -87,6 +89,7 @@
 
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
+				this.metadataDefinitions = esis.metadata;
 			},
 
 			addFile : function(raw, parseZip, defaultDataType) {

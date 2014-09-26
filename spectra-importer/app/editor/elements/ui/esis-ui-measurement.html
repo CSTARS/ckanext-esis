@@ -33,6 +33,10 @@
                 border-bottom: 1px solid #ddd;
             }
 
+            paper-icon-button {
+                color: #2f9b45;
+            }
+
 			.file {
                 background-color: #dff0d8;
             }
@@ -62,17 +66,35 @@
 						<th>Type</th>
 					</tr>
 					<tr template repeat="{{item in metadata.file}}">
-						<td class="file">{{item.key}}</td>
+						<td class="file">
+							<esis-attribute-name 
+								name="{{item.key}}" 
+								esisName="{{ds.metadataDefinitions[item.key]}}"
+								mappedName="{{ds.inverseAttributeMap[item.key]}}">
+							</esis-attribute-name>
+						</td>
 						<td class="file">{{item.value}}</td>
 						<td class="file">File Metadata</td>
 					</tr>
 					<tr template repeat="{{item in metadata.joined}}">
-						<td>{{item.key}}</td>
+						<td>
+							<esis-attribute-name 
+								name="{{item.key}}" 
+								esisName="{{ds.metadataDefinitions[item.key]}}"
+								mappedName="{{ds.inverseAttributeMap[item.key]}}">
+							</esis-attribute-name>
+						</td>
 						<td>{{item.value}}</td>
 						<td>Joined Metadata</td>
 					</tr>
 					<tr template repeat="{{item in metadata.measurement}}">
-						<td class="spectra">{{item.key}}</td>
+						<td class="spectra">
+							<esis-attribute-name 
+								name="{{item.key}}" 
+								esisName="{{ds.metadataDefinitions[item.key]}}"
+								mappedName="{{ds.inverseAttributeMap[item.key]}}">
+							</esis-attribute-name>
+						</td>
 						<td class="spectra">{{item.value}}</td>
 						<td class="spectra">Measurement Metadata</td>
 					</tr>
@@ -114,6 +136,8 @@
 		
 			wavelengthCount : 0,
 
+			ds : null,
+
 			showMetadata : true,
 			showData : true,
 
@@ -126,6 +150,7 @@
 
 			ready : function() {
 				this.chart = new google.visualization.LineChart(this.$.chart);
+				this.ds = document.querySelector('esis-datastore');
 
 				$(window).on('resize', function(){
 					this._drawChart();
@@ -149,26 +174,26 @@
 				var flipMap = {};
 
 				// flip the map;
-				for( var key in attrMap ) {
-					if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
-				}
+				//for( var key in attrMap ) {
+				//	if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
+				//}
 
 				var key;
 				for( key in this.measurement.metadata.file ) {
 					this.metadata.file.push({
-						key : this._getLabel(key, flipMap), 
+						key : key, 
 						value : this.measurement.metadata.file[key]
 					});
 				}
 				for( key in this.measurement.metadata.joined ) {
 					this.metadata.joined.push({
-						key : this._getLabel(key, flipMap), 
+						key : key, 
 						value : this.measurement.metadata.joined[key]
 					});
 				}
 				for( key in this.measurement.metadata.measurement ) {
 					this.metadata.measurement.push({
-						key : this._getLabel(key, flipMap), 
+						key : key, 
 						value : this.measurement.metadata.measurement[key]
 					});
 				}

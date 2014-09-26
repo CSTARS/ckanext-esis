@@ -190,7 +190,13 @@
                         <th>Type</th>
                     </tr>
                     <tr template repeat="{{info in parsedAttributes}}">
-                        <td class="{{info.class}}"><esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name></td>
+                        <td class="{{info.class}}">
+                            <esis-attribute-name 
+                                name="{{info.name}}" 
+                                esisName="{{ds.metadataDefinitions[info.name]}}"
+                                mappedName="{{ds.inverseAttributeMap[info.name]}}">
+                            </esis-attribute-name>
+                        </td>
                         <td class="{{info.class}}">{{info.type}}</td>
                     </tr>
                 </table>

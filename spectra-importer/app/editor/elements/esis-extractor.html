@@ -268,12 +268,29 @@
 
                             // this is metadata
                             } else {
-                                measurement.metadata[key] = contents[j][i];
+                            
+                                // we are guess, by default we will say 'metadata', but check
+                                // any specified values first
+                                var type = 'metadata';
+                                if( this.ds.attributeModifications[key] ) {
+                                    type = this.ds.attributeModifications[key];
+                                }
+
+                                // set to correct type
+                                if( type == 'metadata' ) {
+                                    measurement.metadata[key] = contents[j][i];
+                                } else {
+                                    measurement.datapoints.push({
+                                        key: key,
+                                        value : contents[j][i]
+                                    });
+                                }
+
 
                                 if( i == 1 ) {
                                     attributeTypes[key] = { 
                                         guess : guess,
-                                        type : 'metadata',
+                                        type : type,
                                         flag : this.ds.ATTR_FLAGS.FROM_MIXED_FILE
                                     };
                                 }
@@ -368,13 +385,29 @@
 
                             // this is metadata
                             } else {
-                                measurement.metadata[key] = row[j];
+                               
+                                // we are guess, by default we will say 'metadata', but check
+                                // any specified values first
+                                var type = 'metadata';
+                                if( this.ds.attributeModifications[key] ) {
+                                    type = this.ds.attributeModifications[key];
+                                }
+
+                                // set to correct type
+                                if( type == 'metadata' ) {
+                                    measurement.metadata[key] = row[j];
+                                } else {
+                                    measurement.datapoints.push({
+                                        key: key,
+                                        value : row[j]
+                                    });
+                                }
 
                                 // mark the attribute type on first pass
                                 if( i == startRow+1 ) {
                                     attributeTypes[key] = { 
                                         guess : guess,
-                                        type : 'metadata',
+                                        type : type,
                                         flag : this.ds.ATTR_FLAGS.FROM_MIXED_FILE
                                     };
                                 }
