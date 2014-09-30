@@ -94,7 +94,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.7:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.3:5000' : '';
 
     $.ajax({
         type : 'GET',
@@ -229,7 +229,7 @@
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
       <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
-      <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
+      <esis-item label="New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
       <esis-item label="Attribute Settings" tag="attribute-settings" ele="esis-attribute-settings"></esis-item>
       <esis-item label="Inspect" tag="inspect" ele="esis-inspect"></esis-item>
       <esis-item label="Group Dataset" tag="group-by" ele="esis-group-by"></esis-item>

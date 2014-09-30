@@ -70,6 +70,23 @@
 		        });
 			},
 
+			getUsdaCommonName : function(code, callback) {
+				$.ajax({
+		            url: esis.host + '/spectra/getUsdaCommonName?code='+code,
+		            xhrFields: {
+				      withCredentials: true
+				    },
+		            success: function(response) {
+		                if( !response.success ) return callback(response);
+		                callback(null, response.result);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
 			/**
 			 * Add a resource to a package using the browsers FormData object
 			 *

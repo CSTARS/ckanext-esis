@@ -1,4 +1,5 @@
 <link rel="import" href="../ui/esis-attribute-editor.html" />
+<link rel="import" href="../ui/esis-attribute-ordering.html" />
 
 <polymer-element name="esis-attribute-settings">
 	<template>
@@ -17,15 +18,16 @@
 
 		<paper-tabs selected="{{currentTab}}">
 			<paper-tab>Attribute Types</paper-tab>
-			<paper-tab>Map Attributes</paper-tab>
+			<paper-tab>Dataset Attributes</paper-tab>
+			<paper-tab>Map Attribute Names</paper-tab>
 		</paper-tabs>
 
 		<div hidden?="{{currentTab != 0}}">
 			<esis-attribute-editor id="editor" attributeTypes="{{attributeTypes}}"></esis-attribute-editor>
 		</div>
 
-		<div hidden?="{{currentTab != 1}}">
-	    	<span>If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</span>
+		<div hidden?="{{currentTab != 2}}">
+	    	<div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</div>
 
 	    	<div horizontal layout style="margin-top:25px">
 	    		<div flex>
@@ -45,6 +47,10 @@
 	    			</div>
 	    		</template>
 	    	</template>
+	    </div>
+
+	    <div hidden?="{{currentTab != 1}}">
+	    	<esis-attribute-ordering id="ordering" attributeTypes="{{attributeTypes}}"></esis-attribute-ordering>
 	    </div>
 
 	</template>
@@ -82,6 +88,7 @@
 			onShow : function() {
 				this.attributeTypes = this.ds.getAllAttributeTypes();
 				this.$.editor.update();
+				this.$.ordering.update();
 			},
 
 			_updateVisibility : function() {

@@ -30,10 +30,13 @@
 			},
 			owner_org_name : '',
 
-			group : {
-				by : '',
+			datasetAttributes : {
+				group_by : '',
+				// TODO: make sort into array
 				sort_on : '',
-				description : '',
+				sort_type : '',
+				sort_description : '',
+				location : '',
 			},
 
 			// field that should be used to create uids for measurements
@@ -77,8 +80,10 @@
 			// attributes who's infered type has been overridden by the user
 			attributeModifications : {},
 
-			// the key is the attribute name, the value is 
-			attributes : {},
+			// the key is the attribute name, the value is an object describing what we know about the attribute
+			// this combined with the attributeModifications object describes the current state of the attribute
+			// use getAllAttributeTypes() to access
+			//attributeTypes : {},
 
 			// list of resources that are scheduled to be deleted
 			deleted : [],
