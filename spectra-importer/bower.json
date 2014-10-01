@@ -1,10 +1,11 @@
 {
-  "name": "spectra-importer",
+  "name": "spectra-importer-v2",
   "version": "0.0.0",
-  "homepage": "https://github.com/CSTARS/esis",
+  "homepage": "https://github.com/CSTARS/ckanext-esis",
   "authors": [
     "Justin Merz <jrmerz@gmail.com>"
   ],
+  "description": "resources adder for ecosis",
   "license": "MIT",
   "private": true,
   "ignore": [
@@ -15,12 +16,15 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": "~2.1.0",
-    "font-awesome": "~4.0.3",
-    "js-xlsx": "~0.5.10",
-    "js-xls": "~0.6.9",
-    "jszip": "~2.0.0",
+    "polymer": "Polymer/polymer#~0.3.4",
+    "core-elements": "Polymer/core-elements#~0.3.4",
+    "paper-elements": "Polymer/paper-elements#~0.3.4",
+    "animate-css": "~3.2.0",
+    "js-xlsx": "~0.7.7",
+    "js-xls": "~0.7.0",
+    "jquery": "~2.1.1",
     "jquery-csv": "*",
-    "js-md5": "~1.1.0"
+    "js-md5": "~1.1.0",
+    "jszip": "Stuk/jszip#~2.3.0"
   }
 }

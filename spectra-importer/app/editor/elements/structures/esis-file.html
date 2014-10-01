@@ -1,0 +1,234 @@
+<polymer-element name="esis-file" attributes="info">
+	<script>
+		Polymer('esis-file', {
+			// raw file input object
+			raw : {},
+
+			// general file info
+			info : {},
+
+			sheetName : '',
+
+			// raw file contents
+			contents : null,
+
+			// if we are a zip file, should we extract?
+			parseZip : false,
+
+			error : null,
+			warning : null,
+
+			// HTML5 File Reader Object
+			reader : null,
+
+			observe : {
+				raw : '_parse'
+			},
+
+			// references to child datasheets and resources
+			datasheets : [],
+			resources : [],
+
+			ready : function() {
+				this.datasheets = [];
+				this.resources = [];
+				this.info = {};
+				this.raw = {};
+			},
+
+			// parse file contents
+			_parse : function() {
+				this.info = this._getInfo(this.raw.name);
+
+				this.reader = new FileReader();
+				this.reader.onload = function(e) {
+					this.contents = e.target.result;
+					if(  this.info.isZip ) {
+						this._unzip();
+					} else {
+						document.querySelector('esis-parser').parse(this, function(arr){
+							this._onIngestComplete(arr);
+		        		}.bind(this));
+					}
+				}.bind(this);
+
+				this._readAs();
+			},
+
+			_readAs : function() {
+				if( this.info.hasData || this.info.isZip ) {
+					if( this.info.format == 'binary' ) {
+						//reader.readAsArrayBuffer(file);
+						this.reader.readAsBinaryString(this.raw);
+					} else if( this.info.format == 'string' ) {
+						this.reader.readAsText(this.raw);
+					}
+					return;
+				}
+					
+				this._onIngestComplete([{
+					name : this.info.name,
+					info : this.info,
+					file : this.raw
+				}]);
+			},
+
+			/*_unzip : function(callback) {
+				var worker = new Worker('workers/jszipWorker.js');
+				var ref = this;
+				worker.onmessage = function(e) {
+					if( e.data.zip ) {
+						console.log(e.data.zip);
+						ref._parseUnzipped(e.data.zip);
+					}
+				};
+				worker.postMessage({contents: this.contents});
+			},*/
+
+			_unzip : function() {
+				var zip = new JSZip(this.contents);
+				var arr = [];
+
+				var c = 0;
+				var total = Object.keys(zip.files).length;
+
+				for( var file in zip.files ) {
+					var zipEntry = zip.files[file];
+
+					var linfo = this._getInfo(zipEntry.name);
+
+					// ignore directories
+					if( zipEntry.options.dir || zipEntry.name.match(/.*\/$/) ) {
+						linfo.hasData = false;
+						linfo.isDir = true;
+					}
+
+					// ignore . files
+					var ignore = false;
+					if( zipEntry.name.replace(/.*\//,'').match(/^\..*/) ) {
+						ignore = true;
+					}
+
+		        	var contents = '';
+
+		        	if( ignore ) {
+		        		c++;
+			        	if( c == total ) this._onIngestComplete(arr);
+		        	} else if( linfo.hasData ) {
+
+		        		if( linfo.format == 'binary' ) contents = zipEntry.asBinary();
+		        		else contents = zipEntry.asText();
+
+		        		// if we are extracting the zip, add the resource file as well
+		        		if( this.parseZip ) {
+		        			arr.push({
+			        			name : linfo.name,
+								info : linfo,
+								zipEntry : zipEntry
+							});
+		        		}
+
+		        		document.querySelector('esis-parser').parse({info: linfo, contents: contents}, function(resp){
+			        		for( var i = 0; i < resp.length; i++ ) {
+			        			var d = resp[i];
+			        			// do we need to add reference to the zip file to later relate the resource id?
+			        			if( !this.parseZip ) d.info.zipFilename = linfo.name;
+			        			arr.push(d);
+			        		}
+
+			        		c++;
+			        		if( c == total ) this._onIngestComplete(arr);
+			        	}.bind(this));
+		        	} else if( this.parseZip && !linfo.isDir ) {
+		        		arr.push({
+		        			name : linfo.name,
+							info : linfo,
+							zipEntry : zipEntry
+						});
+
+		        		c++;
+			        	if( c == total ) this._onIngestComplete(arr);
+		        	} else {
+		        		c++;
+			        	if( c == total ) this._onIngestComplete(arr);
+		        	}
+
+		        };
+			},
+
+			_getInfo : function(name) {
+				var i = {};
+				var ext = this._getExtension(name);
+				var tmp = esis.extensions[ext];
+
+				if( !tmp && this.raw.name == '.' ) {
+					tmp = {
+						type : 'directory',
+						isDir : true
+					}
+				} else if( !tmp ) {
+					tmp = {
+						type : 'both',
+						parser : 'csv-4spaces'
+					}
+				}
+
+				for( var key in tmp ) i[key] = tmp[key];
+
+				i.ext = ext;
+				i.name = name;
+				i.hasData = i.type == 'both' || i.type == 'data';
+				return i;	
+			},
+
+			_onIngestComplete : function(files) {
+				debugger;
+
+				// do we need to add the zip file?
+				if( (!this.parseZip && this.info.isZip) || !this.info.isZip ) {
+					files.push({
+						name : this.info.name,
+						info : this.info,
+						file : this.raw,
+						contents : this.contents
+					});
+				}
+
+				var map = {};
+				var ds = document.querySelector('esis-datastore');
+				for( var i = 0; i < files.length; i++ ) {
+					var f = files[i];
+
+					if( f.info.type == 'data' ) {
+						var datasheet = ds.addDatasheet(f);
+						var resourceName = f.info.zipFilename ? f.info.zipFilename : f.info.name;
+
+						if( resourceName ) {
+							if( !map[resourceName] ) map[resourceName] = [datasheet];
+							else map[resourceName].push(datasheet);
+						}
+						this.datasheets.push(datasheet);
+
+						// set reference for next loop
+						f.datasheet = datasheet;
+					} 
+				}
+
+				for( var i = 0; i < files.length; i++ ) {
+					var f = files[i];
+					if( f.info.type == 'resource' || f.info.type == 'both' ) {
+						var resource = ds.addResource(f, map[f.info.name]);
+						if( f.datasheet ) resource.datasheets.push(f.datasheet);
+						this.resources.push(resource);
+					}
+				}
+
+			},
+
+			_getExtension : function(filename) {
+				var parts = filename.split('.');
+				return parts[parts.length-1];
+			}
+		})
+	</script>
+</polymer-element>
