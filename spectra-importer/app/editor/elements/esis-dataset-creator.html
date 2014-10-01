@@ -43,7 +43,9 @@
                 measurement : 0
             },
 
-            joinOrder : ['file','joined','spectra'],
+            joinOrder : ['joined','file','measurement'],
+            // metadata names can't overwrite these attributes
+            protectedKeys : ['_id', 'ecosis', 'datapoints'],
 
             observe : {
                 'ds.data.name' : '_updateVisibility',
@@ -115,6 +117,14 @@
                 for( var key in this.ds.data ) {
                     if( !pkg[key] ) pkg[key] = this.ds.data[key];
                 }
+
+                // TESTING...
+                this._uploadMeasurementResource('1233-12332-1232', function(){
+                    console.log(this._createDatasetJson('1233-12332-1232'));
+                    console.log('done');
+                }.bind(this));
+                return;
+                // TESTING...
 
                 var action = this.ds.editMode ? this.ckan.updatePackage : this.ckan.createPackage;
                 action(pkg, function(err, resp){
@@ -210,74 +220,53 @@
                 return true;
             },
 
-            _createDatasetJson : function() {
+            _createDatasetJson : function(pkgid) {
                 var dataset;
                 if( this.ds.editMode ) {
-                    dataset = this.ds.existing.dataset;
-
-
-                    if( !dataset.join ) dataset.join = [];
-                    if( !dataset.group_by ) dataset.group_by = this.ds.group;
-                    if( !dataset.map ) dataset.map = this.ds.inverseAttributeMap;
-
-                    // move all newly joined data
-                    /*for( var i = 0; i < dataset.data.length; i++ ){
-                        var d = dataset.data[i];
-                        if( !d.metadata.joined ) continue;
-
-                        for( var key in d.metadata.joined ) {
-                            if( this._isEcosisMetadata(key) ) {
-                                d.ecosis[key] = d.metadata.joined[key];
-                            } else if( this.ds.inverseAttributeMap[key] ) {
-                                var ecosisKey = this.ds.inverseAttributeMap[key];
-                                d.ecosis[ecosisKey] = d.metadata.joined[key];
-                                // still keep old reference
-                                d.metadata[key] = d.metadata.joined[key];
-                            } else {
-                                d.metadata[key] = d.metadata.joined[key];
-                            }
-                        }
-                        delete d.metadata.joined;
-                    }*/
-
-                    for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
-
-                    //var joindata = this._getJoinableData();
-                    //for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
-                    dataset.join = this._getJoinableData();
-
+                    // is there any reason for this now?
                 } else {
-                    dataset = {
-                        attributes : {
-                            dataset : this.ds.datasetAttributes,
-                            types : this.ds.getAllAttributeTypes(),
-                            modifications : this.ds.attributeModifications,
-                            map : this.ds.inverseAttributeMap
-                        },
-                        join : this._getJoinableData(),
-                        package_id : pkgid
-                    }
-                };
+                    
+                }
+
+                dataset = {
+                    attributes : {
+                        dataset : this.ds.datasetAttributes,
+                        types : this.ds.getAllAttributeTypes(),
+                        modifications : this.ds.attributeModifications,
+                        map : this.ds.inverseAttributeMap
+                    },
+                    join : this._getJoinableData(),
+                    package_id : pkgid
+                }
+
+                return dataset;
             },
 
             _createMeasurementJson : function(pkgid, callback) {
-                var measurements = [], i, f, j, m;
+                var measurements = [], i, f, j, ele, m;
 
                 for( i = 0; i < this.ds.datasheets.length; i++ ) {
                     f = this.ds.datasheets[i];
                     for( j = 0; j < f.measurements.length; j++ ) {
-                        m = f.measurements[j];
-
+                        ele = f.measurements[j];
+                        m = {
+                            metadata : ele.metadata,
+                            datapoints : ele.datapoints,
+                            ecosis : {
+                                filename : ele.filename,
+                                sheetname : ele.sheetname,
+                                spectra_id : ele.spectra_id,
+                                resource_id : ele.resourceId,
+                                package_id : pkgid
+                            }
+                        };
+                        
                         this._mapMetadata(m);
-
-                        // make format we are using for mongo
-                        m.resource_id = m.resourceId;
-                        delete m.resourceId;
-
-                        m.package_id = pkgid;
 
                         // TODO: make sure all 'sort_on' attributes are in both data and metadata
                         // set the sort attribute with correct type
+
+                        measurements.push(m);
                     }
                 }
 
@@ -298,18 +287,19 @@
                     }
 
                     if( this.commonCache[item['USDA Code'].toLowerCase()] != null ) {
-                        this._setUSDAName(item, commonCache[item.ecosis['USDA Code'].toLowerCase()]);
+                        this._setUSDAName(item, this.commonCache[item['USDA Code'].toLowerCase()]);
                         index++;
                         this._lookupUSDACodes(index, arr, callback);
                         return;
                     }
 
+                    this.statusText = 'Looking up USDA code: '+item['USDA Code'].toLowerCase()+'...';
                     this.ckan.getUsdaCommonName(item['USDA Code'].toLowerCase(), function(resp){
                         if ( !resp.error ) {
-                            this.commonCache[item.ecosis['USDA Code'].toLowerCase()] = resp.body;
-                            this._setUSDAName(item, body);
+                            this.commonCache[item['USDA Code'].toLowerCase()] = resp.body;
+                            this._setUSDAName(item, resp.body);
                         } else {
-                            this.commonCache[item.ecosis['USDA Code'].toLowerCase()] = '';
+                            this.commonCache[item['USDA Code'].toLowerCase()] = '';
                         }
                         index++;
                         this._lookupUSDACodes(index, arr, callback);
@@ -318,7 +308,7 @@
                 }
             },
 
-           /* _setUSDAName(item, str) {
+            _setUSDAName : function(item, str) {
                 if( str.length == 0 ) return;
                 
                 var parts = str.split('\r\n');
@@ -330,7 +320,7 @@
                 for( var i = 0; i < attrs.length; i++ ) {
                     item[attrs[i]] = values[i];
                 }
-            },*/
+            },
 
 
             /**
@@ -338,18 +328,13 @@
              * place in the 'custom' namespace
              **/
             _mapMetadata : function(sp) {
-                sp.custom = {};
+                for( var i = 0; i < this.joinOrder.length; i++ ) {
+                    for( var key in sp.metadata[this.joinOrder[i]] ) {
+                        if( this.protectedKeys.indexOf(key) > -1 ) continue;
 
-                for( var i = 0; i < joinOrder.length; i++ ) {
-                    for( var key in sp.metadata[joinOrder[i]] ) {
-
-                        if( this.ds.metadataDefinitions[key] == null && this.ds.inverseAttributeMap[key] == null ) {
-                            sp.custom[key] = sp.metadata[joinOrder[j]][key];
-                        } else if( this.ds.metadataDefinitions[key] != null ) {
-                            sp[key] = sp.metadata[joinOrder[j]][key];
-                        } else if( this.ds.inverseAttributeMap[key] != null ) {
-                            sp.custom[key] = sp.metadata[joinOrder[j]][key];
-                            sp[pkgSpectra.map[key]] = sp.metadata[joinOrder[j]][key];
+                        sp[key] = sp.metadata[this.joinOrder[i]][key];
+                        if( this.ds.inverseAttributeMap[key] != null ) {                            
+                            sp[this.ds.inverseAttributeMap[key]] = sp.metadata[this.joinOrder[i]][key];
                         }
                     }
                 }
@@ -479,7 +464,11 @@
             _uploadMeasurementResource : function(pkgId, callback) {
                 this.statusText = 'Uploading measurement data resource...';
 
-                var dataset = this._createMeasurementsJsonResource(pkgId);
+                this._createMeasurementJson(pkgId, function(dataset){
+                    console.log(dataset);
+                    callback();
+                });
+                return;
                 // split out data and upload in set chunks
 
                 var data = dataset.data;
