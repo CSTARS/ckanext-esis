@@ -63,18 +63,17 @@ class EsisPlugin(plugins.SingletonPlugin,
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
+
+        # new routes
         # list all packages with spectra.json files
         map.connect('all_spectra_packages', '/spectra/all', controller=controller, action='all')
-
         map.connect('add_spectra_package', '/spectra/addInfo', controller=controller, action='addInfo')
-
         map.connect('update_spectra_package', '/spectra/addData', controller=controller, action='addData')
-
         map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
-
-        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
+        map.connect('get_usda_common_name', '/spectra/getUsdaCommonName', controller=controller, action='getUSDACommonName')
 
         # route all resource edit screens to main ecosis dataset editor
+        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
         # TODO: can we get fancy and point at specific action or resource?
         map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackageRedirect')
         map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackageRedirect')
