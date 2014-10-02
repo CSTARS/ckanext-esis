@@ -171,15 +171,37 @@
 				});
 			},
 
-			addSpectraData : function(pkgid, spectra, callback) {
+			addUpdateSpectraPackage : function(pkgInfo, callback) {
 				$.ajax({
-				    url: esis.host + '/spectra/addData',
+				    url: esis.host + '/spectra/addUpdatePackage',
 				    type: "POST",
 				    data: {
-				    	data : JSON.stringify({
-				    		package_id : pkgid,
-				    		spectra : spectra
-				    	})
+				    	'package' : JSON.stringify(pkgInfo)
+				    },
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function(err) {
+				    	debugger;
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
+			addSpectra : function(spectra, updateIndex, callback) {
+				$.ajax({
+				    url: esis.host + '/spectra/addSpectra',
+				    type: "POST",
+				    data: {
+				    	spectra : JSON.stringify(spectra),
+				    	updateIndex : updateIndex === true ? 'true' : 'false' 
 				    },
 				    xhrFields: {
 				      withCredentials: true

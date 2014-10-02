@@ -119,11 +119,11 @@
                 }
 
                 // TESTING...
-                this._uploadMeasurementResource('1233-12332-1232', function(){
+                /*this._uploadMeasurementResource('1233-12332-1232', function(){
                     console.log(this._createDatasetJson('1233-12332-1232'));
                     console.log('done');
                 }.bind(this));
-                return;
+                return;*/
                 // TESTING...
 
                 var action = this.ds.editMode ? this.ckan.updatePackage : this.ckan.createPackage;
@@ -156,23 +156,38 @@
 
                 this.statusText = 'Adding...';
 
-                this._addResourceToCkan(0, pkg.name);
+                this._addResourceToCkan(0, pkg);
             },
 
-            _addResourceToCkan: function(index, pkgid) {
+            _addResourceToCkan: function(index, pkg) {
+                // once we are done adding dataset resources,
+                //  - remove deleted resource
+                //  - create and upload spectra package info
+                //  - create and upload spectral data
                 if( this.ds.resources.length == index ) {
                     this._removeDeletedResources(0, function(){
-                        this._uploadMeasurementResource(pkgid, function(){
-                            this.statusText = 'Complete';
-                            setTimeout(function(){
-                                window.location = esis.host+'/dataset/'+pkgid;
-                            }, 500);
+
+                        this.statusText = 'Creating spectra package information...';
+                        var datasetInfo = this._createDatasetJson(pkg);
+
+                        this.statusText = 'Uploading spectra package information...';
+                        this.ckan.addUpdateSpectraPackage(datasetInfo, function(){
+                        
+                            this.statusText = 'Uploading spectra data...';
+                            this._uploadMeasurementResource(pkg, function(){
+                        
+                                this.statusText = 'Complete';
+                                setTimeout(function(){
+                                    window.location = esis.host+'/dataset/'+pkg.name;
+                                }, 500);
+                            }.bind(this));
                         }.bind(this));
+                        
                     }.bind(this));
                 } else {
                     this.statusText = 'Uploading '+this.ds.resources[index].filename+'...';
                     this.ckan.addResource(
-                        pkgid, 
+                        pkg.id, 
                         this.ds.resources[index],
                         function(err, resp){
                             if( err ) {
@@ -181,7 +196,7 @@
                             }
 
                             index++;
-                            this._addResourceToCkan(index, pkgid);
+                            this._addResourceToCkan(index, pkg);
                         }.bind(this), 
                         function(progress){
                             this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+progress+'%)...';
@@ -220,7 +235,7 @@
                 return true;
             },
 
-            _createDatasetJson : function(pkgid) {
+            _createDatasetJson : function(pkg) {
                 var dataset;
                 if( this.ds.editMode ) {
                     // is there any reason for this now?
@@ -228,22 +243,48 @@
                     
                 }
 
+                // turn into array and remove guess flag
+                var types = [], key, item;
+                var wavelengths = [];
+                var attrs = this.ds.getAllAttributeTypes();
+                for( key in attrs ) {
+                    item = attrs[key];
+
+                    if( item.flag == 3 ) {
+                        wavelengths.push(key);
+                    } else {
+                        types.push({
+                            name : key,
+                            type : item.type,
+                            flag : item.flag
+                        })
+                    }
+                    
+                }
+
                 dataset = {
                     attributes : {
                         dataset : this.ds.datasetAttributes,
-                        types : this.ds.getAllAttributeTypes(),
+                        types : types,
+                        wavelengths : wavelengths,
                         modifications : this.ds.attributeModifications,
                         map : this.ds.inverseAttributeMap
                     },
                     join : this._getJoinableData(),
-                    package_id : pkgid
+                    package_id : pkg.id
                 }
 
                 return dataset;
             },
 
-            _createMeasurementJson : function(pkgid, callback) {
+            _createMeasurementJson : function(pkg, callback) {
                 var measurements = [], i, f, j, ele, m;
+
+                var sortOn = null, sortType = null;
+                if( this.ds.datasetAttributes.sort_on && this.ds.datasetAttributes.sort_on != '' ) {
+                    sortOn = this.ds.datasetAttributes.sort_on;
+                    sortType = this.ds.datasetAttributes.sort_type;
+                }
 
                 for( i = 0; i < this.ds.datasheets.length; i++ ) {
                     f = this.ds.datasheets[i];
@@ -257,14 +298,13 @@
                                 sheetname : ele.sheetname,
                                 spectra_id : ele.spectra_id,
                                 resource_id : ele.resourceId,
-                                package_id : pkgid
+                                package_id : pkg.id
                             }
                         };
                         
                         this._mapMetadata(m);
 
-                        // TODO: make sure all 'sort_on' attributes are in both data and metadata
-                        // set the sort attribute with correct type
+                        // Note: the sort information will be set on the server
 
                         measurements.push(m);
                     }
@@ -340,6 +380,7 @@
                 }
                 delete sp.metadata;
             },
+
 
             _createMeasurementJsonResource : function(pkgid) {
                 var measurements = [];
@@ -461,46 +502,42 @@
                 return arr;
             },
 
-            _uploadMeasurementResource : function(pkgId, callback) {
+            _uploadMeasurementResource : function(pkg, callback) {
                 this.statusText = 'Uploading measurement data resource...';
 
-                this._createMeasurementJson(pkgId, function(dataset){
-                    console.log(dataset);
-                    callback();
-                });
-                return;
-                // split out data and upload in set chunks
+                this._createMeasurementJson(pkg, function(data){
+                    console.log(data);
 
-                var data = dataset.data;
-                delete dataset.data;
+                    // split out data and upload in set chunks
 
-                var chunks = [];
-                var chunk = [];
-                for( var i = 0; i < data.length; i++ ) {
-                    chunk.push(data[i]);
-                    if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
-                        chunks.push(chunk);
-                        chunk = [];
+                    var chunks = [];
+                    var chunk = [];
+                    for( var i = 0; i < data.length; i++ ) {
+                        chunk.push(data[i]);
+                        if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
+                            chunks.push(chunk);
+                            chunk = [];
+                        }
                     }
-                }
-                if( chunk.length > 0 ) chunks.push(chunk);
+                    if( chunk.length > 0 ) chunks.push(chunk);
 
-                this.ckan.addSpectraInfo(dataset, function(){
-                    this._addMeasurementData(pkgId, 0, data.length, chunks, function(){
+                    this._addMeasurementData(0, data.length, chunks, function(){
                         callback();
-                    }.bind(this));
+                    });
                 }.bind(this));
             },
 
-            _addMeasurementData : function(pkgId, index, total, chunks, callback) {
+            _addMeasurementData : function(index, total, chunks, callback) {
                 if( index == chunks.length ) return callback();
 
                 var count = (index > 0) ? (index * this.MAX_DATA_UPLOAD_COUNT) + chunks[index].length : chunks[index].length;
 
                 this.statusText = 'Uploading measurements ('+count+'/'+total+')...';
-                this.ckan.addSpectraData(pkgId, chunks[index], function(){
+
+                var update = (index == chunks.length-1) ? true : false;
+                this.ckan.addSpectra(chunks[index], update, function(){
                     index++;
-                    this._addMeasurementData(pkgId, index, total, chunks, callback);
+                    this._addMeasurementData(index, total, chunks, callback);
                 }.bind(this));
             },
 
