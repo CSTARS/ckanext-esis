@@ -19,14 +19,17 @@
     <script src="components/js-xls/dist/xls.min.js"></script>
     <script src="components/jquery-csv/src/jquery.csv.js"></script>
     <script src="components/js-md5/js/md5.min.js"></script>
-    <script src="../metadata.js"></script>
+    <!--<script src="../metadata.js"></script>-->
     <!-- endbuild -->
 
     <link rel="import" href="components/core-icons/core-icons.html">
+    <link rel="import" href="components/core-icons/editor-icons.html">
     <link rel="import" href="components/font-roboto/roboto.html">
     <link rel="import" href="components/core-item/core-item.html">
     <link rel="import" href="components/core-menu/core-submenu.html">
     <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
+
+    <link rel="import" href="elements/ui/esis-attribute-name.html">
     <link rel="import" href="elements/esis-scaffold.html">
     <link rel="import" href="elements/esis-item.html">
     <link rel="import" href="elements/esis-datastore.html">
@@ -226,18 +229,17 @@
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
       <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
-      <esis-item label="Add New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
-      
-      <esis-item label="Parsed Spectra" tag="parsed-spectra" ele="esis-parsed-spectra"></esis-item>
-      <esis-item label="Set Attribute Map" tag="attribute-map" ele="esis-attribute-map"></esis-item>
+      <esis-item label="New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
+      <esis-item label="Attribute Settings" tag="attribute-settings" ele="esis-attribute-settings"></esis-item>
+      <esis-item label="Inspect" tag="inspect" ele="esis-inspect"></esis-item>
       <esis-item label="Group Dataset" tag="group-by" ele="esis-group-by"></esis-item>
-      <esis-item label="Join Metadata" tag="join" ele="esis-join"></esis-item>
       <esis-item label="Cancel" tag="back" style="display:block"></esis-item>
 
     </esis-scaffold>
 
     <esis-datastore></esis-datastore>
     <esis-parser></esis-parser>
+    <esis-extractor></esis-extractor>
     <esis-dataset-loader></esis-dataset-load>
     <esis-ckan></esis-ckan>
   

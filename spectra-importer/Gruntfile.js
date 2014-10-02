@@ -12,6 +12,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-vulcanize');
 
+
     // Define the configuration for all the tasks
     grunt.initConfig({
 

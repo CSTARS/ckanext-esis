@@ -1,5 +1,6 @@
 <link rel="import" href="esis-ui-card.html" />
 <link rel="import" href="esis-ui-delete-button.html" />
+<link rel="import" href="esis-ui-resource.html" />
 
 <polymer-element name="esis-ui-file" attributes="file">
 	<template>
@@ -23,15 +24,21 @@
 		</style>
 
 		<esis-ui-card z="1" class="animated" id="card" style="background-color:white">
-			<h4 style="color: #888">{{file.info.name}}</h4>
-			<esis-ui-delete-button class="float-right" label="{{file.info.name}}" on-delete="{{_delete}}"></esis-ui-delete-button>
 
+			<div>
+				<h4 style="color: #888">{{file.info.name}}</h4>
+				<esis-ui-delete-button class="float-right" label="" on-delete="{{_delete}}"></esis-ui-delete-button>
+			</div>
+
+			<template bind if="{{file.resources.length == 1}}">
+				<esis-ui-resource file="{{file}}" resource="{{file.resources[0]}}"></esis-ui-resource>
+			</template>
 
     		<template bind if="{{file.resources.length > 1}}">
     			<div style="margin-left: 25px">
     				<h4>Extracted Resources</h4>
     				<template repeat="{{resource in file.resources}}">
-    					<div>{{resource.title}}</div>
+    					<esis-ui-resource file="{{file}}" resource="{{resource}}" showName></esis-ui-resource>
     				</template>
     			</div>
     		</template>
@@ -39,6 +46,7 @@
 	</template>
 	<script>
 		Polymer('esis-ui-file', {
+
 			_delete : function() {
 				this.$.card.classList.add('flipOutX');
 				setTimeout(function(){

@@ -1,0 +1,176 @@
+<polymer-element name="esis-attribute-ordering" attributes="attributeTypes">
+    <template>
+        <style>
+            .input-wrapper {
+                margin: 10px 10px 50px 10px;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 6px;
+            }
+            .help {
+                color: #888;
+                font-size: 12px;
+            }
+            paper-input::shadow .focusedColor {
+                background-color: #2f9b45;
+                color: #2f9b45;
+            }
+            h4 {
+                margin-bottom: 5px;
+            }
+        </style>
+
+        <div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">
+            All of the following inputs are optional.
+        </div>
+
+        <!--<div style="font-size: 14px; color: #888">
+            Group your data by a certain attribute so related spectra within this dataset can easily be found in search.  Examples for this grouping include time series data, or data that is spatially related.  To group, first select the attribute in your dataset to group on.  This attribute should have the same value for all spectra in that group.  Next, provide a sort attribute.  For time, this would be the time attribute the spectra was taken at.  Finally, you can provide a description of this group to let others know what this grouping is.  Ex: "Spectra time series at 1 minute intervals"
+        </div>-->
+
+        <h4>Dataset Ordering</h4>
+        <div class="help">
+            Is this a time series dataset or a dataset that has any other form of ordering?  If so, select the attribute to order by as well as the type of sort that should be performed.  You can also provide a textual description of what this ordering is.
+        </div>
+        <div class="input-wrapper">
+            Order By:
+            <select value="{{ds.datasetAttributes.sort_on}}">
+                <option value=""></option>
+                <template repeat="{{attr in attributeArray}}">
+                    <option value="{{attr.name}}">{{attr.name}}</option>
+                </template>
+            </select>
+
+            <div hidden?="{{ds.datasetAttributes.sort_on == ''}}">
+                <div style="margin-top:10px">
+                    Order Type: 
+                    <select value="{{ds.datasetAttributes.sort_type}}">
+                        <option value="string">Default (String)</option>
+                        <option value="datetime">Date</option>
+                        <option value="numberic">Numberic</option>
+                    </select>
+                </div>
+                <div class="help" hidden?="{{ds.datasetAttributes.sort_type != 'datetime'}}" style="padding: 5px">
+                    Use <a href="http://www.w3.org/TR/NOTE-datetime" target="_blank">ISO-8601</a> for which the format is: YYYY-MM-DDTHH:mm:ss.sssZ. <a href="http://xkcd.com/1179/" target="_blank">Why?</a>
+                </div>
+
+                <paper-input 
+                    multiline 
+                    rows="3" 
+                    floatingLabel 
+                    label="Description" 
+                    value="{{ds.datasetAttributes.sort_description}}" >
+                </paper-input>
+            </div>
+        </div>
+
+        <h4>Grouping for Search</h4>
+        <div class="help">
+            By default your dataset will show up as one result in search.  Sometimes you may wish to split your dataset out into multiple search results.  You can do this by providing a group by attribute below.  Your dataset will then be split up into multiple groups in search.
+        </div>
+        <div class="input-wrapper">
+            Group By:
+            <select value="{{ds.dataset.group_by}}" on-change="{{_group}}">
+                <option value=""></option>
+                <template repeat="{{attr in attributeArray}}">
+                    <option value="{{attr.name}}">{{attr.name}}</option>
+                </template>
+            </select>
+
+            <template bind if="{{groups.length > 0}}">
+                <div style="padding-bottom: 10px">Grouping Results: </div>
+                <template repeat="{{group in groups}}">
+                    <div style="padding-left: 15px"><b>{{group.key}}:</b> {{group.value}}</div>
+                </template>
+            </template>
+        </div>
+
+        
+
+        <h4>Geographic Location</h4>
+        <div class="help">
+            Select the attribute below that provides a geolocation for this dataset.
+        </div>
+        <div class="input-wrapper">
+            Location:
+            <select value="{{ds.dataset.location}}">
+                <option value=""></option>
+                <template repeat="{{attr in attributeArray}}">
+                    <option value="{{attr.name}}">{{attr.name}}</option>
+                </template>
+            </select>
+            <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+        </div>
+
+    </template>
+    <script>
+        Polymer('esis-attribute-ordering', {
+
+            attributeTypes : null,
+            
+            // attributes that could be sorted by or grouped by
+            attributeArray : [],
+
+            modifications : null,
+
+            sorts : [],
+
+            ds : null,
+
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+            },
+
+            update : function() {
+                this.attributeArray = [];
+
+                if( this.modifications == null ) {
+                    this.modifications = this.ds.attributeModifications;
+                }
+
+                var key, info;
+                for( key in this.attributeTypes ) {
+                    info = this.attributeTypes[key];
+
+                    switch(info.flag) {
+                        case this.ds.ATTR_FLAGS.FROM_METADATA:
+                            this._copyToArray(this.attributeArray, key, info);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:                           
+                            this._copyToArray(this.attributeArray, key, info);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
+                            this._copyToArray(this.attributeArray, key, info);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
+                            this._copyToArray(this.attributeArray, key, info);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
+                            this._copyToArray(this.attributeArray, key, info);
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            },
+
+            _copyToArray : function(arr, key, info) {
+                arr.push({
+                    name : key,
+                    type : this.ds.attributeModifications[key] ? this.ds.attributeModifications[key] : info.type,
+                    flag : info.flag,
+                    guess : info.guess
+                });
+            }
+
+        });
+    </script>
+</polymer-element>

@@ -30,14 +30,17 @@
 			},
 			owner_org_name : '',
 
-			group : {
-				by : '',
+			datasetAttributes : {
+				group_by : '',
+				// TODO: make sort into array
 				sort_on : '',
-				description : '',
+				sort_type : '',
+				sort_description : '',
+				location : '',
 			},
 
-			// field that should be used to create uids for spectra
-			spectraDisambiguator : '',
+			// field that should be used to create uids for measurements
+			measurementDisambiguator : '',
 
 			// list of all new files
 			files : [],
@@ -50,8 +53,37 @@
 			attributeMap : {},
 			inverseAttributeMap : {},
 
+			metadataDefinitions : {},
+
 			// list of currently known attributes for this dataset
+			//   - this is a list of objects.  each object has the structure
+			//       |- name : attribute name
+			//       |- type : (data | metadata)
+			//       \- flag : (1, 2) 
 			knownAttributes : [],
+
+			ATTR_FLAGS : {
+				// the attribute is from a joined metadata file, always metadata
+				FROM_METADATA : 1,
+				// the attribute type could be data or metadata
+				FROM_MIXED_FILE : 2,
+				// the attribute name is numberic and is there for a wavelength
+				IS_WAVELENGTH : 3,
+				// the attribute is from global metadata
+				IS_FILE_METADATA : 4,
+				// the attribute is measurement level metadata
+				IS_MEASUREMENT_METADATA : 5,
+				// the attribute is measurement level data, from the data section of the file
+				IS_FILE_DATA : 6
+			},
+
+			// attributes who's infered type has been overridden by the user
+			attributeModifications : {},
+
+			// the key is the attribute name, the value is an object describing what we know about the attribute
+			// this combined with the attributeModifications object describes the current state of the attribute
+			// use getAllAttributeTypes() to access
+			//attributeTypes : {},
 
 			// list of resources that are scheduled to be deleted
 			deleted : [],
@@ -62,12 +94,14 @@
 
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
+				this.metadataDefinitions = esis.metadata;
 			},
 
-			addFile : function(raw, parseZip) {
+			addFile : function(raw, parseZip, defaultDataType) {
 				var ele = document.createElement('esis-file');
 				ele.raw = raw;
 				ele.parseZip = parseZip;
+				ele.defaultDataType = defaultDataType;
 				this.files.push(ele);
 				return ele;
 			},
@@ -90,18 +124,23 @@
 				}
 			},
 
-			addDatasheet : function(file, parsedContents) {
+			addDatasheet : function(contents) {
 				var ele = document.createElement('esis-datasheet');
 
 				// attach listener for when attributes have been aggregated
 				// add to known list when done
-				ele.addEventListener('spectra-updated', function(e){
+				ele.addEventListener('measurement-updated', function(e){
 					this._addKnownAttributes(e.detail);
 					this.datasheetJoin(ele);
 				}.bind(this));
 
-				ele.file = file;
-				ele.contents = parsedContents;
+				ele.contents = contents;
+
+				// move attributeTypes to first class citizen 
+				if( ele.contents.attributeTypes ) {
+					ele.attributeTypes = ele.contents.attributeTypes;
+					delete ele.contents.attributeTypes;
+				}
 
 				this.datasheets.push(ele);
 				
@@ -127,7 +166,7 @@
 					}
 				}
 
-				// remove any spectra associated with this resource
+				// remove any measurements associated with this resource
 				for( var i = this.existing.dataset.data.length-1; i >= 0; i-- ) {
 					if( this.existing.dataset.data[i].resource_id == id ) {
 						this.existing.dataset.data.splice(i,1);
@@ -160,20 +199,29 @@
 				}
 			},
 
+			getAllAttributeTypes : function() {
+				var attrTypes = {};
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					for( var key in this.datasheets[i].attributeTypes ) {
+						attrTypes[key] = this.datasheets[i].attributeTypes[key];
+					}
+				}
+				return attrTypes;
+			},
 
 			join : function(metadata) {
 				var count = 0;
 				
-				// join on new spectra
+				// join on new measurements
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					if( this.datasheets[i].isMetadata ) continue;
 
-					for( var j = 0; j < this.datasheets[i].spectra.length; j++ ) {
-						if( metadata.join(this.datasheets[i].spectra[j]) ) count++;
+					for( var j = 0; j < this.datasheets[i].measurements.length; j++ ) {
+						if( metadata.join(this.datasheets[i].measurements[j]) ) count++;
 					}
 				}
 
-				// join on existing spectra
+				// join on existing measurements
 				if( this.existing.dataset.data ) {
 					for( var i = 0; i < this.existing.dataset.data.length; i++ ) {
 						if( metadata.join(this.existing.dataset.data[i]) ) count++;
@@ -183,15 +231,41 @@
 				metadata.matchCount = count;
 
 				// make sure to add new metadata attribute to known list
-				this._addKnownAttributes(metadata.joinAttributes());
-			},
+				var attrs = metadata.joinAttributes();
+				for( var i = 0; i < attrs.length; i++ ) {
+					var index = this._hasAttribute(attrs[i]);
 
-			_addKnownAttributes : function(attrList) {
-				for( var i = 0; i < attrList.length; i++ ) {
-					if( this.knownAttributes.indexOf(attrList[i]) == -1 ) {
-						this.knownAttributes.push(attrList[i]);
+					if( index == -1 ) {
+						this.knownAttributes.push({
+							name : attrs[i],
+							type : 'metadata',
+							flag : ATTR_FLAGS.FROM_METADATA
+						});
+					} else {
+						var item = this.knownAttributes[index];
+						item.type = 'metadata';
+						item.flag = ATTR_FLAGS.FROM_METADATA;
 					}
 				}
+			},
+
+			_updateKnownAttributes : function() {
+				//for( var i = 0; i < )
+
+				for( var i = 0; i < attrList.length; i++ ) {
+					if( this.attributes[attrList[i]] ) continue;
+
+					this.knownAttributes.push(attrList[i]);
+					this.attributes[attrList[i]] = {}
+				}
+			},
+
+			// acts like index of for known attributes array of objects
+			_hasAttribute : function(name) {
+				for( var i = 0; i < this.knownAttributes.length; i++ ) {
+					if( this.knownAttributes[i].name == name ) return i;
+				}
+				return -1;
 			},
 
 			_onAttributeMapUpdate : function(oldMap, newMap) {
@@ -199,6 +273,7 @@
 				for( var key in newMap ) {
 					if( newMap[key] != '' ) this.inverseAttributeMap[newMap[key]] = key;
 				}
+				console.log(this.inverseAttributeMap);
 			}
 		});
 	</script>

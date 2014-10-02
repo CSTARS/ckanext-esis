@@ -1,0 +1,288 @@
+<link rel="import" href="../../components/core-collapse/core-collapse.html" >
+<link rel="import" href="../../components/paper-icon-button/paper-icon-button.html" >
+<link rel="import" href="../../components/core-icons/hardware-icons.html" >
+
+<polymer-element name="esis-attribute-editor" attributes="attributeTypes">
+    <template>
+        <style>
+            span[modified] {
+                font-weight: bold;
+            }
+            table {
+                width: 100%;
+                border-spacing: 0px;
+                border-collapse: separate;
+                border-top: 1px solid #ddd;
+                border-left: 1px solid #ddd;
+                background-color: white;
+            }
+            table td {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+            table th {
+                padding: 10px;
+                border-right: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+            h4 {
+                margin-bottom: 5px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .file {
+                background-color: #dff0d8;
+            }
+            .spectra {
+                background-color: #fcf8e3;
+            }
+            .data {
+                background-color: #d9edf7;
+            }
+
+            .helper {
+                font-size: 12px;
+                color: #888;
+                margin-bottom: 5px;
+            }
+            .type-flag {
+                font-size: 80%;
+                vertical-align: top;
+                line-height: 1;
+                color: #aaa;
+            }
+            paper-icon-button {
+                color: #2f9b45;
+            }
+            core-collapse {
+                margin-bottom: 30px;
+            }
+        </style>
+
+        <h4>
+            <paper-icon-button 
+                icon="hardware:{{showEditable ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                on-tap="{{_toggleEditable}}">
+            </paper-icon-button>
+            <span>Configurable Attributes: {{editableArray.length}}</span>
+        </h4>
+        <div class="helper">
+            These attribute types have been infered and can be modified below
+        </div>
+        <core-collapse opened="{{showEditable}}">
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                </tr>
+                <tr template repeat="{{info, i in editableArray}}">
+                    <td class="{{info.class}}">
+                        <span modified?="{{modifications[info.name] != null}}">
+                            <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
+                        </span>
+                    </td>
+                    <td class="{{info.class}}">
+                        <select index="{{i}}" on-change="{{_onTypeChanged}}">
+                            <option value="data" selected?="{{info.type == 'data'}}">Data</option>
+                            <option value="metadata" selected?="{{info.type == 'metadata'}}">Metadata</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+        </core-collapse>
+
+        <h4>
+            <paper-icon-button 
+                icon="hardware:{{showFixed ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                on-tap="{{_toggleFixed}}">
+            </paper-icon-button>
+            Fixed Attributes: {{fixedArray.length}}
+        </h4>
+        <div class="helper">
+            These attribute types have been implied by their import format.
+        </div> 
+        <core-collapse opened="{{showFixed}}">
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                </tr>
+                <tr template repeat="{{info, i in fixedArray}}">
+                    <td class="{{info.class}}">
+                        <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
+                    </td>
+                    <td class="{{info.class}}">
+                        {{info.type}}<span class="type-flag">{{info.flag}}</span>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="padding:10px;font-size:12px">
+                <div>
+                    <span class="type-flag">1</span> Attribute is from a joinable metadata file and is therefore metadata.
+                </div>
+                <div>
+                    <span class="type-flag">3</span> Attribute is from the global metadata section of a file.
+                </div>
+                <div>
+                    <span class="type-flag">5</span> Attribute is from the formatted metadata section of a file.
+                </div>
+                <div>
+                    <span class="type-flag">6</span> Attribute is from the formatted data section of a file.
+                </div>
+            </div>
+        </core-collapse>
+
+        <h4>
+            <paper-icon-button
+                icon="hardware:{{showWavelengths ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                on-tap="{{_toggleWavelengths}}">
+            </paper-icon-button>
+            Wavelengths: {{wavelengthArray.length}}
+        </h4>
+        <div class="helper">
+            These attribute types have been implied because the attribute name is numberic.
+        </div>
+        <core-collapse opened="{{showWavelengths}}">
+            <div class="helper">
+                <template repeat="{{info in wavelengthArray}}">
+                    {{info.name}}
+                </template>
+            </div>
+        </core-collapse>
+
+
+    </template>
+    <script>
+        Polymer('esis-attribute-editor', {
+
+            attributeTypes : null,
+            
+            ds : null,
+
+            // attributes who's types can be edited by used
+            editableArray : [],
+            // attributes who's types are implied by format
+            fixedArray : [],
+            // attributes that are wavelengths
+            wavelengthArray : [],
+
+            // modifications
+            modifications : null,
+
+            // toggles
+            showWavelengths : false,
+            showFixed : false,
+            showEditable : true,
+
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+            },
+
+            update : function() {
+                this.editableArray = [];
+                this.fixedArray = [];
+                this.wavelengthArray = [];
+
+                if( this.modifications == null ) {
+                    this.modifications = this.ds.attributeModifications;
+                }
+
+                var key, info;
+                for( key in this.attributeTypes ) {
+                    info = this.attributeTypes[key];
+
+                    switch(info.flag) {
+                        case this.ds.ATTR_FLAGS.FROM_METADATA:
+                            this._copyToArray(this.fixedArray, key, info, '');
+                            break;
+
+                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
+                            var css = (info.type == 'data') ? 'data' : 'spectra';
+
+                            if( this.modifications[key] ) {
+                                if( this.modifications[key] == 'data' ) css = 'data';
+                                else css = 'spectra';
+                            }
+                           
+                            this._copyToArray(this.editableArray, key, info, css);
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
+                            this._copyToArray(this.wavelengthArray, key, info, 'data');
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
+                            this._copyToArray(this.fixedArray, key, info, 'file');
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
+                            this._copyToArray(this.fixedArray, key, info, 'spectra');
+                            break;
+
+                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
+                            this._copyToArray(this.fixedArray, key, info, 'data');
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            },
+
+            _onTypeChanged : function(e) {
+                var index = parseInt(e.currentTarget.getAttribute('index'));
+                var val = e.currentTarget.value;
+                var attr = this.editableArray[index];
+
+                if( this.modifications == null ) {
+                    this.modifications = this.ds.attributeModifications;
+                }
+
+                if( val == 'data' ) attr.class = 'data';
+                else attr.class = 'spectra';
+
+                if( attr.type == val ) {
+                    if( this.modifications[attr.name] ) {
+                        delete this.modifications[attr.name];
+                    }
+                } else {
+                    this.modifications[attr.name] = val;
+                }
+
+                // now actually update known measurements
+                var i, j, f, m, index;
+                for( i = 0; i < this.ds.datasheets.length; i++ ) {
+                    f = this.ds.datasheets[i];
+                    for( j = 0; j < f.measurements.length; j++ ) {
+                        f.measurements[j].switchAttributeType(attr.name, val);
+                    }
+                }
+            },
+
+            _copyToArray : function(arr, key, info, cssClass) {
+                arr.push({
+                    name : key,
+                    type : this.ds.attributeModifications[key] ? this.ds.attributeModifications[key] : info.type,
+                    flag : info.flag,
+                    guess : info.guess,
+                    class : cssClass
+                });
+            },
+
+            _toggleWavelengths : function() {
+                this.showWavelengths = !this.showWavelengths;
+            },
+
+            _toggleEditable : function() {
+                this.showEditable = !this.showEditable;
+            },
+
+            _toggleFixed : function() {
+                this.showFixed = !this.showFixed;
+            }
+
+        });
+    </script>
+</polymer-element>

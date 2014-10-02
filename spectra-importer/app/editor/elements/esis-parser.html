@@ -1,11 +1,15 @@
 <link rel="import" href="esis-extractor.html">
 
 <polymer-element name="esis-parser">
-	<template>
-		<esis-extractor id="extractor"></esis-extractor>
-	</template>
+	<template></template>
 	<script>
 		Polymer('esis-parser',{
+			extractor : null,
+
+			ready : function() {
+				this.extractor = document.querySelector('esis-extractor');
+			},
+
 			parse : function(file, callback) {
 				var arr = [];
 				var info = file.info;
@@ -26,11 +30,12 @@
 										return;
 									}
 
-									ref.$.extractor.run(data, function(err, resp){
-										count++;
-										resp.sheetName = sheetName;
-										ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-									});
+									var resp = ref.extractor.run(file.defaultDataType, data);
+									count++;
+									resp.sheetName = sheetName;
+									resp.array = data;
+									ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+									
 								});
 							});
 						}
@@ -66,11 +71,12 @@
 										return;
 									}
 
-									ref.$.extractor.run(data, function(err, resp){
-										count++;
-										resp.sheetName = sheetName;
-										ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-									});
+									var resp = this.extractor.run(file.defaultDataType, data);
+									count++;
+									resp.sheetName = sheetName;
+									resp.array = data;
+									this.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+
 								});
 							});
 						}
@@ -90,7 +96,7 @@
 						this.onComplete(e, null, info, 1, 1, arr, callback);
 					}
 				} else if ( info.hasData ) {
-					try {
+					//try {
 						var options = {};
 						if( info.parser == 'csv-tab' ) options.separator = '\t';
 						if( info.parser == 'csv-4spaces' ) options.separator = '    ';
@@ -99,20 +105,29 @@
 						$.csv.toArrays(contents, options, function(err, data){
 							if( err ) return onComplete(err, null, info, 1, 1, arr, callback);
 
-							this.$.extractor.run(data, function(err, resp){
-								if( err ) this.onComplete(err, null, info, 1, 1, arr, callback);
-								else this.onComplete(null, resp, info, 1, 1, arr, callback);
-							}.bind(this));
+							var resp = this.extractor.run(file.defaultDataType, data);
+							resp.array = data;
+							this.onComplete(null, resp, info, 1, 1, arr, callback);
+
 						}.bind(this));
-					} catch(e) {
-						debugger;
-						this.onComplete(e, null, info, 1, 1, arr, callback);
-					}
+					//} catch(e) {
+					//	debugger;
+					//	this.onComplete(e, null, info, 1, 1, arr, callback);
+					//}
 				} else {
 					this.onComplete(null, null, info, 1, 1, arr, callback);
 				}
 			},
 
+			/**
+			 * err - was there an error parsing the data
+			 * data - response from esis-extractor
+			 * info - general information about the file the datasheet came from
+			 * index - current datasheet index we just parsed
+			 * total - total number of datasheets in this file
+			 * arr - the response array of resources we will send back when everything is done
+			 * callback - function to call when all datasheets have been parsed for this file
+			 **/
 			onComplete : function(err, data, info, index, total, arr, callback) {
 				if( err ) {
 					data = {
@@ -122,18 +137,15 @@
 					data = {
 						error : 'Unknown parse error'
 					}
-				} else if( data.spectra.length == 0 && 
+				} else if( data.measurements.length == 0 && 
 					Object.keys(data.metadata).length == 0 &&
 					!data.joindata ) {
-					data.warning = 'No metadata or spectra found';
+					data.warning = 'No metadata or measurements found';
 				}
 
+				data.name = info.name;
 				if( total > 1 ) {
-					if( data.sheetName ) {
-						data.name = info.name + ' - ' + data.sheetName;
-					} else {
-						data.name = info.name + ' - ' + index;
-					}
+					if( !data.sheetName ) data.sheetName = index;
 				}
 
 				data.info = {};

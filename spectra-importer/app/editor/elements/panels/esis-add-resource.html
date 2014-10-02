@@ -3,12 +3,22 @@
 <link rel="import" href="../../components/core-collapse/core-collapse.html" />
 <link rel="import" href="../../components/paper-button/paper-button.html" />
 <link rel="import" href="../ui/esis-ui-file.html" />
+<link rel="import" href="../ui/esis-dataformat-help.html" />
 
 <polymer-element name="esis-add-resource">
 	<template>
 		<link rel="stylesheet" href="../../components/animate-css/animate.min.css" no-shim>
 
 		<style>
+			paper-tabs {
+				margin-bottom: 20px;
+			}
+			paper-tabs::shadow #selectionBar {
+				background-color: rgb(47, 155, 69);
+			}
+			paper-tab::shadow #ink {
+				color: rgb(47, 155, 69);
+			}
 			paper-checkbox {
 				padding: 20px;
 			}
@@ -21,11 +31,14 @@
 				font-size: 20pt;
 				color: #bbb;
 				background-color: white;
-				margin: 20px 0 0 50px;
+				margin: 20px 0 0 0;
 			}
 			.processing-label {
 				position: absolute;
 				top: 0;
+			}
+			.fileinput {
+				margin-top: 50px;
 			}
 			.fileinput.processing {
 				visibility: hidden;
@@ -34,16 +47,8 @@
 				color : #2f9b45;
 				cursor: pointer;
 			}
-			.new-resources {
-				margin: 50px 0;
-				padding: 10px;
-				background-color: #eee;
-				border-radius: 3px;
-			}
-			.new-resources h4 {
-				color: #888;
-			}
 			.next {
+				margin-top: 30px;
 				opacity: 0;
 				transition: opacity 500ms linear;
 				-webkit-transition: opacity 500ms linear;
@@ -58,18 +63,31 @@
 				margin: 10px;
 				padding: 5px;
 			}
+			.note {
+                padding: 10px;
+                color: #777;
+                font-size: 13px;
+            }
+            .options {
+            	background-color: #eee;
+            	padding: 15px 10px;
+            	border-radius: 3px;
+            	margin-bottom: 10px;
+            }
 		</style>
 
-		<div style="font-size:14px;color:#888">
-			<span>Add new files below by using the file selector or drag files over the drop zone.</span><br /><br />
-			<span class="next {{ds.files.length > 0 ? 'ready' : ''}}" style="font-weight:bold; background-color:#f8f8f8; padding:5px; border-radius: 3px">
-		    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:middle"></core-icon> Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
-		    </span>
-		</div>
+		<paper-tabs selected="{{selectedTab}}" hidden?="{{ds.files.length == 0}}">
+		    <paper-tab>Add Resources</paper-tab>
+		    <paper-tab>New File List</paper-tab>
+		    <paper-tab>Configure Datasheets</paper-tab>
+		</paper-tabs>
 
-		<paper-button label="File Import Options" on-tap="{{toggleOptions}}" raisedButton></paper-button>
-		<core-collapse opened="{{showOptions}}">
-			<esis-ui-card class="options-card">
+		<div hidden?="{{selectedTab != 0}}">
+
+
+			<h4 style="color:#888; margin: 10px 0 -9px 15px">File Import Options</h4>
+			
+			<div class="options">
 				<div horizontal layout>
 				    <paper-checkbox checked="{{parseZip}}"></paper-checkbox>
 				    <div vertical layout>
@@ -79,42 +97,99 @@
 				</div>
 
 				<div style="margin-left: 20px">
-					<h4>Tabular data layout</h4>
-					<paper-radio-group class="blue" selected="auto" role="radiogroup" style="margin-left: 10px">
-				     	<paper-radio-button name="auto" label="Horizontal" role="radio" tabindex="0" aria-checked="true" aria-label="Auto" class="core-selected" checked=""></paper-radio-button>
-				    	<paper-radio-button name="5ghz" label="Vertical" role="radio" tabindex="0" aria-checked="false" aria-label="5 GHz only" class=""></paper-radio-button>
+					<h4>Data Format</h4>
+					<paper-radio-group class="blue" selected="{{options.type}}" role="radiogroup" style="margin-left: 10px">
+				     	<paper-radio-button 
+				     		name="spectra" 
+				     		label="Spectral" 
+				     		role="radio" 
+				     		tabindex="0" 
+				     		aria-checked="true" 
+				     		aria-label="Spectral" 
+				     		class="core-selected" 
+				     		checked>
+				     	</paper-radio-button>
+				    	<paper-radio-button 
+				    		name="timeseries" 
+				    		label="Time Series" 
+				    		role="radio" 
+				    		tabindex="0" 
+				    		aria-checked="false" 
+				    		aria-label="Time Series">
+				    	</paper-radio-button>
 				    </paper-radio-group>
+
+				    <div style="margin-left:15px">
+					    <div class="note" hidden?="{{options.type != 'spectra'}}">
+					    	View my data per spectra measurement. <a on-tap="{{toggleHelp}}">Help.</a>
+					    </div>
+					    <div class="note" hidden?="{{options.type != 'timeseries'}}">
+					    	View my data per time measurement. <a on-tap="{{toggleHelp}}">Help.</a>
+					    </div>
+					</div>
 				</div>
-			</esis-ui-card>
-		</core-collapse>
 
-		<template bind if="{{processing}}">
-	    	<div style="position:relative; text-align:center">
-		    	<div class="processing-label">
-		    		<h4>Processing Files...</h4>
-		    	</div>
-		    </div>
-	    </template>
-
-		<div class="fileinput {{processing ? 'processing' : ''}}">
-			<div style="margin-left: 20px">
-				<h4>Select files to be imported</h4>
-				<input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}">
+				<core-collapse opened="{{showHelp}}">
+					<div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
+						<esis-dataformat-help type="{{options.type}}"></esis-dataformat-help>
+					</div>
+				</core-collapse>
 			</div>
 
-			<div class="file-select-group" >
-	        	<div id="dropZone"><b>OR</b> drag and drop files here</div>
-	    	</div>
-	    </div>
 
-	    <template bind if="{{ds.files.length > 0}}">
-	    	<div class="new-resources">
-		    	<h4>New Files</h4>
-		    	<template repeat="{{file in ds.files}}">
-		    		<esis-ui-file file="{{file}}"></esis-ui-file>
-		    	</template>
+			<template bind if="{{processing}}">
+		    	<div style="position:relative; text-align:center">
+			    	<div class="processing-label">
+			    		<h4>Processing Files...</h4>
+			    	</div>
+			    </div>
+		    </template>
+
+			<div class="fileinput {{processing ? 'processing' : ''}}">
+				<div>
+					<h4 style="margin-bottom: 0">Select files to be imported</h4>
+					<div style="font-size:12px;color:#888; margin-bottom: 15px">
+						<span>Add new files below by using the file selector or drag files over the drop zone.</span>
+					</div>
+					<input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}">
+				</div>
+
+				<div class="file-select-group" >
+		        	<div id="dropZone"><b>OR</b> drag and drop files here</div>
+		    	</div>
 		    </div>
-	    </template>
+		</div>
+
+		<div hidden?="{{selectedTab != 1}}">
+		    <template repeat="{{file in ds.files}}">
+			    <esis-ui-file file="{{file}}"></esis-ui-file>
+			</template>
+		</div>
+
+		<div hidden?="{{selectedTab != 2}}">
+
+			<div layout horizontal style="margin-bottom: 20px">
+				<paper-button raisedButton 
+					icon="arrow-back" 
+					disabled?="{{selectedSheetIndex == 0}}"
+					on-tap="{{_previousDatasheet}}">
+				</paper-button>
+				<div flex style="text-align:center">
+					<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
+		    			<template repeat="{{sheet, i in ds.datasheets}}">
+		    				<option value="{{i}}">{{i}} - {{sheet.contents.name}}</option>
+		    			</template>
+		    		</select>
+		    	</div>
+		    	<paper-button raisedButton 
+		    		icon="arrow-forward"
+		    		disabled?="{{selectedSheetIndex == ds.datasheets.length-1}}"
+		    		on-tap="{{_nextDatasheet}}">
+		    	</paper-button>
+			</div>
+
+			<esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}" ></esis-ui-datasheet>
+		</div>
 
 	    <span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
 	    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
@@ -129,11 +204,20 @@
 			processing : false,
 			parseZip : false,
 
-			showOptions : false,
+			selectedTab : 0,
+			selectedSheet : null,
+			selectedSheetIndex : -1,
+
+			showHelp : false,
+
+			options : {
+				type : 'spectra'
+			},
 
 			observe : {
 				'ds.files' : '_updatePreview',
-				'ds.data.title' : '_updateVisibility'
+				'ds.data.title' : '_updateVisibility',
+				selectedSheetIndex : '_updateDatasheet'
 			},
 
 			ready : function() {
@@ -142,7 +226,15 @@
 				this.$.dropZone.addEventListener('drop', this._handleFileSelect.bind(this), false);
 			},
 
+			// redraw current datasheet if there is one selected
+			onShow : function() {
+				this.$.dataSheetUI.update();
+			},
+
 			_updateVisibility : function() {
+				this.menuItem.style.display = 'block';
+				return;
+
 				if( this.ds.data.title.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
@@ -165,15 +257,23 @@
 			    var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
 
 			    setTimeout(function(){
+				    var file;
 				    for (var i = 0, f; f = files[i]; i++) {
-				    	this.ds.addFile(f, this.parseZip);
-			            //esis.structures.importer.addFile(f, $('#parseZip').is(':checked'));
+				    	file = this.ds.addFile(f, this.parseZip, this.options.type);
+
+				    	if( i == 0 ) {
+				    		file.addEventListener('ingest-complete', function() {
+				    			this.processing = false;
+				    			this.selectedTab = 2;
+				    		}.bind(this));
+				    	}
 				    }
 
 				    setTimeout(function(){
-			    		this.processing = false;
 			    		this.$.file.value = '';
 				    }.bind(this), 500);
+
+				    
 			    }.bind(this), 150);
 
 			    
@@ -190,9 +290,25 @@
 		  		this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
 		  	},
 
-		  	toggleOptions : function() {
-		  		this.showOptions = !this.showOptions;
+		  	toggleHelp : function() {
+		  		this.showHelp = !this.showHelp;
+		  	},
+
+		  	_updateDatasheet : function() {
+		  		if( typeof this.selectedSheetIndex == 'string' ) this.selectedSheetIndex = parseInt(this.selectedSheetIndex);
+		  		this.selectedSheet = this.ds.datasheets[this.selectedSheetIndex];
+		  	},
+
+		  	_previousDatasheet : function() {
+		  		if( typeof this.selectedSheetIndex == 'string' ) this.selectedSheetIndex = parseInt(this.selectedSheetIndex);
+		  		this.selectedSheetIndex--;
+		  	},
+
+		  	_nextDatasheet : function() {
+		  		if( typeof this.selectedSheetIndex == 'string' ) this.selectedSheetIndex = parseInt(this.selectedSheetIndex);
+		  		this.selectedSheetIndex++;
 		  	}
+
 		});
 	</script>
 </polymer-element>

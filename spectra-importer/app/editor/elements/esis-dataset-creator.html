@@ -3,374 +3,551 @@
 <link rel="import" href="panels/esis-verify-dataset.html" />
 
 <polymer-element name="esis-dataset-creator">
-	<template>
-		<link rel="stylesheet" href="../components/animate-css/animate.min.css">
-		<style>
-			paper-fab {
-				color: #2f9b45;
-				background-color: white;
-				position: absolute;
-				right: 10px;
-				top: -55px;
-				cursor: pointer;
-			}
-			paper-fab:hover {
-				background-color: #eee;
-			}
-		</style>
+    <template>
+        <link rel="stylesheet" href="../components/animate-css/animate.min.css">
+        <style>
+            paper-fab {
+                color: #2f9b45;
+                background-color: white;
+                position: absolute;
+                right: 10px;
+                top: -55px;
+                cursor: pointer;
+            }
+            paper-fab:hover {
+                background-color: #eee;
+            }
+        </style>
 
-		<paper-fab icon="check-circle-outline" on-tap="{{show}}" hidden?="{{hide}}" class="animated rollIn"></paper-fab>
-		
-		<paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom" autoCloseDisabled="true">
-			<div hidden?="{{uploading}}">
-				<esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
-			</div>
-			<div hidden?="{{!uploading}}" style="min-width: 300px; min-height:250px">
-				<h4>{{ds.editMode ? 'Updating' : 'Creating'}} Dataset...</h4>
-				<div>{{statusText}}</div>
-			</div>
-		</paper-dialog>
-	</template>
-	<script>
-		Polymer('esis-dataset-creator', {
-			hide : true,
-			ds : {},
-			ckan : {},
+        <paper-fab icon="check-circle-outline" on-tap="{{show}}" hidden?="{{hide}}" class="animated rollIn"></paper-fab>
+        
+        <paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom" autoCloseDisabled="true">
+            <div hidden?="{{uploading}}">
+                <esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
+            </div>
+            <div hidden?="{{!uploading}}" style="min-width: 300px; min-height:250px">
+                <h4>{{ds.editMode ? 'Updating' : 'Creating'}} Dataset...</h4>
+                <div>{{statusText}}</div>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer('esis-dataset-creator', {
+            hide : true,
+            ds : {},
+            ckan : {},
 
-			counts : {
-				spectraResources : 0,
-				metadataResources : 0,
-				spectra : 0
-			},
+            counts : {
+                measurementResources : 0,
+                metadataResources : 0,
+                measurement : 0
+            },
 
-			observe : {
-				'ds.data.name' : '_updateVisibility',
-				'ds.deleted' : '_updateVisibility',
-				'ds.datasheets' : '_filesUpdated'
-			},
+            joinOrder : ['joined','file','measurement'],
+            // metadata names can't overwrite these attributes
+            protectedKeys : ['_id', 'ecosis', 'datapoints'],
 
-			uploading : false,
-			statusText : '',
+            observe : {
+                'ds.data.name' : '_updateVisibility',
+                'ds.deleted' : '_updateVisibility',
+                'ds.datasheets' : '_filesUpdated'
+            },
 
-			// make number of spectra to upload at one time
-			MAX_DATA_UPLOAD_COUNT : 100,
+            // local memory cache for usda common names
+            commonCache : {},
 
-			ready : function() {
-				this.ds = document.querySelector('esis-datastore');
-				this.ckan = document.querySelector('esis-ckan');
-			},
+            uploading : false,
+            statusText : '',
 
-			show : function() {
-				this.$.dialog.toggle();
-			},
+            // make number of spectra to upload at one time
+            MAX_DATA_UPLOAD_COUNT : 200,
 
-			_filesUpdated : function() {
-				this.async(function(){
-					this.counts = {
-						spectraResources : 0,
-						metadataResources : 0,
-						spectra : 0
-					};
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+                this.ckan = document.querySelector('esis-ckan');
+            },
 
-					for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-						if( this.ds.datasheets[i].isMetadata ) {
-							this.counts.metadataResources++;
-						} else if ( this.ds.datasheets[i].spectra.length > 0 ) {
-							this.counts.spectraResources++;
-							this.counts.spectra += this.ds.datasheets[i].spectra.length;
-						}
-						
-					}
-				});
-				
+            show : function() {
+                this.$.dialog.toggle();
+            },
 
-				this._updateVisibility();
-			},
+            _filesUpdated : function() {
+                this.async(function(){
+                    this.counts = {
+                        measurementResources : 0,
+                        metadataResources : 0,
+                        measurement : 0
+                    };
 
-			_updateVisibility : function() {
-				if( (this.ds.data.name != '' && this.ds.files.length > 0) || this.ds.editMode ) {
-					this.hide = false;
-				} else {
-					this.hide = true;
-				}
-			},
+                    for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                        if( this.ds.datasheets[i].isMetadata ) {
+                            this.counts.metadataResources++;
+                        } else if ( this.ds.datasheets[i].measurements.length > 0 ) {
+                            this.counts.measurementResources++;
+                            this.counts.measurement += this.ds.datasheets[i].measurements.length;
+                        }
+                        
+                    }
+                });
+                
 
-			_cancel : function() {
-				this.$.dialog.toggle();
-			},
+                this._updateVisibility();
+            },
 
-			// create a new ckan package
-			create : function() {
-				var pkg = $.extend(true, {}, this.ds.data);
-				
-				this.uploading = true,
-				this.statusText = (this.ds.editMode ? 'Updating' : 'Creating initial') + ' dataset package...';
+            _updateVisibility : function() {
+                if( (this.ds.data.name != '' && this.ds.files.length > 0) || this.ds.editMode ) {
+                    this.hide = false;
+                } else {
+                    this.hide = true;
+                }
+            },
 
-				var pkg = document.querySelector('esis-dataset-loader').data;
-				for( var key in this.ds.data ) {
-					pkg[key] = this.ds.data[key];
-				}
+            _cancel : function() {
+                this.$.dialog.toggle();
+            },
 
-				var action = this.ds.editMode ? this.ckan.updatePackage : this.ckan.createPackage;
-				action(pkg, function(err, resp){
-					if( err ) {
-						alert('Error '+(this.ds.editMode ? 'updating' : 'creating')+' dataset');
-						this.uploading = false;
-						return;
-					}
+            // create a new ckan package
+            create : function() {
+                var pkg = $.extend(true, {}, this.ds.data);
+                
+                this.uploading = true,
+                this.statusText = (this.ds.editMode ? 'Updating' : 'Creating initial') + ' dataset package...';
 
-					this._addResources(resp);
-				}.bind(this));
-			},
+                var pkg = document.querySelector('esis-dataset-loader').data;
+                for( var key in this.ds.data ) {
+                    if( !pkg[key] ) pkg[key] = this.ds.data[key];
+                }
 
-			_addResources : function(pkg) {
-				this.statusText = 'Preparing Resources...';				
+                // TESTING...
+                /*this._uploadMeasurementResource('1233-12332-1232', function(){
+                    console.log(this._createDatasetJson('1233-12332-1232'));
+                    console.log('done');
+                }.bind(this));
+                return;*/
+                // TESTING...
 
-				// verify verify everything is ok
-				// if not, quit
-				// you can't use this for upload though! it will not have the resource id assign
-				// since the resources have to be uploaded first!
-				if( !this._isDataUnique() ) {
-					alert('Your spectra signatures are not inherently unique.  Please provide a metadata '+
-						'field that can serve as a unique identifier.');
-					//_createUidSelector(data);
-					//btn.removeClass('disabled').html('Add Resources');
-					this.uploading = false;
-					return;
-				}
+                var action = this.ds.editMode ? this.ckan.updatePackage : this.ckan.createPackage;
+                action(pkg, function(err, resp){
+                    if( err ) {
+                        alert('Error '+(this.ds.editMode ? 'updating' : 'creating')+' dataset');
+                        this.uploading = false;
+                        return;
+                    }
 
-				this.statusText = 'Adding...';
+                    this._addResources(resp);
+                }.bind(this));
+            },
 
-				this._addResourceToCkan(0, pkg.name);
-			},
+            _addResources : function(pkg) {
+                this.statusText = 'Preparing Resources...';             
 
-			_addResourceToCkan: function(index, pkgid) {
-				if( this.ds.resources.length == index ) {
-					this._removeDeletedResources(0, function(){
-						this._uploadSpectraResource(pkgid, function(){
-							this.statusText = 'Complete';
-							setTimeout(function(){
-								window.location = esis.host+'/dataset/'+pkgid;
-							}, 500);
-						}.bind(this));
-					}.bind(this));
-				} else {
-					this.statusText = 'Uploading '+this.ds.resources[index].filename+'...';
-					this.ckan.addResource(
-						pkgid, 
-						this.ds.resources[index],
-						function(err, resp){
-							if( err ) {
-								this.uploading = false;
-								return alert('Error creating ckan resource');
-							}
+                // verify verify everything is ok
+                // if not, quit
+                // you can't use this for upload though! it will not have the resource id assign
+                // since the resources have to be uploaded first!
+                if( !this._isDataUnique() ) {
+                    alert('Your measurement signatures are not inherently unique.  Please provide a metadata '+
+                        'field that can serve as a unique identifier.');
+                    //_createUidSelector(data);
+                    //btn.removeClass('disabled').html('Add Resources');
+                    this.uploading = false;
+                    return;
+                }
 
-							index++;
-							this._addResourceToCkan(index, pkgid);
-						}.bind(this), 
-						function(progress){
-							this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+progress+'%)...';
-						}.bind(this)
-					);
-				}
-			},
+                this.statusText = 'Adding...';
 
-			_removeDeletedResources : function(index, callback) {
-				if( !this.ds.editMode || this.ds.deleted.length == index ) return callback();
+                this._addResourceToCkan(0, pkg);
+            },
 
-				this.statusText = 'Removing deleted resources '+(index+1)+'/'+this.ds.deleted.length;
-				this.ckan.removeResource(this.ds.deleted[index], function(err, resp){
-					// TODO: add error checking
+            _addResourceToCkan: function(index, pkg) {
+                // once we are done adding dataset resources,
+                //  - remove deleted resource
+                //  - create and upload spectra package info
+                //  - create and upload spectral data
+                if( this.ds.resources.length == index ) {
+                    this._removeDeletedResources(0, function(){
 
-					index++;
-					this._removeDeletedResources(index, callback);
-				}.bind(this));
-			},
+                        this.statusText = 'Creating spectra package information...';
+                        var datasetInfo = this._createDatasetJson(pkg);
 
-			_isDataUnique: function() {
-				var spectra = [];
-				var ids = [];
+                        this.statusText = 'Uploading spectra package information...';
+                        this.ckan.addUpdateSpectraPackage(datasetInfo, function(){
+                        
+                            this.statusText = 'Uploading spectra data...';
+                            this._uploadMeasurementResource(pkg, function(){
+                        
+                                this.statusText = 'Complete';
+                                setTimeout(function(){
+                                    window.location = esis.host+'/dataset/'+pkg.name;
+                                }, 500);
+                            }.bind(this));
+                        }.bind(this));
+                        
+                    }.bind(this));
+                } else {
+                    this.statusText = 'Uploading '+this.ds.resources[index].filename+'...';
+                    this.ckan.addResource(
+                        pkg.id, 
+                        this.ds.resources[index],
+                        function(err, resp){
+                            if( err ) {
+                                this.uploading = false;
+                                return alert('Error creating ckan resource');
+                            }
 
-				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-					var f = this.ds.datasheets[i];
-					for( var j = 0; j < f.spectra.length; j++ ) {
-						// make sure the latest uid for the spectra is generated
-						f.spectra[j].updateUid();
+                            index++;
+                            this._addResourceToCkan(index, pkg);
+                        }.bind(this), 
+                        function(progress){
+                            this.statusText = 'Uploading '+this.ds.resources[index].filename+' ('+progress+'%)...';
+                        }.bind(this)
+                    );
+                }
+            },
 
-						if( ids.indexOf( f.spectra[j].spectra_id ) != -1 ) return false;
-						else ids.push( f.spectra[j].spectra_id );
-					}
-				}
+            _removeDeletedResources : function(index, callback) {
+                if( !this.ds.editMode || this.ds.deleted.length == index ) return callback();
 
-				return true;
-			},
+                this.statusText = 'Removing deleted resources '+(index+1)+'/'+this.ds.deleted.length;
+                this.ckan.removeResource(this.ds.deleted[index], function(err, resp){
+                    // TODO: add error checking
 
-			_createSpectraJsonResource : function(pkgid) {
-				var spectra = [];
+                    index++;
+                    this._removeDeletedResources(index, callback);
+                }.bind(this));
+            },
 
-				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-					var f = this.ds.datasheets[i];
-					for( var j = 0; j < f.spectra.length; j++ ) {
-						spectra.push(f.spectra[j]);
-					}
-				}
+            _isDataUnique: function() {
+                var measurements = [];
+                var ids = [];
 
-				var uid = $('#unique-id-input').val();
-				var uidType = '';
-				if( !uid ) {
-					uid = '';
-				} else {
-					var parts = uid.split('.');
-					uidType = parts[0];
-					uid = parts[1];
-				}
+                for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                    var f = this.ds.datasheets[i];
+                    for( var j = 0; j < f.measurements.length; j++ ) {
+                        // make sure the latest uid for the spectra is generated
+                        f.measurements[j].updateUid();
 
-				var data = [];
-				for( var i = 0; i < spectra.length; i++ ) {
-					var d = {
-						metadata : spectra[i].metadata,
-						spectra : spectra[i].data,
-						filename : spectra[i].filename,
-						sheetname : spectra[i].sheetname,
-						resource_id : spectra[i].resourceId,
-						spectra_id : spectra[i].spectra_id,
-						package_id : pkgid
-					};
+                        if( ids.indexOf( f.measurements[j].measurement_id ) != -1 ) return false;
+                        else ids.push( f.measurements[j].measurement_id );
+                    }
+                }
 
-					data.push(d);
-				}
+                return true;
+            },
 
-				var dataset;
-				if( this.ds.editMode ) {
-					dataset = this.ds.existing.dataset;
+            _createDatasetJson : function(pkg) {
+                var dataset;
+                if( this.ds.editMode ) {
+                    // is there any reason for this now?
+                } else {
+                    
+                }
 
-					if( !dataset.data ) dataset.data = [];
-					if( !dataset.join ) dataset.join = [];
-					if( !dataset.group_by ) dataset.group_by = this.ds.group;
-					if( !dataset.map ) dataset.map = this.ds.inverseAttributeMap;
+                // turn into array and remove guess flag
+                var types = [], key, item;
+                var wavelengths = [];
+                var attrs = this.ds.getAllAttributeTypes();
+                for( key in attrs ) {
+                    item = attrs[key];
 
-					// move all newly joined data
-					/*for( var i = 0; i < dataset.data.length; i++ ){
-						var d = dataset.data[i];
-						if( !d.metadata.joined ) continue;
+                    if( item.flag == 3 ) {
+                        wavelengths.push(key);
+                    } else {
+                        types.push({
+                            name : key,
+                            type : item.type,
+                            flag : item.flag
+                        })
+                    }
+                    
+                }
 
-						for( var key in d.metadata.joined ) {
-							if( this._isEcosisMetadata(key) ) {
-								d.ecosis[key] = d.metadata.joined[key];
-							} else if( this.ds.inverseAttributeMap[key] ) {
-								var ecosisKey = this.ds.inverseAttributeMap[key];
-								d.ecosis[ecosisKey] = d.metadata.joined[key];
-								// still keep old reference
-								d.metadata[key] = d.metadata.joined[key];
-							} else {
-								d.metadata[key] = d.metadata.joined[key];
-							}
-						}
-						delete d.metadata.joined;
-					}*/
+                dataset = {
+                    attributes : {
+                        dataset : this.ds.datasetAttributes,
+                        types : types,
+                        wavelengths : wavelengths,
+                        modifications : this.ds.attributeModifications,
+                        map : this.ds.inverseAttributeMap
+                    },
+                    join : this._getJoinableData(),
+                    package_id : pkg.id
+                }
 
-					for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
+                return dataset;
+            },
 
-					//var joindata = this._getJoinableData();
-					//for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
-					dataset.join = this._getJoinableData();
+            _createMeasurementJson : function(pkg, callback) {
+                var measurements = [], i, f, j, ele, m;
 
-				} else {
-					dataset = {
-						data : data,
-						map  : this.ds.inverseAttributeMap,
-						join : this._getJoinableData(),
-						group_by : this.ds.group,
-						package_id : pkgid
-					}
-				};
+                var sortOn = null, sortType = null;
+                if( this.ds.datasetAttributes.sort_on && this.ds.datasetAttributes.sort_on != '' ) {
+                    sortOn = this.ds.datasetAttributes.sort_on;
+                    sortType = this.ds.datasetAttributes.sort_type;
+                }
 
-				// we need to clean all of the attribute here ...
-				for( var i = 0; i < dataset.data.length; i++ ) {
-					var metadata = dataset.data[i].metadata;
-					for( var key in metadata ) {
-						var tmp = key.replace(/[^A-Za-z0-9\s_-]/g, '');
-						if( tmp != key ) {
-							if( metadata[tmp] ) {
-								alert('Metadata Error: the attribute "'+key+'" has illegal characters.  Attempted to clean up key to "'+
-									tmp+'" but this key already exists.');
-								return;
-							}
+                for( i = 0; i < this.ds.datasheets.length; i++ ) {
+                    f = this.ds.datasheets[i];
+                    for( j = 0; j < f.measurements.length; j++ ) {
+                        ele = f.measurements[j];
+                        m = {
+                            metadata : ele.metadata,
+                            datapoints : ele.datapoints,
+                            ecosis : {
+                                filename : ele.filename,
+                                sheetname : ele.sheetname,
+                                spectra_id : ele.spectra_id,
+                                resource_id : ele.resourceId,
+                                package_id : pkg.id
+                            }
+                        };
+                        
+                        this._mapMetadata(m);
 
-							metadata[tmp] = metadata[key];
-							delete metadata[key];
-						}
-					}
-				}
+                        // Note: the sort information will be set on the server
 
-				return dataset;
-			},
+                        measurements.push(m);
+                    }
+                }
 
-			_getJoinableData: function() {
-				var arr = [];
-
-				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-					var jd = this.ds.datasheets[i];
-					if( !jd.isMetadata ) continue;
-					jd = jd.metadata;
-
-					arr.push({
-						metadata : jd.metadata,
-						join_id : jd.joinId,
-						join_on : jd.getJoinType(),
-						resource_id : jd.resourceId
-					});
-				}
-				
-				return arr;
-			},
-
-	    	_uploadSpectraResource : function(pkgId, callback) {
-	        	this.statusText = 'Uploading spectral data resource...';
-
-	        	var dataset = this._createSpectraJsonResource(pkgId);
-	        	// split out data and upload in set chunks
-
-	        	var data = dataset.data;
-	        	delete dataset.data;
-
-	        	var chunks = [];
-	        	var chunk = [];
-	        	for( var i = 0; i < data.length; i++ ) {
-	        		chunk.push(data[i]);
-	        		if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
-	        			chunks.push(chunk);
-	        			chunk = [];
-	        		}
-	        	}
-	        	if( chunk.length > 0 ) chunks.push(chunk);
-
-	        	this.ckan.addSpectraInfo(dataset, function(){
-	        		this._addSpectraData(pkgId, 0, data.length, chunks, function(){
-	        			callback();
-	        		}.bind(this));
-	        	}.bind(this));
-		    },
-
-		    _addSpectraData : function(pkgId, index, total, chunks, callback) {
-		    	if( index == chunks.length ) return callback();
-
-		    	var count = (index > 0) ? (index * this.MAX_DATA_UPLOAD_COUNT) + chunks[index].length : chunks[index].length;
-
-		    	this.statusText = 'Uploading spectral data ('+count+'/'+total+')...';
-		    	this.ckan.addSpectraData(pkgId, chunks[index], function(){
-		    		index++;
-		    		this._addSpectraData(pkgId, index, total, chunks, callback);
-		    	}.bind(this));
-		    },
-
-		    _isEcosisMetadata : function(key) {
-		    	if( esis.metadata[key] != null ) return true;
-				return false;
-		    }
+                this._lookupUSDACodes(0, measurements, callback);
+            },
 
 
-		    
-		});
-	</script>
+            _lookupUSDACodes : function(index, arr, callback) {
+                if( index == arr.length ) {
+                    return callback(arr);
+                } else {
+                    var item = arr[index];
+
+                    if( !item['USDA Code'] ) {
+                        index++;
+                        this._lookupUSDACodes(index, arr, callback);
+                        return;
+                    }
+
+                    if( this.commonCache[item['USDA Code'].toLowerCase()] != null ) {
+                        this._setUSDAName(item, this.commonCache[item['USDA Code'].toLowerCase()]);
+                        index++;
+                        this._lookupUSDACodes(index, arr, callback);
+                        return;
+                    }
+
+                    this.statusText = 'Looking up USDA code: '+item['USDA Code'].toLowerCase()+'...';
+                    this.ckan.getUsdaCommonName(item['USDA Code'].toLowerCase(), function(resp){
+                        if ( !resp.error ) {
+                            this.commonCache[item['USDA Code'].toLowerCase()] = resp.body;
+                            this._setUSDAName(item, resp.body);
+                        } else {
+                            this.commonCache[item['USDA Code'].toLowerCase()] = '';
+                        }
+                        index++;
+                        this._lookupUSDACodes(index, arr, callback);
+                        return;
+                    }.bind(this));
+                }
+            },
+
+            _setUSDAName : function(item, str) {
+                if( str.length == 0 ) return;
+                
+                var parts = str.split('\r\n');
+                if( parts.length < 2 ) return;
+
+                var attrs = parts[0].replace(/"/g, '').split(',');
+                var values = parts[1].replace(/"/g, '').split(',');
+
+                for( var i = 0; i < attrs.length; i++ ) {
+                    item[attrs[i]] = values[i];
+                }
+            },
+
+
+            /**
+             * Make metadata attributes either first class cizitens (if ecosis metadata) or
+             * place in the 'custom' namespace
+             **/
+            _mapMetadata : function(sp) {
+                for( var i = 0; i < this.joinOrder.length; i++ ) {
+                    for( var key in sp.metadata[this.joinOrder[i]] ) {
+                        if( this.protectedKeys.indexOf(key) > -1 ) continue;
+
+                        sp[key] = sp.metadata[this.joinOrder[i]][key];
+                        if( this.ds.inverseAttributeMap[key] != null ) {                            
+                            sp[this.ds.inverseAttributeMap[key]] = sp.metadata[this.joinOrder[i]][key];
+                        }
+                    }
+                }
+                delete sp.metadata;
+            },
+
+
+            _createMeasurementJsonResource : function(pkgid) {
+                var measurements = [];
+
+                for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                    var f = this.ds.datasheets[i];
+                    for( var j = 0; j < f.measurements.length; j++ ) {
+                        measurements.push(f.measurements[j]);
+                    }
+                }
+
+                var uid = $('#unique-id-input').val();
+                var uidType = '';
+                if( !uid ) {
+                    uid = '';
+                } else {
+                    var parts = uid.split('.');
+                    uidType = parts[0];
+                    uid = parts[1];
+                }
+
+                var data = [];
+                for( var i = 0; i < measurements.length; i++ ) {
+                    var d = {
+                        metadata : measurements[i].metadata,
+                        datapoints : measurements[i].data,
+                        filename : measurements[i].filename,
+                        sheetname : measurements[i].sheetname,
+                        resource_id : measurements[i].resourceId,
+                        measurement_id : measurements[i].measurement_id,
+                        package_id : pkgid
+                    };
+
+                    data.push(d);
+                }
+
+                var dataset;
+                if( this.ds.editMode ) {
+                    dataset = this.ds.existing.dataset;
+
+                    if( !dataset.data ) dataset.data = [];
+                    if( !dataset.join ) dataset.join = [];
+                    if( !dataset.group_by ) dataset.group_by = this.ds.group;
+                    if( !dataset.map ) dataset.map = this.ds.inverseAttributeMap;
+
+                    // move all newly joined data
+                    /*for( var i = 0; i < dataset.data.length; i++ ){
+                        var d = dataset.data[i];
+                        if( !d.metadata.joined ) continue;
+
+                        for( var key in d.metadata.joined ) {
+                            if( this._isEcosisMetadata(key) ) {
+                                d.ecosis[key] = d.metadata.joined[key];
+                            } else if( this.ds.inverseAttributeMap[key] ) {
+                                var ecosisKey = this.ds.inverseAttributeMap[key];
+                                d.ecosis[ecosisKey] = d.metadata.joined[key];
+                                // still keep old reference
+                                d.metadata[key] = d.metadata.joined[key];
+                            } else {
+                                d.metadata[key] = d.metadata.joined[key];
+                            }
+                        }
+                        delete d.metadata.joined;
+                    }*/
+
+                    for( var i = 0; i < data.length; i++ ) dataset.data.push(data[i]);
+
+                    //var joindata = this._getJoinableData();
+                    //for( var i = 0; i < joindata.length; i++ ) dataset.join.push(joindata[i]);
+                    dataset.join = this._getJoinableData();
+
+                } else {
+                    dataset = {
+                        data : data,
+                        map  : this.ds.inverseAttributeMap,
+                        join : this._getJoinableData(),
+                        group_by : this.ds.group,
+                        package_id : pkgid
+                    }
+                };
+
+                // we need to clean all of the attribute here ...
+                for( var i = 0; i < dataset.data.length; i++ ) {
+                    var metadata = dataset.data[i].metadata;
+                    for( var key in metadata ) {
+                        var tmp = key.replace(/[^A-Za-z0-9\s_-]/g, '');
+                        if( tmp != key ) {
+                            if( metadata[tmp] ) {
+                                alert('Metadata Error: the attribute "'+key+'" has illegal characters.  Attempted to clean up key to "'+
+                                    tmp+'" but this key already exists.');
+                                return;
+                            }
+
+                            metadata[tmp] = metadata[key];
+                            delete metadata[key];
+                        }
+                    }
+                }
+
+                return dataset;
+            },
+
+            _getJoinableData: function() {
+                var arr = [];
+
+                for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                    var jd = this.ds.datasheets[i];
+                    if( !jd.isMetadata ) continue;
+                    jd = jd.metadata;
+
+                    arr.push({
+                        metadata : jd.metadata,
+                        join_id : jd.joinId,
+                        join_on : jd.getJoinType(),
+                        resource_id : jd.resourceId
+                    });
+                }
+                
+                return arr;
+            },
+
+            _uploadMeasurementResource : function(pkg, callback) {
+                this.statusText = 'Uploading measurement data resource...';
+
+                this._createMeasurementJson(pkg, function(data){
+                    console.log(data);
+
+                    // split out data and upload in set chunks
+
+                    var chunks = [];
+                    var chunk = [];
+                    for( var i = 0; i < data.length; i++ ) {
+                        chunk.push(data[i]);
+                        if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
+                            chunks.push(chunk);
+                            chunk = [];
+                        }
+                    }
+                    if( chunk.length > 0 ) chunks.push(chunk);
+
+                    this._addMeasurementData(0, data.length, chunks, function(){
+                        callback();
+                    });
+                }.bind(this));
+            },
+
+            _addMeasurementData : function(index, total, chunks, callback) {
+                if( index == chunks.length ) return callback();
+
+                var count = (index > 0) ? (index * this.MAX_DATA_UPLOAD_COUNT) + chunks[index].length : chunks[index].length;
+
+                this.statusText = 'Uploading measurements ('+count+'/'+total+')...';
+
+                var update = (index == chunks.length-1) ? true : false;
+                this.ckan.addSpectra(chunks[index], update, function(){
+                    index++;
+                    this._addMeasurementData(index, total, chunks, callback);
+                }.bind(this));
+            },
+
+            _isEcosisMetadata : function(key) {
+                if( esis.metadata[key] != null ) return true;
+                return false;
+            }
+
+
+            
+        });
+    </script>
 </polymer-element>

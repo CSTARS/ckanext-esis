@@ -13,7 +13,7 @@
 			ckan : {},
 			pkgid : '',
 
-			spectraPackageLoaded : false,
+			dataPackageLoaded : false,
 
 			ready : function() {
 				this.pkgid = this._getVar('id');
@@ -42,7 +42,7 @@
 					if( this.data[key] ) this.ds.data[key] = this.data[key];
 				}
 
-				this._getSpectraPackage(this.data.name);
+				this._getDataPackage(this.data.name);
 
 				if( !this.data.resources ) return;
 
@@ -51,22 +51,22 @@
             	}
 			},
 
-			_getSpectraPackage: function(id) {
-				this.fire('get-spectral-resource-progress', 0);
+			_getDataPackage: function(id) {
+				this.fire('get-data-resource-progress', 0);
 				this.ckan.getSpectraResource(
 					id, 
 					function(err, dataset){
-						if( err ) return alert('Failed to load Ecosis spectra resource package');
+						if( err ) return alert('Failed to load Ecosis data resource package');
 						this.ds.existing.dataset = dataset;
 
 						// set existing metadata
 						this._setExistingMetadata();
 
-						this.fire('get-spectral-resource-complete');
-						this.spectraPackageLoaded = true;
+						this.fire('get-data-resource-complete');
+						this.dataPackageLoaded = true;
 					}.bind(this),
 					function(progress){
-						this.fire('get-spectral-resource-progress', progress);
+						this.fire('get-data-resource-progress', progress);
 					}.bind(this)
 				);
 			},

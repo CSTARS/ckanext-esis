@@ -1,268 +1,471 @@
 <polymer-element name="esis-extractor">
-	<template></template>
-	<script>
-		Polymer('esis-extractor', {
+    <template></template>
+    <script>
+        Polymer('esis-extractor', {
 
-			// forceMetadata means just parse as metadata
-			run : function(contents, callback, forceMetadata) {
-				var resp = {
-					metadata : {},
-					spectra : []
-				}
+            ds : null,
 
-				var start = this._getDataStartRow(contents);
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+            },
 
-				// TODO: check if data is 'flipped'.  That means the data is in the format
-		        // header | header | header | header | header | header | header | header
-				// meta   | meta   | meta   | wave   | data   | data   | data   | data
-				// meta   | meta   | meta   | wave   | data   | data   | data   | data
-				// 
-				// vs the 'prefered'
-				// header | meta | meta | meta | meta | meta
-				// header | meta | meta | meta | meta | meta
-				// header | meta | meta | meta | meta | meta
-				// header | meta | meta | meta | meta | meta
-				// wave   | data | data | data | data | data
-				// wave   | data | data | data | data | data
-				// wave   | data | data | data | data | data
-				if( start == -1 ) {
-					console.log('no start row found');
-					var flipped = this._isFlipped(contents);
-					if( flipped ) {
-						alert('Data appears to be flipped.  Transposing...');
-						contents = this._flipData(contents);
-						start = this._getDataStartRow(contents);
+            // type - 'spectral', 'timeseries', 'metadata'
+            run : function(type, contents) {
+                var resp = {
+                    metadata : {},
+                    measurements : [],
+                    attributeTypes : {}
+                }
+
+                if( type == 'metadata' ) {
+                    var data = this._parseAsMetadata(contents);
+                    resp.joindata = data.joindata;
+                    resp.attributeTypes = data.attributeTypes;
+                    return resp;
+                }
+
+                // where are the horizontal ranges of data
+                var hRanges = this._getHRanges(contents);
+
+                // get vertical ranges. Only for datapoints in timeseries
+                var vRanges = this._getVRanges(contents, type, hRanges); 
+
+                resp.metadata = this._getFileMetadata(contents, hRanges);
+                var data = this._getMeasurements(contents, type, hRanges, vRanges);
+
+                // add the file level metadata to the attribute type list
+                for( var key in resp.metadata ) {
+                    data.attributeTypes[key] = { 
+                        guess : false,
+                        type : 'metadata',
+                        flag : this.ds.ATTR_FLAGS.IS_FILE_METADATA
+                    }
+                }
+
+                if( data.error ) {
+                    resp.error = true;
+                } else {
+                    resp.measurements = data.measurements;
+                    resp.attributeTypes = data.attributeTypes;
+                }
+
+                return resp;
+            },
+
+            _parseAsMetadata : function(contents) {
+                var joindata = [];
+                var attributeTypes = {};
+
+                for( var i = 1; i < contents.length; i++ ) {
+                    var md = {};
+                    for( var j = 0; j < contents[0].length; j++ ) {
+                        md[contents[0][j]] = contents[i][j];
+
+                        if( i == 1 ) {
+                            attributeTypes[contents[0][j]] = { 
+                                guess : false,
+                                type : 'metadata',
+                                flag : this.ds.ATTR_FLAGS.FROM_METADATA
+                            };
+                        }
+                    }
+                    joindata.push(md);
+                }
+
+                return {
+                    joindata : joindata,
+                    attributeTypes : attributeTypes
+                };
+            },
+
+            // returns the starting point after the break (in case there are multiple line breaks)
+            _getHRanges : function(contents) {
+                var ranges = [];
+
+                var cStart = 0;
+                var cStop = 0;
+                var processing = true;
+                var empty = false;
+
+                for( var i = 0; i < contents.length; i++ ) {
+                    if( contents[i].length == 0 ) empty = true;
+                    else if( contents[i][0].length == 0 ) empty = true;
+
+                    if( empty && processing ) {
+                        processing = false;
+                        ranges.push({
+                            start : cStart,
+                            stop  : cStop
+                        });
+                    } else if ( empty ) {
+                        continue;
+                    }
+
+                    if( processing ) {
+                        cStop = i;
+                    } else {
+                        processing = true;
+                        cStart = i;
+                    }
+                }
+
+                ranges.push({
+                    start : cStart,
+                    stop  : cStop
+                });
+
+                return ranges;
+            },
+
+            _getVRanges : function(contents, type, hRanges) {
+                var ranges = [];
+
+                if( type != 'timeseries' ) return ranges;
+                if( hRanges.length == 0 ) return ranges;
+
+                var startRow = 0;
+                if( hRanges.length == 2 ) {
+                    startRow = hRanges[1].start;
+                }
+
+                var row = contents[startRow];
+                var cStart = 0;
+                var cStop = 0;
+                var processing = true;
+                var empty = false;
+
+                for( var i = 0; i < row.length; i++ ) {
+                    if( row[i].length == 0 ) empty = true;
+
+                    if( empty && processing ) {
+                        processing = false;
+                        ranges.push({
+                            start : cStart,
+                            stop  : cStop
+                        });
+                    } else if ( empty ) {
+                        continue;
+                    }
+
+                    if( processing ) {
+                        cStop = i;
+                    } else {
+                        processing = true;
+                        cStart = i;
+                    }
+                }
+
+                ranges.push({
+                    start : cStart,
+                    stop  : cStop
+                });
+
+                return ranges;
+            },
+
+            _getFileMetadata : function(contents, hRanges) {
+                // if there is only one range of data, there is not file metadata
+                if( hRanges.length == 1 ) return {};
+                // if the first row doesn't have exactly two columns, there is a problem
+                if( contents[0].length != 2 ) return {};
+
+                var fileMetadata = {};
+                for( var i = 0; i <= hRanges[0].stop; i++ ) {
+                    fileMetadata[contents[i][0]] = contents[i][1];
+                }
+                return fileMetadata;
+            },
+
+            _getMeasurements : function(contents, type, hRanges, vRanges) {
+
+                // actual measurements being parsed
+                var measurements = []; 
+                // what we are guessing the attributes are (data v metadata)
+                var attributeTypes = {}; 
+
+                // we are parsing as though attribute names are vertical in column A
+                if( type == 'spectra' ) {
+
+                    var dataRange = null, metadataRange = null, guess = true;
+
+                    // there is only one range of data, it's all data and we
+                    // should guess on type
+                    if( hRanges.length == 1 ) {
+                        dataRange = hRanges[0];
+
+                    // there are two ranges of data
+                    } else if ( hRanges.length == 2 ) {
+                        // the first range is global file metadata, the second is
+                        // data and we should guess on type
+                        if( contents[0].length == 2 ) {
+                            dataRange = hRanges[1];
+
+                        // the first range is metadata and the second range is data
+                        // no need to guess on type
+                        } else {
+                            guess = false;
+                            metadataRange = hRanges[0];
+                            dataRange = hRanges[1];
+                        }
+                    
+                    // there are three ranges.  user gave use everything via format
+                    } else if( hRanges.length > 2 ) {
+                        guess = false;
+                        metadataRange = hRanges[1];
+                        dataRange = hRanges[2];
+                    }
+
+                    if( !dataRange ) return {error : true};
+
+                    // find what rows are thought to be data (match numberic value) or metadata (doesn't)
+                    var dataRows = this._findDataRows(contents, dataRange.start);
+
+                    var len = contents[dataRange.start].length, i, j;
+                    for( i = 1; i < len; i++ ) {
+                        var measurement = {
+                            metadata : {},
+                            datapoints : []
+                        };
+
+                        // add metadata range for this column
+                        if( metadataRange ) {
+                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
+                                // add known metadata from metadata range
+                                measurement.metadata[contents[j][0]] = contents[j][i];
+
+                                // mark the attribute type on first pass
+                                if( i == 1 ) {
+                                    attributeTypes[contents[j][0]] = { 
+                                        guess : false,
+                                        type : 'metadata',
+                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                    };
+                                }
+                            }
+                        }
+
+                        // add datarange for this column
+                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                            var key = contents[j][0];
+
+                            // this is data
+                            if( dataRows[key] || !guess ) {
+                                measurement.datapoints.push({
+                                    key : key,
+                                    value : contents[j][i]
+                                });
+
+                                // this is a numberic or we are not guessing
+                                // either way type is implied
+                                if( i == 1 ) {
+                                    attributeTypes[key] = { 
+                                        guess : false,
+                                        type : 'data',
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_FILE_DATA
+                                    };
+                                }
+
+                            // this is metadata
+                            } else {
+                            
+                                // we are guess, by default we will say 'metadata', but check
+                                // any specified values first
+                                var type = 'metadata';
+                                if( this.ds.attributeModifications[key] ) {
+                                    type = this.ds.attributeModifications[key];
+                                }
+
+                                // set to correct type
+                                if( type == 'metadata' ) {
+                                    measurement.metadata[key] = contents[j][i];
+                                } else {
+                                    measurement.datapoints.push({
+                                        key: key,
+                                        value : contents[j][i]
+                                    });
+                                }
 
 
-						console.log(contents);
-					
-					//	alert('data is flipped');
-					//	return callback(null, resp);
-					}
-				}
+                                if( i == 1 ) {
+                                    attributeTypes[key] = { 
+                                        guess : guess,
+                                        type : type,
+                                        flag : this.ds.ATTR_FLAGS.FROM_MIXED_FILE
+                                    };
+                                }
+                            }
+                        }
 
-				var headers = [];
-				if( start > -1 ) {
-					var spectra = this._getData(start, contents);
+                        measurements.push(measurement);
+                    }
 
-					headers = this._getHeaderData(start-1, resp.spectra.length > 0 ? resp.spectra[0].length : 0 , contents);
+                // we are parsing as though attribute names are in a row with values
+                // in column below
+                } else if ( type == 'timeseries' ) {
+                    var startRow = 0;
+                    var stopRow = 0;
+                    var dataRange = null, metadataRange = null, guess = true;
 
-					var itemHeaders = [];
-					if( headers.length > 0 ) {
-						for( var j = 1; j < headers[0].length; j++ ) {
-							var h = {};
-							for( var i = 0; i < headers.length; i++ ) {
-								h[headers[i][0]] = headers[i][j];
-							}
-							itemHeaders.push(h);
-						}
-					}
+                    // there is only one range of data, no global file metadata provided
+                    if( hRanges.length == 1 ) {
+                        startRow = hRanges[0].start;
+                        stopRow = hRanges[0].stop;
+                        
+                    // user provided file metadata
+                    } else if ( hRanges >= 2 ) {
+                        startRow = hRanges[1].start;
+                        stopRow = hRanges[1].stop;
+                    }
 
-					var itemSpectra = [];
-					if( spectra.length > 0 ) {
-						for( var j = 1; j < spectra[0].length; j++ ) {
-							var s = [];
-							for( var i = 0; i < spectra.length; i++ ) {
-								s.push([spectra[i][0], spectra[i][j]]);
-							}
-							itemSpectra.push(s);
-						}
-					}
+                    // only one data group, guess on type 
+                    if( vRanges.length == 1 ) {
+                        dataRange = vRanges[0];
 
-					if( itemHeaders.length > 0 && itemSpectra.length > 0 ) {
-						for( var i = 0; i < itemHeaders.length; i++ ) {
-							resp.spectra.push({
-								metadata : itemHeaders[i],
-								data  : itemSpectra[i]
-							});
-						}
-					} else if( itemSpectra.length > 0 ) {
-						for( var i = 0; i < itemSpectra.length; i++ ) {
-							resp.spectra.push({
-								metadata : [],
-								data  : itemSpectra[i]
-							});
-						}
+                    // user has specified metadata and data, no need to guess on type
+                    } else if ( vRanges.length > 1 ) {
+                        metadataRange = vRanges[0];
+                        dataRange = vRanges[1];
+                        guess = false;
+                    }
 
-					} else if( itemHeaders.length > 0 ) {
-						for( var i = 0; i < itemHeaders.length; i++ ) {
-							resp.spectra.push({
-								metadata : itemHeaders[i],
-								data  : itemSpectra[i]
-							});
-						}
-					}
+                    if( !dataRange ) return {error : true};
 
-				}
+                    var dataCols = {};
+                    if( guess ) {
+                        dataCols = this._findDataCols(contents, startRow);
+                    }
 
-				resp.metadata = this._getMetadata(start-headers.length, contents);
+                    var i, j, row, measurement, key;
 
-				if( Object.keys(resp.metadata).length == 0 && resp.spectra.length == 0 ) {
-					if( contents.length > 1 ) {
-						if( contents[0].length > 1 ) {
-							resp.joindata = contents;
-						} 
-					}
-				}
+                    // the actual 'startRow' should be the row of attribute names
+                    for( i = startRow+1; i < stopRow; i++ ) {
+                        measurement = {
+                            metadata : {},
+                            datapoints : []
+                        };
+                        row = contents[i];
 
-				resp.raw = contents;
+                        // if we have a metadata block, add the metadata
+                        if( metadataRange ) {
+                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
+                                 measurement.metadata[contents[startRow][j]] = row[j];
 
-				callback(null, resp);
-			},
+                                // on first pass, keep track of attribute information
+                                if( i == startRow+1 ) {
+                                    attributeTypes[contents[j][0]] = { 
+                                        guess : false,
+                                        type : 'metadata',
+                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                    };
+                                }
+                            }
+                        }
 
-			_getMetadata : function(max, contents) {
-				var metadata = [];
-				for( var i = 0; i < max; i++ ) {
-					if ( contents[i].length > 0 && typeof contents[i][0] == 'string' && contents[i][0].length >= 0 ) {
-						metadata.push(contents[i]);
-					}
-				}
-				return this._parseMetadata(metadata);
-			},
+                        // add datarange for this column
+                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                            key = contents[startRow][j];
 
-			_parseMetadata : function(metadata) {
-				if( metadata.length == 0 ) return {};
+                            // this is data
+                            if( dataCols[key] || !guess ) {
+                                measurement.datapoints.push({
+                                    key : key,
+                                    value : row[j]
+                                });
 
-				var m = {};
-				if( this._isTwoColMeta(metadata) ) {
-					for( var i = 0; i < metadata.length; i++ ) {
-						if( metadata[i][0] != '' ) {
-							m[metadata[i][0]] = metadata[i][1];
-						}	
-					}
-					return m;
-				}
+                                // mark the attribute type on first pass
+                                if( i == startRow+1 ) {
+                                    attributeTypes[key] = { 
+                                        guess : false,
+                                        type : 'data',
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_FILE_DATA
+                                    };
+                                }
 
-				if( this._isColonSplit(metadata) ) {
-					return this._parseColonSplitMeta(metadata);
-				}
+                            // this is metadata
+                            } else {
+                               
+                                // we are guess, by default we will say 'metadata', but check
+                                // any specified values first
+                                var type = 'metadata';
+                                if( this.ds.attributeModifications[key] ) {
+                                    type = this.ds.attributeModifications[key];
+                                }
 
-				var m = {};
-				for( var i = 0; i < metadata.length; i++ ) {
-					m['field'+i] = metadata[i][0];
-				}
-				return m;
-			},
+                                // set to correct type
+                                if( type == 'metadata' ) {
+                                    measurement.metadata[key] = row[j];
+                                } else {
+                                    measurement.datapoints.push({
+                                        key: key,
+                                        value : row[j]
+                                    });
+                                }
 
-			_parseColonSplitMeta : function(metadata) {
-				var cKey, cVal, m = {}, r, p;
-				for( var i = 0; i < metadata.length; i++ ) {
-					r = metadata[i][0];
-					p = r.split(': ');
-					if( p.length > 1 ) {
-						cKey = p[0];
-						m[cKey] = p[1].replace(/^\s*/,'');
-					} else if( typeof r == 'string' && r.length > 0 ) {
-						m[cKey] = m[cKey]+r;
-					}
-				}
-				return m;
-			},
+                                // mark the attribute type on first pass
+                                if( i == startRow+1 ) {
+                                    attributeTypes[key] = { 
+                                        guess : guess,
+                                        type : type,
+                                        flag : this.ds.ATTR_FLAGS.FROM_MIXED_FILE
+                                    };
+                                }
+                            }
+                        }
 
-			_isTwoColMeta : function(metadata) {
-				for( var i = 0; i < metadata.length; i++ ) {
-					if( this._getRowLength(metadata[i]) == 1 ) return false;
-					if( typeof metadata[i][0] != 'string' ) return false;
-					if( metadata[i][0].length == 0 && i != (metadata.length-1)) return false;
-				}
-				return true;
-			},
+                        measurements.push(measurement);
+                    }
+                }
 
-			// get the number off cells that have consecutive values
-			_getRowLength : function(arr) {
-				var c = 0;
-				for( var i = 0; i < arr.length; i++ ) {
-					if( arr[i] && arr[i] != '' ) c++;
-					else return c;
-				}
-				return c;
-			},
-
-			_isColonSplit : function(metadata) {
-				if( metadata[0].length == 0 ) return false;
-				if( typeof metadata[0][0] != 'string' ) return false;
-				if( metadata[0][0].match(/.*:\s.*/ ) ) return true;
-				return false;
-			},
-
-			_getData : function(start, contents) {
-				var data = [];
-				for( var i = start; i < contents.length; i++ ) {
-					if( contents[i].length == 0 ) break;
-					if( contents[i][0].length == 0 ) break;
-
-					data.push(contents[i]);
-				}
-				return data;
-			},
+                return {
+                    measurements : measurements,
+                    attributeTypes : attributeTypes
+                }
+            },
 
 
-			// loop back, while you have text, keep looping
-			_getHeaderData : function(start, dataLength, contents) {
-				var headers = [];
-				for( var i = start; i >= 0; i-- ) {		
-					if( contents[i].length == 0 || contents[i].length < dataLength) {
-						return headers;
-					} else if ( typeof contents[i][0] == 'string' && contents[i][0].length == 0 ) {
-						return headers;
-					} else if( typeof contents[i][0] == 'string' ) {
-						headers.push(contents[i]);
-					}
-				}
-				return headers;
-			},
+            // attempt to sniff out data columns.
+            _findDataCols : function(content, startRow) {
+                var data = {};
 
-			_getDataStartRow : function(contents) {
-				// if the first two numbers parse as floats, we have hit the data
-				var startRow, r;
-				for( startRow = 0; startRow < contents.length; startRow++ ) {
-					if( contents[startRow].length > 0 ) {
-						r = contents[startRow];
-						if( this._areCellsNumberic(r[0], r[1]) ) return startRow;
-					}
-				}
-				return -1;
-			},
+                for( var i = 0; i < content[startRow].length; i++ ) {
+                    var key = content[startRow][i];
+            
+                    if( key.match(/^-?\d+\.?\d*$/) || key.match(/^-?\d*\.\d+$/) ) {
+                        data[key] = true;
+                    } else {
+                        data[key] = false;
+                    }
+                    
+                }
 
-			// go through the second row and see if you can find two where numberics run on
-			_isFlipped : function(contents) {
-				if( contents.length < 2 ) return false;
+                return data;
+            },
 
-				var row = contents[1];
-				for( var col = 0; col < contents.length-1; col++ ) {
-					if( this._areCellsNumberic(row[col], row[col+1]) ) {
-						return true;
-					}
-				}
-				return false;
-			},
+            // any attribute name that matches a numberic value will be assumed wavelength and
+            // marked as data, otherwise it will be assumed as metadata.  This is for when
+            // the user doesn't add the second break to their file
+            _findDataRows : function(content, startRow) {
+                var data = {};
+                var re1 = /^-?\d+\.?\d*$/;
+                var re2 = /^-?\d*\.\d+$/;
 
-			_flipData : function(contents) {
-				var flipped = [], row;
-				for(var i = 0; i < contents[0].length; i++ ) {
-					row = [];
-					for( var j = 0; j < contents.length; j++ ) {
-						row.push(contents[j][i]);
-					}
-					flipped.push(row);
-				}
+                for( var i = startRow; i < content.length; i++ ) {
+                    var key = content[i][0];
 
-				return flipped;
-			},
+                    if( re1.exec(key) || re2.exec(key) ) {
+                        data[key] = true;
+                    } else {
+                        data[key] = false;
+                    }
+                    
+                }
 
-			_areCellsNumberic : function(cell1, cell2) {
-				if( !cell1 || !cell2 ) return false;
+                return data;
+            }
 
-				try {
-					var t1 = cell1.replace(/\s/g,'').match(/^\d+.?\d*$/);
-					var t2 = cell2.replace(/\s/g,'').match(/^\d+.?\d*$/);
 
-					// check they parse to floats
-					if( t1 && t2 ) return true;
-				} catch(e) {}
-				
-				return false;
-			}
-		});
-	</script>
+        });
+    </script>
 </polymer-element>

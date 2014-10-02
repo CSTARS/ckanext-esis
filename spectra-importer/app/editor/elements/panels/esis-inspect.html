@@ -1,8 +1,8 @@
 <link rel="import" href="../../components/paper-tabs/paper-tabs.html" />
-<link rel="import" href="../ui/esis-ui-spectra.html" />
+<link rel="import" href="../ui/esis-ui-measurement.html" />
 <link rel="import" href="../ui/esis-ui-datasheet.html" />
 
-<polymer-element name="esis-parsed-spectra">
+<polymer-element name="esis-inspect">
 	<template>
 		<style>
 			paper-tabs::shadow #selectionBar {
@@ -45,56 +45,48 @@
 
 
 		<esis-ui-card style="padding:15px">
-	    	<paper-tabs selected="{{selectedTab}}">
-			    <paper-tab>Spectra View</paper-tab>
-			    <paper-tab>Datasheet View</paper-tab>
-			</paper-tabs>
+			<div>
+				<h2>
+					<div layout horizontal>
+						<div>
+							{{measurements.length}} Spectra Found
+						</div>
+						<div flex style="text-align:right">
+							<span class="s-selector">
+								Select Spectra: 
+								<select id="spectraSelector" on-change="{{_selectSpectra}}">
+									<template repeat="{{sp,i in measurements}}">
+										<option value="{{i}}">{{i+1}}</option>
+									</template>
+								</select>
+							</span>
+						</div>
+					</div>
+				</h2>
 
+				<a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
+                    <core-icon icon="settings"></core-icon> Configure Attributes
+                </a>
 
-			<div hidden?="{{selectedTab == 0}}">
-				<template repeat="{{datasheet in spectraDatasheets}}">
-					<esis-ui-datasheet datasheet="{{datasheet}}"></esis-ui-datasheet>
-				</template>
-			</div>
-			<div hidden?="{{selectedTab == 1}}">
-				<h2>{{spectra.length}} Spectra Found</h2>
-				<div>
-					<span class="bs-label success-label">File Level Metadata</span> 
-					<span class="bs-label info-label">Spectra Level Metadata</span> 
-					<span class="bs-label warning-label">Linked Metadata</span> <br>
-					<div style="color:#888;padding:8px;font-size:14px">* Custom non-ecosis field</div>
-				</div>
-
-				<div class="s-selector">
-					Select Spectra: 
-					<select id="spectraSelector" on-change="{{_selectSpectra}}">
-						<template repeat="{{sp,i in spectra}}">
-							<option value="{{i}}">{{i+1}}</option>
-						</template>
-					</select>
-				</div>
-
-				<esis-ui-spectra id="spectraUI" spectra="{{selectedSpectra}}"></esis-ui-spectra>
+				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}"></esis-ui-measurement>
 			</div>
 		</esis-ui-card>
 
 	</template>
 	<script>
-		Polymer('esis-parsed-spectra', {
+		Polymer('esis-inspect', {
 			
 			menuItem : null,
 
-			selectedTab : 0,
-
 			spectraDatasheets : [],
 			datasheets : [],
-			spectra    : [],
+			measurements    : [],
+			attachedHandlers : [],
 
 			selectedSpectra : {},
 
 			observe : {
-				datasheets : '_update',
-				selectedTab : '_onTabChange'
+				datasheets : '_update'
 			},
 
 			ready : function() {
@@ -103,43 +95,46 @@
 				 		this.datasheets = document.querySelector('esis-datastore').datasheets;
 				 	});
 				}.bind(this));
-
-				// see if we need to poke the spectra UI panel
-				$(window).on('hashchange', function(){
-					if( window.location.hash.replace(/#/g,'') == 'parsed-spectra' ) {
-						this._onTabChange();
-					}
-				}.bind(this));
 			},
 
 			_update : function() {
 				this.async(function(){
-					this.spectra = [];
-					this.spectraDatasheets = [];
+					this.measurements = [];
+					this.measurementDatasheets = [];
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						var f = this.datasheets[i];
-						if( !f.isMetadata ) {
-							this.spectraDatasheets.push(f);
+
+						// listen for updates, make sure we only attach once
+						if( this.attachedHandlers.indexOf(f) == -1 ) {
+							this.attachedHandlers.push(f);
+							f.addEventListener('datasheet-updated', function(){
+								this._update();
+							}.bind(this));
 						}
-						for( var j = 0; j < f.spectra.length; j++ ) {
-							this.spectra.push(f.spectra[j]);
+
+						if( !f.isMetadata ) {
+							this.measurementDatasheets.push(f);
+						}
+
+						for( var j = 0; j < f.measurements.length; j++ ) {
+							this.measurements.push(f.measurements[j]);
 						}
 					}
 
-					if( this.spectra.length > 0 ) {
-						this.selectedSpectra = this.spectra[0];
+					if( this.measurements.length > 0 ) {
+						this.selectedSpectra = this.measurements[0];
 					}
 
 					this._updateVisibility();
-					this.menuItem.setSecondaryHtml(this.spectra.length+' Spectra Found');
+					this.menuItem.setSecondaryHtml(this.measurements.length+' Spectra Found');
 				});
 			},
 
 			_updateVisibility : function() {
 				var display = 'none';
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].spectra.length > 0 ) {
+					if( this.datasheets[i].measurements.length > 0 ) {
 						display = 'block';
 						break;
 					}
@@ -147,12 +142,13 @@
 				this.menuItem.style.display = display;
 			},
 
-			_onTabChange : function() {
-				if( this.selectedTab == 0 ) this.$.spectraUI.show();
+			onShow : function() {
+				this._update();
+				this.$.measurementUI.show();
 			},
 
 			_selectSpectra : function() {
-				this.selectedSpectra = this.spectra[parseInt(this.$.spectraSelector.value)];
+				this.selectedSpectra = this.measurements[parseInt(this.$.spectraSelector.value)];
 			},
 
 			_gotoAttrMap : function() {
@@ -165,6 +161,10 @@
 
 			_gotoGroup : function() {
 				window.location.hash = '#group-by';
+			},
+
+			_goToAttrSettings : function() {
+				window.location.hash = 'attribute-settings'
 			}
 
 		});

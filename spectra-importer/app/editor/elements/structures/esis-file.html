@@ -25,6 +25,8 @@
 				raw : '_parse'
 			},
 
+			defaultDataType : '',
+
 			// references to child datasheets and resources
 			datasheets : [],
 			resources : [],
@@ -182,7 +184,7 @@
 			},
 
 			_onIngestComplete : function(files) {
-				debugger;
+
 
 				// do we need to add the zip file?
 				if( (!this.parseZip && this.info.isZip) || !this.info.isZip ) {
@@ -207,6 +209,10 @@
 							if( !map[resourceName] ) map[resourceName] = [datasheet];
 							else map[resourceName].push(datasheet);
 						}
+
+						datasheet.dataType = this.defaultDataType;
+						datasheet.init = true;
+
 						this.datasheets.push(datasheet);
 
 						// set reference for next loop
@@ -218,10 +224,14 @@
 					var f = files[i];
 					if( f.info.type == 'resource' || f.info.type == 'both' ) {
 						var resource = ds.addResource(f, map[f.info.name]);
-						if( f.datasheet ) resource.datasheets.push(f.datasheet);
+						if( f.datasheet ) {
+							resource.datasheets.push(f.datasheet);
+						}
 						this.resources.push(resource);
 					}
 				}
+
+				this.fire('ingest-complete');
 
 			},
 
