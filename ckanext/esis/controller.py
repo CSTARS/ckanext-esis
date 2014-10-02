@@ -12,7 +12,8 @@ from ckan.lib.base import c, model, BaseController
 import ckan.logic as logic
 import ckan.lib.helpers as h
 from ckan.common import request, response
-import ckan.lib.uploader as uploader
+import inspect
+from bson.code import Code
 
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
@@ -26,25 +27,67 @@ db = client[config._process_configs[1]['esis.mongo.db']]
 spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection']]
 packageCollection = db[config._process_configs[1]['esis.mongo.package_collection']]
 metadataCollection = db[config._process_configs[1]['esis.mongo.metadata_collection']]
+searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
 
 
 class SpectraController(PackageController):
+    mapreduce = {}
+
+    def __init__(self):
+        localdir = re.sub(r'/\w*.py', '', inspect.getfile(self.__class__))
+
+        # read in mapreduce strings
+        f = open('%s/map.js' % localdir, 'r')
+        self.mapreduce['map'] = f.read()
+        f.close()
+
+        f = open('%s/reduce.js' % localdir, 'r')
+        self.mapreduce['reduce'] = f.read()
+        f.close()
+
+
+    def test(self):
+        t = 2
 
     # Takes an array of spectra and adds to mongo spectra collection
-    def add(self):
-        datapoints = self.parse_json(request.params.get('datapoints'))
+    # all the spectra should be for the same package
+    def addSpectra(self):
+        spectra = self.parse_json(request.params.get('spectra'))
+        update = request.params.get('updateIndex')
+        pkgId = spectra[0]['ecosis']['package_id']
 
         inserted = 0
         ignored = 0
 
+        # get the ckan packge, this will error if they don't have access
+        context = {'model': model, 'user': c.user}
+        ckanPackage = logic.get_action('package_show')(context, {'id': pkgId})
+
+        packageData = packageCollection.find_one({'package_id': pkgId})
+        if packageData == None:
+            return json.dumps({
+                'error' : True,
+                'message' : 'No package data exists for this spectra'
+            })
+
         # how do we want to display this back to user?
-        for point in datapoints:
-            if 'package_id' or 'resource_id' not in point['ecosis']:
+        for measurement in spectra:
+            if 'package_id' not in measurement['ecosis'] or 'resource_id' not in measurement['ecosis']:
                 ignored += 1
                 continue
 
-            spectraCollection.insert(point)
+            # make sure all of the sort information is correct
+            self._set_sort(measurement, packageData['attributes']['dataset'])
+            self._set_ckan_pkg_attrs(measurement, ckanPackage)
+
+            spectraCollection.insert(measurement)
             inserted += 1
+
+        # should we update the search index by running mapreduce for this package
+        if update == 'true':
+            map = Code(self.mapreduce['map'])
+            reduce = Code(self.mapreduce['reduce'])
+            packageCollection.map_reduce(map, reduce, searchCollectionName, query={"ecosis.package_id": pkgId})
 
         return json.dumps({
             'success': True,
@@ -64,10 +107,10 @@ class SpectraController(PackageController):
             isUpdate = True
             packageData['_id'] = pkg['_id']
 
-        # pull out metadata for insert if there is any
-        if 'metadata' in packageData:
-            metadata = packageData['metadata']
-            del packageData['metadata'] # remove from packageData document
+        # pull out joinable metadata for insert if there is any
+        if 'join' in packageData:
+            metadata = packageData['join']
+            del packageData['join'] # remove from packageData document
 
             for item in metadata:
                 metadataCollection.insert(item)
@@ -79,20 +122,27 @@ class SpectraController(PackageController):
             for key, value in packageData['attributes']['map']:
                 map[value] = key
 
+            # get the actual ckan package
+            context = {'model': model, 'user': c.user}
+            ckanPackage = logic.get_action('package_show')(context, {'id': packageData['package_id']})
+
             cur = spectraCollection.find({'ecosis.package_id': packageData['package_id']})
             for spectra in cur:
                 self._rejoin_metadata(spectra, metadata, packageData['attributes'])
                 self._transpose_attributes_by_type(spectra, packageData['attributes'])
                 self._map_attribute_names(spectra, map)
-                self._set_sort(spectra, packageData['dataset'])
+                self._set_sort(spectra, packageData['attributes']['dataset'])
+                self._set_ckan_pkg_attrs(spectra, ckanPackage)
 
                 spectraCollection.update(spectra)
 
         # now update or insert
         if isUpdate:
-            packageData.update(packageData)
+            packageCollection.update(packageData)
         else:
-            packageData.insert(packageData)
+            packageCollection.insert(packageData)
+
+        # now run partial map reduce, just for this package_id
 
     def deletePackage(self):
         params = self._get_request_data(request)
@@ -131,9 +181,14 @@ class SpectraController(PackageController):
     # if we have a sort variable, it should be in the metadata and datapoints locations
     # in a spectra.  It should also be set in spectra.ecosis.sort namespace
     def _set_sort(self, spectra, datasetAttrs):
-        if 'sort_on' not in datasetAttrs:
-            return
-        if datasetAttrs['sort_on'] == None or datasetAttrs['sort_on'] == '':
+        # set group and location information
+        for attr in ['group_by', 'location', 'sort_on']:
+            if attr in datasetAttrs:
+                spectra['ecosis'][attr] = datasetAttrs[attr]
+            else:
+                spectra['ecosis'][attr] = None
+
+        if spectra['ecosis']['sort_on'] == None or spectra['ecosis']['sort_on'] == '':
             return
 
         # find the sort attribute in the data points
@@ -171,6 +226,22 @@ class SpectraController(PackageController):
                     spectra['ecosis']['sort'] = val
             except:
                 spectra['ecosis']['sort'] = None
+
+    def _set_ckan_pkg_attrs(self, spectra, pkg):
+        spectra['ecosis']['package_name'] = pkg['name']
+        spectra['ecosis']['package_title'] = pkg['title']
+        spectra['ecosis']['groups'] = pkg['groups']
+
+        try:
+            spectra['ecosis']['created'] = dateutil.parser.parse(pkg['metadata_created'])
+        except:
+            spectra['ecosis']['created'] = None
+
+        try:
+            spectra['ecosis']['modified'] = dateutil.parser.parse(pkg['metadata_modified'])
+        except:
+            spectra['ecosis']['modified'] = None
+
 
     # make sure all mapped names are set
     def _map_attribute_name(self, spectra, map):
@@ -434,6 +505,9 @@ class SpectraController(PackageController):
         return "Redirecting"
 
     def parse_json(self, jsonstr):
+        if jsonstr == None:
+            raise Exception("No JSON provided")
+
         q = Queue()
         p = Process(target=sub_parse_json, args=(q, jsonstr,))
         p.start()

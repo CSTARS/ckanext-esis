@@ -70,6 +70,11 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('add_spectra_package', '/spectra/addInfo', controller=controller, action='addInfo')
         map.connect('update_spectra_package', '/spectra/addData', controller=controller, action='addData')
         map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
+
+        map.connect('add_spectra_test', '/spectra/test', controller=controller, action='test')
+
+        map.connect('add_spectra_data', '/spectra/addSpectra', controller=controller, action='addSpectra')
+        map.connect('add_update_package', '/spectra/addUpdatePackage', controller=controller, action='addUpdatePackage')
         map.connect('get_usda_common_name', '/spectra/getUsdaCommonName', controller=controller, action='getUSDACommonName')
 
         # route all resource edit screens to main ecosis dataset editor
