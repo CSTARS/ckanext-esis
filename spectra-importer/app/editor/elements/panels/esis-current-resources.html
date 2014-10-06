@@ -86,35 +86,38 @@
 			},
 
 			_groupData : function(res) {
+
 				var ui = {
 					name : res.name,
 					id   : res.id,
-					type : ''
+					type : 'Generic',
+					count : 'NA'
 				};
 
-				if( this.ds.existing.dataset.join ) {
-					for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
-						var join = this.ds.existing.dataset.join[i];
-						if( res.id == join.resource_id ) {
-							ui.type = 'Metadata';
-							return ui;
-						}
-					}
-				}
+				var spCount = this._isData(res.id) 
 
-				if( this.ds.existing.dataset.data ){
-					for( var i = 0; i < this.ds.existing.dataset.data.length; i++ ) {
-						if( this.ds.existing.dataset.data[i].resource_id == res.id ) {
-							ui.type = 'Spectra';
-							if( ui.count == null ) ui.count = 1;
-							else ui.count++;
-						}
-					}
+				if( spCount > -1 ) {
+					ui.count = spCount;
+					ui.type = 'Spectra';
+				} else if( this._isMetdata(res.id) ) {
+					ui.type = 'Metadata';
 				}
-
-				if( ui.type == '' ) ui.type = 'Generic';
 
 				return ui;
+			},
+
+			_isMetdata : function(id) {
+				for( var i = 0; i < this.ds.existing.metadata.length; i++ ) {
+					if( this.ds.existing.metadata[i].resource_id == id ) return true;
+				}
+				return false;
+			},
+
+			_isData : function(id) {
+				for( var i = 0; i < this.ds.existing.data.length; i++ ) {
+					if( this.ds.existing.data[i].resource_id == id ) return this.ds.existing.data[i].spectra_count;
+				}
+				return -1;
 			},
 
 			_updateVisibility : function() {
@@ -124,7 +127,7 @@
 					return;
 				}
 
-				if( Object.keys(this.ds.existing.dataset).length > 0 || this.ds.existing.resources.length > 0) {
+				if( this.ds.existing.resources.length > 0) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';
