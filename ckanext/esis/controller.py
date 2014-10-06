@@ -34,7 +34,7 @@ class SpectraController(PackageController):
     mapreduce = {}
 
     def __init__(self):
-        localdir = re.sub(r'/\w*.py', '', inspect.getfile(self.__class__))
+        localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
 
         # read in mapreduce strings
         f = open('%s/map.js' % localdir, 'r')
@@ -52,6 +52,7 @@ class SpectraController(PackageController):
     # Takes an array of spectra and adds to mongo spectra collection
     # all the spectra should be for the same package
     def addSpectra(self):
+        response.headers["Content-Type"] = "application/json"
         spectra = self.parse_json(request.params.get('spectra'))
         update = request.params.get('updateIndex')
         pkgId = spectra[0]['ecosis']['package_id']
@@ -96,6 +97,7 @@ class SpectraController(PackageController):
         })
 
     def addUpdatePackage(self):
+        response.headers["Content-Type"] = "application/json"
         packageData = self.parse_json(request.params.get('package'))
 
         metadata = []
@@ -113,6 +115,7 @@ class SpectraController(PackageController):
             del packageData['join'] # remove from packageData document
 
             for item in metadata:
+                item['package_id'] = packageData['package_id']
                 metadataCollection.insert(item)
 
         # now transpose existing data
@@ -142,9 +145,62 @@ class SpectraController(PackageController):
         else:
             packageCollection.insert(packageData)
 
-        # now run partial map reduce, just for this package_id
+        return json.dumps({'success': True})
+
+    def getPackage(self):
+        response.headers["Content-Type"] = "application/json"
+        id = request.params.get('id')
+
+        # make sure they have access
+        context = {'model': model, 'user': c.user}
+        ckanPackage = logic.get_action('package_show')(context, {'id': id})
+
+        pkg = packageCollection.find_one({'package_id': ckanPackage['id']}, {'_id': 0, 'package_id':0, 'package_name':0})
+        ckanPackage['ecosis'] = pkg
+        ckanPackage['ecosis']['metadata'] = []
+
+        # lookup information about metadata resources
+        cur = metadataCollection.find({'package_id': ckanPackage['id']}, {'metadata':0, '_id':0,'package_id':0})
+        for metadata in cur:
+            ckanPackage['ecosis']['metadata'].append(metadata)
+
+        # look up information about data files
+        # this will return counts as well
+        query = db.spectra.aggregate([{
+                "$match" : { "ecosis.package_id" : ckanPackage["id"] },
+            },
+            {
+                "$group" : {
+                    "_id" : "$ecosis.resource_id",
+                    "count" : { "$sum" : 1 }
+                }
+             }
+        ])
+        ckanPackage['ecosis']['data'] = []
+        for resource in query['result']:
+            ckanPackage['ecosis']['data'].append({
+                'resource_id' : resource['_id'],
+                'spectra_count' : resource['count']
+            })
+
+
+        return json.dumps(ckanPackage)
+
+    def getMetadata(self):
+        response.headers["Content-Type"] = "application/json"
+        id = request.params.get('id')
+
+        # make sure they have access
+        context = {'model': model, 'user': c.user}
+        ckanResource = logic.get_action('resource_show')(context, {'id': id})
+
+        metadata = metadataCollection.find_one({'resource_id': id}, {'_id': 0})
+        ckanResource['ecosis'] = metadata
+
+        return json.dumps(ckanResource)
 
     def deletePackage(self):
+        response.headers["Content-Type"] = "application/json"
         params = self._get_request_data(request)
 
         context = {'model': model, 'user': c.user}
@@ -168,15 +224,16 @@ class SpectraController(PackageController):
         metadata = metadataCollection.find_one({'resource_id': id})
         if metadata != None:
             pkg = packageCollection.find_one({'package_id': metadata['package_id']})
-
             metadataCollection.remove({'resource_id': id})
-
             metadata = self._get_metadata_for_package(pkg['id'])
 
             cur = spectraCollection.find({'ecosis.package_id': pkg['package_id']})
             for spectra in cur:
                 self._rejoin_metadata(spectra, metadata, pkg['attributes'])
                 spectraCollection.update(spectra)
+
+        # now remove any spectra that were related
+        spectraCollection.remove({'ecosis.resource_id': id})
 
     # if we have a sort variable, it should be in the metadata and datapoints locations
     # in a spectra.  It should also be set in spectra.ecosis.sort namespace
@@ -305,11 +362,15 @@ class SpectraController(PackageController):
 
         # remove all attributes of type join
         for attr, typeInfo in attributeInfo['types'].iteritems():
+            # see the esis-datastore element for all flag types.  #1 is FROM_METADATA
             if typeInfo['flag'] != 1:
                 continue
 
+            # remove the attribute
             self._remove_attribute(spectra, attr)
 
+            # see if this was a custom attribute that was mapped to a different name
+            # if so, remove that attribute as well
             mappedName = attributeInfo['map'][attr]
             if mappedName != None:
                 self._remove_attribute(spectra, attr, map)
@@ -397,6 +458,7 @@ class SpectraController(PackageController):
         else:
             packageCollection.insert(info)
 
+        response.headers["Content-Type"] = "application/json"
         return json.dumps({'success':True})
 
     def addData(self):
@@ -418,6 +480,7 @@ class SpectraController(PackageController):
         for item in data['spectra']:
             self._merge_and_insert(item, currentData)
 
+        response.headers["Content-Type"] = "application/json"
         return json.dumps({'success':True})
 
     def _merge_and_insert(self, item, currentData):
@@ -442,6 +505,7 @@ class SpectraController(PackageController):
 
         spectraCollection.remove({'resource_id':params['id']})
 
+        response.headers["Content-Type"] = "application/json"
         return json.dumps({'success': True})
 
     # replicating default param parsing in ckan... really python... really...
