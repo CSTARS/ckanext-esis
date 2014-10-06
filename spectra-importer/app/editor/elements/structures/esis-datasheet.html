@@ -56,7 +56,7 @@
 			// run the extractor again
 			// most likely called when the dataType changes
 			_extract : function(oldVal, newVal) {
-				if( oldVal === '' ) return;
+				if( oldVal === '' || this.isExisting ) return;
 				this.updating = true;
 
 				setTimeout(function(){

@@ -195,6 +195,48 @@
 				});
 			},
 
+			getSpectraPackage : function(pkgname, callback) {
+				$.ajax({
+				    url: esis.host + '/spectra/getPackage?id='+pkgname,
+				    type: "GET",
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function(err) {
+				    	debugger;
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
+			getMetadataResource : function(resourceId, callback) {
+				$.ajax({
+				    url: esis.host + '/spectra/getMetadata?id='+resourceId,
+				    type: "GET",
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function(err) {
+				    	debugger;
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
 			addSpectra : function(spectra, updateIndex, callback) {
 				$.ajax({
 				    url: esis.host + '/spectra/addSpectra',

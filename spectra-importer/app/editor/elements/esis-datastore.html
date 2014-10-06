@@ -8,9 +8,11 @@
 			// is this an existing dataset
 			editMode : false,
 
+			// information about exsiting resources
 			existing : {
 				resources : [],
-				dataset   : {}
+				metadata  : [],
+				data      : []
 			},
 
 			data : {
@@ -49,18 +51,21 @@
 			// list of all new resources
 			resources  : [],
 
-			// list of current attribute map
+			// hash of current attribute name mappings
+			//  - key: ecosis name
+			//  - value: dataset name
 			attributeMap : {},
+			// inverse list of above map w/ key / value switched
 			inverseAttributeMap : {},
 
 			metadataDefinitions : {},
 
-			// list of currently known attributes for this dataset
+			// list of currently known attributes for this dataset for existing data
 			//   - this is a list of objects.  each object has the structure
 			//       |- name : attribute name
 			//       |- type : (data | metadata)
-			//       \- flag : (1, 2) 
-			knownAttributes : [],
+			//       \- flag : (1, 2, etc) 
+			existingAttributeTypes : [],
 
 			ATTR_FLAGS : {
 				// the attribute is from a joined metadata file, always metadata
@@ -89,7 +94,7 @@
 			deleted : [],
 
 			observe : {
-				attributeMap : '_onAttributeMapUpdate'
+			//	attributeMap : '_onAttributeMapUpdate'
 			},
 
 			ready : function() {
@@ -130,7 +135,7 @@
 				// attach listener for when attributes have been aggregated
 				// add to known list when done
 				ele.addEventListener('measurement-updated', function(e){
-					this._addKnownAttributes(e.detail);
+					//this._addKnownAttributes(e.detail);
 					this.datasheetJoin(ele);
 				}.bind(this));
 
@@ -200,12 +205,22 @@
 			},
 
 			getAllAttributeTypes : function() {
-				var attrTypes = {};
+				var attrTypes = {}, item;
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
 				}
+
+				// override the current datasheets with what's already known
+				for( var i = 0; i < this.existingAttributeTypes.length; i++ ) {
+					item = this.existingAttributeTypes[i];
+					attrTypes[item.name] = {
+						type : item.type,
+						flag : item.flag
+					}
+				}
+
 				return attrTypes;
 			},
 
@@ -222,16 +237,18 @@
 				}
 
 				// join on existing measurements
-				if( this.existing.dataset.data ) {
+				// this should be happening above, existing metadata sheets should be in 
+				// datasheets array
+				/*if( this.existing.dataset.data ) {
 					for( var i = 0; i < this.existing.dataset.data.length; i++ ) {
 						if( metadata.join(this.existing.dataset.data[i]) ) count++;
 					}
-				}
+				}*/
 
 				metadata.matchCount = count;
 
 				// make sure to add new metadata attribute to known list
-				var attrs = metadata.joinAttributes();
+				/*var attrs = metadata.joinAttributes();
 				for( var i = 0; i < attrs.length; i++ ) {
 					var index = this._hasAttribute(attrs[i]);
 
@@ -246,10 +263,10 @@
 						item.type = 'metadata';
 						item.flag = ATTR_FLAGS.FROM_METADATA;
 					}
-				}
+				}*/
 			},
 
-			_updateKnownAttributes : function() {
+			/*_updateKnownAttributes : function() {
 				//for( var i = 0; i < )
 
 				for( var i = 0; i < attrList.length; i++ ) {
@@ -258,23 +275,22 @@
 					this.knownAttributes.push(attrList[i]);
 					this.attributes[attrList[i]] = {}
 				}
-			},
+			},*/
 
 			// acts like index of for known attributes array of objects
-			_hasAttribute : function(name) {
+			/*_hasAttribute : function(name) {
 				for( var i = 0; i < this.knownAttributes.length; i++ ) {
 					if( this.knownAttributes[i].name == name ) return i;
 				}
 				return -1;
-			},
+			},*/
 
-			_onAttributeMapUpdate : function(oldMap, newMap) {
+			/*_onAttributeMapUpdate : function(oldMap, newMap) {
 				this.inverseAttributeMap = {};
 				for( var key in newMap ) {
 					if( newMap[key] != '' ) this.inverseAttributeMap[newMap[key]] = key;
 				}
-				console.log(this.inverseAttributeMap);
-			}
+			}*/
 		});
 	</script>
 </polymer-element>
