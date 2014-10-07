@@ -14,6 +14,7 @@ import ckan.lib.helpers as h
 from ckan.common import request, response
 import inspect
 from bson.code import Code
+from bson.son import SON
 
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
@@ -28,7 +29,7 @@ spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection
 packageCollection = db[config._process_configs[1]['esis.mongo.package_collection']]
 metadataCollection = db[config._process_configs[1]['esis.mongo.metadata_collection']]
 searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
-
+searchCollection = db[searchCollectionName]
 
 class SpectraController(PackageController):
     mapreduce = {}
@@ -43,6 +44,10 @@ class SpectraController(PackageController):
 
         f = open('%s/reduce.js' % localdir, 'r')
         self.mapreduce['reduce'] = f.read()
+        f.close()
+
+        f = open('%s/finalize.js' % localdir, 'r')
+        self.mapreduce['finalize'] = f.read()
         f.close()
 
 
@@ -84,11 +89,9 @@ class SpectraController(PackageController):
             spectraCollection.insert(measurement)
             inserted += 1
 
-        # should we update the search index by running mapreduce for this package
+        # should we update the search index by running mapreduce for all spectra in the package
         if update == 'true':
-            map = Code(self.mapreduce['map'])
-            reduce = Code(self.mapreduce['reduce'])
-            packageCollection.map_reduce(map, reduce, searchCollectionName, query={"ecosis.package_id": pkgId})
+            self._update_mapReduce(ckanPackage)
 
         return json.dumps({
             'success': True,
@@ -99,6 +102,7 @@ class SpectraController(PackageController):
     def addUpdatePackage(self):
         response.headers["Content-Type"] = "application/json"
         packageData = self.parse_json(request.params.get('package'))
+        updateIndex = request.params.get('updateIndex')
 
         metadata = []
         isUpdate = False
@@ -108,6 +112,10 @@ class SpectraController(PackageController):
         if pkg != None:
             isUpdate = True
             packageData['_id'] = pkg['_id']
+
+        # get the actual ckan package
+        context = {'model': model, 'user': c.user}
+        ckanPackage = logic.get_action('package_show')(context, {'id': packageData['package_id']})
 
         # pull out joinable metadata for insert if there is any
         if 'join' in packageData:
@@ -122,12 +130,8 @@ class SpectraController(PackageController):
         if isUpdate:
             # create an inverse map of the attribute name mapping
             map = {}
-            for key, value in packageData['attributes']['map']:
+            for key, value in packageData['attributes']['map'].items():
                 map[value] = key
-
-            # get the actual ckan package
-            context = {'model': model, 'user': c.user}
-            ckanPackage = logic.get_action('package_show')(context, {'id': packageData['package_id']})
 
             cur = spectraCollection.find({'ecosis.package_id': packageData['package_id']})
             for spectra in cur:
@@ -137,13 +141,18 @@ class SpectraController(PackageController):
                 self._set_sort(spectra, packageData['attributes']['dataset'])
                 self._set_ckan_pkg_attrs(spectra, ckanPackage)
 
-                spectraCollection.update(spectra)
+                spectraCollection.update({'_id': spectra['_id']}, spectra)
 
         # now update or insert
         if isUpdate:
-            packageCollection.update(packageData)
+            packageCollection.update({'package_id': packageData['package_id']}, packageData)
         else:
             packageCollection.insert(packageData)
+
+        # should we update the search index by running mapreduce for all spectra in the package
+        if updateIndex == 'true':
+            self._update_mapReduce(ckanPackage)
+
 
         return json.dumps({'success': True})
 
@@ -176,6 +185,7 @@ class SpectraController(PackageController):
                 }
              }
         ])
+
         ckanPackage['ecosis']['data'] = []
         for resource in query['result']:
             ckanPackage['ecosis']['data'].append({
@@ -234,6 +244,60 @@ class SpectraController(PackageController):
 
         # now remove any spectra that were related
         spectraCollection.remove({'ecosis.resource_id': id})
+
+    # rebuild entire search index
+    # TODO: this should be admin only!!
+    def rebuildIndex(self):
+        context = {'model': model, 'user': c.user}
+        list = logic.get_action('package_list')(context,{})
+
+        for pkgId in list:
+            pkg = logic.get_action('package_show')(context,{'id': pkgId})
+            self._update_mapReduce(pkg)
+
+        return json.dumps({'success': True, 'rebuildCount': len(list)})
+
+    # TODO: this needs to be called whenever an organization is updated
+    def _update_mapReduce(self, pkg):
+        map = Code(self.mapreduce['map'])
+        reduce = Code(self.mapreduce['reduce'])
+        finalize = Code(self.mapreduce['finalize'])
+        spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+
+        organization_name = ""
+        organization_id = ""
+        organization_image_url = ""
+        keywords = []
+
+        for item in pkg['tags']:
+            keywords.append(item['display_name'])
+
+        if 'organization' in pkg:
+            if pkg['organization'] != None:
+                organization_name = pkg['organization']['title']
+                organization_id = pkg['organization']['id']
+                organization_image_url = '/uploads/group/%s' % pkg['organization']['image_url']
+
+        # make sure the map reduce did not create a null collection, if so, remove
+        # This means there is no spectra
+        item = searchCollection.find_one({'_id': pkg['id'], 'value': None})
+
+        if item != None:
+            searchCollection.remove({'_id': pkg['id']})
+        else:
+            # Kinda a hack .... now let's set the description in the map-reduce collection
+            searchCollection.update(
+                {'_id': pkg['id']},
+                {'$set' :
+                    {
+                        'value.ecosis.description': pkg['notes'],
+                        'value.ecosis.keywords': keywords,
+                        'value.ecosis.organization_name' : organization_name,
+                        'value.ecosis.organization_id' : organization_id,
+                        'value.ecosis.organization_image_url' : organization_image_url
+                    }
+                }
+            )
 
     # if we have a sort variable, it should be in the metadata and datapoints locations
     # in a spectra.  It should also be set in spectra.ecosis.sort namespace
@@ -301,7 +365,7 @@ class SpectraController(PackageController):
 
 
     # make sure all mapped names are set
-    def _map_attribute_name(self, spectra, map):
+    def _map_attribute_names(self, spectra, map):
         for key in map:
             if key not in spectra and map[key] in spectra:
                 spectra[key] = spectra[map[key]]
@@ -313,9 +377,11 @@ class SpectraController(PackageController):
         if 'modifications' in attributeInfo:
             map = attributeInfo['modifications']
 
-        for key, typeInfo in attributeInfo['types'].iteritems():
+        for typeInfo in attributeInfo['types']:
             # did the user override the type schema?
             type = typeInfo['type']
+            key = typeInfo['name']
+
             if key in map:
                 type = map[key]
 
@@ -333,7 +399,8 @@ class SpectraController(PackageController):
                 spectra['datapoints'].remove(point)
                 break
 
-        spectra[key] = pt['value']
+        if pt != None:
+            spectra[key] = pt['value']
 
     def _make_datapoint(self, key, spectra):
         found = False
@@ -342,13 +409,13 @@ class SpectraController(PackageController):
                 found = True
                 break
 
-        if not found and spectra[key] != None:
+        if not found and key in spectra:
             spectra['datapoints'].push({
                 'key' : key,
                 'value' : spectra[key]
             })
 
-        if spectra[key] != None:
+        if key in spectra:
             del spectra[key]
 
     # this will remove all attributes that have been joined into the spectra
@@ -361,19 +428,13 @@ class SpectraController(PackageController):
             map[value] = key
 
         # remove all attributes of type join
-        for attr, typeInfo in attributeInfo['types'].iteritems():
+        for typeInfo in attributeInfo['types']:
             # see the esis-datastore element for all flag types.  #1 is FROM_METADATA
             if typeInfo['flag'] != 1:
                 continue
 
             # remove the attribute
-            self._remove_attribute(spectra, attr)
-
-            # see if this was a custom attribute that was mapped to a different name
-            # if so, remove that attribute as well
-            mappedName = attributeInfo['map'][attr]
-            if mappedName != None:
-                self._remove_attribute(spectra, attr, map)
+            self._remove_attribute(spectra, typeInfo['name'], map)
 
         # now rejoin all data
         for metadata in metadataList:
