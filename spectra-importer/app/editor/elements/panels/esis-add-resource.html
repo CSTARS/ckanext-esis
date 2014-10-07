@@ -48,7 +48,7 @@
 				cursor: pointer;
 			}
 			.next {
-				margin-top: 30px;
+				margin-top: 50px;
 				opacity: 0;
 				transition: opacity 500ms linear;
 				-webkit-transition: opacity 500ms linear;
@@ -78,7 +78,7 @@
 
 		<paper-tabs selected="{{selectedTab}}" hidden?="{{ds.files.length == 0}}">
 		    <paper-tab>Add Resources</paper-tab>
-		    <paper-tab>New File List</paper-tab>
+		    <paper-tab>Stagged Resources</paper-tab>
 		    <paper-tab>Configure Datasheets</paper-tab>
 		</paper-tabs>
 
@@ -168,31 +168,41 @@
 
 		<div hidden?="{{selectedTab != 2}}">
 
-			<div layout horizontal style="margin-bottom: 20px">
-				<paper-button raisedButton 
-					icon="arrow-back" 
-					disabled?="{{selectedSheetIndex == 0}}"
-					on-tap="{{_previousDatasheet}}">
-				</paper-button>
-				<div flex style="text-align:center">
-					<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
-		    			<template repeat="{{sheet, i in ds.datasheets}}">
-		    				<option value="{{i}}">{{i}} - {{sheet.contents.name}}</option>
-		    			</template>
-		    		</select>
-		    	</div>
-		    	<paper-button raisedButton 
-		    		icon="arrow-forward"
-		    		disabled?="{{selectedSheetIndex == ds.datasheets.length-1}}"
-		    		on-tap="{{_nextDatasheet}}">
-		    	</paper-button>
-			</div>
+			<div hidden?="{{newDatasheets.length == 0}}">
+				<div layout horizontal style="margin-bottom: 20px">
+					<paper-button raisedButton 
+						icon="arrow-back" 
+						disabled?="{{selectedSheetIndex == 0}}"
+						on-tap="{{_previousDatasheet}}">
+					</paper-button>
+					<div flex style="text-align:center">
+						<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
+			    			<template repeat="{{sheet, i in newDatasheets}}">
+			    				<option value="{{i}}">{{i}} - {{sheet.contents.name}}</option>
+			    			</template>
+			    		</select>
+			    	</div>
+			    	<paper-button raisedButton 
+			    		icon="arrow-forward"
+			    		disabled?="{{selectedSheetIndex == newDatasheets.length-1}}"
+			    		on-tap="{{_nextDatasheet}}">
+			    	</paper-button>
+				</div>
 
-			<esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}" ></esis-ui-datasheet>
+				<esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}" ></esis-ui-datasheet>
+			</div>
+			<div style="text-align:center" hidden?="{{newDatasheets.length > 0}}">
+				<h4>No datasheets have been parsed</h4>
+			</div>
 		</div>
 
 	    <span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
-	    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files, <a on-tap='{{_gotoInspect}}'>Click Here</a> to inspect the parsed spectra.
+	    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files
+	    	<ul>
+	    		<li><a on-tap='{{_gotoDatasheets}}'>Configure the datasheets</a></li>
+	    		<li>Then <a on-tap='{{_gotoAttrSetting}}'>configure the datasets attribute schema</a></li>
+	    		<li>Finally <a on-tap='{{_gotoInspect}}'>inspect the parsed spectra.</a></li>
+	    	</ul>
 	    </span>
     	
 		
@@ -208,6 +218,8 @@
 			selectedSheet : null,
 			selectedSheetIndex : -1,
 
+			newDatasheets : [],
+
 			showHelp : false,
 
 			options : {
@@ -217,6 +229,7 @@
 			observe : {
 				'ds.files' : '_updatePreview',
 				'ds.data.title' : '_updateVisibility',
+				'ds.datasheets' : '_updateNewSheets',
 				selectedSheetIndex : '_updateDatasheet'
 			},
 
@@ -232,13 +245,18 @@
 			},
 
 			_updateVisibility : function() {
-				this.menuItem.style.display = 'block';
-				return;
-
 				if( this.ds.data.title.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';
+				}
+			},
+
+			_updateNewSheets : function() {
+				this.newDatasheets = [];
+				for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+					if( this.ds.datasheets[i].isExisting ) continue;
+					this.newDatasheets.push(this.ds.datasheets[i]);
 				}
 			},
 
@@ -283,7 +301,15 @@
 		  	},
 
 		  	_gotoInspect : function() {
-		  		window.location.hash = '#parsed-spectra';
+		  		window.location.hash = 'parsed-spectra';
+		  	},
+
+		  	_gotoDatasheets : function() {
+		  		this.selectedTab = 2;
+		  	},
+
+		  	_gotoAttrSetting : function() {
+		  		window.location.hash = 'attribute-settings';
 		  	},
 
 		  	_updatePreview : function() {
@@ -296,7 +322,7 @@
 
 		  	_updateDatasheet : function() {
 		  		if( typeof this.selectedSheetIndex == 'string' ) this.selectedSheetIndex = parseInt(this.selectedSheetIndex);
-		  		this.selectedSheet = this.ds.datasheets[this.selectedSheetIndex];
+		  		this.selectedSheet = this.newDatasheets[this.selectedSheetIndex];
 		  	},
 
 		  	_previousDatasheet : function() {

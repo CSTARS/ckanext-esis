@@ -59,10 +59,11 @@
 			<paper-shadow z="1"></paper-shadow>
 			<h4>New Resource Information</h4>
 			<table>
-				<tr><td>Total Resources</td><td>{{ds.files.length}}</td></tr>
+				<tr><td>Total New Resources</td><td>{{ds.files.length}}</td></tr>
+				<tr><td>Total Resources</td><td>{{counts.totalResources}}</td></tr>
 				<tr><td>Metadata Resources</td><td>{{counts.metadataResources}}</td></tr>
-				<tr><td>Spectra Resources</td><td>{{counts.spectraResources}}</td></tr>
-				<tr><td># Parsed Spectra</td><td>{{counts.spectra}}</td></tr>
+				<tr><td>Spectra Resources</td><td>{{counts.measurementResources}}</td></tr>
+				<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
 			</table>
 		</div>
 
@@ -74,6 +75,8 @@
 	<script>
 		Polymer('esis-verify-dataset', {
 			ds : {},
+
+
 			ready : function() {
 				this.ds = document.querySelector('esis-dataset');
 			},

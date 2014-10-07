@@ -38,9 +38,10 @@
             ckan : {},
 
             counts : {
+                totalResources : 0,
                 measurementResources : 0,
                 metadataResources : 0,
-                measurement : 0
+                measurements : 0
             },
 
             joinOrder : ['joined','file','measurement'],
@@ -50,7 +51,7 @@
             observe : {
                 'ds.data.name' : '_updateVisibility',
                 'ds.deleted' : '_updateVisibility',
-                'ds.datasheets' : '_filesUpdated'
+                'ds.files' : '_updateVisibility'
             },
 
             // local memory cache for usda common names
@@ -68,30 +69,34 @@
             },
 
             show : function() {
+                this._update();
                 this.$.dialog.toggle();
             },
 
-            _filesUpdated : function() {
-                this.async(function(){
-                    this.counts = {
-                        measurementResources : 0,
-                        metadataResources : 0,
-                        measurement : 0
-                    };
+            _update : function() {
+                this.counts = {
+                    totalResources : 0,
+                    measurementResources : 0,
+                    metadataResources : 0,
+                    measurements : 0
+                };
 
-                    for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-                        if( this.ds.datasheets[i].isMetadata ) {
-                            this.counts.metadataResources++;
-                        } else if ( this.ds.datasheets[i].measurements.length > 0 ) {
-                            this.counts.measurementResources++;
-                            this.counts.measurement += this.ds.datasheets[i].measurements.length;
-                        }
-                        
+                for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                    if( this.ds.datasheets[i].isMetadata ) {
+                        this.counts.metadataResources++;
+                    } else if ( this.ds.datasheets[i].measurements.length > 0 ) {
+                        this.counts.measurementResources++;
+                        this.counts.measurements += this.ds.datasheets[i].measurements.length;
                     }
-                });
-                
+                }
 
-                this._updateVisibility();
+                for( var i = 0; i < this.ds.existing.data.length; i++ ) {
+                    this.counts.measurements += this.ds.existing.data[i].spectra_count;
+                }
+
+                this.counts.measurementResources += this.ds.existing.data.length;
+
+                this.counts.totalResources = this.ds.files.length + this.ds.existing.data.length + this.ds.existing.metadata.length;
             },
 
             _updateVisibility : function() {
@@ -115,7 +120,8 @@
 
                 var pkg = document.querySelector('esis-dataset-loader').data;
                 for( var key in this.ds.data ) {
-                    if( !pkg[key] ) pkg[key] = this.ds.data[key];
+                    if( this.ds.editMode && (key == 'name' || key == 'title') ) continue;
+                    pkg[key] = this.ds.data[key];
                 }
 
                 // TESTING...
@@ -145,14 +151,14 @@
                 // if not, quit
                 // you can't use this for upload though! it will not have the resource id assign
                 // since the resources have to be uploaded first!
-                if( !this._isDataUnique() ) {
+                /*if( !this._isDataUnique() ) {
                     alert('Your measurement signatures are not inherently unique.  Please provide a metadata '+
                         'field that can serve as a unique identifier.');
                     //_createUidSelector(data);
                     //btn.removeClass('disabled').html('Add Resources');
                     this.uploading = false;
                     return;
-                }
+                }*/
 
                 this.statusText = 'Adding...';
 
@@ -170,17 +176,24 @@
                         this.statusText = 'Creating spectra package information...';
                         var datasetInfo = this._createDatasetJson(pkg);
 
-                        this.statusText = 'Uploading spectra package information...';
-                        this.ckan.addUpdateSpectraPackage(datasetInfo, function(){
-                        
-                            this.statusText = 'Uploading spectra data...';
-                            this._uploadMeasurementResource(pkg, function(){
-                        
-                                this.statusText = 'Complete';
-                                setTimeout(function(){
-                                    window.location = esis.host+'/dataset/'+pkg.name;
-                                }, 500);
+                        // if measurement data length is 0, we are not adding any new data
+                        // so poke the mapReduce build on 'addUpdateSpectra'
+                        this._createMeasurementJson(pkg, function(measurementData){
+
+                            var rebuildIndex = measurementData.length == 0 ? true : false;
+                            this.statusText = 'Uploading spectra package information...';
+                            this.ckan.addUpdateSpectraPackage(datasetInfo, rebuildIndex, function(){
+                            
+                                this.statusText = 'Uploading spectra data...';
+                                this._uploadMeasurementResource(measurementData, function(){
+                            
+                                    this.statusText = 'Complete';
+                                    setTimeout(function(){
+                                        window.location = esis.host+'/dataset/'+pkg.name;
+                                    }, 500);
+                                }.bind(this));
                             }.bind(this));
+
                         }.bind(this));
                         
                     }.bind(this));
@@ -279,7 +292,7 @@
             },
 
             _createMeasurementJson : function(pkg, callback) {
-                var measurements = [], i, f, j, ele, m;
+                var measurements = [], i, f, j, ele, m;               
 
                 var sortOn = null, sortType = null;
                 if( this.ds.datasetAttributes.sort_on && this.ds.datasetAttributes.sort_on != '' ) {
@@ -489,7 +502,8 @@
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var jd = this.ds.datasheets[i];
-                    if( !jd.isMetadata ) continue;
+
+                    if( !jd.isMetadata || jd.isExisting ) continue;
                     jd = jd.metadata;
 
                     arr.push({
@@ -503,29 +517,23 @@
                 return arr;
             },
 
-            _uploadMeasurementResource : function(pkg, callback) {
+            _uploadMeasurementResource : function(data, callback) {
                 this.statusText = 'Uploading measurement data resource...';
 
-                this._createMeasurementJson(pkg, function(data){
-                    console.log(data);
-
-                    // split out data and upload in set chunks
-
-                    var chunks = [];
-                    var chunk = [];
-                    for( var i = 0; i < data.length; i++ ) {
-                        chunk.push(data[i]);
-                        if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
-                            chunks.push(chunk);
-                            chunk = [];
-                        }
+                var chunks = [];
+                var chunk = [];
+                for( var i = 0; i < data.length; i++ ) {
+                    chunk.push(data[i]);
+                    if( chunk.length == this.MAX_DATA_UPLOAD_COUNT ) {
+                        chunks.push(chunk);
+                        chunk = [];
                     }
-                    if( chunk.length > 0 ) chunks.push(chunk);
+                }
+                if( chunk.length > 0 ) chunks.push(chunk);
 
-                    this._addMeasurementData(0, data.length, chunks, function(){
-                        callback();
-                    });
-                }.bind(this));
+                this._addMeasurementData(0, data.length, chunks, function(){
+                    callback();
+                });
             },
 
             _addMeasurementData : function(index, total, chunks, callback) {

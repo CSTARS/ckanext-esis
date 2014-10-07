@@ -171,12 +171,13 @@
 				});
 			},
 
-			addUpdateSpectraPackage : function(pkgInfo, callback) {
+			addUpdateSpectraPackage : function(pkgInfo, rebuildIndex, callback) {
 				$.ajax({
 				    url: esis.host + '/spectra/addUpdatePackage',
 				    type: "POST",
 				    data: {
-				    	'package' : JSON.stringify(pkgInfo)
+				    	'package' : JSON.stringify(pkgInfo),
+				    	'updateIndex' : rebuildIndex+''
 				    },
 				    xhrFields: {
 				      withCredentials: true

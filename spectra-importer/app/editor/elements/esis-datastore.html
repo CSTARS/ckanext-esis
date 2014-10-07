@@ -134,7 +134,7 @@
 
 				// attach listener for when attributes have been aggregated
 				// add to known list when done
-				ele.addEventListener('measurement-updated', function(e){
+				ele.addEventListener('datasheet-updated', function(e){
 					//this._addKnownAttributes(e.detail);
 					this.datasheetJoin(ele);
 				}.bind(this));
@@ -172,16 +172,16 @@
 				}
 
 				// remove any measurements associated with this resource
-				for( var i = this.existing.dataset.data.length-1; i >= 0; i-- ) {
-					if( this.existing.dataset.data[i].resource_id == id ) {
-						this.existing.dataset.data.splice(i,1);
+				for( var i = this.existing.data.length-1; i >= 0; i-- ) {
+					if( this.existing.data[i].resource_id == id ) {
+						this.existing.data.splice(i,1);
 					}
 				}
 
 				// remove any metadata associated with this resource
-				for( var i = this.existing.dataset.join.length-1; i >= 0; i-- ) {
-					if( this.existing.dataset.join[i].resource_id == id ) {
-						this.existing.dataset.join.splice(i, 1);
+				for( var i = this.existing.metadata.length-1; i >= 0; i-- ) {
+					if( this.existing.metadata[i].resource_id == id ) {
+						this.existing.metadata.splice(i, 1);
 					}
 				}
 
@@ -192,13 +192,14 @@
 			datasheetJoin : function(datasheet) {
 				if( datasheet.isMetadata ) return;
 
+
 				// make sure currently joined (new) metadata is joined
 				for( var i = 0; i < this.datasheets.length; i++ ) {
 					if( !this.datasheets[i].isMetadata ) continue;
 
 					var count = 0;
-					for( var j = 0; j < datasheet.spectra.length; j++ ) {
-						if( this.datasheets[i].metadata.join(datasheet.spectra[j]) ) count++;
+					for( var j = 0; j < datasheet.measurements.length; j++ ) {
+						if( this.datasheets[i].metadata.join(datasheet.measurements[j]) ) count++;
 					}
 					this.datasheets[i].metadata.matchCount += count;
 				}
@@ -236,61 +237,9 @@
 					}
 				}
 
-				// join on existing measurements
-				// this should be happening above, existing metadata sheets should be in 
-				// datasheets array
-				/*if( this.existing.dataset.data ) {
-					for( var i = 0; i < this.existing.dataset.data.length; i++ ) {
-						if( metadata.join(this.existing.dataset.data[i]) ) count++;
-					}
-				}*/
-
 				metadata.matchCount = count;
+			}
 
-				// make sure to add new metadata attribute to known list
-				/*var attrs = metadata.joinAttributes();
-				for( var i = 0; i < attrs.length; i++ ) {
-					var index = this._hasAttribute(attrs[i]);
-
-					if( index == -1 ) {
-						this.knownAttributes.push({
-							name : attrs[i],
-							type : 'metadata',
-							flag : ATTR_FLAGS.FROM_METADATA
-						});
-					} else {
-						var item = this.knownAttributes[index];
-						item.type = 'metadata';
-						item.flag = ATTR_FLAGS.FROM_METADATA;
-					}
-				}*/
-			},
-
-			/*_updateKnownAttributes : function() {
-				//for( var i = 0; i < )
-
-				for( var i = 0; i < attrList.length; i++ ) {
-					if( this.attributes[attrList[i]] ) continue;
-
-					this.knownAttributes.push(attrList[i]);
-					this.attributes[attrList[i]] = {}
-				}
-			},*/
-
-			// acts like index of for known attributes array of objects
-			/*_hasAttribute : function(name) {
-				for( var i = 0; i < this.knownAttributes.length; i++ ) {
-					if( this.knownAttributes[i].name == name ) return i;
-				}
-				return -1;
-			},*/
-
-			/*_onAttributeMapUpdate : function(oldMap, newMap) {
-				this.inverseAttributeMap = {};
-				for( var key in newMap ) {
-					if( newMap[key] != '' ) this.inverseAttributeMap[newMap[key]] = key;
-				}
-			}*/
 		});
 	</script>
 </polymer-element>
