@@ -69,11 +69,12 @@
 			currentTab : 0,
 
 			observe : {
-				datasheets : '_updateVisibility'
-				//map   : '_updateAttrMapList'
+				'ds.datasheets' : '_updateVisibility',
+				'ds.existing.data' : '_updateVisibility'
 			},
 
 			ready : function() {
+
 				this.ds = document.querySelector('esis-datastore');
 
 				this.ds.addEventListener('attribute-map-update', function(){
@@ -87,6 +88,7 @@
 				 		this.map = this.ds.attributeMap;
 				 		this._updateAttrMapList();
 				 	});
+				 	this._updateVisibility();
 				}.bind(this));
 			},
 
@@ -98,7 +100,7 @@
 			},
 
 			_updateVisibility : function() {
-				if( this.datasheets.length > 0 ) {
+				if( this.ds.datasheets.length > 0 || this.ds.existing.data.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
 					this.menuItem.style.display = 'none';

@@ -1062,6 +1062,26 @@ You can override the margin by doing:
       margin-left: 20px;
     }
 
+To style the item for the submenu, do something like this:
+
+    core-submenu::shadow > #submenuItem {
+      color: blue;
+    }
+    
+To style all the `core-item`s in the light DOM:
+
+    polyfill-next-selector { content: 'core-submenu > #submenu > core-item'; }
+    core-submenu > core-item {
+      color: red;
+    }
+    
+The above will style `Topic1` and `Topic2` to have font color red.
+
+    <core-submenu icon="settings" label="Topics">
+      <core-item label="Topic1"></core-item>
+      <core-item label="Topic2"></core-item>
+    </core-submenu>
+    
 @group Polymer Core Elements
 @element core-submenu
 @extends core-item
@@ -1415,7 +1435,7 @@ core-item {
 }
 </style>
 
-  <core-item src="{{src}}" label="{{label}}" icon="{{icon}}" class="{{ {&apos;core-selected&apos; : active} | tokenList}}" on-tap="{{activate}}">
+  <core-item id="submenuItem" src="{{src}}" label="{{label}}" icon="{{icon}}" class="{{ {&apos;core-selected&apos; : active} | tokenList}}" on-tap="{{activate}}">
     <content select=".item-content"></content>
   </core-item>
 
@@ -1626,11 +1646,7 @@ Apply `circle` class to make the rippling effect within a circle.
       position: relative;
     }
 
-    :host-context([noink]) {
-      pointer-events: none;
-    }
-
-    #bg, #waves, .wave-container, .wave {
+    #canvas {
       pointer-events: none;
       position: absolute;
       top: 0;
@@ -1639,32 +1655,11 @@ Apply `circle` class to make the rippling effect within a circle.
       height: 100%;
     }
 
-    #bg, .wave {
-      opacity: 0;
-    }
-
-    #waves, .wave {
-      overflow: hidden;
-    }
-
-    .wave-container, .wave {
+    :host(.circle) #canvas {
       border-radius: 50%;
-    }
-
-    :host(.circle) #bg,
-    :host(.circle) #waves {
-      border-radius: 50%;
-    }
-
-    :host(.circle) .wave-container {
-      overflow: hidden;
     }
 
   </style>
-
-  <div id="bg"></div>
-  <div id="waves">
-  </div>
 
 </template>
 
@@ -1729,17 +1724,7 @@ root if there is one. This implies:
 
   <template>
 
-    <style no-shim="">/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-.paper-shadow {
+    <style no-shim="">.paper-shadow {
   position: absolute;
   top: 0;
   left: 0;
@@ -1831,17 +1816,7 @@ root if there is one. This implies:
 
   <template>
 
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
+    <style>:host {
   display: inline-block;
   position: relative;
   border: 0;
@@ -2084,9 +2059,6 @@ with `bottom`.
     <core-toolbar class="tall">
       <div id="progressBar" class="bottom fit"></div>
     </core-toolbar>
-    
-`core-toolbar` adapts to mobile/narrow layout when there is a `core-narrow` class set
-on itself or any of its ancestors.
 
 @group Polymer Core Elements
 @element core-toolbar
@@ -2142,26 +2114,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 }
 
 /* narrow layout */
-:host(.core-narrow),
-:host-context(.core-narrow) {
+:host(.narrow) {
   height: 56px;
 }
 
-polyfill-next-selector { content: ':host.core-narrow.medium-tall, .core-narrow :host.medium-tall'; }
-:host(.core-narrow.medium-tall),
-:host-context(.core-narrow):host(.medium-tall) {
+:host(.narrow.medium-tall) {
   height: 112px;
 }
 
-polyfill-next-selector { content: ':host.core-narrow.tall, .core-narrow :host.tall'; }
-:host(.core-narrow.tall),
-:host-context(.core-narrow):host(.tall) {
+:host(.narrow.tall) {
   height: 168px;
 }
 
-polyfill-next-selector { content: ':host.core-narrow .toolbar-tools, .core-narrow :host .toolbar-tools'; }
-:host(.core-narrow) .toolbar-tools,
-:host-context(.core-narrow) .toolbar-tools {
+:host(.narrow) .toolbar-tools {
   height: 56px;
   padding: 0;
 }
@@ -2196,7 +2161,7 @@ polyfill-next-selector { content: '.toolbar-tools > *'; }
 /* elements spacing */
 polyfill-next-selector { content: '.toolbar-tools > *'; }
 ::content > * {
-  margin: 0 8px;
+  margin: 0px 8px;
 }
 
 /* misc helpers */
@@ -2244,7 +2209,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <!--
 `core-drawer-panel` contains a drawer panel and a main panel.  The drawer
 and the main panel are side-by-side with drawer on the left.  When browser
-window size is smaller than the `responsiveWidth`, `core-drawer-panel`
+window size is smaller than the `responsiveWidth`, `core-drawer-panel` 
 changes to narrow layout.  In narrow layout, the drawer will be stacked on top
 of the main panel.  The drawer will be slided in/out to hide/reveal the main
 panel.
@@ -2258,7 +2223,7 @@ Example:
       <div drawer> Drawer panel... </div>
       <div main> Main panel... </div>
     </core-drawer-panel>
-
+    
 The drawer and the main panels are not scrollable.  You can set CSS overflow
 property on the elements to make them scrollable or use `core-header-panel`.
 
@@ -2274,7 +2239,7 @@ Example:
         <div> Main content... </div>
       </core-header-panel>
     </core-drawer-panel>
-
+    
 To position the drawer to the right, add `rightDrawer` attribute.
 
     <core-drawer-panel rightDrawer>
@@ -2363,7 +2328,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   top: 0;
   left: 0;
   height: 100%;
-  will-change: transform;
   box-sizing: border-box;
   -mox-box-sizing: border-box;
 }
@@ -2450,14 +2414,14 @@ polyfill-next-selector { content: ':host .narrow-layout > #drawer > [drawer]'; }
 }
 
 .narrow-layout > #drawer:not(.core-selected) {
-  -webkit-transform: translateX(-100%);
-  transform: translateX(-100%);
+  -webkit-transform: translate3d(-100%, 0, 0);
+  transform: translate3d(-100%, 0, 0);
 }
 
 .right-drawer.narrow-layout > #drawer:not(.core-selected) {
   left: auto;
-  -webkit-transform: translateX(100%);
-  transform: translateX(100%);
+  -webkit-transform: translate3d(100%, 0, 0);
+  transform: translate3d(100%, 0, 0);
 }
 
 .narrow-layout > #main {
@@ -2496,7 +2460,7 @@ polyfill-next-selector { content: ':host .narrow-layout > #main > [main]'; }
       <content select="[main]"></content>
       <div id="scrim" on-tap="{{togglePanel}}"></div>
     </div>
-
+    
     <div id="drawer" _style="width: {{ drawerWidth }}">
       <content select="[drawer]"></content>
     </div>
@@ -2551,7 +2515,7 @@ Example:
       <div>Content goes here...</div>
     </core-header-panel>
 
-If you want to use other than `core-toolbar` for the header, add
+If you want to use other than `core-toolbar` for the header, add 
 `core-header` class to that element.
 
 Example:
@@ -2560,7 +2524,7 @@ Example:
       <div class="core-header">Header</div>
       <div>Content goes here...</div>
     </core-header-panel>
-
+    
 To have the content fits to the main area, use `fit` attribute.
 
     <core-header-panel>
@@ -2600,6 +2564,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   right: 0;
   bottom: 0;
   left: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 #mainPanel {
@@ -2633,12 +2600,6 @@ mode: scroll
   overflow: visible;
 }
 
-:host([mode=scroll]) #outerContainer {
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
 /*
 mode: cover
 */
@@ -2659,19 +2620,19 @@ mode: cover
   width: 100%;
 }
 </style>
-
-  <div id="outerContainer" vertical="" layout="">
+  
+  <div id="outerContainer" on-scroll="{{scroll}}" vertical="" layout="">
 
     <content id="headerContent" select="core-toolbar, .core-header"></content>
 
     <div id="mainPanel" flex="" vertical="" layout="">
-
-      <div id="mainContainer" flex?="{{mode !== &apos;cover&apos;}}">
+    
+      <div id="mainContainer" flex?="{{mode !== &apos;cover&apos;}}" on-scroll="{{scroll}}">
         <content id="mainContent" select="*"></content>
       </div>
-
+      
       <div id="dropShadow"></div>
-
+      
     </div>
 
   </div>
@@ -3047,8 +3008,6 @@ the focused and invalid states.
 @homepage github.io
 -->
 
-
-
 <!--
 Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
@@ -3079,7 +3038,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
  * ----------
  *
  * core-input can optionally validate the value using the HTML5 constraints API,
- * similar to native inputs. There are two methods to configure input validation:
+ * similar to native inputs. There are two methods to enable input validation:
  *
  * 1. By setting the `type` attribute. For example, setting it to `email` will
  *    check the value is a valid email, and setting it to `number` will check
@@ -3143,19 +3102,10 @@ Fired when the inputValue of this text input changes and passes validation.
 
   <template>
 
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
+    <style>:host {
   display: inline-block;
   text-align: inherit;
+  color: #ccc;
   position: relative;
   width: 20em;
 }
@@ -3167,7 +3117,6 @@ Fired when the inputValue of this text input changes and passes validation.
 input,
 textarea {
   font: inherit;
-  color: inherit;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -3181,16 +3130,20 @@ textarea {
   resize: none;
 }
 
-textarea[rows=fit] {
-  height: 100%;
+textarea[fit] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }</style>
 
     <template if="{{multiline}}">
-      <textarea id="input" value="{{inputValue}}" rows="{{rows}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" autofocus?="{{autofocus}}" required?="{{required}}" readonly?="{{readonly}}" maxlength="{{maxlength}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{inputFocusAction}}" on-blur="{{inputBlurAction}}"></textarea>
+      <textarea id="input" value="{{inputValue}}" rows="{{rows}}" fit?="{{rows === &apos;fit&apos;}}" disabled?="{{disabled}}" placeholder="{{placeholder}}" autofocus?="{{autofocus}}" required?="{{required}}" readonly?="{{readonly}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-change="{{inputChangeAction}}" on-focus="{{inputFocusAction}}" on-blur="{{inputBlurAction}}"></textarea>
     </template>
 
     <template if="{{!multiline}}">
-      <input id="input" value="{{inputValue}}" disabled?="{{disabled}}" type="{{type}}" placeholder="{{placeholder}}" autofocus?="{{autofocus}}" required?="{{required}}" readonly?="{{readonly}}" pattern="{{pattern}}" min="{{min}}" max="{{max}}" step="{{step}}" maxlength="{{maxlength}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-keypress="{{keypressAction}}" on-change="{{inputChangeAction}}" on-focus="{{inputFocusAction}}" on-blur="{{inputBlurAction}}">
+      <input id="input" value="{{inputValue}}" disabled?="{{disabled}}" type="{{type}}" placeholder="{{placeholder}}" autofocus?="{{autofocus}}" required?="{{required}}" readonly?="{{readonly}}" pattern="{{pattern}}" min="{{min}}" max="{{max}}" step="{{step}}" maxlength="{{maxlength}}" aria-label="{{label || placeholder}}" aria-invalid="{{invalid}}" on-keydown="{{keydownAction}}" on-change="{{inputChangeAction}}" on-focus="{{inputFocusAction}}" on-blur="{{inputBlurAction}}">
     </template>
 
   </template>
@@ -3306,65 +3259,54 @@ Putting this together:
 
 <core-style id="paper-input">
 
-:host([focused]) .floated-label {
+#label.focused,
+#floatedLabel.focused {
   color: {{g.paperInput.focusedColor}};
 }
 
-.focused-underline,
-.cursor {
+#underlineHighlight.focused,
+#caretInner {
   background-color: {{g.paperInput.focusedColor}};
 }
 
-
-:host(.invalid[focused]) .floated-label,
-:host([focused]) .error-text,
-:host([focused]) .error-icon {
+#error,
+:host(.invalid) #label.focused,
+:host(.invalid) #floatedLabel.focused {
   color: {{g.paperInput.invalidColor}};
 }
-
-:host(.invalid) .focused-underline,
-:host(.invalid) .cursor {
+:host(.invalid) #underlineHighlight.focused,
+:host(.invalid) #caretInner {
   background-color: {{g.paperInput.invalidColor}};
 }
 
 </core-style>
 
-<polymer-element name="paper-input" extends="core-input" layout="" vertical="" attributes="label floatingLabel maxRows error" on-transitionend="{{transitionEndAction}}" on-webkittransitionend="{{transitionEndAction}}" assetpath="components/paper-input/">
+<polymer-element name="paper-input" extends="core-input" attributes="label floatingLabel maxRows error" on-down="{{downAction}}" on-up="{{upAction}}" assetpath="components/paper-input/">
 
   <template>
 
-    <!--
-    Input tests:
-
-    - set value to integer 0
-    - various html5 input types
-    - sizing:
-      - single-line: size with CSS
-      - single-line: can fit to container
-      - multi-line: size with CSS
-      - multi-line: size with rows
-      - multi-line: can fit to container
-      - multi-line: grows with typing
-      - multi-line: max rows
-      - multi-line: max rows, scrolls after
-    -->
-
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
+    <style>:host {
   display: inline-block;
   outline: none;
   text-align: inherit;
   color: #757575;
-  padding: 0.75em 0;
+}
+:host(:hover) {
+  cursor: text;
+}
+
+#container {
+  position: relative;
+}
+
+#inputClone,
+#minInputHeight,
+#maxInputHeight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  padding: 0.5em 0;
 }
 
 :host /deep/ input,
@@ -3372,168 +3314,227 @@ Putting this together:
   font: inherit;
   color: #000;
   padding: 0;
-  margin: 0;
+  /* Important to use margin here so the margin remains visible
+   * when textarea scrolls internally. */
+  margin: 0.5em 0;
   background-color: transparent;
   border: none;
   outline: none;
-  /* see comments in template */
   width: 100%;
-  height: 100%;
 }
 
-input:invalid,
-textarea:invalid {
+:host /deep/ input:invalid,
+:host /deep/ textarea:invalid {
   box-shadow: none;
 }
 
-textarea {
+.host /deep/ textarea {
   resize: none;
 }
 
-[invisible] {
-  visibility: hidden;
-}
-
-[animated] {
-  visibility: visible !important;
-  -webkit-transition: -webkit-transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.floated-label {
+#floatedLabel {
   font-size: 0.75em;
   background: transparent;
   white-space: nowrap;
 }
-
-.mirror-text {
-  padding: 0.5em 0 0.25em;
-  max-width: 100%;
-  white-space: nowrap;
+#floatedLabel.hidden {
+  visibility: hidden;
+}
+#floatedLabel.focused {
+  visibility: visible;
 }
 
-:host([multiline]) .mirror-text {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.label {
-  padding: 0.5em 0 0.25em;
+#label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 0.5em 0;
   background: transparent;
+  -moz-transform-origin: 0% 0%;
+  -webkit-transform-origin: 0% 0%;
+  transform-origin: 0% 0%;
   pointer-events: none;
 }
+#label.hidden {
+  display: none;
+}
+#label.animating {
+  /* TODO: transforms are unprefixed in M36/ Remove when stable. */
+  -webkit-transition: -webkit-transform 0.3s cubic-bezier(0.2, 0, 0.03, 1);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.03, 1);
+}
 
-.label-text {
+#labelSpan {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   display: inline-block;
   max-width: 100%;
-  -moz-transform-origin: 0% 0%;
-  -webkit-transform-origin: 0% 0%;
-  transform-origin: 0% 0%;
 }
 
-.cursor {
+#errorContainer {
+  visibility: hidden;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+:host(.invalid) #errorContainer {
+  visibility: visible;
+}
+
+#error {
+  -webkit-flex: 1;
+  flex: 1;
+  font-size: 0.75em;
+  padding: 0.5em 0;
+}
+
+#errorIcon {
+  background-image: url(components/paper-input/error-100.png);
+  background-size: 24px 24px;
+  height: 24px;
+  width: 24px;
+}
+
+
+@media (min-resolution: 2dppx) {
+  #errorIcon {
+    background-image: url(components/paper-input/error-200.png);
+    background-size: 24px 24px;
+  }
+}
+
+#underlineContainer {
   position: absolute;
-  top: 0.4em;
   left: 0;
-  width: 1px;
-  height: 1.4em;
-  opacity: 0.4;
-  -moz-transform-origin: 0%;
-  -webkit-transform-origin: 0%;
-  transform-origin: 0%;
-  -webkit-transform: none;
-  transform: none;
-}
-
-.cursor[invisible] {
-  opacity: 0.75;
-  -webkit-transform: translate3d(3em,0,0) scale3d(50,1,1);
-  transform: translate3d(3em,0,0) scale3d(50,1,1);
-}
-
-.input-container {
-  position: absolute;
-  /* simulate padding so the input/textarea can use 100% width/height */
-  top: 0.5em;
   right: 0;
-  bottom: 0.25em;
-  left: 0;
+  bottom: -1px;
 }
 
-.underline {
-  height: 0px;
-  overflow: visible;
+:host([multiline]) #underlineContainer {
+  bottom: auto;
 }
 
-:host([disabled]) .underline {
-  border-bottom: 1px dashed;
+:host([multiline]) #underlineContainer.animating {
+  -webkit-transition: top 0.2s ease-in;
+  transition: top 0.2s ease-in;
 }
 
-.unfocused-underline {
+#underline {
   height: 1px;
   background: #757575;
   border-bottom-color: #757575;
 }
 
-.focused-underline {
+:host([disabled]) #underline {
+  border-bottom: 1px dashed;
+  height: 0px;
+  background: transparent;
+}
+
+#underlineHighlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 2px;
-  -webkit-transform: none;
-  transform: none;
+  -webkit-transform: scale(0,2);
+  transform: scale(0,2);
+}
+#underlineHighlight.pressed {
+  -webkit-transform: scale(0.1,2);
+  transform: scale(0.1,2);
+  /* TODO: transforms are unprefixed in M36/ Remove when stable. */
+  -webkit-transition: -webkit-transform 0.1s cubic-bezier(0.2, 0, 0.03, 1);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.03, 1);
+}
+#underlineHighlight.animating {
+  /* TODO: transforms are unprefixed in M36/ Remove when stable. */
+  -webkit-transition: -webkit-transform 0.3s cubic-bezier(0.2, 0, 0.03, 1);
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.03, 1);
+}
+#underlineHighlight.focused {
+  -webkit-transform: scale(1);
+  transform: scale(1);
 }
 
-.focused-underline[invisible] {
-  -webkit-transform: scale3d(0,1,1);
-  transform: scale3d(0,1,1);
+#caret {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  -moz-transform-origin: 0%;
+  -webkit-transform-origin-x: 0%;
+  transform-origin-x: 0%;
+  -webkit-transform: scaleX(1) translateX(10%);
+  transform: scaleX(1) translateX(10%);
 }
-
-.error-text {
-  font-size: 0.75em;
-  padding: 0.5em 0;
+#caret.animating {
+  display: block;
+   /* TODO: transforms are unprefixed in M36/ Remove when stable. */
+  -webkit-transition: -webkit-transform 0.2s ease-out, opacity 0.2s ease-out;
+  transition: transform 0.3s cubic-bezier(0.2, 0, 0.03, 1);
 }
-
-.error-icon {
-  height: 20px;
-  width: 20px;
+#caret.focused {
+  display: block;
+  opacity: 0.75;
+  -webkit-transform: scaleX(0) translateX(0);
+  transform: scaleX(0) translateX(0);
+}
+#caretInner {
+  position: absolute;
+  top: 0.6em;
+  left: 0;
+  height: 1.2em;
+  width: 25%;
 }
 </style>
+
     <core-style ref="paper-input"></core-style>
 
-    <div class="floated-label" aria-hidden="true" hidden?="{{!floatingLabel}}" invisible?="{{!inputValue &amp;&amp; !(type === &apos;number&apos; &amp;&amp; !validity.valid) || labelAnimated}}">
-      <!-- needed for floating label animation measurement -->
-      <span id="floatedLabelText" class="label-text">{{label}}</span>
-    </div>
+    <div id="floatedLabel" class="hidden" hidden?="{{!floatingLabel}}"><span id="floatedLabelSpan">{{label}}</span></div>
 
-    <!-- <div class="input-body" flex auto relative on-down="{{downAction}}" on-up="{{upAction}}"> -->
-    <div class="input-body" flex="" auto="" relative="">
+    <div id="container" on-transitionend="{{transitionEndAction}}" on-webkittransitionend="{{transitionEndAction}}">
 
-      <!-- the mirror sizes the input/textarea so it grows with typing -->
-      <div id="mirror" class="mirror-text" invisible="" aria-hidden="true"></div>
+      <div id="label"><span id="labelSpan">{{label}}</span></div>
 
-      <div class="label" fit="" aria-hidden="true">
-        <!-- needed for floating label animation measurement -->
-        <span id="labelText" class="label-text" invisible?="{{inputValue || !inputValue &amp;&amp; type === &apos;number&apos; &amp;&amp; !validity.valid}}" animated?="{{labelAnimated}}">{{label}}</span>
-      </div>
+      <div id="inputContainer">
 
-      <div class="cursor" invisible?="{{!cursorAnimated}}" animated?="{{cursorAnimated}}"></div>
+        <div id="inputClone">
+          <span id="inputCloneSpan" aria-hidden="true">&#xA0;</span>
+        </div>
 
-      <!-- size the input/textarea with a div, because the textarea has intrinsic size in ff -->
-      <div class="input-container" on-down="{{downAction}}" on-up="{{upAction}}">
+        <template if="{{multiline}}">
+          <div id="minInputHeight"></div>
+          <div id="maxInputHeight"></div>
+        </template>
+
         <shadow></shadow>
+
+      </div>
+
+      <div id="underlineContainer">
+        <div id="underline"></div>
+        <div id="underlineHighlight" class="focusedColor"></div>
+      </div>
+
+      <div id="caret">
+        <div id="caretInner" class="focusedColor"></div>
       </div>
 
     </div>
 
-    <div id="underline" class="underline" relative="">
-      <div class="unfocused-underline" fit="" invisible?="{{disabled}}"></div>
-      <div id="focusedUnderline" class="focused-underline" fit="" invisible?="{{!focused}}" animated?="{{underlineAnimated}}"></div>
-    </div>
-
-    <div layout="" horizontal="" center="" hidden?="{{!invalid}}">
-      <div class="error-text" flex="" auto="" role="alert" aria-hidden="{{!invalid}}">{{error || validationMessage}}</div>
-      <core-icon class="error-icon" icon="warning"></core-icon>
+    <div id="errorContainer">
+      <div id="error" role="alert" aria-hidden="{{!invalid}}">{{error || validationMessage}}</div>
+      <div id="errorIcon"></div>
     </div>
 
   </template>
@@ -3552,17 +3553,7 @@ textarea {
 
   <template>
 
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
+    <style>:host {
   display: inline-block;
   position: relative;
   border: 0;
@@ -4043,18 +4034,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   pointer-events: none;
 }
 
-:host([disabled]) #onRadio {
-  display: none;
-}
-
 :host([disabled]) #offRadio {
-  opacity: 0.33;
-  border-color: #5a5a5a;
+  border-color: #eaeaea !important;
 }
 
-:host([disabled][checked]) #offRadio {
-  opacity: 0.33;
-  background-color: #5a5a5a;
+:host([disabled]) #onRadio {
+  background-color: #eaeaea !important;
 }
 </style>
   
@@ -4337,8 +4322,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 }
 
 :host([disabled]) #checkbox {
-  opacity: 0.33;
-  border-color: #5a5a5a;
+  border-color: #eaeaea !important;
 }
 </style>
 
@@ -4755,7 +4739,7 @@ Copyright (c) 2013 Daniel Eden
 				cursor: pointer;
 			}
 			.next {
-				margin-top: 30px;
+				margin-top: 50px;
 				opacity: 0;
 				transition: opacity 500ms linear;
 				-webkit-transition: opacity 500ms linear;
@@ -4785,7 +4769,7 @@ Copyright (c) 2013 Daniel Eden
 
 		<paper-tabs selected="{{selectedTab}}" hidden?="{{ds.files.length == 0}}">
 		    <paper-tab>Add Resources</paper-tab>
-		    <paper-tab>New File List</paper-tab>
+		    <paper-tab>Stagged Resources</paper-tab>
 		    <paper-tab>Configure Datasheets</paper-tab>
 		</paper-tabs>
 
@@ -4861,25 +4845,35 @@ Copyright (c) 2013 Daniel Eden
 
 		<div hidden?="{{selectedTab != 2}}">
 
-			<div layout="" horizontal="" style="margin-bottom: 20px">
-				<paper-button raisedbutton="" icon="arrow-back" disabled?="{{selectedSheetIndex == 0}}" on-tap="{{_previousDatasheet}}">
-				</paper-button>
-				<div flex="" style="text-align:center">
-					<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
-		    			<template repeat="{{sheet, i in ds.datasheets}}">
-		    				<option value="{{i}}">{{i}} - {{sheet.contents.name}}</option>
-		    			</template>
-		    		</select>
-		    	</div>
-		    	<paper-button raisedbutton="" icon="arrow-forward" disabled?="{{selectedSheetIndex == ds.datasheets.length-1}}" on-tap="{{_nextDatasheet}}">
-		    	</paper-button>
-			</div>
+			<div hidden?="{{newDatasheets.length == 0}}">
+				<div layout="" horizontal="" style="margin-bottom: 20px">
+					<paper-button raisedbutton="" icon="arrow-back" disabled?="{{selectedSheetIndex == 0}}" on-tap="{{_previousDatasheet}}">
+					</paper-button>
+					<div flex="" style="text-align:center">
+						<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
+			    			<template repeat="{{sheet, i in newDatasheets}}">
+			    				<option value="{{i}}">{{i}} - {{sheet.contents.name}}</option>
+			    			</template>
+			    		</select>
+			    	</div>
+			    	<paper-button raisedbutton="" icon="arrow-forward" disabled?="{{selectedSheetIndex == newDatasheets.length-1}}" on-tap="{{_nextDatasheet}}">
+			    	</paper-button>
+				</div>
 
-			<esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}"></esis-ui-datasheet>
+				<esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}"></esis-ui-datasheet>
+			</div>
+			<div style="text-align:center" hidden?="{{newDatasheets.length &gt; 0}}">
+				<h4>No datasheets have been parsed</h4>
+			</div>
 		</div>
 
 	    <span class="next {{ds.files.length &gt; 0 ? &apos;ready&apos; : &apos;&apos;}}">
-	    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files, <a on-tap="{{_gotoInspect}}">Click Here</a> to inspect the parsed spectra.
+	    	<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files
+	    	<ul>
+	    		<li><a on-tap="{{_gotoDatasheets}}">Configure the datasheets</a></li>
+	    		<li>Then <a on-tap="{{_gotoAttrSetting}}">configure the datasets attribute schema</a></li>
+	    		<li>Finally <a on-tap="{{_gotoInspect}}">inspect the parsed spectra.</a></li>
+	    	</ul>
 	    </span>
     	
 		
@@ -5135,7 +5129,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <select value="{{ds.datasetAttributes.sort_on}}">
                 <option value=""></option>
                 <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}">{{attr.name}}</option>
+                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.sort_on}}">{{attr.name}}</option>
                 </template>
             </select>
 
@@ -5163,10 +5157,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
         <div class="input-wrapper">
             Group By:
-            <select value="{{ds.dataset.group_by}}" on-change="{{_group}}">
+            <select value="{{ds.datasetAttributes.group_by}}" on-change="{{_group}}">
                 <option value=""></option>
                 <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}">{{attr.name}}</option>
+                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.group_by}}">{{attr.name}}</option>
                 </template>
             </select>
 
@@ -5186,7 +5180,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
         <div class="input-wrapper">
             Location:
-            <select value="{{ds.dataset.location}}">
+            <select value="{{ds.datasetAttributes.location}}">
                 <option value=""></option>
                 <template repeat="{{attr in attributeArray}}">
                     <option value="{{attr.name}}">{{attr.name}}</option>
@@ -5215,9 +5209,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		</style>
 
 		<paper-tabs selected="{{currentTab}}">
-			<paper-tab>Attribute Types</paper-tab>
-			<paper-tab>Dataset Attributes</paper-tab>
-			<paper-tab>Map Attribute Names</paper-tab>
+			<paper-tab>Schema</paper-tab>
+			<paper-tab>Dataset</paper-tab>
+			<paper-tab>Map Names</paper-tab>
 		</paper-tabs>
 
 		<div hidden?="{{currentTab != 0}}">
@@ -5237,7 +5231,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 	    	</div>
 
 	    	<template bind="" if="{{attrMapList.length &gt; 0}}">
-	    		<h4 style="margin-top:50px">Current Attribute Mappings</h4>
+	    		<h4 style="margin-top:50px">Current Name Mappings</h4>
 	    		<template repeat="{{item, i in attrMapList}}">
 	    			<div layout="" horizontal="">
 	    				<div flex=""><b>{{item.c1[0]}}:</b> <span style="color:#888">{{item.c1[1]}}</span></div>
@@ -5448,7 +5442,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 }
 
 #selectionBar.contract {
-  transition-duration: 0.18s;
+  transition-duration: 0.1s;
   transition-timing-function: cubic-bezier(0.0, 0.0, 0.2, 1);
 }
 
@@ -5893,14 +5887,16 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 		<div style="color:#888;font-size:14px;margin-bottom:40px">
 			<div>This panel shows the current state of your newely added spectra.  Please verify your spectral data looks correct.</div>
 
-			<div class="next">
-				<h4><core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Possible next steps include:</h4>
-				<ul>
-					<li><a on-tap="{{_gotoAttrMap}}">Set Attribute Map</a> - If you have custom fields below (marked with an &apos;*&apos;) that map to Ecosis metadata fields, please upload a attribute map file.</li>
-					<li><a on-tap="{{_gotoJoin}}">Join Auxiliary Metadata</a> - If you uploaded your metadata in a separate file you will need to join the metadata to your spectra.</li>
-					<li><a on-tap="{{_gotoGroup}}">Set Dataset Group</a> - If your dataset has logical groups users should know about (ex: time series, spatially related) you can define those groups here.</li>
-				</ul>
-			</div>
+			<!--
+				<div class="next">
+					<h4><core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Possible next steps include:</h4>
+					<ul>
+						<li><a on-tap="{{_gotoAttrMap}}">Set Attribute Map</a> - If you have custom fields below (marked with an '*') that map to Ecosis metadata fields, please upload a attribute map file.</li>
+						<li><a on-tap="{{_gotoJoin}}">Join Auxiliary Metadata</a> - If you uploaded your metadata in a separate file you will need to join the metadata to your spectra.</li>
+						<li><a on-tap="{{_gotoGroup}}">Set Dataset Group</a> - If your dataset has logical groups users should know about (ex: time series, spatially related) you can define those groups here.</li>
+					</ul>
+				</div>
+			-->
 		</div>
 
 
@@ -5931,57 +5927,6 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}"></esis-ui-measurement>
 			</div>
 		</esis-ui-card>
-
-	</template>
-	
-</polymer-element>
-<polymer-element name="esis-group-by" assetpath="elements/panels/">
-	<template>
-		<style>
-			.input-wrapper {
-				margin: 20px;
-			}
-			paper-input::shadow .focusedColor {
-				background-color: #2f9b45;
-				color: #2f9b45;
-			}
-		</style>
-
-		<div style="font-size: 14px; color: #888">
-			Group your data by a certain attribute so related spectra within this dataset can easily be found in search.  Examples for this grouping include time series data, or data that is spatially related.  To group, first select the attribute in your dataset to group on.  This attribute should have the same value for all spectra in that group.  Next, provide a sort attribute.  For time, this would be the time attribute the spectra was taken at.  Finally, you can provide a description of this group to let others know what this grouping is.  Ex: &quot;Spectra time series at 1 minute intervals&quot;
-		</div>
-
-		<div class="input-wrapper">
-			Group By:
-			<select value="{{ds.group.by}}" on-change="{{_group}}">
-				<option value=""></option>
-				<template repeat="{{attr in ds.knownAttributes}}">
-					<option value="{{attr}}">{{attr}}</option>
-				</template>
-			</select>
-		</div>
-
-		<div class="input-wrapper">
-			Sort On:
-			<select value="{{ds.group.sort_on}}">
-				<option value=""></option>
-				<template repeat="{{attr in ds.knownAttributes}}">
-					<option value="{{attr}}">{{attr}}</option>
-				</template>
-			</select>
-		</div>
-
-		<div class="input-wrapper">
-			<paper-input multiline="" rows="3" floatinglabel="" label="Description" value="{{ds.group.description}}"></paper-input>
-		</div>
-
-		<template bind="" if="{{groups.length &gt; 0}}">
-			<div style="padding-bottom: 10px">Grouping Results: </div>
-			<template repeat="{{group in groups}}">
-				<div style="padding-left: 15px"><b>{{group.key}}:</b> {{group.value}}</div>
-			</template>
-		</template>
-
 
 	</template>
 	
@@ -6122,9 +6067,9 @@ To use a transition, import `paper-dialog-transition.html` alongside paper-dialo
 
 Then set the `transition` attribute:
 
-    <paper-dialog heading="Title for dialog" transition="paper-dialog-transition-center">
+    <paper-dialog heading="Title for dialog" transition="paper-transition-center">
 
-    <paper-dialog heading="Title for dialog" transition="paper-dialog-transition-bottom">
+    <paper-dialog heading="Title for dialog" transition="paper-transition-bottom">
 
 @group Paper Elements
 @element paper-dialog
@@ -6377,17 +6322,7 @@ object like this: `{v: 'top', h: 'right'}`.
 
   <template>
 
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
+    <style>:host {
   background: white;
   color: rgba(0, 0, 0, 0.87);
 }
@@ -6428,6 +6363,7 @@ h1 {
 polymer-next-selector { content: ':host > *'; }
 ::content > * {
   font: inherit;
+  border: 0;
 }
 </style>
 
@@ -6498,17 +6434,7 @@ Example:
 
   <template>
 
-    <style>/*
- * @license
- * Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
- * This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
- * The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
- * The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
- * Code distributed by Google as part of the polymer project is also
- * subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
- */
-
-:host {
+    <style>:host {
   box-sizing: border-box;
   width: 56px;
   height: 56px;
@@ -6605,10 +6531,11 @@ Example:
 			<paper-shadow z="1"></paper-shadow>
 			<h4>New Resource Information</h4>
 			<table>
-				<tr><td>Total Resources</td><td>{{ds.files.length}}</td></tr>
+				<tr><td>Total New Resources</td><td>{{ds.files.length}}</td></tr>
+				<tr><td>Total Resources</td><td>{{counts.totalResources}}</td></tr>
 				<tr><td>Metadata Resources</td><td>{{counts.metadataResources}}</td></tr>
-				<tr><td>Spectra Resources</td><td>{{counts.spectraResources}}</td></tr>
-				<tr><td># Parsed Spectra</td><td>{{counts.spectra}}</td></tr>
+				<tr><td>Spectra Resources</td><td>{{counts.measurementResources}}</td></tr>
+				<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
 			</table>
 		</div>
 
@@ -6721,11 +6648,10 @@ Copyright (c) 2013 Daniel Eden
 
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
-      <esis-item label="Edit Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
+      <esis-item label="Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
       <esis-item label="New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
       <esis-item label="Attribute Settings" tag="attribute-settings" ele="esis-attribute-settings"></esis-item>
       <esis-item label="Inspect" tag="inspect" ele="esis-inspect"></esis-item>
-      <esis-item label="Group Dataset" tag="group-by" ele="esis-group-by"></esis-item>
       <esis-item label="Cancel" tag="back" style="display:block"></esis-item>
 
     </esis-scaffold>

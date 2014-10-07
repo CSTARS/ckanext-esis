@@ -184,10 +184,9 @@
 			},
 
 			_onIngestComplete : function(files) {
-
-
 				// do we need to add the zip file?
-				if( (!this.parseZip && this.info.isZip) || !this.info.isZip ) {
+				//if( (!this.parseZip && this.info.isZip) || !this.info.isZip ) {
+				if( (!this.parseZip && this.info.isZip) || (!this.info.isZip && this.info.type != 'resource') ) {
 					files.push({
 						name : this.info.name,
 						info : this.info,
