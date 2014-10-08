@@ -6,9 +6,10 @@
 	<template>
 		<link rel="stylesheet" href="../../components/animate-css/animate.min.css" no-shim>
 		<style>
-			esis-ui-card {
-				margin: 10px 5px !important;
+			.card {
+				margin: 10px 5px;
 				padding: 5px;
+				box-shadow: 0 0 5px #888;
 			}
 			table tr th {
 				text-align: left;
@@ -16,18 +17,18 @@
 			h4 {
 				margin: 5px;
 			}
-			.float-right {
-				position: absolute;
-				right: 0px;
-				top: 0px;
-			}
 		</style>
 
-		<esis-ui-card z="1" class="animated" id="card" style="background-color:white">
+		<div id="card" class="card animated">
+  			
 
-			<div>
-				<h4 style="color: #888">{{file.info.name}}</h4>
-				<esis-ui-delete-button class="float-right" label="" on-delete="{{_delete}}"></esis-ui-delete-button>
+			<div layout horizontal>
+				<div flex>
+					<h4 style="color: #888">{{file.info.name}}</h4>
+				</div>
+				<div>
+					<esis-ui-delete-button label="" on-delete="{{_delete}}"></esis-ui-delete-button>
+				</div>
 			</div>
 
 			<template bind if="{{file.resources.length == 1}}">
@@ -42,7 +43,7 @@
     				</template>
     			</div>
     		</template>
-		</esis-ui-card>
+		</div>
 	</template>
 	<script>
 		Polymer('esis-ui-file', {
