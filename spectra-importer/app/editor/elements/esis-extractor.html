@@ -17,6 +17,12 @@
                     attributeTypes : {}
                 }
 
+                if( contents === null ) {
+                    return resp;
+                } else if ( contents.length == 0 ) {
+                    return resp;
+                }
+
                 if( type == 'metadata' ) {
                     var data = this._parseAsMetadata(contents);
                     resp.joindata = data.joindata;
@@ -378,10 +384,11 @@
                                     attributeTypes[key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
                                                                 this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
                                 }
+
 
                             // this is metadata
                             } else {

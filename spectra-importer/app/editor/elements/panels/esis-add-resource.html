@@ -313,6 +313,7 @@
 		  	},
 
 		  	_updatePreview : function() {
+		  		if( this.ds.files.length == 0 ) this.selectedTab = 0;
 		  		this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
 		  	},
 

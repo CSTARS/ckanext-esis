@@ -1,4 +1,6 @@
 <link rel="import" href="../../components/paper-input/paper-input.html"/>
+<link rel="import" href="../../components/paper-icon-button/paper-icon-button.html"/>
+<link rel="import" href="../../components/core-icons/core-icons.html"/>
 <link rel="import" href="../ui/esis-paper-button.html"/>
 
 <polymer-element name="esis-ui-token-input" attributes="value">
@@ -8,7 +10,7 @@
                 background-color: #2f9b45;
                 color: #2f9b45;
             }
-            esis-paper-button[raisedButton] {
+            paper-icon-button[raisedButton] {
                 background-color: #2f9b45;
                 color: white;
             }
@@ -28,7 +30,7 @@
 
         <div id="container" on-click="{{_setFocus}}">
             <template repeat="{{token in tokens}}">
-                <esis-paper-button style="margin:2px 0px" on-click="{{_onTokenClick}}" token="{{token._id}}" label="{{token.label}}" icon="close" size="14" raisedButton></esis-paper-button>
+                <paper-icon-button style="margin:2px 0px" on-click="{{_onTokenClick}}" token="{{token._id}}" label="{{token.label}}" icon="close" size="14" raisedButton></paper-icon-button>
             </template>
         </div>
     </template>
