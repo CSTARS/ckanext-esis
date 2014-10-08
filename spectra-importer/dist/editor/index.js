@@ -4290,6 +4290,7 @@ Polymer('esis-dataformat-help');;
 		  	},
 
 		  	_updatePreview : function() {
+		  		if( this.ds.files.length == 0 ) this.selectedTab = 0;
 		  		this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
 		  	},
 
@@ -6276,6 +6277,12 @@ Polymer('esis-dataformat-help');;
                     attributeTypes : {}
                 }
 
+                if( contents === null ) {
+                    return resp;
+                } else if ( contents.length == 0 ) {
+                    return resp;
+                }
+
                 if( type == 'metadata' ) {
                     var data = this._parseAsMetadata(contents);
                     resp.joindata = data.joindata;
@@ -6637,10 +6644,11 @@ Polymer('esis-dataformat-help');;
                                     attributeTypes[key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
                                                                 this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
                                 }
+
 
                             // this is metadata
                             } else {
@@ -6746,23 +6754,21 @@ Polymer('esis-dataformat-help');;
 						var ref = this;
 						function onXlsxComplete(wb){
 							var count = 0;
-							wb.SheetNames.forEach(function(sheetName) {
-								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-								$.csv.toArrays(csv, {}, function(err, data){
-									if( err ) {
-										count++;
-										ref.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
-										return;
-									}
 
-									var resp = ref.extractor.run(file.defaultDataType, data);
-									count++;
-									resp.sheetName = sheetName;
-									resp.array = data;
-									ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-									
-								});
-							});
+							var list = wb.SheetNames;
+							for( i = 0; i < list.length; i++ ) {
+								var sheetName = list[i];
+								var worksheet = wb.Sheets[sheetName];
+								
+								var data = ref.sheet_to_array(wb.Sheets[sheetName]);
+								if( !data ) data = [[]];
+
+								var resp = ref.extractor.run(file.defaultDataType, data);
+								count++;
+								resp.sheetName = sheetName;
+								resp.array = data;
+								ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+							};
 						}
 
 						var worker = new Worker('components/js-xlsx/xlsxworker.js');
@@ -6787,23 +6793,20 @@ Polymer('esis-dataformat-help');;
 							wb = XLS.read(contents, {type: 'binary'});
 
 							var count = wb.SheetNames.length;
-							wb.SheetNames.forEach(function(sheetName) {
-								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-								$.csv.toArrays(csv, {}, function(err, data){
-									if( err ) {
-										count++;
-										ref.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
-										return;
-									}
+							var list = wb.SheetNames;
+							for( i = 0; i < list.length; i++ ) {
+								var sheetName = list[i];
+								var worksheet = wb.Sheets[sheetName];
+								
+								var data = ref.sheet_to_array(wb.Sheets[sheetName]);
+								if( !data ) data = [[]];
 
-									var resp = this.extractor.run(file.defaultDataType, data);
-									count++;
-									resp.sheetName = sheetName;
-									resp.array = data;
-									this.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-
-								});
-							});
+								var resp = ref.extractor.run(file.defaultDataType, data);
+								count++;
+								resp.sheetName = sheetName;
+								resp.array = data;
+								ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+							};
 						}
 
 						var worker = new Worker('components/js-xls/xlsworker.js');
@@ -6882,6 +6885,60 @@ Polymer('esis-dataformat-help');;
 				arr.push(data);
 
 				if( index == total ) callback(arr);
+			},
+
+			sheet_to_array : function(sheet) {
+				var out = [], txt = "";
+				if(sheet == null || sheet["!ref"] == null) return "";
+				var r = this.safe_decode_range(sheet["!ref"]);
+				var row = [], rr = "", cols = [];
+				var i = 0, cc = 0, val;
+				var R = 0, C = 0;
+				for(C = r.s.c; C <= r.e.c; ++C) cols[C] = XLSX.utils.encode_col(C);
+				for(R = r.s.r; R <= r.e.r; ++R) {
+					row = [];
+					rr = XLSX.utils.encode_row(R);
+					for(C = r.s.c; C <= r.e.c; ++C) {
+						val = sheet[cols[C] + rr];
+						txt = val !== undefined ? ''+XLSX.utils.format_cell(val) : "";
+						row.push(txt);
+					}
+					out.push(row);
+				}
+				return out;
+			},
+
+			// from XLSX utils...
+			safe_decode_range : function(range) {
+				var o = {s:{c:0,r:0},e:{c:0,r:0}};
+				var idx = 0, i = 0, cc = 0;
+				var len = range.length;
+				for(idx = 0; i < len; ++i) {
+					if((cc=range.charCodeAt(i)-64) < 1 || cc > 26) break;
+					idx = 26*idx + cc;
+				}
+				o.s.c = --idx;
+
+				for(idx = 0; i < len; ++i) {
+					if((cc=range.charCodeAt(i)-48) < 0 || cc > 9) break;
+					idx = 10*idx + cc;
+				}
+				o.s.r = --idx;
+
+				if(i === len || range.charCodeAt(++i) === 58) { o.e.c=o.s.c; o.e.r=o.s.r; return o; }
+
+				for(idx = 0; i != len; ++i) {
+					if((cc=range.charCodeAt(i)-64) < 1 || cc > 26) break;
+					idx = 26*idx + cc;
+				}
+				o.e.c = --idx;
+
+				for(idx = 0; i != len; ++i) {
+					if((cc=range.charCodeAt(i)-48) < 0 || cc > 9) break;
+					idx = 10*idx + cc;
+				}
+				o.e.r = --idx;
+				return o;
 			}
 		});
 	;
