@@ -1,10 +1,11 @@
 function(key, spectra){
         var searchObj = {
-            count : 0,
-            ecosis : {}
+            ecosis : {
+                spectra_count : 0
+            }
         };
-
-        var ignoreList = ['_id','datapoints', 'ecosis', 'count'];
+        
+        var ignoreList = ['_id','datapoints', 'ecosis'];
 
         // create unique lists of our attributes
         function addOrAppendUnique(obj, key, value) {
@@ -24,7 +25,7 @@ function(key, spectra){
         var i, measurement, key, arr;
         for( i = 0; i < spectra.length; i++ ) {
             measurement = spectra[i];
-            searchObj.count += measurement.count;
+            searchObj.ecosis.spectra_count += measurement.ecosis.spectra_count;
 
             for( key in measurement ) {
                 if( ignoreList.indexOf(key) != -1 ) continue;
