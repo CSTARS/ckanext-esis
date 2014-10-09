@@ -5914,7 +5914,7 @@ Polymer('esis-dataformat-help');;
 
 						if( this.contents.metadata ) {
 							for( var key in this.contents.metadata ) {
-								sp.metadata.contents[key] = this.contents.metadata[key];
+								sp.metadata.file[key] = this.contents.metadata[key];
 							}
 						}
 
@@ -6354,6 +6354,7 @@ Polymer('esis-dataformat-help');;
                 var empty = false;
 
                 for( var i = 0; i < contents.length; i++ ) {
+                    empty = false;
                     if( contents[i].length == 0 ) empty = true;
                     else if( contents[i][0].length == 0 ) empty = true;
 
@@ -6363,6 +6364,7 @@ Polymer('esis-dataformat-help');;
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -6401,6 +6403,7 @@ Polymer('esis-dataformat-help');;
                 var empty = false;
 
                 for( var i = 0; i < row.length; i++ ) {
+                    empty = false;
                     if( row[i].length == 0 ) empty = true;
 
                     if( empty && processing ) {
@@ -6409,6 +6412,7 @@ Polymer('esis-dataformat-help');;
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -6432,8 +6436,15 @@ Polymer('esis-dataformat-help');;
             _getFileMetadata : function(contents, hRanges) {
                 // if there is only one range of data, there is not file metadata
                 if( hRanges.length == 1 ) return {};
+
                 // if the first row doesn't have exactly two columns, there is a problem
-                if( contents[0].length != 2 ) return {};
+                for( var i = 0; i <= hRanges[0].stop; i++ ) {
+                    if( contents[i].length == 1 ) {
+                        return {};
+                    } else if( contents[i].length >= 3 && contents[i][2] != '' ) {
+                        return {};
+                    }
+                }
 
                 var fileMetadata = {};
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
@@ -6495,7 +6506,7 @@ Polymer('esis-dataformat-help');;
 
                         // add metadata range for this column
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
                                 // add known metadata from metadata range
                                 measurement.metadata[contents[j][0]] = contents[j][i];
 
@@ -6511,7 +6522,7 @@ Polymer('esis-dataformat-help');;
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             var key = contents[j][0];
 
                             // this is data
@@ -6605,7 +6616,7 @@ Polymer('esis-dataformat-help');;
                     var i, j, row, measurement, key;
 
                     // the actual 'startRow' should be the row of attribute names
-                    for( i = startRow+1; i < stopRow; i++ ) {
+                    for( i = startRow+1; i <= stopRow; i++ ) {
                         measurement = {
                             metadata : {},
                             datapoints : []
@@ -6614,7 +6625,7 @@ Polymer('esis-dataformat-help');;
 
                         // if we have a metadata block, add the metadata
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
                                  measurement.metadata[contents[startRow][j]] = row[j];
 
                                 // on first pass, keep track of attribute information
@@ -6629,7 +6640,7 @@ Polymer('esis-dataformat-help');;
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             key = contents[startRow][j];
 
                             // this is data

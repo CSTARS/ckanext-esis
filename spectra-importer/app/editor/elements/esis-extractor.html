@@ -94,6 +94,7 @@
                 var empty = false;
 
                 for( var i = 0; i < contents.length; i++ ) {
+                    empty = false;
                     if( contents[i].length == 0 ) empty = true;
                     else if( contents[i][0].length == 0 ) empty = true;
 
@@ -103,6 +104,7 @@
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -141,6 +143,7 @@
                 var empty = false;
 
                 for( var i = 0; i < row.length; i++ ) {
+                    empty = false;
                     if( row[i].length == 0 ) empty = true;
 
                     if( empty && processing ) {
@@ -149,6 +152,7 @@
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -172,8 +176,15 @@
             _getFileMetadata : function(contents, hRanges) {
                 // if there is only one range of data, there is not file metadata
                 if( hRanges.length == 1 ) return {};
+
                 // if the first row doesn't have exactly two columns, there is a problem
-                if( contents[0].length != 2 ) return {};
+                for( var i = 0; i <= hRanges[0].stop; i++ ) {
+                    if( contents[i].length == 1 ) {
+                        return {};
+                    } else if( contents[i].length >= 3 && contents[i][2] != '' ) {
+                        return {};
+                    }
+                }
 
                 var fileMetadata = {};
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
@@ -235,7 +246,7 @@
 
                         // add metadata range for this column
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
                                 // add known metadata from metadata range
                                 measurement.metadata[contents[j][0]] = contents[j][i];
 
@@ -251,7 +262,7 @@
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             var key = contents[j][0];
 
                             // this is data
@@ -345,7 +356,7 @@
                     var i, j, row, measurement, key;
 
                     // the actual 'startRow' should be the row of attribute names
-                    for( i = startRow+1; i < stopRow; i++ ) {
+                    for( i = startRow+1; i <= stopRow; i++ ) {
                         measurement = {
                             metadata : {},
                             datapoints : []
@@ -354,7 +365,7 @@
 
                         // if we have a metadata block, add the metadata
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
                                  measurement.metadata[contents[startRow][j]] = row[j];
 
                                 // on first pass, keep track of attribute information
@@ -369,7 +380,7 @@
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             key = contents[startRow][j];
 
                             // this is data
