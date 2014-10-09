@@ -5426,10 +5426,11 @@ Polymer('esis-dataformat-help');;
 			},
 
 			_readAs : function() {
+				debugger;
 				if( this.info.hasData || this.info.isZip ) {
 					if( this.info.format == 'binary' ) {
-						//reader.readAsArrayBuffer(file);
-						this.reader.readAsBinaryString(this.raw);
+						this.reader.readAsArrayBuffer(this.raw);
+						//this.reader.readAsBinaryString(this.raw);
 					} else if( this.info.format == 'string' ) {
 						this.reader.readAsText(this.raw);
 					}
@@ -6171,11 +6172,13 @@ Polymer('esis-dataformat-help');;
 			},
 
 			addResource : function(resource, datasheets) {
+				debugger;
 				var ele = document.createElement('esis-resource');
 				ele.filename = resource.name || resource.info.name;
 				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
 				ele.ext = resource.info.ext;
 				ele.datasheets = datasheets;
+				ele.contents = resource.contents
 				this.resources.push(ele);
 				return ele;
 			},
@@ -8701,6 +8704,8 @@ Polymer('esis-dataformat-help');;
 			 * progress: callback for progress update
 			 **/
 			addResource : function(pkgid, resource, callback, progress) {
+				debugger;
+
 		        // TODO: if this fails, we have an issue on our hands
 		    	var formData = new FormData();
 

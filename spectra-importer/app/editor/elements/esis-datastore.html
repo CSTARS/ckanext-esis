@@ -153,11 +153,13 @@
 			},
 
 			addResource : function(resource, datasheets) {
+				debugger;
 				var ele = document.createElement('esis-resource');
 				ele.filename = resource.name || resource.info.name;
 				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
 				ele.ext = resource.info.ext;
 				ele.datasheets = datasheets;
+				ele.contents = resource.contents
 				this.resources.push(ele);
 				return ele;
 			},

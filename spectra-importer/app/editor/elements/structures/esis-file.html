@@ -58,10 +58,11 @@
 			},
 
 			_readAs : function() {
+				debugger;
 				if( this.info.hasData || this.info.isZip ) {
 					if( this.info.format == 'binary' ) {
-						//reader.readAsArrayBuffer(file);
-						this.reader.readAsBinaryString(this.raw);
+						this.reader.readAsArrayBuffer(this.raw);
+						//this.reader.readAsBinaryString(this.raw);
 					} else if( this.info.format == 'string' ) {
 						this.reader.readAsText(this.raw);
 					}
