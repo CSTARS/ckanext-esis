@@ -100,8 +100,10 @@
 					var spMetadata = measurement.metadata.measurement; // case for new metadata
 					if( !spMetadata ) spMetadata = measurement.metadata; // case for existing spectra
 
+					var val = $.trim(spMetadata[this.joinId] || '');
+
 					for( var i = 0; i < this.metadata.length; i++ ) {
-						if( this.metadata[i][this.joinId] == spMetadata[this.joinId] ) {
+						if( $.trim(this.metadata[i][this.joinId]) == val ) {
 							return i;
 						}
 					}

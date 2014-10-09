@@ -178,7 +178,7 @@
 					<div flex style="text-align:center">
 						<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
 			    			<template repeat="{{sheet, i in newDatasheets}}">
-			    				<option value="{{i}}">{{i}} - {{sheet.contents.name}}</option>
+			    				<option value="{{i}}">{{i}} - {{sheet.contents.sheetName}} {{sheet.contents.name}}</option>
 			    			</template>
 			    		</select>
 			    	</div>

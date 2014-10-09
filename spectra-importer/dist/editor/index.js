@@ -5426,7 +5426,6 @@ Polymer('esis-dataformat-help');;
 			},
 
 			_readAs : function() {
-				debugger;
 				if( this.info.hasData || this.info.isZip ) {
 					if( this.info.format == 'binary' ) {
 						this.reader.readAsArrayBuffer(this.raw);
@@ -5709,8 +5708,10 @@ Polymer('esis-dataformat-help');;
 					var spMetadata = measurement.metadata.measurement; // case for new metadata
 					if( !spMetadata ) spMetadata = measurement.metadata; // case for existing spectra
 
+					var val = $.trim(spMetadata[this.joinId] || '');
+
 					for( var i = 0; i < this.metadata.length; i++ ) {
-						if( this.metadata[i][this.joinId] == spMetadata[this.joinId] ) {
+						if( $.trim(this.metadata[i][this.joinId]) == val ) {
 							return i;
 						}
 					}
@@ -6172,7 +6173,6 @@ Polymer('esis-dataformat-help');;
 			},
 
 			addResource : function(resource, datasheets) {
-				debugger;
 				var ele = document.createElement('esis-resource');
 				ele.filename = resource.name || resource.info.name;
 				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
@@ -6498,7 +6498,7 @@ Polymer('esis-dataformat-help');;
                     if( !dataRange ) return {error : true};
 
                     // find what rows are thought to be data (match numberic value) or metadata (doesn't)
-                    var dataRows = this._findDataRows(contents, dataRange.start);
+                    var dataRows = this._findDataRows(contents, metadataRange, dataRange);
 
                     var len = contents[dataRange.start].length, i, j;
                     for( i = 1; i < len; i++ ) {
@@ -6510,15 +6510,27 @@ Polymer('esis-dataformat-help');;
                         // add metadata range for this column
                         if( metadataRange ) {
                             for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
-                                // add known metadata from metadata range
-                                measurement.metadata[contents[j][0]] = contents[j][i];
+                                key = contents[j][0];
+
+                                // add wavelengths even if they are in the wrong range
+                                if( dataRows[key] ) {
+                                    measurement.datapoints.push({
+                                        key : key,
+                                        value : contents[j][i]
+                                    });
+                                } else {
+                                    // add known metadata from metadata range
+                                    measurement.metadata[key] = contents[j][i];
+                                }
+                                
 
                                 // mark the attribute type on first pass
                                 if( i == 1 ) {
-                                    attributeTypes[contents[j][0]] = { 
+                                    attributeTypes[key] = { 
                                         guess : false,
-                                        type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        type : dataRows[key] ? 'data' : 'metadata',
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
@@ -6629,14 +6641,25 @@ Polymer('esis-dataformat-help');;
                         // if we have a metadata block, add the metadata
                         if( metadataRange ) {
                             for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
-                                 measurement.metadata[contents[startRow][j]] = row[j];
+                                key = contents[startRow][j];
+                                
+                                if( dataCols[key] ) {
+                                    measurement.datapoints.push({
+                                        key : contents[key],
+                                        value : row[j]
+                                    });
+                                } else {
+                                    // add wavelengths even if they are in the wrong range
+                                    measurement.metadata[key] = row[j];
+                                }
 
                                 // on first pass, keep track of attribute information
                                 if( i == startRow+1 ) {
-                                    attributeTypes[contents[j][0]] = { 
+                                    attributeTypes[key] = { 
                                         guess : false,
                                         type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
@@ -6727,12 +6750,25 @@ Polymer('esis-dataformat-help');;
             // any attribute name that matches a numberic value will be assumed wavelength and
             // marked as data, otherwise it will be assumed as metadata.  This is for when
             // the user doesn't add the second break to their file
-            _findDataRows : function(content, startRow) {
+            _findDataRows : function(content, metadataRange, dataRange) {
                 var data = {};
                 var re1 = /^-?\d+\.?\d*$/;
                 var re2 = /^-?\d*\.\d+$/;
 
-                for( var i = startRow; i < content.length; i++ ) {
+                if( metadataRange ) {
+                    for( var i = metadataRange.start; i <= metadataRange.stop; i++ ) {
+                        var key = content[i][0];
+
+                        if( re1.exec(key) || re2.exec(key) ) {
+                            data[key] = true;
+                        } else {
+                            data[key] = false;
+                        }
+                    }
+                }
+
+
+                for( var i = dataRange.start; i <= dataRange.stop; i++ ) {
                     var key = content[i][0];
 
                     if( re1.exec(key) || re2.exec(key) ) {
