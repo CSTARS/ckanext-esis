@@ -5940,6 +5940,11 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 			table td {
 				padding: 5px;
 			}
+			paper-icon-button {
+				margin-top: 100px;
+				background-color: rgb(210, 63, 49) !important;
+				color: white;
+			}
 		</style>
 
 		<div hidden?="{{!loading}}" style="margin-bottom:25px">
@@ -5958,6 +5963,8 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 				<td><esis-ui-delete-button rid="{{res.id}}" label="{{res.name}}" on-delete="{{_deleteResource}}"></esis-ui-delete-button></td>
 			</tr>
 		</table>
+
+		<paper-icon-button icon="warning" label="Delete Dataset" style="margin-top" on-tap="{{_delete}}" raisedbutton=""></paper-icon-button>
 	</template>
 	
 <polymer-element assetpath="elements/panels/"></polymer-element></polymer-element>

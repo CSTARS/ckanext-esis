@@ -5347,6 +5347,20 @@ Polymer('esis-dataformat-help');;
 		  	_deleteResource : function(e) {
 		  		var id = e.currentTarget.getAttribute('rid');
 		  		this.ds.removeResource(id);
+		  	},
+
+		  	_delete : function() {
+		  		if( confirm('Are you sure your want to remove this dataset?') ) {
+		  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+		  				document.querySelector('esis-ckan').deletePackage(
+		  					this.ds.package_id, 
+		  					function(err, resp) {
+		  						alert('package deleted');
+		  						window.location = '/dataset';
+		  					}
+		  				);
+		  			}
+		  		}
 		  	}
 		});
 	;
@@ -6027,6 +6041,8 @@ Polymer('esis-dataformat-help');;
 		Polymer('esis-datastore', {
 			// is this an existing dataset
 			editMode : false,
+			// existing package id
+			package_id : '',
 
 			// information about exsiting resources
 			existing : {
@@ -6451,7 +6467,8 @@ Polymer('esis-dataformat-help');;
 
                 var fileMetadata = {};
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
-                    fileMetadata[contents[i][0]] = contents[i][1];
+                    if( !contents[i][0] ) continue;
+                    fileMetadata[this._cleanKey(contents[i][0])] = this._cleanValue(contents[i][1]);
                 }
                 return fileMetadata;
             },
@@ -6516,11 +6533,12 @@ Polymer('esis-dataformat-help');;
                                 if( dataRows[key] ) {
                                     measurement.datapoints.push({
                                         key : key,
-                                        value : contents[j][i]
+                                        value : this._cleanValue(contents[j][i])
                                     });
                                 } else {
+                                    key = this._cleanKey(key);
                                     // add known metadata from metadata range
-                                    measurement.metadata[key] = contents[j][i];
+                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
                                 }
                                 
 
@@ -6542,9 +6560,11 @@ Polymer('esis-dataformat-help');;
 
                             // this is data
                             if( dataRows[key] || !guess ) {
+                                if( !dataRows[key] ) key = this._cleanKey(key);
+
                                 measurement.datapoints.push({
                                     key : key,
-                                    value : contents[j][i]
+                                    value : this._cleanValue(contents[j][i])
                                 });
 
                                 // this is a numberic or we are not guessing
@@ -6559,8 +6579,9 @@ Polymer('esis-dataformat-help');;
                                 }
 
                             // this is metadata
-                            } else {
-                            
+                            } else {                      
+                                this._cleanKey(key);
+
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
@@ -6570,11 +6591,11 @@ Polymer('esis-dataformat-help');;
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = contents[j][i];
+                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
                                 } else {
                                     measurement.datapoints.push({
                                         key: key,
-                                        value : contents[j][i]
+                                        value : this._cleanValue(contents[j][i])
                                     });
                                 }
 
@@ -6649,8 +6670,9 @@ Polymer('esis-dataformat-help');;
                                         value : row[j]
                                     });
                                 } else {
+                                    key = this._cleanKey(key);
                                     // add wavelengths even if they are in the wrong range
-                                    measurement.metadata[key] = row[j];
+                                    measurement.metadata[key] = this._cleanValue(row[j]);
                                 }
 
                                 // on first pass, keep track of attribute information
@@ -6671,9 +6693,11 @@ Polymer('esis-dataformat-help');;
 
                             // this is data
                             if( dataCols[key] || !guess ) {
+                                if( !dataCols[key] ) key = this._cleanKey(key);
+
                                 measurement.datapoints.push({
                                     key : key,
-                                    value : row[j]
+                                    value : this._cleanValue(row[j])
                                 });
 
                                 // mark the attribute type on first pass
@@ -6689,7 +6713,8 @@ Polymer('esis-dataformat-help');;
 
                             // this is metadata
                             } else {
-                               
+                                this._cleanKey(key);
+
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
@@ -6699,11 +6724,11 @@ Polymer('esis-dataformat-help');;
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = row[j];
+                                    measurement.metadata[key] = this._cleanValue(row[j]);
                                 } else {
                                     measurement.datapoints.push({
                                         key: key,
-                                        value : row[j]
+                                        value : this._cleanValue(row[j])
                                     });
                                 }
 
@@ -6780,9 +6805,24 @@ Polymer('esis-dataformat-help');;
                 }
 
                 return data;
+            },
+
+            regex : {
+                key1 : /\./g,
+                key2 : /\n/g,
+                val : /\r/g
+            },
+
+            // clean a key so it can be added into mongo
+            _cleanKey : function(key) {
+                if( !key ) return '';
+                return key.replace(this.regex.key1,'').replace(this.regex.key2,'');
+            },
+
+            _cleanValue : function(val) {
+                if( !val ) return '';
+                return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
             }
-
-
         });
     ;
 
@@ -7924,6 +7964,7 @@ Polymer('esis-dataformat-help');;
 
 			_setData : function() {
 				this.ds.editMode = true;
+				this.ds.package_id = this.data.id;
 
 				// set the default attirbutes for this dataset
 				for( var key in this.ds.data ) {
@@ -8669,6 +8710,24 @@ Polymer('esis-dataformat-help');;
 					url : esis.host+'/api/3/action/package_create',
 					type : 'POST',
 					data : JSON.stringify(pkg),
+					xhrFields: {
+				      withCredentials: true
+				    },
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, resp.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
+			deletePackage : function(pkgid, callback) {
+				$.ajax({
+					url : esis.host+'/api/3/action/package_delete',
+					type : 'POST',
+					data : JSON.stringify({id: pkgid}),
 					xhrFields: {
 				      withCredentials: true
 				    },

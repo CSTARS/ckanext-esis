@@ -40,6 +40,7 @@
 
 			_setData : function() {
 				this.ds.editMode = true;
+				this.ds.package_id = this.data.id;
 
 				// set the default attirbutes for this dataset
 				for( var key in this.ds.data ) {

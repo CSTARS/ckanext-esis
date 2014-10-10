@@ -27,6 +27,24 @@
 				});
 			},
 
+			deletePackage : function(pkgid, callback) {
+				$.ajax({
+					url : esis.host+'/api/3/action/package_delete',
+					type : 'POST',
+					data : JSON.stringify({id: pkgid}),
+					xhrFields: {
+				      withCredentials: true
+				    },
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, resp.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
 			updatePackage : function(pkg, callback) {
 				$.ajax({
 					url : esis.host+'/api/3/action/package_update',
