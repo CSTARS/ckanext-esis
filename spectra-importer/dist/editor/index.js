@@ -6837,12 +6837,13 @@ Polymer('esis-dataformat-help');;
 					}
 				} else if( info.ext == 'xls' ) {
 					try {
+						
 
 						var ref = this;
 						function onXlsComplete(wb){
-							wb = XLS.read(contents, {type: 'binary'});
+							//wb = XLS.read(contents, {type: 'binary'});
 
-							var count = wb.SheetNames.length;
+							var count = 0;
 							var list = wb.SheetNames;
 							for( i = 0; i < list.length; i++ ) {
 								var sheetName = list[i];
@@ -6859,15 +6860,25 @@ Polymer('esis-dataformat-help');;
 							};
 						}
 
+						function fixdata(data) {
+							var o = "", l = 0, w = 10240;
+							for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
+							o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(o.length)));
+							return o;
+						}
+
 						var worker = new Worker('components/js-xls/xlsworker.js');
 						worker.onmessage = function(e) {
 							switch(e.data.t) {
 								case 'ready': break;
 								case 'e': console.error(e.data.d); break;
-								case 'xlsx': onXlsComplete(JSON.parse(e.data.d)); break;
+								case 'xls': onXlsComplete(JSON.parse(e.data.d)); break;
 							}
 						};
-						worker.postMessage({d:contents,b:true});
+
+						contents = btoa(fixdata(contents));
+						//debugger;
+						worker.postMessage({d:contents, b:false});
 
 					} catch(e) {
 						debugger;
@@ -8740,8 +8751,6 @@ Polymer('esis-dataformat-help');;
 			 * progress: callback for progress update
 			 **/
 			addResource : function(pkgid, resource, callback, progress) {
-				debugger;
-
 		        // TODO: if this fails, we have an issue on our hands
 		    	var formData = new FormData();
 
