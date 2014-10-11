@@ -4290,6 +4290,7 @@ Polymer('esis-dataformat-help');;
 		  	},
 
 		  	_updatePreview : function() {
+		  		if( this.ds.files.length == 0 ) this.selectedTab = 0;
 		  		this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
 		  	},
 
@@ -5346,6 +5347,20 @@ Polymer('esis-dataformat-help');;
 		  	_deleteResource : function(e) {
 		  		var id = e.currentTarget.getAttribute('rid');
 		  		this.ds.removeResource(id);
+		  	},
+
+		  	_delete : function() {
+		  		if( confirm('Are you sure your want to remove this dataset?') ) {
+		  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+		  				document.querySelector('esis-ckan').deletePackage(
+		  					this.ds.package_id, 
+		  					function(err, resp) {
+		  						alert('package deleted');
+		  						window.location = '/dataset';
+		  					}
+		  				);
+		  			}
+		  		}
 		  	}
 		});
 	;
@@ -5427,8 +5442,8 @@ Polymer('esis-dataformat-help');;
 			_readAs : function() {
 				if( this.info.hasData || this.info.isZip ) {
 					if( this.info.format == 'binary' ) {
-						//reader.readAsArrayBuffer(file);
-						this.reader.readAsBinaryString(this.raw);
+						this.reader.readAsArrayBuffer(this.raw);
+						//this.reader.readAsBinaryString(this.raw);
 					} else if( this.info.format == 'string' ) {
 						this.reader.readAsText(this.raw);
 					}
@@ -5707,8 +5722,10 @@ Polymer('esis-dataformat-help');;
 					var spMetadata = measurement.metadata.measurement; // case for new metadata
 					if( !spMetadata ) spMetadata = measurement.metadata; // case for existing spectra
 
+					var val = $.trim(spMetadata[this.joinId] || '');
+
 					for( var i = 0; i < this.metadata.length; i++ ) {
-						if( this.metadata[i][this.joinId] == spMetadata[this.joinId] ) {
+						if( $.trim(this.metadata[i][this.joinId]) == val ) {
 							return i;
 						}
 					}
@@ -5913,7 +5930,7 @@ Polymer('esis-dataformat-help');;
 
 						if( this.contents.metadata ) {
 							for( var key in this.contents.metadata ) {
-								sp.metadata.contents[key] = this.contents.metadata[key];
+								sp.metadata.file[key] = this.contents.metadata[key];
 							}
 						}
 
@@ -6024,6 +6041,8 @@ Polymer('esis-dataformat-help');;
 		Polymer('esis-datastore', {
 			// is this an existing dataset
 			editMode : false,
+			// existing package id
+			package_id : '',
 
 			// information about exsiting resources
 			existing : {
@@ -6175,6 +6194,7 @@ Polymer('esis-dataformat-help');;
 				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
 				ele.ext = resource.info.ext;
 				ele.datasheets = datasheets;
+				ele.contents = resource.contents
 				this.resources.push(ele);
 				return ele;
 			},
@@ -6224,7 +6244,19 @@ Polymer('esis-dataformat-help');;
 
 			getAllAttributeTypes : function() {
 				var attrTypes = {}, item;
+
+				// add metadata first, that way file / spectra level data overrides
+				// this is required for when the server 'rejoins' on update.  have fields
+				// that are in both metadata and spectra show as joinable makes things foobar
 				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( !this.datasheets[i].isMetadata ) continue;
+					for( var key in this.datasheets[i].attributeTypes ) {
+						attrTypes[key] = this.datasheets[i].attributeTypes[key];
+					}
+				}
+
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( this.datasheets[i].isMetadata ) continue;
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
@@ -6274,6 +6306,12 @@ Polymer('esis-dataformat-help');;
                     metadata : {},
                     measurements : [],
                     attributeTypes : {}
+                }
+
+                if( contents === null ) {
+                    return resp;
+                } else if ( contents.length == 0 ) {
+                    return resp;
                 }
 
                 if( type == 'metadata' ) {
@@ -6347,6 +6385,7 @@ Polymer('esis-dataformat-help');;
                 var empty = false;
 
                 for( var i = 0; i < contents.length; i++ ) {
+                    empty = false;
                     if( contents[i].length == 0 ) empty = true;
                     else if( contents[i][0].length == 0 ) empty = true;
 
@@ -6356,6 +6395,7 @@ Polymer('esis-dataformat-help');;
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -6394,6 +6434,7 @@ Polymer('esis-dataformat-help');;
                 var empty = false;
 
                 for( var i = 0; i < row.length; i++ ) {
+                    empty = false;
                     if( row[i].length == 0 ) empty = true;
 
                     if( empty && processing ) {
@@ -6402,6 +6443,7 @@ Polymer('esis-dataformat-help');;
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -6425,12 +6467,20 @@ Polymer('esis-dataformat-help');;
             _getFileMetadata : function(contents, hRanges) {
                 // if there is only one range of data, there is not file metadata
                 if( hRanges.length == 1 ) return {};
+
                 // if the first row doesn't have exactly two columns, there is a problem
-                if( contents[0].length != 2 ) return {};
+                for( var i = 0; i <= hRanges[0].stop; i++ ) {
+                    if( contents[i].length == 1 ) {
+                        return {};
+                    } else if( contents[i].length >= 3 && contents[i][2] != '' ) {
+                        return {};
+                    }
+                }
 
                 var fileMetadata = {};
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
-                    fileMetadata[contents[i][0]] = contents[i][1];
+                    if( !contents[i][0] ) continue;
+                    fileMetadata[this._cleanKey(contents[i][0])] = this._cleanValue(contents[i][1]);
                 }
                 return fileMetadata;
             },
@@ -6477,7 +6527,7 @@ Polymer('esis-dataformat-help');;
                     if( !dataRange ) return {error : true};
 
                     // find what rows are thought to be data (match numberic value) or metadata (doesn't)
-                    var dataRows = this._findDataRows(contents, dataRange.start);
+                    var dataRows = this._findDataRows(contents, metadataRange, dataRange);
 
                     var len = contents[dataRange.start].length, i, j;
                     for( i = 1; i < len; i++ ) {
@@ -6488,30 +6538,45 @@ Polymer('esis-dataformat-help');;
 
                         // add metadata range for this column
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
-                                // add known metadata from metadata range
-                                measurement.metadata[contents[j][0]] = contents[j][i];
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
+                                key = contents[j][0];
+
+                                // add wavelengths even if they are in the wrong range
+                                if( dataRows[key] ) {
+                                    measurement.datapoints.push({
+                                        key : key,
+                                        value : this._cleanValue(contents[j][i])
+                                    });
+                                } else {
+                                    key = this._cleanKey(key);
+                                    // add known metadata from metadata range
+                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
+                                }
+                                
 
                                 // mark the attribute type on first pass
                                 if( i == 1 ) {
-                                    attributeTypes[contents[j][0]] = { 
+                                    attributeTypes[key] = { 
                                         guess : false,
-                                        type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        type : dataRows[key] ? 'data' : 'metadata',
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             var key = contents[j][0];
 
                             // this is data
                             if( dataRows[key] || !guess ) {
+                                if( !dataRows[key] ) key = this._cleanKey(key);
+
                                 measurement.datapoints.push({
                                     key : key,
-                                    value : contents[j][i]
+                                    value : this._cleanValue(contents[j][i])
                                 });
 
                                 // this is a numberic or we are not guessing
@@ -6526,8 +6591,9 @@ Polymer('esis-dataformat-help');;
                                 }
 
                             // this is metadata
-                            } else {
-                            
+                            } else {                      
+                                this._cleanKey(key);
+
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
@@ -6537,11 +6603,11 @@ Polymer('esis-dataformat-help');;
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = contents[j][i];
+                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
                                 } else {
                                     measurement.datapoints.push({
                                         key: key,
-                                        value : contents[j][i]
+                                        value : this._cleanValue(contents[j][i])
                                     });
                                 }
 
@@ -6598,7 +6664,7 @@ Polymer('esis-dataformat-help');;
                     var i, j, row, measurement, key;
 
                     // the actual 'startRow' should be the row of attribute names
-                    for( i = startRow+1; i < stopRow; i++ ) {
+                    for( i = startRow+1; i <= stopRow; i++ ) {
                         measurement = {
                             metadata : {},
                             datapoints : []
@@ -6607,29 +6673,43 @@ Polymer('esis-dataformat-help');;
 
                         // if we have a metadata block, add the metadata
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
-                                 measurement.metadata[contents[startRow][j]] = row[j];
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
+                                key = contents[startRow][j];
+                                
+                                if( dataCols[key] ) {
+                                    measurement.datapoints.push({
+                                        key : contents[key],
+                                        value : row[j]
+                                    });
+                                } else {
+                                    key = this._cleanKey(key);
+                                    // add wavelengths even if they are in the wrong range
+                                    measurement.metadata[key] = this._cleanValue(row[j]);
+                                }
 
                                 // on first pass, keep track of attribute information
                                 if( i == startRow+1 ) {
-                                    attributeTypes[contents[j][0]] = { 
+                                    attributeTypes[key] = { 
                                         guess : false,
                                         type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             key = contents[startRow][j];
 
                             // this is data
                             if( dataCols[key] || !guess ) {
+                                if( !dataCols[key] ) key = this._cleanKey(key);
+
                                 measurement.datapoints.push({
                                     key : key,
-                                    value : row[j]
+                                    value : this._cleanValue(row[j])
                                 });
 
                                 // mark the attribute type on first pass
@@ -6637,14 +6717,16 @@ Polymer('esis-dataformat-help');;
                                     attributeTypes[key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
                                                                 this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
                                 }
 
+
                             // this is metadata
                             } else {
-                               
+                                this._cleanKey(key);
+
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
@@ -6654,11 +6736,11 @@ Polymer('esis-dataformat-help');;
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = row[j];
+                                    measurement.metadata[key] = this._cleanValue(row[j]);
                                 } else {
                                     measurement.datapoints.push({
                                         key: key,
-                                        value : row[j]
+                                        value : this._cleanValue(row[j])
                                     });
                                 }
 
@@ -6705,12 +6787,25 @@ Polymer('esis-dataformat-help');;
             // any attribute name that matches a numberic value will be assumed wavelength and
             // marked as data, otherwise it will be assumed as metadata.  This is for when
             // the user doesn't add the second break to their file
-            _findDataRows : function(content, startRow) {
+            _findDataRows : function(content, metadataRange, dataRange) {
                 var data = {};
                 var re1 = /^-?\d+\.?\d*$/;
                 var re2 = /^-?\d*\.\d+$/;
 
-                for( var i = startRow; i < content.length; i++ ) {
+                if( metadataRange ) {
+                    for( var i = metadataRange.start; i <= metadataRange.stop; i++ ) {
+                        var key = content[i][0];
+
+                        if( re1.exec(key) || re2.exec(key) ) {
+                            data[key] = true;
+                        } else {
+                            data[key] = false;
+                        }
+                    }
+                }
+
+
+                for( var i = dataRange.start; i <= dataRange.stop; i++ ) {
                     var key = content[i][0];
 
                     if( re1.exec(key) || re2.exec(key) ) {
@@ -6722,9 +6817,24 @@ Polymer('esis-dataformat-help');;
                 }
 
                 return data;
+            },
+
+            regex : {
+                key1 : /\./g,
+                key2 : /\n/g,
+                val : /\r/g
+            },
+
+            // clean a key so it can be added into mongo
+            _cleanKey : function(key) {
+                if( !key ) return '';
+                return key.replace(this.regex.key1,'').replace(this.regex.key2,'');
+            },
+
+            _cleanValue : function(val) {
+                if( !val ) return '';
+                return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
             }
-
-
         });
     ;
 
@@ -6746,23 +6856,21 @@ Polymer('esis-dataformat-help');;
 						var ref = this;
 						function onXlsxComplete(wb){
 							var count = 0;
-							wb.SheetNames.forEach(function(sheetName) {
-								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-								$.csv.toArrays(csv, {}, function(err, data){
-									if( err ) {
-										count++;
-										ref.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
-										return;
-									}
 
-									var resp = ref.extractor.run(file.defaultDataType, data);
-									count++;
-									resp.sheetName = sheetName;
-									resp.array = data;
-									ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
-									
-								});
-							});
+							var list = wb.SheetNames;
+							for( i = 0; i < list.length; i++ ) {
+								var sheetName = list[i];
+								var worksheet = wb.Sheets[sheetName];
+								
+								var data = ref.sheet_to_array(wb.Sheets[sheetName]);
+								if( !data ) data = [[]];
+
+								var resp = ref.extractor.run(file.defaultDataType, data);
+								count++;
+								resp.sheetName = sheetName;
+								resp.array = data;
+								ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+							};
 						}
 
 						var worker = new Worker('components/js-xlsx/xlsxworker.js');
@@ -6781,29 +6889,34 @@ Polymer('esis-dataformat-help');;
 					}
 				} else if( info.ext == 'xls' ) {
 					try {
+						
 
 						var ref = this;
 						function onXlsComplete(wb){
-							wb = XLS.read(contents, {type: 'binary'});
+							//wb = XLS.read(contents, {type: 'binary'});
 
-							var count = wb.SheetNames.length;
-							wb.SheetNames.forEach(function(sheetName) {
-								var csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
-								$.csv.toArrays(csv, {}, function(err, data){
-									if( err ) {
-										count++;
-										ref.onComplete(err, null, info, count, wb.SheetNames.length, arr, callback);
-										return;
-									}
+							var count = 0;
+							var list = wb.SheetNames;
+							for( i = 0; i < list.length; i++ ) {
+								var sheetName = list[i];
+								var worksheet = wb.Sheets[sheetName];
+								
+								var data = ref.sheet_to_array(wb.Sheets[sheetName]);
+								if( !data ) data = [[]];
 
-									var resp = this.extractor.run(file.defaultDataType, data);
-									count++;
-									resp.sheetName = sheetName;
-									resp.array = data;
-									this.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+								var resp = ref.extractor.run(file.defaultDataType, data);
+								count++;
+								resp.sheetName = sheetName;
+								resp.array = data;
+								ref.onComplete(null, resp, info, count, wb.SheetNames.length, arr, callback);
+							};
+						}
 
-								});
-							});
+						function fixdata(data) {
+							var o = "", l = 0, w = 10240;
+							for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
+							o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(o.length)));
+							return o;
 						}
 
 						var worker = new Worker('components/js-xls/xlsworker.js');
@@ -6811,10 +6924,13 @@ Polymer('esis-dataformat-help');;
 							switch(e.data.t) {
 								case 'ready': break;
 								case 'e': console.error(e.data.d); break;
-								case 'xlsx': onXlsComplete(JSON.parse(e.data.d)); break;
+								case 'xls': onXlsComplete(JSON.parse(e.data.d)); break;
 							}
 						};
-						worker.postMessage({d:contents,b:true});
+
+						contents = btoa(fixdata(contents));
+						//debugger;
+						worker.postMessage({d:contents, b:false});
 
 					} catch(e) {
 						debugger;
@@ -6882,6 +6998,60 @@ Polymer('esis-dataformat-help');;
 				arr.push(data);
 
 				if( index == total ) callback(arr);
+			},
+
+			sheet_to_array : function(sheet) {
+				var out = [], txt = "";
+				if(sheet == null || sheet["!ref"] == null) return "";
+				var r = this.safe_decode_range(sheet["!ref"]);
+				var row = [], rr = "", cols = [];
+				var i = 0, cc = 0, val;
+				var R = 0, C = 0;
+				for(C = r.s.c; C <= r.e.c; ++C) cols[C] = XLSX.utils.encode_col(C);
+				for(R = r.s.r; R <= r.e.r; ++R) {
+					row = [];
+					rr = XLSX.utils.encode_row(R);
+					for(C = r.s.c; C <= r.e.c; ++C) {
+						val = sheet[cols[C] + rr];
+						txt = val !== undefined ? ''+XLSX.utils.format_cell(val) : "";
+						row.push(txt);
+					}
+					out.push(row);
+				}
+				return out;
+			},
+
+			// from XLSX utils...
+			safe_decode_range : function(range) {
+				var o = {s:{c:0,r:0},e:{c:0,r:0}};
+				var idx = 0, i = 0, cc = 0;
+				var len = range.length;
+				for(idx = 0; i < len; ++i) {
+					if((cc=range.charCodeAt(i)-64) < 1 || cc > 26) break;
+					idx = 26*idx + cc;
+				}
+				o.s.c = --idx;
+
+				for(idx = 0; i < len; ++i) {
+					if((cc=range.charCodeAt(i)-48) < 0 || cc > 9) break;
+					idx = 10*idx + cc;
+				}
+				o.s.r = --idx;
+
+				if(i === len || range.charCodeAt(++i) === 58) { o.e.c=o.s.c; o.e.r=o.s.r; return o; }
+
+				for(idx = 0; i != len; ++i) {
+					if((cc=range.charCodeAt(i)-64) < 1 || cc > 26) break;
+					idx = 26*idx + cc;
+				}
+				o.e.c = --idx;
+
+				for(idx = 0; i != len; ++i) {
+					if((cc=range.charCodeAt(i)-48) < 0 || cc > 9) break;
+					idx = 10*idx + cc;
+				}
+				o.e.r = --idx;
+				return o;
 			}
 		});
 	;
@@ -7806,6 +7976,7 @@ Polymer('esis-dataformat-help');;
 
 			_setData : function() {
 				this.ds.editMode = true;
+				this.ds.package_id = this.data.id;
 
 				// set the default attirbutes for this dataset
 				for( var key in this.ds.data ) {
@@ -8551,6 +8722,24 @@ Polymer('esis-dataformat-help');;
 					url : esis.host+'/api/3/action/package_create',
 					type : 'POST',
 					data : JSON.stringify(pkg),
+					xhrFields: {
+				      withCredentials: true
+				    },
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, resp.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
+			deletePackage : function(pkgid, callback) {
+				$.ajax({
+					url : esis.host+'/api/3/action/package_delete',
+					type : 'POST',
+					data : JSON.stringify({id: pkgid}),
 					xhrFields: {
 				      withCredentials: true
 				    },

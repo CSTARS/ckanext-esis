@@ -94,6 +94,7 @@
                 var empty = false;
 
                 for( var i = 0; i < contents.length; i++ ) {
+                    empty = false;
                     if( contents[i].length == 0 ) empty = true;
                     else if( contents[i][0].length == 0 ) empty = true;
 
@@ -103,6 +104,7 @@
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -141,6 +143,7 @@
                 var empty = false;
 
                 for( var i = 0; i < row.length; i++ ) {
+                    empty = false;
                     if( row[i].length == 0 ) empty = true;
 
                     if( empty && processing ) {
@@ -149,6 +152,7 @@
                             start : cStart,
                             stop  : cStop
                         });
+                        continue;
                     } else if ( empty ) {
                         continue;
                     }
@@ -172,12 +176,20 @@
             _getFileMetadata : function(contents, hRanges) {
                 // if there is only one range of data, there is not file metadata
                 if( hRanges.length == 1 ) return {};
+
                 // if the first row doesn't have exactly two columns, there is a problem
-                if( contents[0].length != 2 ) return {};
+                for( var i = 0; i <= hRanges[0].stop; i++ ) {
+                    if( contents[i].length == 1 ) {
+                        return {};
+                    } else if( contents[i].length >= 3 && contents[i][2] != '' ) {
+                        return {};
+                    }
+                }
 
                 var fileMetadata = {};
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
-                    fileMetadata[contents[i][0]] = contents[i][1];
+                    if( !contents[i][0] ) continue;
+                    fileMetadata[this._cleanKey(contents[i][0])] = this._cleanValue(contents[i][1]);
                 }
                 return fileMetadata;
             },
@@ -224,7 +236,7 @@
                     if( !dataRange ) return {error : true};
 
                     // find what rows are thought to be data (match numberic value) or metadata (doesn't)
-                    var dataRows = this._findDataRows(contents, dataRange.start);
+                    var dataRows = this._findDataRows(contents, metadataRange, dataRange);
 
                     var len = contents[dataRange.start].length, i, j;
                     for( i = 1; i < len; i++ ) {
@@ -235,30 +247,45 @@
 
                         // add metadata range for this column
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
-                                // add known metadata from metadata range
-                                measurement.metadata[contents[j][0]] = contents[j][i];
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
+                                key = contents[j][0];
+
+                                // add wavelengths even if they are in the wrong range
+                                if( dataRows[key] ) {
+                                    measurement.datapoints.push({
+                                        key : key,
+                                        value : this._cleanValue(contents[j][i])
+                                    });
+                                } else {
+                                    key = this._cleanKey(key);
+                                    // add known metadata from metadata range
+                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
+                                }
+                                
 
                                 // mark the attribute type on first pass
                                 if( i == 1 ) {
-                                    attributeTypes[contents[j][0]] = { 
+                                    attributeTypes[key] = { 
                                         guess : false,
-                                        type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        type : dataRows[key] ? 'data' : 'metadata',
+                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             var key = contents[j][0];
 
                             // this is data
                             if( dataRows[key] || !guess ) {
+                                if( !dataRows[key] ) key = this._cleanKey(key);
+
                                 measurement.datapoints.push({
                                     key : key,
-                                    value : contents[j][i]
+                                    value : this._cleanValue(contents[j][i])
                                 });
 
                                 // this is a numberic or we are not guessing
@@ -273,8 +300,9 @@
                                 }
 
                             // this is metadata
-                            } else {
-                            
+                            } else {                      
+                                this._cleanKey(key);
+
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
@@ -284,11 +312,11 @@
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = contents[j][i];
+                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
                                 } else {
                                     measurement.datapoints.push({
                                         key: key,
-                                        value : contents[j][i]
+                                        value : this._cleanValue(contents[j][i])
                                     });
                                 }
 
@@ -345,7 +373,7 @@
                     var i, j, row, measurement, key;
 
                     // the actual 'startRow' should be the row of attribute names
-                    for( i = startRow+1; i < stopRow; i++ ) {
+                    for( i = startRow+1; i <= stopRow; i++ ) {
                         measurement = {
                             metadata : {},
                             datapoints : []
@@ -354,29 +382,43 @@
 
                         // if we have a metadata block, add the metadata
                         if( metadataRange ) {
-                            for( j = metadataRange.start; j < metadataRange.stop; j++ ) {
-                                 measurement.metadata[contents[startRow][j]] = row[j];
+                            for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
+                                key = contents[startRow][j];
+                                
+                                if( dataCols[key] ) {
+                                    measurement.datapoints.push({
+                                        key : contents[key],
+                                        value : row[j]
+                                    });
+                                } else {
+                                    key = this._cleanKey(key);
+                                    // add wavelengths even if they are in the wrong range
+                                    measurement.metadata[key] = this._cleanValue(row[j]);
+                                }
 
                                 // on first pass, keep track of attribute information
                                 if( i == startRow+1 ) {
-                                    attributeTypes[contents[j][0]] = { 
+                                    attributeTypes[key] = { 
                                         guess : false,
                                         type : 'metadata',
-                                        flag : this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
                                 }
                             }
                         }
 
                         // add datarange for this column
-                        for( j = dataRange.start; j < dataRange.stop; j++ ) {
+                        for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             key = contents[startRow][j];
 
                             // this is data
                             if( dataCols[key] || !guess ) {
+                                if( !dataCols[key] ) key = this._cleanKey(key);
+
                                 measurement.datapoints.push({
                                     key : key,
-                                    value : row[j]
+                                    value : this._cleanValue(row[j])
                                 });
 
                                 // mark the attribute type on first pass
@@ -392,7 +434,8 @@
 
                             // this is metadata
                             } else {
-                               
+                                this._cleanKey(key);
+
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
@@ -402,11 +445,11 @@
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = row[j];
+                                    measurement.metadata[key] = this._cleanValue(row[j]);
                                 } else {
                                     measurement.datapoints.push({
                                         key: key,
-                                        value : row[j]
+                                        value : this._cleanValue(row[j])
                                     });
                                 }
 
@@ -453,12 +496,25 @@
             // any attribute name that matches a numberic value will be assumed wavelength and
             // marked as data, otherwise it will be assumed as metadata.  This is for when
             // the user doesn't add the second break to their file
-            _findDataRows : function(content, startRow) {
+            _findDataRows : function(content, metadataRange, dataRange) {
                 var data = {};
                 var re1 = /^-?\d+\.?\d*$/;
                 var re2 = /^-?\d*\.\d+$/;
 
-                for( var i = startRow; i < content.length; i++ ) {
+                if( metadataRange ) {
+                    for( var i = metadataRange.start; i <= metadataRange.stop; i++ ) {
+                        var key = content[i][0];
+
+                        if( re1.exec(key) || re2.exec(key) ) {
+                            data[key] = true;
+                        } else {
+                            data[key] = false;
+                        }
+                    }
+                }
+
+
+                for( var i = dataRange.start; i <= dataRange.stop; i++ ) {
                     var key = content[i][0];
 
                     if( re1.exec(key) || re2.exec(key) ) {
@@ -470,9 +526,24 @@
                 }
 
                 return data;
+            },
+
+            regex : {
+                key1 : /\./g,
+                key2 : /\n/g,
+                val : /\r/g
+            },
+
+            // clean a key so it can be added into mongo
+            _cleanKey : function(key) {
+                if( !key ) return '';
+                return key.replace(this.regex.key1,'').replace(this.regex.key2,'');
+            },
+
+            _cleanValue : function(val) {
+                if( !val ) return '';
+                return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
             }
-
-
         });
     </script>
 </polymer-element>

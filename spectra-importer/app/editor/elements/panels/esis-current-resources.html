@@ -15,6 +15,11 @@
 			table td {
 				padding: 5px;
 			}
+			paper-icon-button {
+				margin-top: 100px;
+				background-color: rgb(210, 63, 49) !important;
+				color: white;
+			}
 		</style>
 
 		<div hidden?="{{!loading}}" style="margin-bottom:25px">
@@ -33,6 +38,8 @@
 				<td><esis-ui-delete-button rid="{{res.id}}" label="{{res.name}}" on-delete="{{_deleteResource}}"></esis-ui-delete-button></td>
 			</tr>
 		</table>
+
+		<paper-icon-button icon="warning" label="Delete Dataset" style="margin-top" on-tap="{{_delete}}" raisedButton></paper-icon-button>
 	</template>
 	<script>
 		Polymer('esis-current-resources',{
@@ -146,6 +153,20 @@
 		  	_deleteResource : function(e) {
 		  		var id = e.currentTarget.getAttribute('rid');
 		  		this.ds.removeResource(id);
+		  	},
+
+		  	_delete : function() {
+		  		if( confirm('Are you sure your want to remove this dataset?') ) {
+		  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+		  				document.querySelector('esis-ckan').deletePackage(
+		  					this.ds.package_id, 
+		  					function(err, resp) {
+		  						alert('package deleted');
+		  						window.location = '/dataset';
+		  					}
+		  				);
+		  			}
+		  		}
 		  	}
 		});
 	</script>

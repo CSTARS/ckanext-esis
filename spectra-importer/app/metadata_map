@@ -1,0 +1,209 @@
+Vegetation Biophysical Variables
+Percent Crown Cover=
+Approx Crown Diameter=
+Chlorophyll Content=
+Crown Class (FPMRIS)=
+DBH=
+Dry Weight=
+Height=
+Leaf Area=
+Specific Leaf Area=
+Water Content=
+Wet Weight=
+
+General
+Acquisition Time=
+File Comments=
+File Name=
+File Version=
+Loading Time=
+Raw Data Format=
+Spectrum Number=
+Type=
+Class=
+Subclass=
+
+Campaign Details
+Agency Code=
+Campaign Name=
+Project ID=
+
+Soil Parameters
+Air Dry Water Content=
+Air Dry Water Content Method=
+ASC Order=
+ASC Sub-Order=
+Available P=
+Available P Method=
+Bulk Density=
+Bulk Density Method=
+Carbon=
+Carbon Method=
+CEC=
+CEC Method=
+Clay=
+Clay Method=
+Coarse Sand=
+Coarse Sand Method=
+Electrical Conductivity=
+Electrical Conductivity Method=
+Exchangeable Acidity=
+Exchangeable Acidity Method=
+Exchangeable Ca=
+Exchangeable Ca Method=
+Exchangeable K=
+Exchangeable K Method=
+Exchangeable Mg=
+Exchangeable Mg Method=
+Exchangeable Na=
+Exchangeable Na Method=
+Extractable Fe=
+Extractable Fe Method=
+Fine Sand=
+Fine Sand Method=
+Geothite=
+Geothite Method=
+Gibsite=
+Gibsite Method=
+Hematite=
+Hematite Method=
+Horizon Desig Master=
+Horizon Desig Sub Division=
+Horizon Name=
+Horizon Number=
+Illite=
+Illite Method=
+Kaolinite=
+Kaolinite Method=
+Montmorillonite=
+Montmorillonite Method=
+pH CaCl2=
+pH CaCl2 Method=
+pH Water=
+pH Water Method=
+Sampling Lower Depth=
+Sampling Upper Depth=
+Silt=
+Silt Method=
+Smectite=
+Smectite Method=
+Total K=
+Total K Method=
+Total N=
+Total N Method=
+Total P=
+Total P Method=
+Water Content 0_1 Bar=
+Water Content 0_1 Bar Method=
+Water Holding Capacity 15 Bar=
+Water Holding Capacity 15 Bar Method=
+
+Environmental Conditions
+Air Pressure=
+Ambient Temperature=
+Cloud Cover=
+Relative Humidity=
+Sampling Environment=
+Weather Conditions=
+Wind Direction=
+Wind Speed=
+
+Location
+Altitude=
+Latitude=
+Location Name=
+Longitude=
+State=
+
+Instrument Settings
+Automatic Dark Current Correction=
+Capturing Software Name=
+Capturing Software Version=
+Gain_SWIR1=
+Gain_SWIR2=
+Instrument Channel=
+Integration Time=
+Number of internal Scans=
+Offset_SWIR1=
+Offset_SWIR2=
+Time since last DC=
+UniSpec Spectral Resampling=
+
+Instrumentation
+Azimuth Sensor Type=
+Contact Probe=
+Goniometer=
+Illumination Sources=
+Integrating Sphere=
+Light Source Parameters=
+White Reference Panel Name=
+
+Sampling Geometry
+Beam Geometry=
+Illumination Azimuth=
+Illumination Distance=
+Illumination Zenith=
+Sensor Azimuth=
+Sensor Distance=
+Sensor Zenith=
+
+Instrument
+Calibration Number=
+Extended Instrument Name=
+Instrument Serial Number=
+
+Scientific References
+Citation=
+Publication=
+
+Names
+Common=
+ENVI Hdr=
+Latin=
+USDA Code=
+
+Processing
+Data Ingestion Notes=
+DC Flag=
+Garbage Flag=
+Processing Algorithm=
+Processing Level=
+Processing Module=
+Source File=
+Time Shift=
+
+Data Portal
+Data Usage Policy=
+Digital Object Identifier=
+
+PDFs
+Experimental Design=
+Field Protocol=
+
+Optics
+FOV=
+Optics Name=
+
+Personnel
+Investigator=
+
+Keywords
+Keyword=
+
+Illumination
+Polarization=
+Polarization Direction=
+
+Generic Target Properties
+Sample Collection Date=
+Sample Number=
+Site ID=
+Target Description=
+Target ID=
+
+Pictures
+Sampling Environment Picture=
+Sampling Setup Picture=
+Sky Picture=
+Target Picture=
+
