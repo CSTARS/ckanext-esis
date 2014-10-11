@@ -117,13 +117,19 @@ class SpectraController(PackageController):
         context = {'model': model, 'user': c.user}
         ckanPackage = logic.get_action('package_show')(context, {'id': packageData['package_id']})
 
+        # grab current metadata
+        cur = metadataCollection.find({'package_id': packageData['package_id']})
+        for metadataFile in cur:
+            metadata.append(metadataFile)
+
         # pull out joinable metadata for insert if there is any
         if 'join' in packageData:
-            metadata = packageData['join']
+            newMetadata = packageData['join']
             del packageData['join'] # remove from packageData document
 
-            for item in metadata:
+            for item in newMetadata:
                 item['package_id'] = packageData['package_id']
+                metadata.append(item)
                 metadataCollection.insert(item)
 
         # now transpose existing data
@@ -216,6 +222,7 @@ class SpectraController(PackageController):
         context = {'model': model, 'user': c.user}
         logic.get_action('package_delete')(context, params)
 
+        searchCollection.remove({'_id':params['id']})
         spectraCollection.remove({'ecosis.package_id':params['id']})
         packageCollection.remove({'package_id':params['id']})
         metadataCollection.remove({'package_id': params['id']})
@@ -421,11 +428,7 @@ class SpectraController(PackageController):
     # this will remove all attributes that have been joined into the spectra
     # then will rejoin with all metadata in the given list
     def _rejoin_metadata(self, spectra, metadataList, attributeInfo):
-        # for the join below, it will be nice to have an inverse dic of
-        # the attribute map
-        map = {}
-        for key, value in attributeInfo['map'].iteritems():
-            map[value] = key
+        map = attributeInfo['map']
 
         # remove all attributes of type join
         for typeInfo in attributeInfo['types']:
@@ -443,6 +446,9 @@ class SpectraController(PackageController):
                     self._join(spectra, col, map)
                     break
 
+        #TODO: once we 'rejoined' everything, we need to detect if the USDA code has changed
+        # if so we need to re-update
+
     # join a metadata column to a spectra
     def _join(self, spectra, col, map):
         for key, value in col.iteritems():
@@ -454,24 +460,22 @@ class SpectraController(PackageController):
     def _is_join_match(self, spectra, metadata, col):
         val = col[metadata['join_id']]
 
-        if metadata['worksheetMatch'] or metadata['filenameMatch']:
+        if 'worksheetMatch' in metadata or 'filenameMatch' in metadata:
             name = spectra['ecosis']['filename'] if metadata['filenameMatch'] else spectra['ecosis']['worksheet']
 
             # if the value doesn't have a period, assume we want to strip any extension on a filename match
-            if val.find('.') == -1 and metadata['filenameMatch']:
+            if val.find('.') == -1 and 'filenameMatch' in metadata:
                 name = re.sub(r'\..*', '', name)
 
             # this can match too much
-            if metadata['exactMatch'] and name.find(val) > -1:
+            if 'exactMatch' in metadata and name.find(val) > -1:
                 return True
             if val == name:
                 return True
 
         else:
-            if spectra[metadata['join_id']] == val:
-                return True
-            if spectra['custom'] != None:
-                if spectra['custom'][metadata['join_id']] == val:
+            if metadata['join_id'] in spectra:
+                if spectra[metadata['join_id']] == val:
                     return True
 
         return False
