@@ -6244,7 +6244,19 @@ Polymer('esis-dataformat-help');;
 
 			getAllAttributeTypes : function() {
 				var attrTypes = {}, item;
+
+				// add metadata first, that way file / spectra level data overrides
+				// this is required for when the server 'rejoins' on update.  have fields
+				// that are in both metadata and spectra show as joinable makes things foobar
 				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( !this.datasheets[i].isMetadata ) continue;
+					for( var key in this.datasheets[i].attributeTypes ) {
+						attrTypes[key] = this.datasheets[i].attributeTypes[key];
+					}
+				}
+
+				for( var i = 0; i < this.datasheets.length; i++ ) {
+					if( this.datasheets[i].isMetadata ) continue;
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
