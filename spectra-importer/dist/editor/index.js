@@ -5760,7 +5760,7 @@ Polymer('esis-dataformat-help');;
 			// newType should be 'data' or 'metadata'
 			switchAttributeType : function(attr, newType) {
 				// move from metadata to datapoints array
-				if( newType == 'data' && this.metadata.measurement && this.metadata.measurement[attr] ) {
+				if( newType == 'data' && this.metadata.measurement && this.metadata.measurement[attr] != null ) {
 					this.datapoints.push({
 						key : attr,
 						value : this.metadata.measurement[attr]
@@ -5768,7 +5768,7 @@ Polymer('esis-dataformat-help');;
 					delete this.metadata.measurement[attr];
 
 				// move from datapoints array to metadata
-				} else {
+				} else if ( newType == 'metadata' ) {
 					var index = this.getDataPointIndex(attr);
 					if( index == -1 ) return;
 
@@ -6408,10 +6408,12 @@ Polymer('esis-dataformat-help');;
                     }
                 }
 
-                ranges.push({
-                    start : cStart,
-                    stop  : cStop
-                });
+                if( processing ) {
+                    ranges.push({
+                        start : cStart,
+                        stop  : cStop
+                    });
+                }
 
                 return ranges;
             },
@@ -6456,10 +6458,12 @@ Polymer('esis-dataformat-help');;
                     }
                 }
 
-                ranges.push({
-                    start : cStart,
-                    stop  : cStop
-                });
+                if( processing ) {
+                    ranges.push({
+                        start : cStart,
+                        stop  : cStop
+                    });
+                }
 
                 return ranges;
             },
@@ -6506,7 +6510,7 @@ Polymer('esis-dataformat-help');;
                     } else if ( hRanges.length == 2 ) {
                         // the first range is global file metadata, the second is
                         // data and we should guess on type
-                        if( contents[0].length == 2 ) {
+                        if( this._getLength(contents[0]) == 2 ) {
                             dataRange = hRanges[1];
 
                         // the first range is metadata and the second range is data
@@ -6834,6 +6838,18 @@ Polymer('esis-dataformat-help');;
             _cleanValue : function(val) {
                 if( !val ) return '';
                 return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
+            },
+
+            // get the number of cells until the rest are empty
+            _getLength : function(arr) {
+                if( !arr ) return 0;
+                if( arr[arr.length-1] && arr[arr.length-1] != '' ) return arr.length;
+
+                var i = 0; len = arr.length;
+                for( var i = len-1; i >= 0; i-- ) {
+                    if( arr[i] != '' ) return i+1;
+                }
+                return 0;
             }
         });
     ;
@@ -7986,33 +8002,35 @@ Polymer('esis-dataformat-help');;
 				var ecosis = this.data.ecosis;
 
 				// set the existing user modifications
-				this.ds.attributeModifications = ecosis.attributes.modifications;
+				if( ecosis.attributes ) {
+					this.ds.attributeModifications = ecosis.attributes.modifications;
 
-				// set the known attribute name mappings
-				this.ds.inverseAttributeMap = ecosis.attributes.map;
-				for( var key in ecosis.attributes.map ) {
-					this.ds.attributeMap[ecosis.attributes.map[key]] = key;
-				}
-				this.async(function(){
-					this.ds.fire('attribute-map-update');
-				});
-				
-
-				// set the known attribute types
-				// add the wavelengths back into the types array
-				for( var i = 0; i < ecosis.attributes.wavelengths.length; i++ ) {
-					ecosis.attributes.types.push({
-						type : 'data',
-						flag : this.ds.ATTR_FLAGS.IS_WAVELENGTH,
-						name : ecosis.attributes.wavelengths[i]
+					// set the known attribute name mappings
+					this.ds.inverseAttributeMap = ecosis.attributes.map;
+					for( var key in ecosis.attributes.map ) {
+						this.ds.attributeMap[ecosis.attributes.map[key]] = key;
+					}
+					this.async(function(){
+						this.ds.fire('attribute-map-update');
 					});
-				}
-				this.ds.existingAttributeTypes = ecosis.attributes.types;
+					
 
-				// set the dataset attributes
-				for( var key in this.ds.datasetAttributes ) {
-					if( ecosis.attributes.dataset[key] ) {
-						this.ds.datasetAttributes[key] = ecosis.attributes.dataset[key];
+					// set the known attribute types
+					// add the wavelengths back into the types array
+					for( var i = 0; i < ecosis.attributes.wavelengths.length; i++ ) {
+						ecosis.attributes.types.push({
+							type : 'data',
+							flag : this.ds.ATTR_FLAGS.IS_WAVELENGTH,
+							name : ecosis.attributes.wavelengths[i]
+						});
+					}
+					this.ds.existingAttributeTypes = ecosis.attributes.types;
+
+					// set the dataset attributes
+					for( var key in this.ds.datasetAttributes ) {
+						if( ecosis.attributes.dataset[key] ) {
+							this.ds.datasetAttributes[key] = ecosis.attributes.dataset[key];
+						}
 					}
 				}
 
@@ -8071,69 +8089,6 @@ Polymer('esis-dataformat-help');;
 					}.bind(this));
 				}
 			},
-
-
-			/*_getDataPackage: function(id) {
-				this.fire('get-data-resource-progress', 0);
-
-				this.ckan.getSpectraResource(
-					id, 
-					function(err, dataset){
-						if( err ) return alert('Failed to load Ecosis data resource package');
-						this.ds.existing.dataset = dataset;
-
-						// set existing metadata
-						this._setExistingMetadata();
-
-						this.fire('get-data-resource-complete');
-						this.dataPackageLoaded = true;
-					}.bind(this),
-					function(progress){
-						this.fire('get-data-resource-progress', progress);
-					}.bind(this)
-				);
-			},
-
-			// create metadata elements for the resources that already exist
-			_setExistingMetadata : function() {
-				if( !this.ds.existing.dataset ) return;
-				if( !this.ds.existing.dataset.join ) return;
-
-				for( var i = 0; i < this.ds.existing.dataset.join.length; i++ ) {
-					var mdObj = this.ds.existing.dataset.join[i];
-
-					var datasheet = document.createElement('esis-datasheet');
-					datasheet.isMetadata = true;
-					datasheet.isExisting = true;
-
-					var metadata = document.createElement('esis-metadata');
-					metadata.metadata = mdObj.metadata;
-					metadata.joinId = mdObj.join_id;
-					metadata.resourceId = mdObj.resource_id;
-					metadata.isExisting = true;
-
-					// set filename
-					if( this.data.resources ) {
-						for( var i = 0; i < this.data.resources.length; i++ ) {
-							if( this.data.resources[i].id = metadata.resourceId ) {
-								metadata.filename = this.data.resources[i].name;
-								break;
-							}
-						}
-					}
-
-					// set join information
-					if( mdObj.join_on.type == 'filename' ) {
-						metadata.filenameMatch = true;
-						if( mdObj.join_on.loose ) metadata.looseMatch = true;
-					} else if ( mdObj.join_on.type == 'worksheet' ) {
-						metadata.worksheetMatch = true;
-					}
-
-					datasheet.metadata = metadata;
-					this.ds.datasheets.push(datasheet);
-				}
-			},*/
 
 			_getVar : function(variable) {
        			var query = window.location.search.substring(1);
@@ -9049,7 +9004,7 @@ Polymer('esis-dataformat-help');;
     ;
 
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.6:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.4:5000' : '';
 
     $.ajax({
         type : 'GET',
