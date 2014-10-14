@@ -6408,10 +6408,12 @@ Polymer('esis-dataformat-help');;
                     }
                 }
 
-                ranges.push({
-                    start : cStart,
-                    stop  : cStop
-                });
+                if( processing ) {
+                    ranges.push({
+                        start : cStart,
+                        stop  : cStop
+                    });
+                }
 
                 return ranges;
             },
@@ -6456,10 +6458,12 @@ Polymer('esis-dataformat-help');;
                     }
                 }
 
-                ranges.push({
-                    start : cStart,
-                    stop  : cStop
-                });
+                if( processing ) {
+                    ranges.push({
+                        start : cStart,
+                        stop  : cStop
+                    });
+                }
 
                 return ranges;
             },
@@ -6506,7 +6510,7 @@ Polymer('esis-dataformat-help');;
                     } else if ( hRanges.length == 2 ) {
                         // the first range is global file metadata, the second is
                         // data and we should guess on type
-                        if( contents[0].length == 2 ) {
+                        if( this._getLength(contents[0]) == 2 ) {
                             dataRange = hRanges[1];
 
                         // the first range is metadata and the second range is data
@@ -6834,6 +6838,18 @@ Polymer('esis-dataformat-help');;
             _cleanValue : function(val) {
                 if( !val ) return '';
                 return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
+            },
+
+            // get the number of cells until the rest are empty
+            _getLength : function(arr) {
+                if( !arr ) return 0;
+                if( arr[arr.length-1] && arr[arr.length-1] != '' ) return arr.length;
+
+                var i = 0; len = arr.length;
+                for( var i = len-1; i >= 0; i-- ) {
+                    if( arr[i] != '' ) return i+1;
+                }
+                return 0;
             }
         });
     ;
@@ -8988,7 +9004,7 @@ Polymer('esis-dataformat-help');;
     ;
 
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.6:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.4:5000' : '';
 
     $.ajax({
         type : 'GET',
