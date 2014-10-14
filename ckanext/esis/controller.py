@@ -163,7 +163,7 @@ class SpectraController(PackageController):
         return json.dumps({'success': True})
 
     def getPackage(self):
-        response.headers["Content-Type"] = "application/json"
+	response.headers["Content-Type"] = "application/json"
         id = request.params.get('id')
 
         # make sure they have access
@@ -171,7 +171,10 @@ class SpectraController(PackageController):
         ckanPackage = logic.get_action('package_show')(context, {'id': id})
 
         pkg = packageCollection.find_one({'package_id': ckanPackage['id']}, {'_id': 0, 'package_id':0, 'package_name':0})
-        ckanPackage['ecosis'] = pkg
+	# This is bad, need to detect before it happens
+	if pkg == None:
+		pkg = {}
+	ckanPackage['ecosis'] = pkg
         ckanPackage['ecosis']['metadata'] = []
 
         # lookup information about metadata resources
