@@ -289,22 +289,46 @@ class SpectraController(PackageController):
         # This means there is no spectra
         item = searchCollection.find_one({'_id': pkg['id'], 'value': None})
 
+        # now see if we have a group by attribute...
+
         if item != None:
             searchCollection.remove({'_id': pkg['id']})
         else:
+            item = packageCollection.find_one({'package_id': pkg['id']},{'attributes.dataset.group_by': 1})
+            if item == None:
+                return
+
             # Kinda a hack .... now let's set the description in the map-reduce collection
-            searchCollection.update(
-                {'_id': pkg['id']},
-                {'$set' :
-                    {
-                        'value.ecosis.description': pkg['notes'],
-                        'value.ecosis.keywords': keywords,
-                        'value.ecosis.organization_name' : organization_name,
-                        'value.ecosis.organization_id' : organization_id,
-                        'value.ecosis.organization_image_url' : organization_image_url
-                    }
+            setValues = {'$set' :
+                {
+                    'value.ecosis.description': pkg['notes'],
+                    'value.ecosis.keywords': keywords,
+                    'value.ecosis.organization_name' : organization_name,
+                    'value.ecosis.organization_id' : organization_id,
+                    'value.ecosis.organization_image_url' : organization_image_url
                 }
-            )
+            }
+
+            groupBy = None
+            if 'attributes' in item:
+                if 'dataset' in item['attributes']:
+                    if 'group_by' in item['attributes']['dataset']:
+                        if item['attributes']['dataset']['group_by'] != None and item['attributes']['dataset']['group_by'] != '':
+                            groupBy = item['attributes']['dataset']['group_by']
+
+            # need to set values for each group by collection if it exists
+            if groupBy != None:
+                groups = spectraCollection.find({'ecosis.package_id': pkg['id']}).distinct(groupBy)
+                for group in groups:
+                    searchCollection.update(
+                        {'_id': "%s-%s" % (pkg['id'], group)},
+                        setValues
+                    )
+            else:
+                searchCollection.update(
+                    {'_id': pkg['id']},
+                    setValues
+                )
 
     # if we have a sort variable, it should be in the metadata and datapoints locations
     # in a spectra.  It should also be set in spectra.ecosis.sort namespace
