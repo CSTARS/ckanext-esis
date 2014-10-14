@@ -5760,7 +5760,7 @@ Polymer('esis-dataformat-help');;
 			// newType should be 'data' or 'metadata'
 			switchAttributeType : function(attr, newType) {
 				// move from metadata to datapoints array
-				if( newType == 'data' && this.metadata.measurement && this.metadata.measurement[attr] ) {
+				if( newType == 'data' && this.metadata.measurement && this.metadata.measurement[attr] != null ) {
 					this.datapoints.push({
 						key : attr,
 						value : this.metadata.measurement[attr]
@@ -5768,7 +5768,7 @@ Polymer('esis-dataformat-help');;
 					delete this.metadata.measurement[attr];
 
 				// move from datapoints array to metadata
-				} else {
+				} else if ( newType == 'metadata' ) {
 					var index = this.getDataPointIndex(attr);
 					if( index == -1 ) return;
 
