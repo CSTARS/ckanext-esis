@@ -199,7 +199,6 @@ class SpectraController(PackageController):
                 'spectra_count' : resource['count']
             })
 
-
         return json.dumps(ckanPackage)
 
     def getMetadata(self):
