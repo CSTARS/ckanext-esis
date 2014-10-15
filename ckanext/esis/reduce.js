@@ -2,23 +2,40 @@ function(key, spectra){
         var searchObj = {
             ecosis : {
                 spectra_count : 0
-            }
+            },
+            // keeps track of counts for unique items
+            _repeats : {}
         };
         
-        var ignoreList = ['_id','datapoints', 'ecosis'];
+        var ignoreList = ['_id','datapoints', 'ecosis', '_repeats'];
 
         // create unique lists of our attributes
         function addOrAppendUnique(obj, key, value) {
             if( value === null ) return;
+            if( value === '' ) return;
             // don't include values that have over 100 characters.  Assume not good filter
             if( typeof value == 'string' && value.length > 100 ) return;
 
             if( obj[key] !== undefined ) {
                 if( obj[key].indexOf(value) == -1 ) {
                     obj[key].push(value);
+                } else {
+                    addRepeat(obj, key);
                 }
             } else {
                 obj[key] = [value];
+            }
+        }
+
+        function addRepeat(obj, key) {
+            if( obj._repeats[key] && !searchObj._repeats[key] ) {
+                searchObj._repeats[key] = obj._repeats[key];
+            }
+            
+            if( searchObj._repeats[key] ) {
+                searchObj._repeats[key] += 1;
+            } else {
+                searchObj._repeats[key] = 1;
             }
         }
 

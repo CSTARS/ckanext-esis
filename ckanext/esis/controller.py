@@ -258,7 +258,14 @@ class SpectraController(PackageController):
     # TODO: this should be admin only!!
     def rebuildIndex(self):
         context = {'model': model, 'user': c.user}
+
+        if not c.userobj.sysadmin:
+            return json.dumps({'error':True, 'message':'nope'})
+
         list = logic.get_action('package_list')(context,{})
+
+        # clear the current collection
+        searchCollection.remove({})
 
         for pkgId in list:
             pkg = logic.get_action('package_show')(context,{'id': pkgId})
