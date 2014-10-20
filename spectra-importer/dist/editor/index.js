@@ -9004,7 +9004,7 @@ Polymer('esis-dataformat-help');;
     ;
 
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.4:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.6:5000' : '';
 
     $.ajax({
         type : 'GET',
