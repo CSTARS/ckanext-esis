@@ -3891,6 +3891,10 @@ Polymer('core-style', {
 
 			visible : true,
 
+			// if we are creating a dataset and the dataset add button has been clicked
+			// from inside an organization
+			group : '',
+
 			licenses : [],
 			organizations : [],
 
@@ -3908,6 +3912,8 @@ Polymer('core-style', {
 			ready : function() {
 				this.baseUrl = esis.host+'/dataset/';
 
+				this.group = this._getVar('group');
+
 				this.ds = document.querySelector('esis-datastore');
 				this.ckan = document.querySelector('esis-ckan');
 
@@ -3921,6 +3927,9 @@ Polymer('core-style', {
 						id : '',
 						display_name : 'No Organization'
 					});
+					
+					if( this.group ) this.ds.data.owner_org = this.group;
+
 				}.bind(this));
 			},
 
@@ -3988,6 +3997,16 @@ Polymer('core-style', {
 
 			_setVisibility : function() {
 				this.$.visible.value = (this.ds.hidden)+'';
+			},
+
+		  	_getVar : function(variable) {
+       			var query = window.location.search.substring(1);
+       			var vars = query.split("&");
+       			for (var i = 0; i < vars.length; i++) {
+               		var pair = vars[i].split("=");
+               		if( pair[0] == variable ) return pair[1];
+       			}
+       			return null;
 			}
 
 		});
@@ -4210,7 +4229,7 @@ Polymer('esis-dataformat-help');;
 				selectedSheetIndex : '_updateDatasheet'
 			},
 
-			ready : function() {
+			ready : function() {				
 				this.ds = document.querySelector('esis-datastore');
 				this.$.dropZone.addEventListener('dragover', this._handleDragOver.bind(this), false);
 				this.$.dropZone.addEventListener('drop', this._handleFileSelect.bind(this), false);
@@ -6069,8 +6088,7 @@ Polymer('esis-dataformat-help');;
 			owner_org_name : '',
 
 			datasetAttributes : {
-				group_by : '',
-				// TODO: make sort into array
+				//group_by : '',
 				sort_on : '',
 				sort_type : '',
 				sort_description : '',
@@ -9004,7 +9022,7 @@ Polymer('esis-dataformat-help');;
     ;
 
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.4:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.6:5000' : '';
 
     $.ajax({
         type : 'GET',

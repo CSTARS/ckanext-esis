@@ -3746,7 +3746,7 @@ Putting this together:
 		</style>
 
 		<div style="font-size: 14px; color: #888">
-			Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.
+			Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br>First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
 		</div>
 
 		<div class="form-wrap">
@@ -4572,10 +4572,10 @@ Copyright (c) 2013 Daniel Eden
                     <td class="spectra">Spectra 3 value</td>
                 </tr>
                 <tr>
-                    <td class="spectra attr">Another Spectra Attribute</td>
-                    <td class="spectra">Spectra 1 other val</td>
-                    <td class="spectra">Spectra 2 other val</td>
-                    <td class="spectra">Spectra 3 other val</td>
+                    <td class="spectra attr">USDA Code</td>
+                    <td class="spectra">ORYZA</td>
+                    <td class="spectra">ORYZA</td>
+                    <td class="spectra">ACRU</td>
                 </tr>
                 <tr>
                     <td class="spectra attr">id</td>
@@ -4651,7 +4651,7 @@ Copyright (c) 2013 Daniel Eden
                     <td class="spectra attr">datetime</td>
                     <td class="spectra attr">id</td>
                     <td class="spectra attr">Metadata Attribute</td>
-                    <td class="spectra attr">Another Attribute</td>
+                    <td class="spectra attr">USDA Code</td>
                     <td></td>
                     <td class="data attr">PAR</td>
                     <td class="data attr">NDVI</td>
@@ -4661,7 +4661,7 @@ Copyright (c) 2013 Daniel Eden
                     <td class="spectra attr">2008-07-24</td>
                     <td class="spectra">id1</td>
                     <td class="spectra">metadata value 1</td>
-                    <td class="spectra">another value 1</td>
+                    <td class="spectra">ORYZA</td>
                     <td></td>
                     <td class="data">688.34</td>
                     <td class="data">.53</td>
@@ -4671,7 +4671,7 @@ Copyright (c) 2013 Daniel Eden
                     <td class="spectra attr">2008-07-25</td>
                     <td class="spectra">id2</td>
                     <td class="spectra">metadata value 2</td>
-                    <td class="spectra">another value 2</td>
+                    <td class="spectra">ACRU</td>
                     <td></td>
                     <td class="data">566.17</td>
                     <td class="data">.50</td>
@@ -4690,6 +4690,18 @@ Copyright (c) 2013 Daniel Eden
 
         <div class="note">
             <span style="color:red">*</span> The name for data attributes that are wavelengths should always be the wavelengths numberic value.
+        </div>
+
+        <div style="margin-top:15px">
+            Still lost?  <a href="http://tutorial.ecospectra.org/walkthrough/#/7" target="_blank">Click here</a> to checkout the tutorial on data formats.
+        </div>
+
+
+        <div style="margin-top: 15px;border-top:1px solid #ccc">
+            <h4 style="margin-bottom:5px">USDA Codes</h4>
+            <p>
+                If you privode the short <a href="http://plants.usda.gov/dl_all.html" target="_blank">USDA Plant Code</a> the importer will automatically lookup and add the Scientific Name, Common Name, Category, Genus and Family attributes.  This is highly recommended!  Make sure the attribute name is &apos;USDA Code&apos;.
+            </p>
         </div>
     </template>
 </polymer-element>
@@ -5119,10 +5131,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             All of the following inputs are optional.
         </div>
 
-        <!--<div style="font-size: 14px; color: #888">
-            Group your data by a certain attribute so related spectra within this dataset can easily be found in search.  Examples for this grouping include time series data, or data that is spatially related.  To group, first select the attribute in your dataset to group on.  This attribute should have the same value for all spectra in that group.  Next, provide a sort attribute.  For time, this would be the time attribute the spectra was taken at.  Finally, you can provide a description of this group to let others know what this grouping is.  Ex: "Spectra time series at 1 minute intervals"
-        </div>-->
-
         <h4>Dataset Ordering</h4>
         <div class="help">
             Is this a time series dataset or a dataset that has any other form of ordering?  If so, select the attribute to order by as well as the type of sort that should be performed.  You can also provide a textual description of what this ordering is.
@@ -5154,6 +5162,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
         </div>
 
+<!-- TOREMOVE
         <h4>Grouping for Search</h4>
         <div class="help">
             By default your dataset will show up as one result in search.  Sometimes you may wish to split your dataset out into multiple search results.  You can do this by providing a group by attribute below.  Your dataset will then be split up into multiple groups in search.
@@ -5167,14 +5176,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 </template>
             </select>
 
-            <template bind="" if="{{groups.length &gt; 0}}">
+            <template bind if="{{groups.length > 0}}">
                 <div style="padding-bottom: 10px">Grouping Results: </div>
                 <template repeat="{{group in groups}}">
                     <div style="padding-left: 15px"><b>{{group.key}}:</b> {{group.value}}</div>
                 </template>
             </template>
         </div>
-
+-->
         
 
         <h4>Geographic Location</h4>
