@@ -95,6 +95,7 @@
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						var f = this.datasheets[i];
+						if( f.ignore ) continue;
 
 						// listen for updates, make sure we only attach once
 						if( this.attachedHandlers.indexOf(f) == -1 ) {
@@ -115,6 +116,8 @@
 
 					if( this.measurements.length > 0 ) {
 						this.selectedSpectra = this.measurements[0];
+					} else {
+						this.selectedSpectra = {};
 					}
 
 					this._updateVisibility();

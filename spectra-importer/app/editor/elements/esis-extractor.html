@@ -535,6 +535,8 @@
             regex : {
                 key1 : /\./g,
                 key2 : /\n/g,
+                trim1 : /^\s*/,
+                trim2 : /\s*$/,
                 val : /\r/g
             },
 
@@ -546,7 +548,7 @@
 
             _cleanValue : function(val) {
                 if( !val ) return '';
-                return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
+                return val.replace(this.regex.key2,' ').replace(this.regex.val,'').replace(this.regex.trim1,'').replace(this.regex.trim2,'');
             },
 
             // get the number of cells until the rest are empty

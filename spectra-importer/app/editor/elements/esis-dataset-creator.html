@@ -82,6 +82,8 @@
                 };
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                    if( this.ds.datasheets[i].ignore ) continue;
+
                     if( this.ds.datasheets[i].isMetadata ) {
                         this.counts.metadataResources++;
                     } else if ( this.ds.datasheets[i].measurements.length > 0 ) {
@@ -236,6 +238,8 @@
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var f = this.ds.datasheets[i];
+                    if( f.ignore ) continue;
+
                     for( var j = 0; j < f.measurements.length; j++ ) {
                         // make sure the latest uid for the spectra is generated
                         f.measurements[j].updateUid();
@@ -302,6 +306,8 @@
 
                 for( i = 0; i < this.ds.datasheets.length; i++ ) {
                     f = this.ds.datasheets[i];
+                    if( f.ignore ) continue;
+
                     for( j = 0; j < f.measurements.length; j++ ) {
                         ele = f.measurements[j];
                         m = {
@@ -401,6 +407,8 @@
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var f = this.ds.datasheets[i];
+                    if( f.ignore ) continue;
+
                     for( var j = 0; j < f.measurements.length; j++ ) {
                         measurements.push(f.measurements[j]);
                     }
@@ -502,6 +510,7 @@
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var jd = this.ds.datasheets[i];
+                    if( jd.ignore ) return;
 
                     if( !jd.isMetadata || jd.isExisting ) continue;
                     jd = jd.metadata;

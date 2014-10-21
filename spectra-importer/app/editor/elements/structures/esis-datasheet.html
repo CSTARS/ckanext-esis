@@ -35,6 +35,12 @@
 
 			label : '',
 
+			// should this datasheet be ignored?
+			ignore : false,
+			ignoreChanged : function() {
+				this.fire('datasheet-updated');
+			},
+
 			observe : {
 				contents : '_update',
 				dataType : '_extract',
@@ -100,13 +106,17 @@
 						this.measurements.push(sp);
 					}
 
-					//
+					if( this.contents.measurements.length == 0 ) {
+						this.contents.warning = 'No measurements found';
+					}
 				} else if( this.contents.joindata && this.contents.joindata.length > 0 ) {
 					
 					this.metadata = document.createElement('esis-metadata');
 					this.metadata.contents = this.contents;
 					this.metadata.metadata = this.contents.joindata;
 					this.isMetadata = true;
+
+					this.contents.warning = '';
 				}
 
 				this.updating = false;

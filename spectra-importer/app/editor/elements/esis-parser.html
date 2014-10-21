@@ -143,11 +143,12 @@
 					data = {
 						error : 'Unknown parse error'
 					}
-				} else if( data.measurements.length == 0 && 
+				}
+				/* else if( data.measurements.length == 0 && 
 					Object.keys(data.metadata).length == 0 &&
 					!data.joindata ) {
 					data.warning = 'No metadata or measurements found';
-				}
+				} */
 
 				data.name = info.name;
 				if( total > 1 ) {

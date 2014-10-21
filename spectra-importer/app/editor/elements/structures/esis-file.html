@@ -130,7 +130,7 @@
 							});
 		        		}
 
-		        		document.querySelector('esis-parser').parse({info: linfo, contents: contents}, function(resp){
+		        		document.querySelector('esis-parser').parse({info: linfo, defaultDataType: this.defaultDataType, contents: contents}, function(resp){
 			        		for( var i = 0; i < resp.length; i++ ) {
 			        			var d = resp[i];
 			        			// do we need to add reference to the zip file to later relate the resource id?

@@ -197,7 +197,7 @@
 
 				// make sure currently joined (new) metadata is joined
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( !this.datasheets[i].isMetadata ) continue;
+					if( !this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
 
 					var count = 0;
 					for( var j = 0; j < datasheet.measurements.length; j++ ) {
@@ -214,14 +214,16 @@
 				// this is required for when the server 'rejoins' on update.  have fields
 				// that are in both metadata and spectra show as joinable makes things foobar
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( !this.datasheets[i].isMetadata ) continue;
+					if( !this.datasheets[i].isMetadata || this.datasheets[i].ignore) continue;
+
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
 				}
 
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].isMetadata ) continue;
+					if( this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
+
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
@@ -244,7 +246,7 @@
 				
 				// join on new measurements
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].isMetadata ) continue;
+					if( this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
 
 					for( var j = 0; j < this.datasheets[i].measurements.length; j++ ) {
 						if( metadata.join(this.datasheets[i].measurements[j]) ) count++;

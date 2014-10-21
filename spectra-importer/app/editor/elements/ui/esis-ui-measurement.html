@@ -48,7 +48,7 @@
             }
 		</style>
 
-		<div class="card">
+		<div class="card" hidden?="{{hide}}">
 			<h4 style="color: #888">From - {{measurement.filename}}</h4>
 
 			<h4>
@@ -127,6 +127,8 @@
 		Polymer('esis-ui-measurement', {
 			measurement : {},
 
+			hide : true,
+
 			metadata : {
 				file : [],
 				joined : [],
@@ -167,8 +169,16 @@
 				this.data = [];
 				this.wavelengthCount = 0;
 
-				if( !this.measurement ) return;
-				if( !this.measurement.metadata ) return;
+				if( !this.measurement ) {
+					this.hide = true;
+					return;
+				}
+				if( !this.measurement.metadata || !this.measurement.datapoints ) {
+					this.hide = true;
+					return;
+				}
+
+				this.hide = false;
 
 				var attrMap = document.querySelector('esis-datastore').attributeMap;
 				var flipMap = {};
