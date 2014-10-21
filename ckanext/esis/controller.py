@@ -163,7 +163,7 @@ class SpectraController(PackageController):
         return json.dumps({'success': True})
 
     def getPackage(self):
-	response.headers["Content-Type"] = "application/json"
+        response.headers["Content-Type"] = "application/json"
         id = request.params.get('id')
 
         # make sure they have access
@@ -171,10 +171,11 @@ class SpectraController(PackageController):
         ckanPackage = logic.get_action('package_show')(context, {'id': id})
 
         pkg = packageCollection.find_one({'package_id': ckanPackage['id']}, {'_id': 0, 'package_id':0, 'package_name':0})
-	# This is bad, need to detect before it happens
-	if pkg == None:
-		pkg = {}
-	ckanPackage['ecosis'] = pkg
+        # This is bad, need to detect before it happens
+        if pkg == None:
+            pkg = {}
+
+        ckanPackage['ecosis'] = pkg
         ckanPackage['ecosis']['metadata'] = []
 
         # lookup information about metadata resources
@@ -275,10 +276,16 @@ class SpectraController(PackageController):
 
     # TODO: this needs to be called whenever an organization is updated
     def _update_mapReduce(self, pkg):
+        # if the package is private, remove a return
+        if pkg['private'] == True:
+            searchCollection.remove({'_id': pkg['id']})
+            return
+
         map = Code(self.mapreduce['map'])
         reduce = Code(self.mapreduce['reduce'])
-        finalize = Code(self.mapreduce['finalize'])
-        spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+        #finalize = Code(self.mapreduce['finalize'])
+        #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+        spectraCollection.map_reduce(map, reduce, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
 
         organization_name = ""
         organization_id = ""
@@ -318,26 +325,26 @@ class SpectraController(PackageController):
                 }
             }
 
-            groupBy = None
-            if 'attributes' in item:
-                if 'dataset' in item['attributes']:
-                    if 'group_by' in item['attributes']['dataset']:
-                        if item['attributes']['dataset']['group_by'] != None and item['attributes']['dataset']['group_by'] != '':
-                            groupBy = item['attributes']['dataset']['group_by']
+            #groupBy = None
+            #if 'attributes' in item:
+            #    if 'dataset' in item['attributes']:
+            #        if 'group_by' in item['attributes']['dataset']:
+            #            if item['attributes']['dataset']['group_by'] != None and item['attributes']['dataset']['group_by'] != '':
+            #                groupBy = item['attributes']['dataset']['group_by']
 
             # need to set values for each group by collection if it exists
-            if groupBy != None:
-                groups = spectraCollection.find({'ecosis.package_id': pkg['id']}).distinct(groupBy)
-                for group in groups:
-                    searchCollection.update(
-                        {'_id': "%s-%s" % (pkg['id'], group)},
-                        setValues
-                    )
-            else:
-                searchCollection.update(
-                    {'_id': pkg['id']},
-                    setValues
-                )
+            #if groupBy != None:
+            #    groups = spectraCollection.find({'ecosis.package_id': pkg['id']}).distinct(groupBy)
+            #    for group in groups:
+            #        searchCollection.update(
+            #            {'_id': "%s-%s" % (pkg['id'], group)},
+            #            setValues
+            #        )
+            #else:
+            searchCollection.update(
+                {'_id': pkg['id']},
+                setValues
+            )
 
     # if we have a sort variable, it should be in the metadata and datapoints locations
     # in a spectra.  It should also be set in spectra.ecosis.sort namespace
@@ -392,6 +399,7 @@ class SpectraController(PackageController):
         spectra['ecosis']['package_name'] = pkg['name']
         spectra['ecosis']['package_title'] = pkg['title']
         spectra['ecosis']['groups'] = pkg['groups']
+        spectra['ecosis']['private'] = pkg['private']
 
         try:
             spectra['ecosis']['created'] = dateutil.parser.parse(pkg['metadata_created'])
@@ -657,8 +665,14 @@ class SpectraController(PackageController):
         return dataset
 
     def createPackageRedirect(self):
+        group = request.params.get('group')
         response.status_int = 307
-        response.headers["Location"] = "/editor/"
+
+        if group == None:
+            response.headers["Location"] = "/editor/"
+        else:
+            response.headers["Location"] = "/editor/?group=%s" % group.encode('ascii','ignore')
+
         return "Redirecting"
 
     def editPackageRedirect(self, id):
