@@ -44,12 +44,12 @@
 						</div>
 						<div flex style="text-align:right">
 							<span class="s-selector">
-								Select Spectra: 
-								<select id="spectraSelector" on-change="{{_selectSpectra}}">
+								Select Spectra ({{measurements.length}}): <paper-input style="width: 75px" inputValue="{{selectedIndex}}"></paper-input>
+								<!--<select id="spectraSelector" on-change="{{_selectSpectra}}">
 									<template repeat="{{sp,i in measurements}}">
 										<option value="{{i}}">{{i+1}}</option>
 									</template>
-								</select>
+								</select>-->
 							</span>
 						</div>
 					</div>
@@ -59,7 +59,7 @@
                     <core-icon icon="settings"></core-icon> Configure Attributes
                 </a>
 
-				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}"></esis-ui-measurement>
+				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}" attrTypes="{{attrTypes}}"></esis-ui-measurement>
 			</div>
 		</div>
 
@@ -69,15 +69,19 @@
 			
 			menuItem : null,
 
+			attrTypes : {},
+
 			spectraDatasheets : [],
 			datasheets : [],
 			measurements    : [],
 			attachedHandlers : [],
 
 			selectedSpectra : {},
+			selectedIndex : 1,
 
 			observe : {
-				datasheets : '_update'
+				datasheets : '_update',
+				selectedIndex : '_selectSpectra'
 			},
 
 			ready : function() {
@@ -137,12 +141,22 @@
 			},
 
 			onShow : function() {
+				this.attrTypes = document.querySelector('esis-datastore').getAllAttributeTypes();
 				this._update();
 				this.$.measurementUI.show();
 			},
 
 			_selectSpectra : function() {
-				this.selectedSpectra = this.measurements[parseInt(this.$.spectraSelector.value)];
+				var index = parseInt(this.selectedIndex);
+				if( index < 1 ) {
+					index = 1;
+					this.selectedIndex = 1;
+				} else if ( index > this.measurements.length ) {
+					index = this.measurements.length;
+					this.selectedIndex = index;
+				}
+
+				this.selectedSpectra = this.measurements[index - 1];
 			},
 
 			_gotoAttrMap : function() {

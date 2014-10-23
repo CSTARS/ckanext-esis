@@ -1,6 +1,6 @@
 <link rel="import" href="esis-ui-card.html" />
 
-<polymer-element name="esis-ui-measurement" attributes="measurement">
+<polymer-element name="esis-ui-measurement" attributes="measurement attrTypes">
 	<template>
 		<style>
 			.card {
@@ -73,7 +73,7 @@
 								mappedName="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td class="file">{{item.value}}</td>
+						<td class="file">{{item.value}} {{item.units}}</td>
 						<td class="file">File Metadata</td>
 					</tr>
 					<tr template repeat="{{item in metadata.joined}}">
@@ -84,7 +84,7 @@
 								mappedName="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td>{{item.value}}</td>
+						<td>{{item.value}} {{item.units}}</td>
 						<td>Joined Metadata</td>
 					</tr>
 					<tr template repeat="{{item in metadata.measurement}}">
@@ -95,7 +95,7 @@
 								mappedName="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td class="spectra">{{item.value}}</td>
+						<td class="spectra">{{item.value}} {{item.units}}</td>
 						<td class="spectra">Measurement Metadata</td>
 					</tr>
 				</table>
@@ -113,7 +113,7 @@
 					<table style="width:100%">
 						<tr template repeat="{{p in data}}">
 							<td class="data"><b>{{p.key}}</b></td>
-							<td class="data">{{p.value}}</td>
+							<td class="data">{{p.value}} {{p.units}}</td>
 						</tr>
 					</table>
 				</core-collapse>
@@ -187,24 +187,27 @@
 				//for( var key in attrMap ) {
 				//	if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
 				//}
-
+				debugger;
 				var key;
 				for( key in this.measurement.metadata.file ) {
 					this.metadata.file.push({
 						key : key, 
-						value : this.measurement.metadata.file[key]
+						value : this.measurement.metadata.file[key],
+						units : this.attrTypes[key] ? this.attrTypes[key].units || '' : ''
 					});
 				}
 				for( key in this.measurement.metadata.joined ) {
 					this.metadata.joined.push({
 						key : key, 
-						value : this.measurement.metadata.joined[key]
+						value : this.measurement.metadata.joined[key],
+						units : this.attrTypes[key] ? this.attrTypes[key].units || '' : ''
 					});
 				}
 				for( key in this.measurement.metadata.measurement ) {
 					this.metadata.measurement.push({
 						key : key, 
-						value : this.measurement.metadata.measurement[key]
+						value : this.measurement.metadata.measurement[key],
+						units : this.attrTypes[key] ? this.attrTypes[key].units || '' : ''
 					});
 				}
 
@@ -226,7 +229,11 @@
 				  			parseFloat(point.value)
 				  		]);
 					} else {
-						this.data.push(point); 
+						this.data.push({
+							key : point.key,
+							value : point.value,
+							units : this.attrTypes[point.key] ? this.attrTypes[point.key].units || '' : ''
+						}); 
 					}
 				}
 

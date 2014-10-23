@@ -58,6 +58,10 @@
             core-collapse {
                 margin-bottom: 30px;
             }
+            paper-input {
+                width: 100px;
+                height: 40px;
+            }
         </style>
 
         <h4>
@@ -74,6 +78,7 @@
             <table>
                 <tr>
                     <th>Name</th>
+                    <th>Units</th>
                     <th>Type</th>
                 </tr>
                 <tr template repeat="{{info, i in editableArray}}">
@@ -81,6 +86,9 @@
                         <span modified?="{{modifications[info.name] != null}}">
                             <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
                         </span>
+                    </td>
+                    <td class="{{info.class}}">
+                        <paper-input type="text" inputValue="{{info.units}}" ></paper-input>
                     </td>
                     <td class="{{info.class}}">
                         <select index="{{i}}" on-change="{{_onTypeChanged}}">
@@ -106,11 +114,15 @@
             <table>
                 <tr>
                     <th>Name</th>
+                    <th>Units</th>
                     <th>Type</th>
                 </tr>
                 <tr template repeat="{{info, i in fixedArray}}">
                     <td class="{{info.class}}">
                         <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
+                    </td>
+                    <td class="{{info.class}}">
+                        <paper-input type="text" inputValue="{{info.units}}" ></paper-input>
                     </td>
                     <td class="{{info.class}}">
                         {{info.type}}<span class="type-flag">{{info.flag}}</span>
@@ -145,11 +157,7 @@
             These attribute types have been implied because the attribute name is numberic.
         </div>
         <core-collapse opened="{{showWavelengths}}">
-            <div class="helper">
-                <template repeat="{{info in wavelengthArray}}">
-                    {{info.name}}
-                </template>
-            </div>
+            <div class="helper" id="wavelengths"></div>
         </core-collapse>
 
 
@@ -185,6 +193,8 @@
                 this.fixedArray = [];
                 this.wavelengthArray = [];
 
+                //var wavelengths = [];
+
                 if( this.modifications == null ) {
                     this.modifications = this.ds.attributeModifications;
                 }
@@ -210,7 +220,8 @@
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            this._copyToArray(this.wavelengthArray, key, info, 'data');
+                            this.wavelengthArray.push(key+(info.label ? ' <span style="font-style:italic">('+info.label+')</span>' : '') );
+                            //this._copyToArray(this.wavelengthArray, key, info, 'data');
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
@@ -229,6 +240,8 @@
                             break;
                     }
                 }
+
+                this.$.wavelengths.innerHTML = this.wavelengthArray.join(', ');
             },
 
             _onTypeChanged : function(e) {
@@ -266,6 +279,7 @@
                     name : key,
                     type : this.ds.attributeModifications[key] ? this.ds.attributeModifications[key] : info.type,
                     flag : info.flag,
+                    units : info.units || '',
                     guess : info.guess,
                     class : cssClass
                 });
