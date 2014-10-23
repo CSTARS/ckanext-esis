@@ -76,6 +76,9 @@
 					this.attributeTypes = resp.attributeTypes;
 					this.contents.joindata = resp.joindata;
 
+					if( resp.error ) this.contents.error = resp.error;
+					else this.contents.error = null;
+
 					this._update();
 				}.bind(this), 250);
 			},

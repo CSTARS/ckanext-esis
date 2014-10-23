@@ -11,6 +11,7 @@
 
             // type - 'spectral', 'timeseries', 'metadata'
             run : function(type, contents) {
+
                 var resp = {
                     metadata : {},
                     measurements : [],
@@ -39,6 +40,13 @@
                 resp.metadata = this._getFileMetadata(contents, hRanges);
                 var data = this._getMeasurements(contents, type, hRanges, vRanges);
 
+                // if there are more than 500 attribute types found, assume this data is bad
+                var len = Object.keys(data.attributeTypes).length;
+                if( len > 500 ) {
+                    resp.error = len+' different attribute types where found.  A max of 500 are allowed.  Recommend switching the data format.';
+                    return resp;
+                }
+
                 // add the file level metadata to the attribute type list
                 for( var key in resp.metadata ) {
                     data.attributeTypes[key] = { 
@@ -49,8 +57,9 @@
                 }
 
                 if( data.error ) {
-                    resp.error = true;
+                    resp.error = data.error;
                 } else {
+
                     resp.measurements = data.measurements;
                     resp.attributeTypes = data.attributeTypes;
                 }
@@ -93,7 +102,16 @@
                 var processing = true;
                 var empty = false;
 
-                for( var i = 0; i < contents.length; i++ ) {
+                // first make sure there are no extra rows at top
+                for( cStart = 0; cStart < contents.length; cStart++ ) {
+                    empty = false;
+                    if( contents[cStart].length == 0 ) empty = true;
+                    else if( contents[cStart][0].length == 0 ) empty = true;
+                    if( !empty ) break;
+                }
+                cStop = cStart;
+
+                for( var i = cStart; i < contents.length; i++ ) {
                     empty = false;
                     if( contents[i].length == 0 ) empty = true;
                     else if( contents[i][0].length == 0 ) empty = true;
@@ -136,6 +154,8 @@
                 var startRow = 0;
                 if( hRanges.length == 2 ) {
                     startRow = hRanges[1].start;
+                } else if( hRanges.length == 1 ) {
+                    startRow = hRanges[0].start;
                 }
 
                 var row = contents[startRow];
