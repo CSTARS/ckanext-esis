@@ -73,7 +73,7 @@
 								mappedName="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td class="file">{{item.value}} {{item.units}}</td>
+						<td class="file">{{item.value}} <span hidden?="{{item.units == ''}}">({{item.units}})</span></td>
 						<td class="file">File Metadata</td>
 					</tr>
 					<tr template repeat="{{item in metadata.joined}}">
@@ -84,7 +84,7 @@
 								mappedName="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td>{{item.value}} {{item.units}}</td>
+						<td>{{item.value}} <span hidden?="{{item.units == ''}}">({{item.units}})</span></td>
 						<td>Joined Metadata</td>
 					</tr>
 					<tr template repeat="{{item in metadata.measurement}}">
@@ -95,7 +95,7 @@
 								mappedName="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td class="spectra">{{item.value}} {{item.units}}</td>
+						<td class="spectra">{{item.value}} <span hidden?="{{item.units == ''}}">({{item.units}})</span></td>
 						<td class="spectra">Measurement Metadata</td>
 					</tr>
 				</table>
@@ -113,7 +113,7 @@
 					<table style="width:100%">
 						<tr template repeat="{{p in data}}">
 							<td class="data"><b>{{p.key}}</b></td>
-							<td class="data">{{p.value}} {{p.units}}</td>
+							<td class="data">{{p.value}} <span hidden?="{{p.units == ''}}">({{p.units}})</span></td>
 						</tr>
 					</table>
 				</core-collapse>
@@ -187,7 +187,7 @@
 				//for( var key in attrMap ) {
 				//	if( attrMap[key] != '' ) flipMap[attrMap[key]] = key;
 				//}
-				debugger;
+
 				var key;
 				for( key in this.measurement.metadata.file ) {
 					this.metadata.file.push({

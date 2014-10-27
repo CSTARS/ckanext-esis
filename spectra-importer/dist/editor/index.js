@@ -4365,6 +4365,8 @@ Polymer('esis-dataformat-help');;
                 this.fixedArray = [];
                 this.wavelengthArray = [];
 
+                //var wavelengths = [];
+
                 if( this.modifications == null ) {
                     this.modifications = this.ds.attributeModifications;
                 }
@@ -4390,7 +4392,8 @@ Polymer('esis-dataformat-help');;
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            this._copyToArray(this.wavelengthArray, key, info, 'data');
+                            this.wavelengthArray.push(key+(info.label ? ' <span style="font-style:italic">('+info.label+')</span>' : '') );
+                            //this._copyToArray(this.wavelengthArray, key, info, 'data');
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
@@ -4409,6 +4412,8 @@ Polymer('esis-dataformat-help');;
                             break;
                     }
                 }
+
+                this.$.wavelengths.innerHTML = this.wavelengthArray.join(', ');
             },
 
             _onTypeChanged : function(e) {
@@ -4446,6 +4451,7 @@ Polymer('esis-dataformat-help');;
                     name : key,
                     type : this.ds.attributeModifications[key] ? this.ds.attributeModifications[key] : info.type,
                     flag : info.flag,
+                    units : info.units || '',
                     guess : info.guess,
                     class : cssClass
                 });
@@ -4738,6 +4744,8 @@ Polymer('esis-dataformat-help');;
 		Polymer('esis-ui-measurement', {
 			measurement : {},
 
+			hide : true,
+
 			metadata : {
 				file : [],
 				joined : [],
@@ -4778,8 +4786,16 @@ Polymer('esis-dataformat-help');;
 				this.data = [];
 				this.wavelengthCount = 0;
 
-				if( !this.measurement ) return;
-				if( !this.measurement.metadata ) return;
+				if( !this.measurement ) {
+					this.hide = true;
+					return;
+				}
+				if( !this.measurement.metadata || !this.measurement.datapoints ) {
+					this.hide = true;
+					return;
+				}
+
+				this.hide = false;
 
 				var attrMap = document.querySelector('esis-datastore').attributeMap;
 				var flipMap = {};
@@ -4793,19 +4809,22 @@ Polymer('esis-dataformat-help');;
 				for( key in this.measurement.metadata.file ) {
 					this.metadata.file.push({
 						key : key, 
-						value : this.measurement.metadata.file[key]
+						value : this.measurement.metadata.file[key],
+						units : this.attrTypes[key] ? this.attrTypes[key].units || '' : ''
 					});
 				}
 				for( key in this.measurement.metadata.joined ) {
 					this.metadata.joined.push({
 						key : key, 
-						value : this.measurement.metadata.joined[key]
+						value : this.measurement.metadata.joined[key],
+						units : this.attrTypes[key] ? this.attrTypes[key].units || '' : ''
 					});
 				}
 				for( key in this.measurement.metadata.measurement ) {
 					this.metadata.measurement.push({
 						key : key, 
-						value : this.measurement.metadata.measurement[key]
+						value : this.measurement.metadata.measurement[key],
+						units : this.attrTypes[key] ? this.attrTypes[key].units || '' : ''
 					});
 				}
 
@@ -4827,7 +4846,11 @@ Polymer('esis-dataformat-help');;
 				  			parseFloat(point.value)
 				  		]);
 					} else {
-						this.data.push(point); 
+						this.data.push({
+							key : point.key,
+							value : point.value,
+							units : this.attrTypes[point.key] ? this.attrTypes[point.key].units || '' : ''
+						}); 
 					}
 				}
 
@@ -4998,6 +5021,7 @@ Polymer('esis-dataformat-help');;
                         case this.ds.ATTR_FLAGS.FROM_METADATA:
                             this.parsedAttributes.push({
                                 name : key,
+                                units : info.units || '',
                                 type : 'Joinable Metadata',
                                 class : '',
                             });
@@ -5010,12 +5034,14 @@ Polymer('esis-dataformat-help');;
                             if( type == 'metadata' ) {
                                 this.parsedAttributes.push({
                                     name : key,
+                                    units : info.units || '',
                                     type : 'Spectra Metadata',
                                     class : 'spectra'
                                 });
                             } else {
                                 this.parsedAttributes.push({
                                     name : key,
+                                    units : info.units || '',
                                     type : 'Data',
                                     class : 'data'
                                 });
@@ -5023,12 +5049,13 @@ Polymer('esis-dataformat-help');;
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            this.wavelengths.push(key);
+                            this.wavelengths.push(key+(info.label ? ' <span style="color:#888">('+info.label+')</span>' : '') );
                             break;
 
                         case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
                             this.parsedAttributes.push({
                                 name : key,
+                                units : info.units || '',
                                 type : 'File Metadata',
                                 class : 'file'
                             });
@@ -5037,6 +5064,7 @@ Polymer('esis-dataformat-help');;
                         case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
                             this.parsedAttributes.push({
                                 name : key,
+                                units : info.units || '',
                                 type : 'Spectra Metadata',
                                 class : 'spectra'
                             });
@@ -5045,6 +5073,7 @@ Polymer('esis-dataformat-help');;
                         case this.ds.ATTR_FLAGS.IS_FILE_DATA:
                             this.parsedAttributes.push({
                                 name : key,
+                                units : info.units || '',
                                 type : 'Derived Data',
                                 class : 'data'
                             });
@@ -5054,6 +5083,8 @@ Polymer('esis-dataformat-help');;
                             break;
                     }
                 }
+
+                this.$.wavelengths.innerHTML = this.wavelengths.join(', ');
 
                 if( this.datasheet.isMetadata ){
                     this.async(function(){
@@ -5150,7 +5181,7 @@ Polymer('esis-dataformat-help');;
             },
 
             goToAttrSettings : function() {
-                window.location.hash = 'attribute-settings';
+                window.location.hash = 'schema-settings';
             },
 
             _goToJoin : function() {
@@ -5163,15 +5194,19 @@ Polymer('esis-dataformat-help');;
 			
 			menuItem : null,
 
+			attrTypes : {},
+
 			spectraDatasheets : [],
 			datasheets : [],
 			measurements    : [],
 			attachedHandlers : [],
 
 			selectedSpectra : {},
+			selectedIndex : 1,
 
 			observe : {
-				datasheets : '_update'
+				datasheets : '_update',
+				selectedIndex : '_selectSpectra'
 			},
 
 			ready : function() {
@@ -5189,6 +5224,7 @@ Polymer('esis-dataformat-help');;
 
 					for( var i = 0; i < this.datasheets.length; i++ ) {
 						var f = this.datasheets[i];
+						if( f.ignore ) continue;
 
 						// listen for updates, make sure we only attach once
 						if( this.attachedHandlers.indexOf(f) == -1 ) {
@@ -5209,6 +5245,8 @@ Polymer('esis-dataformat-help');;
 
 					if( this.measurements.length > 0 ) {
 						this.selectedSpectra = this.measurements[0];
+					} else {
+						this.selectedSpectra = {};
 					}
 
 					this._updateVisibility();
@@ -5228,12 +5266,22 @@ Polymer('esis-dataformat-help');;
 			},
 
 			onShow : function() {
+				this.attrTypes = document.querySelector('esis-datastore').getAllAttributeTypes();
 				this._update();
 				this.$.measurementUI.show();
 			},
 
 			_selectSpectra : function() {
-				this.selectedSpectra = this.measurements[parseInt(this.$.spectraSelector.value)];
+				var index = parseInt(this.selectedIndex);
+				if( index < 1 ) {
+					index = 1;
+					this.selectedIndex = 1;
+				} else if ( index > this.measurements.length ) {
+					index = this.measurements.length;
+					this.selectedIndex = index;
+				}
+
+				this.selectedSpectra = this.measurements[index - 1];
 			},
 
 			_gotoAttrMap : function() {
@@ -5531,7 +5579,7 @@ Polymer('esis-dataformat-help');;
 							});
 		        		}
 
-		        		document.querySelector('esis-parser').parse({info: linfo, contents: contents}, function(resp){
+		        		document.querySelector('esis-parser').parse({info: linfo, defaultDataType: this.defaultDataType, contents: contents}, function(resp){
 			        		for( var i = 0; i < resp.length; i++ ) {
 			        			var d = resp[i];
 			        			// do we need to add reference to the zip file to later relate the resource id?
@@ -5891,6 +5939,12 @@ Polymer('esis-dataformat-help');;
 
 			label : '',
 
+			// should this datasheet be ignored?
+			ignore : false,
+			ignoreChanged : function() {
+				this.fire('datasheet-updated');
+			},
+
 			observe : {
 				contents : '_update',
 				dataType : '_extract',
@@ -5926,6 +5980,9 @@ Polymer('esis-dataformat-help');;
 					this.attributeTypes = resp.attributeTypes;
 					this.contents.joindata = resp.joindata;
 
+					if( resp.error ) this.contents.error = resp.error;
+					else this.contents.error = null;
+
 					this._update();
 				}.bind(this), 250);
 			},
@@ -5956,13 +6013,17 @@ Polymer('esis-dataformat-help');;
 						this.measurements.push(sp);
 					}
 
-					//
+					if( this.contents.measurements.length == 0 ) {
+						this.contents.warning = 'No measurements found';
+					}
 				} else if( this.contents.joindata && this.contents.joindata.length > 0 ) {
 					
 					this.metadata = document.createElement('esis-metadata');
 					this.metadata.contents = this.contents;
 					this.metadata.metadata = this.contents.joindata;
 					this.isMetadata = true;
+
+					this.contents.warning = '';
 				}
 
 				this.updating = false;
@@ -6250,7 +6311,7 @@ Polymer('esis-dataformat-help');;
 
 				// make sure currently joined (new) metadata is joined
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( !this.datasheets[i].isMetadata ) continue;
+					if( !this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
 
 					var count = 0;
 					for( var j = 0; j < datasheet.measurements.length; j++ ) {
@@ -6267,14 +6328,16 @@ Polymer('esis-dataformat-help');;
 				// this is required for when the server 'rejoins' on update.  have fields
 				// that are in both metadata and spectra show as joinable makes things foobar
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( !this.datasheets[i].isMetadata ) continue;
+					if( !this.datasheets[i].isMetadata || this.datasheets[i].ignore) continue;
+
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
 				}
 
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].isMetadata ) continue;
+					if( this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
+
 					for( var key in this.datasheets[i].attributeTypes ) {
 						attrTypes[key] = this.datasheets[i].attributeTypes[key];
 					}
@@ -6297,7 +6360,7 @@ Polymer('esis-dataformat-help');;
 				
 				// join on new measurements
 				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].isMetadata ) continue;
+					if( this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
 
 					for( var j = 0; j < this.datasheets[i].measurements.length; j++ ) {
 						if( metadata.join(this.datasheets[i].measurements[j]) ) count++;
@@ -6320,6 +6383,7 @@ Polymer('esis-dataformat-help');;
 
             // type - 'spectral', 'timeseries', 'metadata'
             run : function(type, contents) {
+
                 var resp = {
                     metadata : {},
                     measurements : [],
@@ -6345,21 +6409,27 @@ Polymer('esis-dataformat-help');;
                 // get vertical ranges. Only for datapoints in timeseries
                 var vRanges = this._getVRanges(contents, type, hRanges); 
 
-                resp.metadata = this._getFileMetadata(contents, hRanges);
+                
                 var data = this._getMeasurements(contents, type, hRanges, vRanges);
+                resp.metadata = this._getFileMetadata(contents, hRanges, data.attributeTypes);
 
-                // add the file level metadata to the attribute type list
-                for( var key in resp.metadata ) {
-                    data.attributeTypes[key] = { 
-                        guess : false,
-                        type : 'metadata',
-                        flag : this.ds.ATTR_FLAGS.IS_FILE_METADATA
-                    }
+                // if there are more than 500 attribute types found that are not wavelengths, assume wrong data format selected.  Don't parse.
+                var c = 0;
+                for( var key in data.attributeTypes ) {
+                    if( data.attributeTypes[key].flag != this.ds.ATTR_FLAGS.IS_WAVELENGTH ) c++;
                 }
 
+                if( c > 500 ) {
+                    resp.error = c+' different attribute types where found.  Recommend switching the data format.';
+                    return resp;
+                }
+
+                
+
                 if( data.error ) {
-                    resp.error = true;
+                    resp.error = data.error;
                 } else {
+
                     resp.measurements = data.measurements;
                     resp.attributeTypes = data.attributeTypes;
                 }
@@ -6371,10 +6441,16 @@ Polymer('esis-dataformat-help');;
                 var joindata = [];
                 var attributeTypes = {};
 
+                var attrInfo = this._parseAttributeKeyByCols(contents, 0);
+                var key, keyInfo;
+
                 for( var i = 1; i < contents.length; i++ ) {
                     var md = {};
                     for( var j = 0; j < contents[0].length; j++ ) {
-                        md[contents[0][j]] = contents[i][j];
+                        key = contents[0][j];
+                        keyInfo = attrInfo[key];
+
+                        md[keyInfo.key] = contents[i][j];
 
                         if( i == 1 ) {
                             attributeTypes[contents[0][j]] = { 
@@ -6382,6 +6458,7 @@ Polymer('esis-dataformat-help');;
                                 type : 'metadata',
                                 flag : this.ds.ATTR_FLAGS.FROM_METADATA
                             };
+                            this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                         }
                     }
                     joindata.push(md);
@@ -6402,7 +6479,16 @@ Polymer('esis-dataformat-help');;
                 var processing = true;
                 var empty = false;
 
-                for( var i = 0; i < contents.length; i++ ) {
+                // first make sure there are no extra rows at top
+                for( cStart = 0; cStart < contents.length; cStart++ ) {
+                    empty = false;
+                    if( contents[cStart].length == 0 ) empty = true;
+                    else if( contents[cStart][0].length == 0 ) empty = true;
+                    if( !empty ) break;
+                }
+                cStop = cStart;
+
+                for( var i = cStart; i < contents.length; i++ ) {
                     empty = false;
                     if( contents[i].length == 0 ) empty = true;
                     else if( contents[i][0].length == 0 ) empty = true;
@@ -6445,6 +6531,8 @@ Polymer('esis-dataformat-help');;
                 var startRow = 0;
                 if( hRanges.length == 2 ) {
                     startRow = hRanges[1].start;
+                } else if( hRanges.length == 1 ) {
+                    startRow = hRanges[0].start;
                 }
 
                 var row = contents[startRow];
@@ -6486,7 +6574,7 @@ Polymer('esis-dataformat-help');;
                 return ranges;
             },
 
-            _getFileMetadata : function(contents, hRanges) {
+            _getFileMetadata : function(contents, hRanges, attributeTypes) {
                 // if there is only one range of data, there is not file metadata
                 if( hRanges.length == 1 ) return {};
 
@@ -6499,10 +6587,19 @@ Polymer('esis-dataformat-help');;
                     }
                 }
 
-                var fileMetadata = {};
+                var fileMetadata = {}, keyInfo;
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
                     if( !contents[i][0] ) continue;
-                    fileMetadata[this._cleanKey(contents[i][0])] = this._cleanValue(contents[i][1]);
+
+                    keyInfo = this._parseAttributeKey(key);
+                    fileMetadata[keyInfo.key] = this._cleanValue(contents[i][1]);
+
+                    attributeTypes[keyInfo.key] = { 
+                        guess : false,
+                        type : 'metadata',
+                        flag : this.ds.ATTR_FLAGS.IS_FILE_METADATA
+                    }
+                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                 }
                 return fileMetadata;
             },
@@ -6517,7 +6614,7 @@ Polymer('esis-dataformat-help');;
                 // we are parsing as though attribute names are vertical in column A
                 if( type == 'spectra' ) {
 
-                    var dataRange = null, metadataRange = null, guess = true;
+                    var dataRange = null, metadataRange = null, guess = true, keyInfo;
 
                     // there is only one range of data, it's all data and we
                     // should guess on type
@@ -6549,7 +6646,7 @@ Polymer('esis-dataformat-help');;
                     if( !dataRange ) return {error : true};
 
                     // find what rows are thought to be data (match numberic value) or metadata (doesn't)
-                    var dataRows = this._findDataRows(contents, metadataRange, dataRange);
+                    var attrInfo = this._parseAttributeKeyByRows(contents, metadataRange, dataRange);
 
                     var len = contents[dataRange.start].length, i, j;
                     for( i = 1; i < len; i++ ) {
@@ -6562,28 +6659,29 @@ Polymer('esis-dataformat-help');;
                         if( metadataRange ) {
                             for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
                                 key = contents[j][0];
+                                keyInfo = attrInfo[key];
 
                                 // add wavelengths even if they are in the wrong range
-                                if( dataRows[key] ) {
+                                if( keyInfo.wavelength ) {
                                     measurement.datapoints.push({
-                                        key : key,
+                                        key : keyInfo.key,
                                         value : this._cleanValue(contents[j][i])
                                     });
                                 } else {
-                                    key = this._cleanKey(key);
                                     // add known metadata from metadata range
-                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
+                                    measurement.metadata[keyInfo.key] = this._cleanValue(contents[j][i]);
                                 }
                                 
 
                                 // mark the attribute type on first pass
                                 if( i == 1 ) {
-                                    attributeTypes[key] = { 
+                                    attributeTypes[keyInfo.key] = { 
                                         guess : false,
-                                        type : dataRows[key] ? 'data' : 'metadata',
-                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                        type : keyInfo.wavelength ? 'data' : 'metadata',
+                                        flag : keyInfo.wavelength ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
                                                                 this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
+                                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                                 }
                             }
                         }
@@ -6591,55 +6689,54 @@ Polymer('esis-dataformat-help');;
                         // add datarange for this column
                         for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             var key = contents[j][0];
+                            keyInfo = attrInfo[key];
 
                             // this is data
-                            if( dataRows[key] || !guess ) {
-                                if( !dataRows[key] ) key = this._cleanKey(key);
-
+                            if( keyInfo.wavelength || !guess ) {
                                 measurement.datapoints.push({
-                                    key : key,
+                                    key : keyInfo.key,
                                     value : this._cleanValue(contents[j][i])
                                 });
 
                                 // this is a numberic or we are not guessing
                                 // either way type is implied
                                 if( i == 1 ) {
-                                    attributeTypes[key] = { 
+                                    attributeTypes[keyInfo.key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : dataRows[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                        flag : keyInfo.wavelength ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
                                                                 this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
+                                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                                 }
 
                             // this is metadata
                             } else {                      
-                                this._cleanKey(key);
-
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
-                                if( this.ds.attributeModifications[key] ) {
-                                    type = this.ds.attributeModifications[key];
+                                if( this.ds.attributeModifications[keyInfo.key] ) {
+                                    type = this.ds.attributeModifications[keyInfo.key];
                                 }
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = this._cleanValue(contents[j][i]);
+                                    measurement.metadata[keyInfo.key] = this._cleanValue(contents[j][i]);
                                 } else {
                                     measurement.datapoints.push({
-                                        key: key,
+                                        key: keyInfo.key,
                                         value : this._cleanValue(contents[j][i])
                                     });
                                 }
 
 
                                 if( i == 1 ) {
-                                    attributeTypes[key] = { 
+                                    attributeTypes[keyInfo.key] = { 
                                         guess : guess,
                                         type : type,
                                         flag : this.ds.ATTR_FLAGS.FROM_MIXED_FILE
                                     };
+                                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                                 }
                             }
                         }
@@ -6678,12 +6775,12 @@ Polymer('esis-dataformat-help');;
 
                     if( !dataRange ) return {error : true};
 
-                    var dataCols = {};
-                    if( guess ) {
-                        dataCols = this._findDataCols(contents, startRow);
-                    }
+                    // map of 'attr (unit)' to attr information
+                    // info has 'wavelength', 'key' and 'label'
+                    // if not a wavelength, key has been cleaned
+                    var attrInfo = this._parseAttributeKeyByCols(contents, startRow);
 
-                    var i, j, row, measurement, key;
+                    var i, j, row, measurement, key, keyInfo;
 
                     // the actual 'startRow' should be the row of attribute names
                     for( i = startRow+1; i <= stopRow; i++ ) {
@@ -6697,26 +6794,29 @@ Polymer('esis-dataformat-help');;
                         if( metadataRange ) {
                             for( j = metadataRange.start; j <= metadataRange.stop; j++ ) {
                                 key = contents[startRow][j];
-                                
-                                if( dataCols[key] ) {
-                                    measurement.datapoints.push({
-                                        key : contents[key],
-                                        value : row[j]
-                                    });
-                                } else {
-                                    key = this._cleanKey(key);
-                                    // add wavelengths even if they are in the wrong range
-                                    measurement.metadata[key] = this._cleanValue(row[j]);
-                                }
+                                keyInfo = attrInfo[key];
 
                                 // on first pass, keep track of attribute information
                                 if( i == startRow+1 ) {
-                                    attributeTypes[key] = { 
+                                    attributeTypes[keyInfo.key] = { 
                                         guess : false,
-                                        type : 'metadata',
-                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
-                                                                this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
+                                        type : keyInfo.wavelength ? 'data' : 'metadata',
+                                        flag : keyInfo.wavelength ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                    this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA
                                     };
+
+                                    // set units or label
+                                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
+                                }
+                                
+                                if( keyInfo.wavelength ) {
+                                    measurement.datapoints.push({
+                                        key : attrInfo[key].key,
+                                        value : row[j]
+                                    });
+                                } else {
+                                    // add wavelengths even if they are in the wrong range
+                                    measurement.metadata[attrInfo[key].key] = this._cleanValue(row[j]);
                                 }
                             }
                         }
@@ -6724,55 +6824,56 @@ Polymer('esis-dataformat-help');;
                         // add datarange for this column
                         for( j = dataRange.start; j <= dataRange.stop; j++ ) {
                             key = contents[startRow][j];
+                            keyInfo = attrInfo[key];
 
                             // this is data
-                            if( dataCols[key] || !guess ) {
-                                if( !dataCols[key] ) key = this._cleanKey(key);
+                            if( keyInfo.wavelength || !guess ) {
 
                                 measurement.datapoints.push({
-                                    key : key,
+                                    key : keyInfo.key,
                                     value : this._cleanValue(row[j])
                                 });
 
                                 // mark the attribute type on first pass
                                 if( i == startRow+1 ) {
-                                    attributeTypes[key] = { 
+                                    attributeTypes[keyInfo.key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : dataCols[key] ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
-                                                                this.ds.ATTR_FLAGS.IS_FILE_DATA
+                                        flag : keyInfo.wavelength ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                                                    this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
+                                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                                 }
 
 
                             // this is metadata
                             } else {
-                                this._cleanKey(key);
 
                                 // we are guess, by default we will say 'metadata', but check
                                 // any specified values first
                                 var type = 'metadata';
-                                if( this.ds.attributeModifications[key] ) {
-                                    type = this.ds.attributeModifications[key];
+                                if( this.ds.attributeModifications[keyInfo.key] ) {
+                                    type = this.ds.attributeModifications[keyInfo.key];
                                 }
 
                                 // set to correct type
                                 if( type == 'metadata' ) {
-                                    measurement.metadata[key] = this._cleanValue(row[j]);
+                                    measurement.metadata[keyInfo.key] = this._cleanValue(row[j]);
                                 } else {
                                     measurement.datapoints.push({
-                                        key: key,
+                                        key: keyInfo.key,
                                         value : this._cleanValue(row[j])
                                     });
                                 }
 
                                 // mark the attribute type on first pass
                                 if( i == startRow+1 ) {
-                                    attributeTypes[key] = { 
+                                    attributeTypes[keyInfo.key] = { 
                                         guess : guess,
                                         type : type,
                                         flag : this.ds.ATTR_FLAGS.FROM_MIXED_FILE
                                     };
+                                    this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);
                                 }
                             }
                         }
@@ -6787,63 +6888,57 @@ Polymer('esis-dataformat-help');;
                 }
             },
 
+            _addUnitOrLabel : function(keyInfo, attr) {
+                if( keyInfo.label ) {
+                    if( keyInfo.wavelength ) {
+                        attr.label = keyInfo.label;
+                    } else {
+                        attr.units = keyInfo.label;
+                    }
+                }
+            },
 
-            // attempt to sniff out data columns.
-            _findDataCols : function(content, startRow) {
-                var data = {};
+
+            // attempt to sniff out attribute information by column columns.
+            _parseAttributeKeyByCols : function(content, startRow) {
+                var attrs = {}, key;
 
                 for( var i = 0; i < content[startRow].length; i++ ) {
-                    var key = content[startRow][i];
-            
-                    if( key.match(/^-?\d+\.?\d*$/) || key.match(/^-?\d*\.\d+$/) ) {
-                        data[key] = true;
-                    } else {
-                        data[key] = false;
-                    }
-                    
+                    key = content[startRow][i];
+                    attrs[key] = this._parseAttributeKey(key);
                 }
 
-                return data;
+                return attrs;
             },
 
             // any attribute name that matches a numberic value will be assumed wavelength and
             // marked as data, otherwise it will be assumed as metadata.  This is for when
             // the user doesn't add the second break to their file
-            _findDataRows : function(content, metadataRange, dataRange) {
-                var data = {};
-                var re1 = /^-?\d+\.?\d*$/;
-                var re2 = /^-?\d*\.\d+$/;
+             _parseAttributeKeyByRows : function(content, metadataRange, dataRange) {
+                var attrs = {};
+                var re1 = /^-?\d+\.?\d*/;
+                var re2 = /^-?\d*\.\d+/;
 
                 if( metadataRange ) {
                     for( var i = metadataRange.start; i <= metadataRange.stop; i++ ) {
                         var key = content[i][0];
-
-                        if( re1.exec(key) || re2.exec(key) ) {
-                            data[key] = true;
-                        } else {
-                            data[key] = false;
-                        }
+                        attrs[key] = this._parseAttributeKey(key);
                     }
                 }
-
 
                 for( var i = dataRange.start; i <= dataRange.stop; i++ ) {
                     var key = content[i][0];
-
-                    if( re1.exec(key) || re2.exec(key) ) {
-                        data[key] = true;
-                    } else {
-                        data[key] = false;
-                    }
-                    
+                    attrs[key] = this._parseAttributeKey(key);
                 }
 
-                return data;
+                return attrs;
             },
 
             regex : {
                 key1 : /\./g,
                 key2 : /\n/g,
+                trim1 : /^\s*/,
+                trim2 : /\s*$/,
                 val : /\r/g
             },
 
@@ -6855,7 +6950,7 @@ Polymer('esis-dataformat-help');;
 
             _cleanValue : function(val) {
                 if( !val ) return '';
-                return val.replace(this.regex.key2,' ').replace(this.regex.val,'');
+                return val.replace(this.regex.key2,' ').replace(this.regex.val,'').replace(this.regex.trim1,'').replace(this.regex.trim2,'');
             },
 
             // get the number of cells until the rest are empty
@@ -6868,7 +6963,69 @@ Polymer('esis-dataformat-help');;
                     if( arr[i] != '' ) return i+1;
                 }
                 return 0;
+            },
+
+            _parseAttributeUnits : function(attributeTypes) {
+                var key, key2, parts, val, attr, regex = /.+\(.*\)\s*/;
+                for( key in attributeTypes ) {
+                    if( !regex.test(key) ) continue;
+
+                    try {
+                        attr = attributeTypes[key];
+
+                        // split out the unit/label and the new key
+                        parts = key.split('(');
+                        key2 = parts[0].replace(/\s*$/,'');
+                        val = parts[1].replace(/^\s*/,'').replace(/\)\s*$/,'');
+
+                        if( attr.flag == this.ds.ATTR_FLAGS.IS_WAVELENGTH ) {
+                            attr.label = val;
+                        } else {
+                            attr.units = val;
+                        }
+
+                        // replace the old key with the new key
+                        delete attributeTypes[key];
+                        attributeTypes[key2] = attr;
+                    } catch(e) {}
+                }
+            },
+
+            _parseAttributeKey : function(key) {
+                var parts, attr;
+
+                var re1Wave = /^-?\d+\.?\d*/;
+                var re2Wave = /^-?\d*\.\d+/; 
+                var reLabel = /.+\(.*\)\s*/;
+
+                var resp = {
+                    key : '',
+                    wavelength : (re1Wave.test(key) || re2Wave.test(key)) ? true : false
+                }
+
+
+                // do we have a label to parse out?
+                if( !reLabel.test(key) ) {
+                    if( !resp.wavelength ) resp.key = this._cleanKey(key);
+                    else resp.key = key;
+
+                    return resp;
+                }
+
+                try {
+                    // split out the unit/label and the new key
+                    parts = key.split('(');
+
+                    resp.key = parts[0].replace(/\s*$/,'');
+                    if( !resp.wavelength ) resp.key = this._cleanKey(resp.key);
+                    
+                    resp.label = parts[1].replace(/^\s*/,'').replace(/\)\s*$/,'');
+                } catch(e) {
+                    debugger;
+                }
+                return resp;
             }
+
         });
     ;
 
@@ -6880,6 +7037,7 @@ Polymer('esis-dataformat-help');;
 			},
 
 			parse : function(file, callback) {
+
 				var arr = [];
 				var info = file.info;
 				var contents = file.contents;
@@ -7012,11 +7170,12 @@ Polymer('esis-dataformat-help');;
 					data = {
 						error : 'Unknown parse error'
 					}
-				} else if( data.measurements.length == 0 && 
+				}
+				/* else if( data.measurements.length == 0 && 
 					Object.keys(data.metadata).length == 0 &&
 					!data.joindata ) {
 					data.warning = 'No metadata or measurements found';
-				}
+				} */
 
 				data.name = info.name;
 				if( total > 1 ) {
@@ -8204,6 +8363,8 @@ Polymer('esis-dataformat-help');;
                 };
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
+                    if( this.ds.datasheets[i].ignore ) continue;
+
                     if( this.ds.datasheets[i].isMetadata ) {
                         this.counts.metadataResources++;
                     } else if ( this.ds.datasheets[i].measurements.length > 0 ) {
@@ -8358,6 +8519,8 @@ Polymer('esis-dataformat-help');;
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var f = this.ds.datasheets[i];
+                    if( f.ignore ) continue;
+
                     for( var j = 0; j < f.measurements.length; j++ ) {
                         // make sure the latest uid for the spectra is generated
                         f.measurements[j].updateUid();
@@ -8424,6 +8587,8 @@ Polymer('esis-dataformat-help');;
 
                 for( i = 0; i < this.ds.datasheets.length; i++ ) {
                     f = this.ds.datasheets[i];
+                    if( f.ignore ) continue;
+
                     for( j = 0; j < f.measurements.length; j++ ) {
                         ele = f.measurements[j];
                         m = {
@@ -8523,6 +8688,8 @@ Polymer('esis-dataformat-help');;
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var f = this.ds.datasheets[i];
+                    if( f.ignore ) continue;
+
                     for( var j = 0; j < f.measurements.length; j++ ) {
                         measurements.push(f.measurements[j]);
                     }
@@ -8624,6 +8791,7 @@ Polymer('esis-dataformat-help');;
 
                 for( var i = 0; i < this.ds.datasheets.length; i++ ) {
                     var jd = this.ds.datasheets[i];
+                    if( jd.ignore ) return;
 
                     if( !jd.isMetadata || jd.isExisting ) continue;
                     jd = jd.metadata;

@@ -4867,7 +4867,7 @@ Copyright (c) 2013 Daniel Eden
 					<div flex="" style="text-align:center">
 						<select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
 			    			<template repeat="{{sheet, i in newDatasheets}}">
-			    				<option value="{{i}}">{{i}} - {{sheet.contents.sheetName}} {{sheet.contents.name}}</option>
+			    				<option value="{{i}}">{{i}} - {{sheet.label}}</option>
 			    			</template>
 			    		</select>
 			    	</div>
@@ -5013,6 +5013,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             core-collapse {
                 margin-bottom: 30px;
             }
+            paper-input {
+                width: 100px;
+                height: 40px;
+            }
         </style>
 
         <h4>
@@ -5027,6 +5031,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <table>
                 <tr>
                     <th>Name</th>
+                    <th>Units</th>
                     <th>Type</th>
                 </tr>
                 <tr template="" repeat="{{info, i in editableArray}}">
@@ -5034,6 +5039,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         <span modified?="{{modifications[info.name] != null}}">
                             <esis-attribute-name name="{{info.name}}" mappedname="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
                         </span>
+                    </td>
+                    <td class="{{info.class}}">
+                        <paper-input type="text" inputvalue="{{info.units}}"></paper-input>
                     </td>
                     <td class="{{info.class}}">
                         <select index="{{i}}" on-change="{{_onTypeChanged}}">
@@ -5057,11 +5065,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <table>
                 <tr>
                     <th>Name</th>
+                    <th>Units</th>
                     <th>Type</th>
                 </tr>
                 <tr template="" repeat="{{info, i in fixedArray}}">
                     <td class="{{info.class}}">
                         <esis-attribute-name name="{{info.name}}" mappedname="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
+                    </td>
+                    <td class="{{info.class}}">
+                        <paper-input type="text" inputvalue="{{info.units}}"></paper-input>
                     </td>
                     <td class="{{info.class}}">
                         {{info.type}}<span class="type-flag">{{info.flag}}</span>
@@ -5094,11 +5106,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             These attribute types have been implied because the attribute name is numberic.
         </div>
         <core-collapse opened="{{showWavelengths}}">
-            <div class="helper">
-                <template repeat="{{info in wavelengthArray}}">
-                    {{info.name}}
-                </template>
-            </div>
+            <div class="helper" id="wavelengths"></div>
         </core-collapse>
 
 
@@ -5479,7 +5487,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 
 
 
-<polymer-element name="esis-ui-measurement" attributes="measurement" assetpath="elements/ui/">
+<polymer-element name="esis-ui-measurement" attributes="measurement attrTypes" assetpath="elements/ui/">
 	<template>
 		<style>
 			.card {
@@ -5527,7 +5535,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
             }
 		</style>
 
-		<div class="card">
+		<div class="card" hidden?="{{hide}}">
 			<h4 style="color: #888">From - {{measurement.filename}}</h4>
 
 			<h4>
@@ -5547,7 +5555,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 							<esis-attribute-name name="{{item.key}}" esisname="{{ds.metadataDefinitions[item.key]}}" mappedname="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td class="file">{{item.value}}</td>
+						<td class="file">{{item.value}} <span hidden?="{{item.units == &apos;&apos;}}">({{item.units}})</span></td>
 						<td class="file">File Metadata</td>
 					</tr>
 					<tr template="" repeat="{{item in metadata.joined}}">
@@ -5555,7 +5563,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 							<esis-attribute-name name="{{item.key}}" esisname="{{ds.metadataDefinitions[item.key]}}" mappedname="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td>{{item.value}}</td>
+						<td>{{item.value}} <span hidden?="{{item.units == &apos;&apos;}}">({{item.units}})</span></td>
 						<td>Joined Metadata</td>
 					</tr>
 					<tr template="" repeat="{{item in metadata.measurement}}">
@@ -5563,7 +5571,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 							<esis-attribute-name name="{{item.key}}" esisname="{{ds.metadataDefinitions[item.key]}}" mappedname="{{ds.inverseAttributeMap[item.key]}}">
 							</esis-attribute-name>
 						</td>
-						<td class="spectra">{{item.value}}</td>
+						<td class="spectra">{{item.value}} <span hidden?="{{item.units == &apos;&apos;}}">({{item.units}})</span></td>
 						<td class="spectra">Measurement Metadata</td>
 					</tr>
 				</table>
@@ -5579,7 +5587,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 					<table style="width:100%">
 						<tr template="" repeat="{{p in data}}">
 							<td class="data"><b>{{p.key}}</b></td>
-							<td class="data">{{p.value}}</td>
+							<td class="data">{{p.value}} <span hidden?="{{p.units == &apos;&apos;}}">({{p.units}})</span></td>
 						</tr>
 					</table>
 				</core-collapse>
@@ -5757,32 +5765,39 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
                 color: #333;
                 background-color: rgba(255,255,255,.7);
             }
+            .ignored {
+                text-align: center;
+                padding: 35px;
+                color: #888;
+                font-size: 32px;
+            }
 		</style>
 
 		<esis-ui-card style="padding:10px" class="{{datasheet.updating ? &apos;updating&apos; : &apos;&apos;}}">
             <div class="processing" hidden?="{{!datasheet.updating}}">Processing...</div>
 			<h4 style="border-bottom: 1px solid #eee;margin-bottom:25px;padding-bottom:5px">
-                <div>{{datasheet.contents.name}}</div>
-                <div style="font-size:14px; color: #888" hidden?="{{!datasheet.contents.sheetName || datasheet.contents.sheetName == &apos;&apos;}}">
+                {{datasheet.label}}
+                <!--<div>{{datasheet.contents.name}}</div>
+                <div style="font-size:14px; color: #888" hidden?="{{!datasheet.contents.sheetName || datasheet.contents.sheetName == ''}}">
                     {{datasheet.contents.sheetName}}
-                </div>
+                </div>-->
             </h4>
 
             <div class="options">
                 <span style="float: right">Parser: {{datasheet.contents.info.parser}}</span>
     			
     			<template bind="" if="{{datasheet.contents.error}}">
-    				<div style="color:red">Error {{datasheet.contents.error}}</div>
+    				<div style="color:red">Error: {{datasheet.contents.error}}</div>
     			</template>
     			<template bind="" if="{{datasheet.contents.warning}}">
     				<div style="color:orange">Warning: {{datasheet.contents.warning}}</div>
     			</template>
 
                 <div horizontal="" layout="" style="margin: 10px 0 20px 20px">
-                    <paper-checkbox checked="{{datasheet.isMetadata}}" style="margin-right:10px"></paper-checkbox>
+                    <paper-checkbox checked="{{datasheet.isMetadata}}" style="margin-right:10px" disabled?="{{datasheet.ignore}}"></paper-checkbox>
                     <div>
                         <div>Joinable Metadata File</div>
-                        <div style="color:#888; font-size: 13px">This file only contains metadata to be joined on given data.</div>
+                        <div style="color:#888; font-size: 13px">This datasheet only contains metadata to be joined on given data.</div>
                         
                         <template bind="" if="{{datasheet.isMetadata}}">
                             <esis-ui-metadata metadata="{{datasheet.metadata}}" attributetypes="{{datasheet.attributeTypes}}">
@@ -5791,15 +5806,24 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
                     </div>
                 </div>
 
+                <div horizontal="" layout="" style="margin: 10px 0 20px 20px">
+                    <paper-checkbox checked="{{datasheet.ignore}}" style="margin-right:10px" disabled?="{{datasheet.isMetadata}}"></paper-checkbox>
+                    <div>
+                        <div>Ignore</div>
+                        <div style="color:#888; font-size: 13px">This datasheet should not be parsed.</div>
+                    </div>
+                </div>
+
+
                 <div>
                     <paper-radio-group selected="{{datasheet.dataType}}" role="radiogroup" style="margin-left: 10px" disabled?="{{datasheet.isMetadata}}">
-                        <paper-radio-button name="spectra" label="Spectra Data Format" role="radio" tabindex="0" aria-checked="true" aria-label="Spectra Data Format" class="core-selected" disabled?="{{datasheet.isMetadata}}">
+                        <paper-radio-button name="spectra" label="Spectra Data Format" role="radio" tabindex="0" aria-checked="true" aria-label="Spectra Data Format" class="core-selected" disabled?="{{datasheet.isMetadata || datasheet.ignore}}">
                         </paper-radio-button>
-                        <paper-radio-button name="timeseries" label="Time Series Data Format" role="radio" tabindex="0" aria-checked="false" aria-label="Time Series Data Format" disabled?="{{datasheet.isMetadata}}">
+                        <paper-radio-button name="timeseries" label="Time Series Data Format" role="radio" tabindex="0" aria-checked="false" aria-label="Time Series Data Format" disabled?="{{datasheet.isMetadata || datasheet.ignore}}">
                         </paper-radio-button>
                     </paper-radio-group>
 
-                    <div style="margin-left:55px" hidden?="{{datasheet.isMetadata}}">
+                    <div style="margin-left:55px" hidden?="{{datasheet.isMetadata || datasheet.ignore}}">
                         <div class="note" hidden?="{{datasheet.dataType != &apos;spectra&apos;}}">
                             View datasheet per spectra measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
                         </div>
@@ -5808,7 +5832,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
                         </div>
                     </div>
 
-                    <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.isMetadata}}">
+                    <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.isMetadata || datasheet.ignore}}">
                         <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
                             <esis-dataformat-help type="{{datasheet.dataType}}"></esis-dataformat-help>
                         </div>
@@ -5816,51 +5840,48 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
                 </div>
             </div>
 
-            <h4>
-                <div layout="" horizontal="">
-                    <div>
-                        <paper-icon-button icon="hardware:{{showAttrs ? &apos;keyboard-arrow-down&apos; : &apos;keyboard-arrow-right&apos;}}" on-tap="{{_toggleAttrs}}">
-                        </paper-icon-button>
-                        Parsed Attributes: {{parsedAttributes.length}}
+            <div hidden?="{{datasheet.ignore}}">
+                <h4>
+                    <div layout="" horizontal="">
+                        <div>
+                            <paper-icon-button icon="hardware:{{showAttrs ? &apos;keyboard-arrow-down&apos; : &apos;keyboard-arrow-right&apos;}}" on-tap="{{_toggleAttrs}}">
+                            </paper-icon-button>
+                            Parsed Attributes: {{parsedAttributes.length}}
+                        </div>
+                        <div flex="" style="text-align:right">
+                            <a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
+                                <core-icon icon="settings"></core-icon> Configure Dataset Schema
+                            </a>
+                        </div>
                     </div>
-                    <div flex="" style="text-align:right">
-                        <a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
-                            <core-icon icon="settings"></core-icon> Configure Attributes
-                        </a>
-                    </div>
-                </div>
-            </h4>
-            <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
-                <table>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                    </tr>
-                    <tr template="" repeat="{{info in parsedAttributes}}">
-                        <td class="{{info.class}}">
-                            <esis-attribute-name name="{{info.name}}" esisname="{{ds.metadataDefinitions[info.name]}}" mappedname="{{ds.inverseAttributeMap[info.name]}}">
-                            </esis-attribute-name>
-                        </td>
-                        <td class="{{info.class}}">{{info.type}}</td>
-                    </tr>
-                </table>
-            </core-collapse>
+                </h4>
+                <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
+                    <table>
+                        <tr>
+                            <th>Name</th>
+                            <th>Units</th>
+                            <th>Type</th>
+                        </tr>
+                        <tr template="" repeat="{{info in parsedAttributes}}">
+                            <td class="{{info.class}}">
+                                <esis-attribute-name name="{{info.name}}" esisname="{{ds.metadataDefinitions[info.name]}}" mappedname="{{ds.inverseAttributeMap[info.name]}}">
+                                </esis-attribute-name>
+                            </td>
+                            <td class="{{info.class}}">{{info.units}}</td>
+                            <td class="{{info.class}}">{{info.type}}</td>
+                        </tr>
+                    </table>
+                </core-collapse>
 
-            <h4>Wavelengths: {{wavelengths.length}} <small><a on-tap="{{_toggleWavelengths}}">show</a></small></h4>
-            <div hidden?="{{!showWavelengths}}">
-                <template repeat="{{key in wavelengths}}">
-                    <span>{{key}}</span>
-                </template>
+                <h4>Wavelengths: {{wavelengths.length}} <small><a on-tap="{{_toggleWavelengths}}">show</a></small></h4>
+                <div id="wavelengths" hidden?="{{!showWavelengths}}">
+                    
+                </div>
             </div>
 
-			<!--<div id="chart"></div>-->
-
-			<!-- TODO: this needs to change now
-			<template bind if="{{datasheet.measurements.length > maxLineCount}}">
-				<div style="padding: 15px; color: #888; font-size: 12px; font-style: italic">
-					*Note: only {{maxLineCount}} of {{datasheet.measurements.length}} measurements drawn.
-				</div>
-			</template> -->
+            <div hidden?="{{!datasheet.ignore}}" class="ignored">
+                Ignored
+            </div>
 
 
 		</esis-ui-card>
@@ -5910,12 +5931,12 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 						</div>
 						<div flex="" style="text-align:right">
 							<span class="s-selector">
-								Select Spectra: 
-								<select id="spectraSelector" on-change="{{_selectSpectra}}">
+								<span style="vertical-align:top">Select Spectra:</span> <paper-input style="width: 75px;font-size: 14px" inputvalue="{{selectedIndex}}"></paper-input>
+								<!--<select id="spectraSelector" on-change="{{_selectSpectra}}">
 									<template repeat="{{sp,i in measurements}}">
 										<option value="{{i}}">{{i+1}}</option>
 									</template>
-								</select>
+								</select>-->
 							</span>
 						</div>
 					</div>
@@ -5925,7 +5946,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
                     <core-icon icon="settings"></core-icon> Configure Attributes
                 </a>
 
-				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}"></esis-ui-measurement>
+				<esis-ui-measurement id="measurementUI" measurement="{{selectedSpectra}}" attrtypes="{{attrTypes}}"></esis-ui-measurement>
 			</div>
 		</div>
 
@@ -5973,7 +5994,7 @@ polyfill-next-selector { content: '#tabsContainer > *:not(#selectionBar)'; }
 			</tr>
 		</table>
 
-		<paper-icon-button icon="warning" label="Delete Dataset" style="margin-top" on-tap="{{_delete}}" raisedbutton=""></paper-icon-button>
+		<paper-icon-button icon="warning" label="Delete Dataset" style="margin-top" on-click="{{_delete}}" raisedbutton=""></paper-icon-button>
 	</template>
 	
 <polymer-element assetpath="elements/panels/"></polymer-element></polymer-element>
@@ -6658,7 +6679,7 @@ Copyright (c) 2013 Daniel Eden
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
       <esis-item label="Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
       <esis-item label="New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
-      <esis-item label="Attribute Settings" tag="attribute-settings" ele="esis-attribute-settings"></esis-item>
+      <esis-item label="Schema Settings" tag="schema-settings" ele="esis-attribute-settings"></esis-item>
       <esis-item label="Inspect" tag="inspect" ele="esis-inspect"></esis-item>
       <esis-item label="Cancel" tag="back" style="display:block"></esis-item>
 

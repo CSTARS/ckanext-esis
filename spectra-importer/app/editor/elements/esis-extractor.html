@@ -46,12 +46,13 @@
                 for( var key in data.attributeTypes ) {
                     if( data.attributeTypes[key].flag != this.ds.ATTR_FLAGS.IS_WAVELENGTH ) c++;
                 }
+
                 if( c > 500 ) {
                     resp.error = c+' different attribute types where found.  Recommend switching the data format.';
                     return resp;
                 }
 
-                console.log(data.attributeTypes);
+                
 
                 if( data.error ) {
                     resp.error = data.error;
@@ -331,7 +332,7 @@
                                     attributeTypes[keyInfo.key] = { 
                                         guess : false,
                                         type : 'data',
-                                        flag : key.wavelength ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
+                                        flag : keyInfo.wavelength ? this.ds.ATTR_FLAGS.IS_WAVELENGTH :
                                                                 this.ds.ATTR_FLAGS.IS_FILE_DATA
                                     };
                                     this._addUnitOrLabel(keyInfo, attributeTypes[keyInfo.key]);

@@ -195,7 +195,7 @@
                         </div>
                         <div flex style="text-align:right">
                             <a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
-                                <core-icon icon="settings"></core-icon> Configure Attributes
+                                <core-icon icon="settings"></core-icon> Configure Dataset Schema
                             </a>
                         </div>
                     </div>
@@ -444,7 +444,7 @@
             },
 
             goToAttrSettings : function() {
-                window.location.hash = 'attribute-settings';
+                window.location.hash = 'schema-settings';
             },
 
             _goToJoin : function() {
