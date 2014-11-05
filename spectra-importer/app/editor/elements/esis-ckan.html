@@ -88,9 +88,9 @@
 		        });
 			},
 
-			getUsdaCommonName : function(code, callback) {
+			getUsdaCommonName : function(codes, callback) {
 				$.ajax({
-		            url: esis.host + '/spectra/getUsdaCommonName?code='+code,
+		            url: esis.host + '/spectra/getUsdaCommonName?codes='+codes,
 		            xhrFields: {
 				      withCredentials: true
 				    },
@@ -257,6 +257,7 @@
 			},
 
 			addSpectra : function(spectra, updateIndex, callback) {
+				debugger;
 				$.ajax({
 				    url: esis.host + '/spectra/addSpectra',
 				    type: "POST",
@@ -268,6 +269,7 @@
 				      withCredentials: true
 				    },
 				    success: function(response, status) {
+				    	debugger;
 		                if( response.success || !response.error ) {
 				            callback(null, response);
 		                } else {

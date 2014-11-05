@@ -219,6 +219,7 @@
                 for( var i = 0; i <= hRanges[0].stop; i++ ) {
                     if( !contents[i][0] ) continue;
 
+                    var key = contents[i][0];
                     keyInfo = this._parseAttributeKey(key);
                     fileMetadata[keyInfo.key] = this._cleanValue(contents[i][1]);
 

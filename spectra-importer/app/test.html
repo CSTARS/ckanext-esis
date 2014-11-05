@@ -1,0 +1,35 @@
+<html>
+<head>
+    <!--<script>
+      window.CustomEvent = function(inType, params) {
+        debugger;
+        params = params || {};
+        var e = document.createEvent('CustomEvent');
+        e.initEvent(inType, Boolean(params.bubbles), Boolean(params.cancelable));
+        e.detail = params.detail;
+        //e.initCustomEvent(inType, Boolean(params.bubbles), Boolean(params.cancelable), params.detail);
+        return e;
+      };
+      window.CustomEvent.prototype = window.Event.prototype;
+    </script>
+    <script src="platform/CustomElements/CustomElements.js"></script>-->
+    <script>
+        var Window = window;
+    </script>
+    <script src="platform/webcomponentsjs/webcomponents.js"></script>
+</head>
+<body>
+    <script>
+
+        console.log('this is a test');
+
+        document.addEventListener('WebComponentsReady', function() {
+           console.log('WebComponentsReady is READY!!!')
+          });
+        window.addEventListener('polymer-ready', function(){
+            console.log('Polymer is READY!!!')
+        });
+
+    </script>
+</body>
+</html>

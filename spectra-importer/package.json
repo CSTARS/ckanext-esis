@@ -34,6 +34,9 @@
     "grunt-contrib-compass": "^0.9.1",
     "grunt-contrib-imagemin": "^0.8.0",
     "grunt-contrib-cssmin": "^0.10.0",
-    "grunt-svgmin": "^0.4.0"
+    "grunt-svgmin": "^0.4.0",
+    "assert": "^1.1.2",
+    "iconv-lite": "^0.4.4",
+    "zombie": "^2.1.1"
   }
 }
