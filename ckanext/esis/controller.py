@@ -18,6 +18,7 @@ from bson.son import SON
 
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
+import subprocess
 
 
 log = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ log = logging.getLogger(__name__)
 # setup mongo connection
 client = MongoClient(config._process_configs[1]['esis.mongo.url'])
 db = client[config._process_configs[1]['esis.mongo.db']]
+usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection']]
 packageCollection = db[config._process_configs[1]['esis.mongo.package_collection']]
 metadataCollection = db[config._process_configs[1]['esis.mongo.metadata_collection']]
@@ -33,20 +35,21 @@ searchCollection = db[searchCollectionName]
 
 class SpectraController(PackageController):
     mapreduce = {}
+    localdir = ""
 
     def __init__(self):
-        localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
+        self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
 
         # read in mapreduce strings
-        f = open('%s/map.js' % localdir, 'r')
+        f = open('%s/map.js' % self.localdir, 'r')
         self.mapreduce['map'] = f.read()
         f.close()
 
-        f = open('%s/reduce.js' % localdir, 'r')
+        f = open('%s/reduce.js' % self.localdir, 'r')
         self.mapreduce['reduce'] = f.read()
         f.close()
 
-        f = open('%s/finalize.js' % localdir, 'r')
+        f = open('%s/finalize.js' % self.localdir, 'r')
         self.mapreduce['finalize'] = f.read()
         f.close()
 
@@ -56,7 +59,7 @@ class SpectraController(PackageController):
 
     # Takes an array of spectra and adds to mongo spectra collection
     # all the spectra should be for the same package
-    def addSpectra(self):
+    '''def addSpectra(self):
         response.headers["Content-Type"] = "application/json"
         spectra = self.parse_json(request.params.get('spectra'))
         update = request.params.get('updateIndex')
@@ -66,8 +69,7 @@ class SpectraController(PackageController):
         ignored = 0
 
         # get the ckan packge, this will error if they don't have access
-        context = {'model': model, 'user': c.user}
-        ckanPackage = logic.get_action('package_show')(context, {'id': pkgId})
+
 
         packageData = packageCollection.find_one({'package_id': pkgId})
         if packageData == None:
@@ -98,6 +100,12 @@ class SpectraController(PackageController):
             'ignored': ignored,
             'inserted': inserted
         })
+    '''
+    def addSpectra(self):
+        context = {'model': model, 'user': c.user}
+        ckanPackage = logic.get_action('package_show')(context, {'id': request.params.get('package_id')})
+
+        return self._sub_addSpectra(ckanPackage, request.params.get('spectra'), request.params.get('updateIndex'))
 
     def addUpdatePackage(self):
         response.headers["Content-Type"] = "application/json"
@@ -144,7 +152,7 @@ class SpectraController(PackageController):
                 self._rejoin_metadata(spectra, metadata, packageData['attributes'])
                 self._transpose_attributes_by_type(spectra, packageData['attributes'])
                 self._map_attribute_names(spectra, map)
-                self._set_sort(spectra, packageData['attributes']['dataset'])
+                set_sort(spectra, packageData['attributes']['dataset'])
                 self._set_ckan_pkg_attrs(spectra, ckanPackage)
 
                 spectraCollection.update({'_id': spectra['_id']}, spectra)
@@ -346,55 +354,6 @@ class SpectraController(PackageController):
                 setValues
             )
 
-    # if we have a sort variable, it should be in the metadata and datapoints locations
-    # in a spectra.  It should also be set in spectra.ecosis.sort namespace
-    def _set_sort(self, spectra, datasetAttrs):
-        # set group and location information
-        for attr in ['group_by', 'location', 'sort_on']:
-            if attr in datasetAttrs:
-                spectra['ecosis'][attr] = datasetAttrs[attr]
-            else:
-                spectra['ecosis'][attr] = None
-
-        if spectra['ecosis']['sort_on'] == None or spectra['ecosis']['sort_on'] == '':
-            return
-
-        # find the sort attribute in the data points
-        pt = None
-        for point in spectra['datapoints']:
-            if datasetAttrs['sort_on'] == point['key']:
-                pt = point
-                break
-
-        # if the sort attribute is not found in the points
-        if pt == None:
-            # and not found in the metadata, just return
-            if datasetAttrs['sort_on'] not in spectra:
-                return
-            # else add to points
-            else:
-                spectra['datapoints'].append({
-                    'key' : datasetAttrs['sort_on'],
-                    'value' : spectra[datasetAttrs['sort_on']]
-                })
-        # if the sort attribute is found in points and not in metadata
-        elif datasetAttrs['sort_on'] not in spectra:
-            spectra[datasetAttrs['sort_on']] = pt['value']
-
-        # now set the sort variable, if it is date or numberic attempt to parse
-        # if we fail, just set to null
-        val = spectra[datasetAttrs['sort_on']]
-        if 'sort_type' in datasetAttrs:
-            try:
-                if datasetAttrs['sort_type'] == 'datetime':
-                    spectra['ecosis']['sort'] = dateutil.parser.parse(val)
-                elif datasetAttrs['sort_type'] == 'numberic':
-                    spectra['ecosis']['sort'] = float(val)
-                else:
-                    spectra['ecosis']['sort'] = val
-            except:
-                spectra['ecosis']['sort'] = None
-
     def _set_ckan_pkg_attrs(self, spectra, pkg):
         spectra['ecosis']['package_name'] = pkg['name']
         spectra['ecosis']['package_title'] = pkg['title']
@@ -410,6 +369,28 @@ class SpectraController(PackageController):
             spectra['ecosis']['modified'] = dateutil.parser.parse(pkg['metadata_modified'])
         except:
             spectra['ecosis']['modified'] = None
+
+    def gitInfo(self):
+        resp = {}
+
+        cmd = "git describe --tags"
+        process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=self.localdir)
+        resp["tag"] = process.communicate()[0]
+
+        cmd = "git branch"
+        process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=self.localdir)
+        resp["branch"] = process.communicate()[0].split("\n")
+        for branch in resp["branch"]:
+            if "*" in branch:
+                resp["branch"] = branch.replace("* ","")
+                break
+
+        cmd = "git log -1"
+        process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=self.localdir)
+        resp["commit"] = re.sub(r'\n.*', '', process.communicate()[0]).replace("commit ","")
+
+
+        return json.dumps(resp)
 
 
     # make sure all mapped names are set
@@ -641,12 +622,45 @@ class SpectraController(PackageController):
 
     def getUSDACommonName(self):
         response.headers["Content-Type"] = "application/json"
-        code = request.params.get('code')
+        #code = request.params.get('code')
+        #try:
+        #    resp = urllib2.urlopen('http://plants.usda.gov/java/AdvancedSearchServlet?symbol=%s&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on' % code)
+        #except:
+        #    return json.dumps({'error': True})
+        #return json.dumps({'body': resp.read(), 'code': code})
+        codes = re.sub(r' ','', request.params.get('codes')).split(',')
+        resp = {}
+        for code in codes:
+            item = usdaCollection.find_one({'Accepted Symbol': code.upper()},{'_id':0})
+            if item != None:
+                resp[code] = item
+            else:
+                resp[code] = {
+                    'error' : True,
+                    'message' : 'Unknown Code'
+                }
+        return json.dumps(resp)
+
+
+    def rebuildUSDACollection(self):
+        usdaCollection.remove({})
+        rows = []
+
         try:
-            resp = urllib2.urlopen('http://plants.usda.gov/java/AdvancedSearchServlet?symbol=%s&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on' % code)
-        except:
+            resp = urllib2.urlopen('http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on')
+            rows = re.sub(r'\r', '', resp.read()).split('\n')
+            header = re.sub(r'"', '', rows[0]).split(',')
+
+            for i in range(1, len(rows)-1):
+                row = re.sub(r'"', '', rows[i]).split(',')
+                item = {}
+                for j in range(0, len(header)-1):
+                    item[header[j]] = row[j]
+                usdaCollection.insert(item)
+
+        except Exception as e:
             return json.dumps({'error': True})
-        return json.dumps({'body': resp.read(), 'code': code})
+        return json.dumps({'success':True, 'count': len(rows)-2})
 
 
     def get(self):
@@ -710,6 +724,15 @@ class SpectraController(PackageController):
         p.terminate()
         return jsonstr
 
+    def _sub_addSpectra(self, ckanPackage, spectra, update):
+        q = Queue()
+        p = Process(target=sub_addSpectra, args=(q, self, ckanPackage, spectra, update,))
+        p.start()
+        jsonstr = q.get()
+        p.join()
+        p.terminate()
+        return jsonstr
+
 
 
 def sub_parse_json(q, jsonstr):
@@ -742,3 +765,93 @@ def sub_get(q, pkg, id, metadataOnly):
             print e
 
         q.put(json.dumps(dataset))
+
+
+def sub_addSpectra(q, controller, ckanPackage, spectra, update):
+        spectra = json.dumps(spectra)
+
+        # TODO: check at least one spectra was sent
+
+        pkgId = spectra[0]['ecosis']['package_id']
+
+        inserted = 0
+        ignored = 0
+
+        packageData = packageCollection.find_one({'package_id': pkgId})
+        if packageData == None:
+            q.put(json.dumps({
+                'error' : True,
+                'message' : 'No package data exists for this spectra'
+            }))
+
+        # how do we want to display this back to user?
+        for measurement in spectra:
+            if 'package_id' not in measurement['ecosis'] or 'resource_id' not in measurement['ecosis']:
+                ignored += 1
+                continue
+
+            # make sure all of the sort information is correct
+            set_sort(measurement, packageData['attributes']['dataset'])
+            controller._set_ckan_pkg_attrs(measurement, ckanPackage)
+
+            spectraCollection.insert(measurement)
+            inserted += 1
+
+        # should we update the search index by running mapreduce for all spectra in the package
+        if update == 'true':
+            controller._update_mapReduce(ckanPackage)
+
+        q.put(json.dumps({
+            'success': True,
+            'ignored': ignored,
+            'inserted': inserted
+        }))
+
+# if we have a sort variable, it should be in the metadata and datapoints locations
+# in a spectra.  It should also be set in spectra.ecosis.sort namespac
+def set_sort(self, spectra, datasetAttrs):
+        # set group and location information
+        for attr in ['group_by', 'location', 'sort_on']:
+            if attr in datasetAttrs:
+                spectra['ecosis'][attr] = datasetAttrs[attr]
+            else:
+                spectra['ecosis'][attr] = None
+
+        if spectra['ecosis']['sort_on'] == None or spectra['ecosis']['sort_on'] == '':
+            return
+
+        # find the sort attribute in the data points
+        pt = None
+        for point in spectra['datapoints']:
+            if datasetAttrs['sort_on'] == point['key']:
+                pt = point
+                break
+
+        # if the sort attribute is not found in the points
+        if pt == None:
+            # and not found in the metadata, just return
+            if datasetAttrs['sort_on'] not in spectra:
+                return
+            # else add to points
+            else:
+                spectra['datapoints'].append({
+                    'key' : datasetAttrs['sort_on'],
+                    'value' : spectra[datasetAttrs['sort_on']]
+                })
+        # if the sort attribute is found in points and not in metadata
+        elif datasetAttrs['sort_on'] not in spectra:
+            spectra[datasetAttrs['sort_on']] = pt['value']
+
+        # now set the sort variable, if it is date or numberic attempt to parse
+        # if we fail, just set to null
+        val = spectra[datasetAttrs['sort_on']]
+        if 'sort_type' in datasetAttrs:
+            try:
+                if datasetAttrs['sort_type'] == 'datetime':
+                    spectra['ecosis']['sort'] = dateutil.parser.parse(val)
+                elif datasetAttrs['sort_type'] == 'numberic':
+                    spectra['ecosis']['sort'] = float(val)
+                else:
+                    spectra['ecosis']['sort'] = val
+            except:
+                spectra['ecosis']['sort'] = None
