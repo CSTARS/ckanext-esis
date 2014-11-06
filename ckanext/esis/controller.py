@@ -371,11 +371,12 @@ class SpectraController(PackageController):
             spectra['ecosis']['modified'] = None
 
     def gitInfo(self):
+        response.headers["Content-Type"] = "application/json"
         resp = {}
 
         cmd = "git describe --tags"
         process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=self.localdir)
-        resp["tag"] = process.communicate()[0]
+        resp["version"] = process.communicate()[0]
 
         cmd = "git branch"
         process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=self.localdir)
