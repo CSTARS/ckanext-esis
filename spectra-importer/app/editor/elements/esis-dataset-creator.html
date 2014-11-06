@@ -187,9 +187,11 @@
                             this.ckan.addUpdateSpectraPackage(datasetInfo, rebuildIndex, function(){
                             
                                 this.statusText = 'Uploading spectra data...';
+                                debugger;
                                 this._uploadMeasurementResource(measurementData, function(){
                             
                                     this.statusText = 'Complete';
+                                    debugger;
                                     setTimeout(function(){
                                         window.location = esis.host+'/dataset/'+pkg.name;
                                     }, 500);
@@ -330,11 +332,42 @@
                     }
                 }
 
-                this._lookupUSDACodes(0, measurements, callback);
+                this._lookupUSDACodes(measurements, callback);
+                //this._lookupUSDACodes(0, measurements, callback);
             },
 
+            _lookupUSDACodes : function(arr, callback) {
+                var codes = [], code;
+                for( var i = 0; i < arr.length; i++ ) {
+                    code = arr[i]['USDA Code'];
+                    if( code && codes.indexOf(code.toUpperCase()) == -1 ) {
+                        codes.push(code.toUpperCase());
+                    }
+                }
 
-            _lookupUSDACodes : function(index, arr, callback) {
+                if( codes.length == 0 ) {
+                    return callback(arr);
+                }
+
+                this.statusText = 'Looking up USDA codes ...';
+                this.ckan.getUsdaCommonName(codes.join(','), function(resp){
+
+                    for( var i = 0; i < arr.length; i++ ) {
+                        code = arr[i]['USDA Code'];
+                        if( code ) code = code.toUpperCase();
+
+                        if( resp[code] && !resp[code].error ) {
+                            for( var key in resp[code] ) {
+                                if( resp[code][key] != '' ) arr[i][key] = resp[code][key];
+                            }
+                        }
+
+                    }
+                    callback(arr);
+                });
+            },
+
+            /*_lookupUSDACodes : function(index, arr, callback) {
                 if( index == arr.length ) {
                     return callback(arr);
                 } else {
@@ -380,7 +413,7 @@
                 for( var i = 0; i < attrs.length; i++ ) {
                     item[attrs[i]] = values[i];
                 }
-            },
+            },*/
 
 
             /**
@@ -554,6 +587,7 @@
 
                 var update = (index == chunks.length-1) ? true : false;
                 this.ckan.addSpectra(chunks[index], update, function(){
+                    debugger;
                     index++;
                     this._addMeasurementData(index, total, chunks, callback);
                 }.bind(this));
