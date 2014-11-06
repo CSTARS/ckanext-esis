@@ -79,6 +79,9 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('get_metadata', '/spectra/getMetadata', controller=controller, action='getMetadata')
         map.connect('get_usda_common_name', '/spectra/getUsdaCommonName', controller=controller, action='getUSDACommonName')
         map.connect('rebuild_index', '/spectra/rebuildIndex', controller=controller, action='rebuildIndex')
+        map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
+
+        map.connect('git_info', '/spectra/gitInfo', controller=controller, action='gitInfo')
 
         # route all resource edit screens to main ecosis dataset editor
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
