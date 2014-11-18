@@ -46,6 +46,8 @@ Use Node.JS and webdriver.io who's api is documented here: http://webdriver.io/a
 
 If you have a <input /> value bound to elements attribute, setting the <input /> value via the webdriver WILL NOT set the elements attribute or fire any valueChanged events!  Instead, you should simply set the elements attribute directly, this will fire valueChanged events and the new value will be reflected in the <input /> tag.
 
+The only application change (so far), is that any file upload needs to be exposed (not hidden in Shadow DOM) as you must use the webdriver API for uploading files.  Currently I'm exposing a hidden input to add any file data.
+
 A couple of the helpers:
 - setHash(hash, callback): sets the url hash of the app
 - polymerSetValue(cssQuery, path, value, callback): Given a cssQuery (can include /deep/), will set the elements attribute, defined by 'path' to 'value'.  Path can be in dot notation, so you can call client.polymerSetValue('my-app /deep/ my-cool-widget', 'data.foo', 'bar') which will set my-cool-widget.data.foo = 'bar'.

@@ -35,6 +35,8 @@
 	    		</div>
 	    		<div flex>
 	    			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
+
+	    			<input type="file" style="display:none" id="addAttrMap" name="addAttrMap" />
 	    		</div>
 	    	</div>
 
@@ -90,6 +92,9 @@
 				 	});
 				 	this._updateVisibility();
 				}.bind(this));
+
+				// for webdriver
+				this.expose();
 			},
 
 			// fired when element is attached.  For this element we should render the attribute type control
@@ -163,7 +168,15 @@
 					}
 				}
 				this.menuItem.setSecondaryHtml(c+' Attributes Mapped');
-			}
+			},
+
+			expose : function() {
+		  		this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
+
+		  		// expose file input for tests
+				document.body.appendChild(this.$.addAttrMap);
+				this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
+		  	}
 
 		});
 	</script>
