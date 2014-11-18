@@ -12,14 +12,6 @@ exports.init = function(client) {
         }, hash, cb);
     });
 
-    client.addCommand("polymerElement", function(query, cb) {
-        this.requestHandler.create(
-            '/session/:sessionId/element',
-            { using: 'css selector', value: query },
-            cb
-        );
-    });
-
     // note, this will directly set a value via css query and path
     client.addCommand("polymerSetValue", function(query, path, value, cb) {
         this.execute(function(query, path, value){
