@@ -37,6 +37,8 @@
     "grunt-svgmin": "^0.4.0",
     "assert": "^1.1.2",
     "iconv-lite": "^0.4.4",
-    "zombie": "^2.1.1"
+    "zombie": "^2.1.1",
+    "selenium-webdriver": "^2.44.0",
+    "webdriverio": "^2.3.0"
   }
 }

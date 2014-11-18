@@ -7,7 +7,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <script src="components/platform/platform.js"></script>
+    <script src="components/webcomponentsjs/webcomponents.js"></script>
     
 
     <link rel="stylesheet" href="components/animate-css/animate.min.css" shim-shadowdom>
@@ -57,6 +57,25 @@
         -webkit-touch-callout: none;
       }
 
+      html /deep/ .focused-underline {
+        color: #2f9b45 !important;
+        background-color: #2f9b45 !important;
+      }
+      html /deep/ paper-input-decorator /deep/ .label-text {
+        color: #2f9b45 !important;
+      }
+      paper-input-decorator /deep/ .cursor {
+        background-color: #2f9b45 !important;
+      }
+      html /deep/ paper-input {
+        width: 350px;
+      }
+      html /deep/ paper-input-decorator {
+        width: 350px;
+      }
+
+
+
       html /deep/ core-toolbar {
         background-color: #2f9b45 !important;
       }
@@ -93,7 +112,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://168.150.42.240:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.4:5000' : '';
 
     $.ajax({
         type : 'GET',

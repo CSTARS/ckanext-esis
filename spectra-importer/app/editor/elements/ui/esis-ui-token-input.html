@@ -15,8 +15,10 @@
                 color: white;
             }
         </style>
-        <paper-input id="input" floatingLabel label="Keywords" on-keypress="{{_onInputKey}}" inputValue="{{inputValue}}" ></paper-input>
-        
+        <paper-input-decorator floatingLabel label="Keywords" >
+            <input type="text" on-keypress="{{_onInputKey}}" value="{{inputValue}}" />
+        </paper-input-decorator>
+
         <div>
             <template bind if="{{searching}}">
                 Searching...

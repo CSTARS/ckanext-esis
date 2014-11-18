@@ -36,7 +36,9 @@
 				</div>
 			</div>
 			<div hidden?="{{ds.editMode}}" > 
-				<paper-input floatingLabel label="Title" inputValue="{{ds.data.title}}"></paper-input>
+				<paper-input-decorator floatingLabel label="Title" >
+					<input type="text" value="{{ds.data.title}}" />
+				</paper-input-decorator>
 				<div hidden?="{{!verifingName}}" style="color:#888;margin-left:20px;font-size:12px;padding:5px">
 					Verifying name...
 				</div>
@@ -53,7 +55,9 @@
 		</div>
 
 		<div class="form-wrap">
-			<paper-input multiline rows="3" floatinglabel label="Description" value="{{ds.data.notes}}" ></paper-input>
+			<paper-input-decorator floatingLabel label="Description" style="width: 350px">
+			    <textarea rows="3" value="{{ds.data.notes}}" ></textarea>
+			</paper-input-decorator>
 		</div>
 
 		<div class="form-wrap">
@@ -93,17 +97,27 @@
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Version" value="{{ds.data.version}}"></paper-input>
+			<paper-input-decorator floatingLabel label="Version" >
+				<input type="text" value="{{ds.data.version}}" />
+			</paper-input-decorator>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Author" value="{{ds.data.author}}"></paper-input>
-			<paper-input floatingLabel label="Author Email" value="{{ds.data.author_email}}"></paper-input>
+			<paper-input-decorator floatingLabel label="Author" >
+				<input type="text" value="{{ds.data.author}}" />
+			</paper-input-decorator>
+			<paper-input-decorator floatingLabel label="Author Email" >
+				<input type="text" value="{{ds.data.author_email}}" />
+			</paper-input-decorator>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input floatingLabel label="Maintainer" value="{{ds.data.maintainer}}"></paper-input>
-			<paper-input floatingLabel label="Maintainer Email" value="{{ds.data.maintainer_email}}"></paper-input>
+			<paper-input-decorator floatingLabel label="Maintainer" >
+				<input type="text" value="{{ds.data.maintainer}}" />
+			</paper-input-decorator>
+			<paper-input-decorator floatingLabel label="Maintainer Email" >
+				<input type="text" value="{{ds.data.maintainer_email}}" />
+			</paper-input-decorator>
 		</div>
 
 		<template bind if="{{ds.data.title != ''}}">
@@ -179,7 +193,6 @@
 
 				$.get(esis.host+'/spectra/gitInfo', function(resp){
 					this.git = resp;
-					debugger;
 				}.bind(this));
 			},
 

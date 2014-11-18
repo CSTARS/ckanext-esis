@@ -151,7 +151,9 @@
 					<div style="font-size:12px;color:#888; margin-bottom: 15px">
 						<span>Add new files below by using the file selector or drag files over the drop zone.</span>
 					</div>
-					<input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}">
+					<input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}" />
+
+					<input type="file" style="display:none" id="addFileTesting" name="addFileTesting" multiple="" />
 				</div>
 
 				<div class="file-select-group" >
@@ -237,6 +239,8 @@
 				this.ds = document.querySelector('esis-datastore');
 				this.$.dropZone.addEventListener('dragover', this._handleDragOver.bind(this), false);
 				this.$.dropZone.addEventListener('drop', this._handleFileSelect.bind(this), false);
+
+				this.expose();
 			},
 
 			// redraw current datasheet if there is one selected
@@ -334,7 +338,16 @@
 		  	_nextDatasheet : function() {
 		  		if( typeof this.selectedSheetIndex == 'string' ) this.selectedSheetIndex = parseInt(this.selectedSheetIndex);
 		  		this.selectedSheetIndex++;
+		  	},
+
+		  	expose : function() {
+		  		this.$.addFileTesting.parentNode.removeChild(this.$.addFileTesting);
+
+		  		// expose file input for tests
+				document.body.appendChild(this.$.addFileTesting);
+				this.$.addFileTesting.addEventListener('change', this._handleFileSelect.bind(this), false);
 		  	}
+
 
 		});
 	</script>
