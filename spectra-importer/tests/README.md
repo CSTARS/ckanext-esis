@@ -4,7 +4,9 @@ Chrome supports the webdriver protocal (https://dvcs.w3.org/hg/webdriver/raw-fil
 
 ## Libraries
 Selenium Server: http://docs.seleniumhq.org/projects/webdriver/
+
 webdriver.io: http://webdriver.io/
+
 mocha: http://mochajs.org/
 
 
@@ -20,7 +22,9 @@ npm install
 ```
 
 // download selenium webdriver server (webdriver.io connects to server which speaks to browser)
+
 http://docs.seleniumhq.org/download/
+
 // latest
 ```
 wget http://selenium-release.storage.googleapis.com/2.44/selenium-server-standalone-2.44.0.jar
@@ -39,6 +43,7 @@ mocha [test].js
 Use Node.JS and webdriver.io who's api is documented here: http://webdriver.io/api.html.
 
 **Note:** The webdriver spec does not currently account for Shadow DOM.  So working with webcomponents is tricky.  injectPolymerHelpers.js will use webdriver.io's client.addCommand() to add custom commands which are useful for working around the lack of Shadow DOM query support.
+
 Also, if you have an <input /> value bound to elements attribute, setting the <input /> value via the webdriver WILL NOT set the elements attribute or fire any valueChanged events!  Instead, you should simply set the elements attribute directly, this will fire valueChanged events and the new value will be reflected in the <input /> tag.
 
 A couple of the helpers:
