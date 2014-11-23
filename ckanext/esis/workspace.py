@@ -18,11 +18,12 @@ import inspect
 from bson.code import Code
 from bson.son import SON
 import ckan.lib.uploader as uploader
+import hashlib
 
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
 import subprocess
-
+import csv
 
 log = logging.getLogger(__name__)
 
@@ -39,13 +40,6 @@ searchCollection = db[searchCollectionName]
 class WorkspaceController(PackageController):
     workspaceDir = ""
     dataExtension = ["xlsx","xls","spectra","csv","tsv"]
-
-    WORKSPACE_DIR = {
-        "GITHUB" : "/github",
-        "GOOGLE" : "/google",
-        "CKAN" : "/ckan",
-        "PARSED" : "/parsed"
-    }
 
     def __init__(self):
         self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
@@ -69,13 +63,41 @@ class WorkspaceController(PackageController):
 
         # TODO: this will be remove and become a check
         dir = "%s/%s" % (self.workspaceDir, ckanPackage['name'])
-        print dir
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
-        os.makedirs(dir)
+
+        #if os.path.exists(dir):
+        #    shutil.rmtree(dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        resources = self._processResources(ckanPackage, dir)
+
+        attrs = {}
+        arr = []
+        for resource in resources:
+            files = []
+            for file in resource['files']:
+                for attr in file['attributes']:
+                    if not attr['name'] in attrs:
+                        attrs[attr['name']] = {
+                            "type" : attr["type"],
+                            "scope" : attr["scope"],
+                            "units" : attr["units"]
+                        }
+                files.append({
+                    "name" : file["name"],
+                    "layout" : file["layout"]
+                })
+            arr.append({
+                "name" : resource["name"],
+                "type" : resource["type"],
+                "id"   : resource["id"],
+                "files" : files
+            })
+
 
         return json.dumps({
-            "resources" : self._processResources(ckanPackage, dir)
+            "resources"  : arr,
+            "attributes" : attrs
         })
 
     # process all of the resources
@@ -102,7 +124,19 @@ class WorkspaceController(PackageController):
 
         # extract zip file
         if ext == "zip":
-            print "Found Zip:"
+            ckanLocation = self._getLocalResourcePath(r)
+
+            # check for changes
+            if parseData != None:
+                md5 = self._hashfile(ckanLocation)
+                if md5 == parseData['md5']:
+                    print "Found zipfile: %s but NO changes detected" % r['name']
+                    return parseData
+                else:
+                    print "Found zipfile: %s and changes detected" % r['name']
+                    shutil.rmtree(zipDir = "%s/%s/files" % (dir, r['id']))
+            else:
+                print "Found new zipfile: %s extracting..." % r['name']
 
             # init resource dir
             self._initResourceDir(r, dir)
@@ -111,7 +145,7 @@ class WorkspaceController(PackageController):
             zipDir = "%s/%s/files" % (dir, r['id'])
 
             files = []
-            z = zipfile.ZipFile(self._getLocalResourcePath(r), "r")
+            z = zipfile.ZipFile(ckanLocation, "r")
             for info in z.infolist():
                 if self._isDataFile(info.filename):
                     parts = info.filename.split("/")
@@ -120,42 +154,67 @@ class WorkspaceController(PackageController):
                     for i in range(0, len(parts)-1):
                         zipPath += parts[i]+"/"
 
-                    z.extract(info, "%s/%s" % (zipDir, zipPath))
+                    z.extract(info, "%s" % zipDir)
 
-                    files.append({
+                    file = {
                         "name" : re.sub(r".*/", "", info.filename),
                         "location" : "%s/%s" % (re.sub(self.workspaceDir, "", zipDir), zipPath)
-                    })
+                    }
+                    self._processFile(file, None)
+                    files.append(file)
+            z.close()
 
-            return {
+            info = {
                 "name" : r["name"],
                 "id"   : r["id"],
                 "files" : files,
                 "type" : "zip",
-                "url_type" : r["url_type"]
+                "url_type" : r["url_type"],
+                "md5" : self._hashfile(ckanLocation)
             }
 
-            #with  as z:
-            #    z.extractall(zipDir)
+            # save parse info to disk
+            self._saveJson("%s/%s/info.json" % (dir, r['id']), info)
+            return info
+
+
         elif ext in self.dataExtension:
-            print "Found dataType: %s" % ext
+            ckanLocation = self._getLocalResourcePath(r)
+
+            if parseData != None:
+                md5 = self._hashfile(ckanLocation)
+                if md5 == parseData['md5']:
+                    print "Found data file: %s but NO changes detected" % r['name']
+                    return parseData
+                else:
+                    print "Found data file: %s and changes detected" % r['name']
+                    os.remove("%s/%s/files/%s" % (dir, r['id'], r['name']))
+            else:
+                print "Found new data file: %s extracting..." % r['name']
+
 
             # init resource dir
             self._initResourceDir(r, dir)
 
             # link in file
-            os.symlink(self._getLocalResourcePath(r), "%s/%s/files/%s" % (dir, r['id'], r['name']))
+            os.symlink(ckanLocation, "%s/%s/files/%s" % (dir, r['id'], r['name']))
 
-            return {
+            file = {
+                "name" : r['name'],
+                "location" : "%s/%s/files/" % (re.sub(self.workspaceDir, "", dir), r['id'])
+            }
+            self._processFile(file, None)
+
+            info = {
                 "name" : r["name"],
                 "id"   : r["id"],
-                "files" : [{
-                    "name" : r['name'],
-                    "location" : "%s/%s/files/" % (re.sub(self.workspaceDir, "", dir), r['id'])
-                }],
-                "type" : "zip",
-                "url_type" : r["url_type"]
+                "files" : [file],
+                "type" : "datafile",
+                "url_type" : r["url_type"],
+                "md5" : self._hashfile(ckanLocation)
             }
+            self._saveJson("%s/%s/info.json" % (dir, r['id']), info)
+            return info
         else:
             print "Found Unknown: %s" % r.name
 
@@ -178,7 +237,7 @@ class WorkspaceController(PackageController):
                 raise NameError("Git Repo exists but no existing parse data found for %s" % r['id'])
 
             # update git repo
-            gitDir = "%s/%s" % (gitDir, repoName)
+            gitDir = "%s/files" % gitDir
             cmd = "git pull"
             process = subprocess.Popen(cmd.split(), cwd=gitDir)
             process.wait()
@@ -186,13 +245,18 @@ class WorkspaceController(PackageController):
             # get current commit
             cmd = "git log -1"
             process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=gitDir)
+            process.wait()
             commit = re.sub(r'\n.*', '', process.communicate()[0]).replace("commit ","")
 
             # don't need to do anything to commit is the same
             if parseData['commit'] == commit:
+                print "Git Repo found, No changes detected"
                 return parseData
+            else:
+                print "Git Repo found, changes detected"
 
         else:
+            print "New Git Repo found"
             parseData = {}
 
             os.makedirs(gitDir)
@@ -207,10 +271,12 @@ class WorkspaceController(PackageController):
             gitDir = "%s/files" % gitDir
             cmd = "git log -1"
             process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=gitDir)
+            process.wait()
             parseData['commit'] = re.sub(r'\n.*', '', process.communicate()[0]).replace("commit ","")
 
             # set some other attributes for processed data file
             parseData['name'] = r['name']
+            parseData['id'] = r['id']
             parseData['url'] = r['url']
             parseData['type'] = 'github'
             parseData['repo'] = repoName
@@ -232,14 +298,150 @@ class WorkspaceController(PackageController):
 
         # now parse information for known data files
         for file in parseData['files']:
-            self._processFile(file)
+            self._processFile(file, None)
+
+        self._saveJson("%s/%s/info.json" % (dir, r['id']), parseData)
 
         return parseData
 
     # actually parse file information object
     # must have name and location
-    def _processFile(self, f):
-        self._getFileExtension(filename)
+    def _processFile(self, f, config):
+        ext = self._getFileExtension(f['name'])
+
+        dataLayout = 'row'
+        if 'layout' in f:
+            dataLayout = f['layout']
+        elif config != None:
+            if 'layout' in config:
+                dataLayout = config['layout']
+
+        data = []
+        if ext == "csv":
+            data = self._processCsv(f)
+        elif ext == "tsv" or ext == "spectra":
+            data = self._processTsv(f)
+
+        f['layout'] = dataLayout
+        f['attributes'] = self._processFileArray(data, dataLayout)
+
+    # given a data array [[]], process based on config
+    #  - type row = attribute names are in the first row
+    #  - type col = attribute names are in the first col
+    def _processFileArray(self, data, layout):
+        ranges = self._getDataRanges(data)
+
+        localRange = {}
+        globalRange = None
+        if len(ranges) == 1:
+            localRange = ranges[0]
+        elif len(ranges) == 2:
+            globalRange = ranges[0]
+            localRange = ranges[1]
+
+        attrTypes = []
+        if layout == "row":
+            for i in range(0, len(data[localRange['start']])):
+                info = self._parseAttrTypes(data[localRange['start']][i], [localRange['start'], i],  "local")
+                attrTypes.append(info)
+        else:
+            names = []
+            for i in range(localRange['start'], localRange['stop']):
+                info = self._parseAttrTypes(data[i][0], [i,0], "local")
+                attrTypes.append(info)
+
+        return attrTypes
+
+
+    # parse out the attribute information from the attribute information
+    # TODO: check for units and attribute data type
+    def _parseAttrTypes(self, name, pos, attributeLocality, isData=False):
+        original = name
+
+        # clean up string
+        name = name.strip()
+
+        # parse out units
+        # TODO
+
+        type = "metadata"
+        if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
+            type = "wavelength"
+        elif re.match(r".*__d($|\s)", name) or isData:
+            type = "data"
+
+        attr = {
+            "type" : type,
+            "name" : name,
+            "units" : "",
+            "pos" : pos,
+            "scope" : attributeLocality,
+        }
+        if original != name:
+            attr["original"] = original
+        
+
+
+    # find the table ranges (is there one or two)
+    def _getDataRanges(self, data):
+        ranges = []
+        r = {
+            "start" : 0,
+            "end" : 0
+        }
+        started = False
+
+        i = 0
+        for i in range(0, len(data)):
+            if self._isEmptyRow(data[i]):
+                if started:
+                    r['end'] = i
+                    ranges.push(r)
+                    if len(ranges) == 2:
+                        break
+                    else:
+                        r = {"start":0, "stop":0}
+                else:
+                    continue
+
+            if not started:
+                r['start'] = i
+                started = True
+
+        if started and len(ranges) < 2:
+            r['end'] = i
+            ranges.append(r)
+
+        return ranges
+
+
+
+    # is a row array empty
+    def _isEmptyRow(self, row):
+        if len(row) == 0:
+            return True
+
+        for i in range(0, len(row)):
+            if row[i] != "" or row[i] != None:
+                return False
+
+        return True
+
+    def _processCsv(self, f):
+        return self._processSeperatorFile(f, ",")
+
+    def _processTsv(self, f):
+        return self._processSeperatorFile(f, "\t")
+
+    # parse a csv or tsv file location into array
+    def _processSeperatorFile(self, f, separator):
+        with open("%s%s%s" % (self.workspaceDir, f['location'], f['name']), 'rb') as csvfile:
+            reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
+            arr = []
+            for row in reader:
+                arr.append(row)
+            csvfile.close()
+            return arr
 
 
     # is this a known data file type (based on extension)
@@ -284,3 +486,23 @@ class WorkspaceController(PackageController):
     def _initResourceDir(self, r, dir):
         if not os.path.exists("%s/%s" % (dir, r['id'])):
             os.makedirs("%s/%s/files" % (dir, r['id']))
+
+    def _saveJson(self, file, data):
+        f = open(file, 'w')
+        json.dump(data, f)
+        f.close()
+
+    # returns the md5 hash of a file, file should be a string location
+    def _hashfile(self, file):
+        f = open(file, 'rb')
+        blocksize = 65536
+        hasher = hashlib.md5()
+
+        buf = f.read(blocksize)
+        while len(buf) > 0:
+            hasher.update(buf)
+            buf = f.read(blocksize)
+
+        md5 = hasher.hexdigest()
+        f.close()
+        return md5
