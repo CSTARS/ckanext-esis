@@ -104,6 +104,12 @@ class EsisPlugin(plugins.SingletonPlugin,
         # attach the upload handle to the SpectralController
         #map.connect('upload', '/spectral/api/upload', controller=controller, action='upload')
 
+
+        # connect workspace calls
+        controller = 'ckanext.esis.workspace:WorkspaceController'
+        map.connect('init_workspace', '/workspace/init', controller=controller, action='initWorkspace')
+
+
         return map
 
     def package_types(self):
