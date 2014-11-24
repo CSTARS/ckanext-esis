@@ -165,6 +165,28 @@
 				});
 			},
 
+			addUrlResource : function(resource, callback) {
+		    	$.ajax({
+				    url: esis.host + '/api/action/resource_create',
+				    type: "POST",
+				    data: JSON.stringify(resource),
+				    contentType: 'application/json',
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function() {
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
 			addSpectraInfo : function(info, callback) {
 				$.ajax({
 				    url: esis.host + '/spectra/addInfo',
@@ -183,7 +205,7 @@
 		                }
 				    },
 				    error : function(err) {
-				    	debugger;
+				    	//debugger;
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
@@ -208,7 +230,7 @@
 		                }
 				    },
 				    error : function(err) {
-				    	debugger;
+				    	//debugger;
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
@@ -250,14 +272,13 @@
 		                }
 				    },
 				    error : function(err) {
-				    	debugger;
+				    	//debugger;
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
 			},
 
 			addSpectra : function(spectra, updateIndex, callback) {
-				debugger;
 				$.ajax({
 				    url: esis.host + '/spectra/addSpectra',
 				    type: "POST",
@@ -269,7 +290,7 @@
 				      withCredentials: true
 				    },
 				    success: function(response, status) {
-				    	debugger;
+				    	//debugger;
 		                if( response.success || !response.error ) {
 				            callback(null, response);
 		                } else {

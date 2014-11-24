@@ -108,6 +108,8 @@
 					this.ckan.getMetadataResource(
 						this.data.ecosis.metadata[index].resource_id, 
 						function(err, resp) {
+							if( err ) return;
+							
 							var mdObj = resp.ecosis;
 
 							var datasheet = document.createElement('esis-datasheet');
