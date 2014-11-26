@@ -31,14 +31,14 @@
                 font-size: 20pt;
                 color: #bbb;
                 background-color: white;
-                margin: 20px 0 0 0;
+                margin: 15px 0 0 0;
             }
             .processing-label {
                 position: absolute;
                 top: 0;
             }
             .fileinput {
-                margin-top: 50px;
+                /*margin-top: 50px;*/
             }
             .fileinput.processing {
                 visibility: hidden;
@@ -76,123 +76,84 @@
             }
         </style>
 
-        <paper-tabs selected="{{selectedTab}}" hidden?="{{ds.files.length == 0}}">
-            <paper-tab>Add Resources</paper-tab>
-            <paper-tab>Stagged Resources</paper-tab>
-            <paper-tab>Configure Datasheets</paper-tab>
-        </paper-tabs>
 
-        <div hidden?="{{selectedTab != 0}}">
+        <h4 style="margin-bottom: 0">Select files to be uploaded</h4>
+        <div style="font-size:12px;color:#888; margin-bottom: 30px">
+            <span>Add new files below by using the file selector or drag files over the drop zone.</span>
+        </div>
 
+        <div class="options">
+            <div style="color:#888; margin: 10px 0 0px 15px">Default Data Format</div>
 
-            <h4 style="color:#888; margin: 10px 0 -9px 15px">Default Data Format</h4>
-            
-            <div class="options">
+            <div style="margin-left: 20px">
+                <paper-radio-group selected="{{options.type}}" role="radiogroup" style="margin-left: 10px">
+                    <paper-radio-button 
+                        name="column" 
+                        label="My data is laid out by column" 
+                        role="radio" 
+                        tabindex="0" 
+                        aria-checked="true" 
+                        aria-label="column format" 
+                        class="core-selected" 
+                        checked>
+                    </paper-radio-button>
+                    <paper-radio-button 
+                        name="row" 
+                        label="My data is laid out by row" 
+                        role="radio" 
+                        tabindex="1" 
+                        aria-checked="false" 
+                        aria-label="row format">
+                    </paper-radio-button>
+                </paper-radio-group>
 
-                <div style="margin-left: 20px">
-                    <paper-radio-group class="blue" selected="{{options.type}}" role="radiogroup" style="margin-left: 10px">
-                        <paper-radio-button 
-                            name="spectra" 
-                            label="My attribute names are in the 1st column" 
-                            role="radio" 
-                            tabindex="0" 
-                            aria-checked="true" 
-                            aria-label="Spectral" 
-                            class="core-selected" 
-                            checked>
-                        </paper-radio-button>
-                        <paper-radio-button 
-                            name="timeseries" 
-                            label="My attribute names are in the 1st row" 
-                            role="radio" 
-                            tabindex="0" 
-                            aria-checked="false" 
-                            aria-label="Time Series">
-                        </paper-radio-button>
-                    </paper-radio-group>
-
-                    <div style="margin-left:15px">
-                        <div class="note">
-                            <a on-tap="{{toggleHelp}}">Help.</a>
-                        </div>
+                <div style="margin-left:15px">
+                    <div class="note">
+                        <a on-tap="{{toggleHelp}}">Help.</a>
                     </div>
-                </div>
-
-                <core-collapse opened="{{showHelp}}">
-                    <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
-                        <esis-dataformat-help type="{{options.type}}"></esis-dataformat-help>
-                    </div>
-                </core-collapse>
-            </div>
-
-
-            <template bind if="{{processing}}">
-                <div style="position:relative; text-align:center">
-                    <div class="processing-label">
-                        <h4>Processing Files...</h4>
-                    </div>
-                </div>
-            </template>
-
-            <div class="fileinput {{processing ? 'processing' : ''}}">
-                <div>
-                    <h4 style="margin-bottom: 0">Select files to be imported</h4>
-                    <div style="font-size:12px;color:#888; margin-bottom: 15px">
-                        <span>Add new files below by using the file selector or drag files over the drop zone.</span>
-                    </div>
-                    <input type="file" style="margin:5px 0 0 33px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}" />
-
-                    <input type="file" style="display:none" id="addFileTesting" name="addFileTesting" multiple="" />
-                </div>
-
-                <div class="file-select-group" >
-                    <div id="dropZone"><b>OR</b> drag and drop files here</div>
                 </div>
             </div>
 
+            <core-collapse opened="{{showHelp}}">
+                <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
+                    <esis-dataformat-help type="{{options.type}}"></esis-dataformat-help>
+                </div>
+            </core-collapse>
+        </div>
+
+
+        <template bind if="{{processing}}">
+            <div style="position:relative; text-align:center">
+                <div class="processing-label">
+                    <h4>Uploading Files...</h4>
+                    <div>{{currentUpload.name}} {{currentUpload.progress}}</div>
+                </div>
+            </div>
+        </template>
+
+        <div class="fileinput {{processing ? 'processing' : ''}}">
             <div>
-                Link Git Repository:
-                <input type="text" value="{{gitUrl}}" />
-                <button is="paper-button" on-tap="{{setGitRepo}}">Add Repo</button>
+                
+                <input type="file" style="margin:30px 0 0 15px" id="file" name="file" multiple="" on-change="{{_handleFileSelect}}" />
+
+                <input type="file" style="display:none" id="addFileTesting" name="addFileTesting" multiple="" />
+            </div>
+
+            <div class="file-select-group" >
+                <div id="dropZone"><b>OR</b> drag and drop files here</div>
             </div>
         </div>
 
-        <div hidden?="{{selectedTab != 1}}">
-            <template repeat="{{file in ds.files}}">
-                <esis-ui-file file="{{file}}"></esis-ui-file>
-            </template>
+        <!-- for v2
+        <div>
+            Link Git Repository:
+            <input type="text" value="{{gitUrl}}" />
+            <button is="paper-button" on-tap="{{setGitRepo}}">Add Repo</button>
         </div>
+        -->
 
-        <div hidden?="{{selectedTab != 2}}">
 
-            <div hidden?="{{newDatasheets.length == 0}}">
-                <div layout horizontal style="margin-bottom: 20px">
-                    <paper-button raisedButton 
-                        icon="arrow-back" 
-                        disabled?="{{selectedSheetIndex == 0}}"
-                        on-tap="{{_previousDatasheet}}">
-                    </paper-button>
-                    <div flex style="text-align:center">
-                        <select value="{{selectedSheetIndex}}" style="margin-top: 10px; font-size: 16px">
-                            <template repeat="{{sheet, i in newDatasheets}}">
-                                <option value="{{i}}">{{i}} - {{sheet.label}}</option>
-                            </template>
-                        </select>
-                    </div>
-                    <paper-button raisedButton 
-                        icon="arrow-forward"
-                        disabled?="{{selectedSheetIndex == newDatasheets.length-1}}"
-                        on-tap="{{_nextDatasheet}}">
-                    </paper-button>
-                </div>
-
-                <esis-ui-datasheet id="dataSheetUI" datasheet="{{selectedSheet}}" ></esis-ui-datasheet>
-            </div>
-            <div style="text-align:center" hidden?="{{newDatasheets.length > 0}}">
-                <h4>No datasheets have been parsed</h4>
-            </div>
-        </div>
-
+        <!--
         <span class="next {{ds.files.length > 0 ? 'ready' : ''}}">
             <core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Once you are done adding files
             <ul>
@@ -201,35 +162,28 @@
                 <li>Finally <a on-tap='{{_gotoInspect}}'>inspect the parsed spectra.</a></li>
             </ul>
         </span>
-        
+        -->
         
     </template>
     <script>
         Polymer('esis-add-resource', {
-            menuItem : null,
             ds : null,
             processing : false,
-            parseZip : false,
 
-            gitUrl : '',
-
-            selectedTab : 0,
-            selectedSheet : null,
-            selectedSheetIndex : -1,
-
-            newDatasheets : [],
+            // v2
+            // gitUrl : '',
 
             showHelp : false,
 
             options : {
-                type : 'spectra'
+                type : 'column'
             },
 
-            observe : {
-                'ds.files' : '_updatePreview',
-                'ds.data.title' : '_updateVisibility',
-                'ds.datasheets' : '_updateNewSheets',
-                selectedSheetIndex : '_updateDatasheet'
+            staggedFiles : [],
+            newResourceIds : [],
+            currentUpload : {
+                name : '',
+                progress : 0,
             },
 
             ready : function() {                
@@ -237,15 +191,12 @@
                 this.$.dropZone.addEventListener('dragover', this._handleDragOver.bind(this), false);
                 this.$.dropZone.addEventListener('drop', this._handleFileSelect.bind(this), false);
 
-                // for webdriver
+                // for webdriver (integration testing)
                 this.expose();
             },
 
-            // redraw current datasheet if there is one selected
-            onShow : function() {
-                this.$.dataSheetUI.update();
-            },
-
+            /**
+            For v2
             setGitRepo : function() {
                 var resource = {
                     package_id : this.ds.package_id,
@@ -259,22 +210,7 @@
                     console.log(resp);
                 });
             },
-
-            _updateVisibility : function() {
-                if( this.ds.data.title.length > 0 ) {
-                    this.menuItem.style.display = 'block';
-                } else {
-                    this.menuItem.style.display = 'none';
-                }
-            },
-
-            _updateNewSheets : function() {
-                this.newDatasheets = [];
-                for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-                    if( this.ds.datasheets[i].isExisting ) continue;
-                    this.newDatasheets.push(this.ds.datasheets[i]);
-                }
-            },
+            **/
 
             _handleDragOver : function (evt) {
                 evt.stopPropagation();
@@ -289,32 +225,54 @@
                 this.processing = true;
 
                 var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
+                this.staggedFiles = [];
+                this.newResourceIds = [];
+                for( var i = 0; i < files.length; i++ ) {
+                    this.staggedFiles.push(files[i]);
+                }
 
-                setTimeout(function(){
-                    var file;
-                    for (var i = 0, f; f = files[i]; i++) {
-                        
-                        file = this.ds.addFile(f, this.parseZip, this.options.type);
+                var type = this.options.type;
 
-                        if( i == 0 ) {
-                            file.addEventListener('ingest-complete', function() {
-                                this.processing = false;
-                                this.selectedTab = 2;
-                            }.bind(this));
-                        }
-                    }
+                this._uploadFiles(type);
+            },
 
-                    setTimeout(function(){
-                        this.$.file.value = '';
-                    }.bind(this), 500);
+            _uploadFiles : function(type) {
+                if( this.staggedFiles.length == 0 ) {
+                    // now tell server to parse resources with given type
+                    this.processing = false;
+                    return;
+                }
 
+                var file = this.staggedFiles.splice(0, 1)[0];
+                var reader = new FileReader();
+
+                this.currentUpload = {
+                    name : file.name,
+                    progress : 0,
+                }
+
+                reader.onload = function(e) {
+                    document.querySelector('esis-ckan').addResource(
+                        this.ds.package_id,
+                        {
+                            contents : e.target.result,
+                            mimetype : file.type,
+                            filename : file.name
+                        },
+                        function(err, resp) {
+                            if( err ) console.log('Error adding resource: '+file.name);
+
+                            // save this, when we are done, we will set default parse type
+                            this.newResourceIds.push(resp.result.id);
+                            this._uploadFiles(type);
+                        }.bind(this),
+                        function(progress) {
+                            this.currentUpload.progress = progress;
+                        }.bind(this)
+                    )
                     
-                }.bind(this), 150);
-
-                
-                // once they add spectra, we only want them to update the spectra.json file
-                // via the add resources button and not the special 'update group by' button.
-                //esis.app.groupBy.hideUpdateButton();
+                }.bind(this);
+                reader.readAsArrayBuffer(file);        
             },
 
             _gotoInspect : function() {
@@ -327,11 +285,6 @@
 
             _gotoAttrSetting : function() {
                 window.location.hash = 'attribute-settings';
-            },
-
-            _updatePreview : function() {
-                if( this.ds.files.length == 0 ) this.selectedTab = 0;
-                this.menuItem.setSecondaryHtml(this.ds.files.length+' File(s) Stagged');
             },
 
             toggleHelp : function() {

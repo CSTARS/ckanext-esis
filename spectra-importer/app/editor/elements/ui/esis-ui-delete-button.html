@@ -5,10 +5,12 @@
 	<template>
 		<link rel="stylesheet" href="../../components/animate-css/animate.min.css" no-shim>
 
-		<paper-icon-button id="start" icon="close" class="animated" on-tap="{{_confirm}}"></paper-icon-button>
+		<paper-button id="start" class="animated" on-tap="{{_confirm}}">
+			<core-icon icon="close"></core-icon>
+		</paper-button>
 
-		<paper-button id="remove" label="Remove {{label}}" style="display:none;background-color: #d23f31" class="animated flipInX" raisedButton on-tap="{{_delete}}"></paper-button>
-		<paper-button id="cancel" label="Cancel" style="display:none;background-color: white" class="animated flipInX" raisedButton on-tap="{{_cancel}}"></paper-button>
+		<paper-button id="remove" style="display:none;background-color: #d23f31" class="animated flipInX" on-tap="{{_delete}}">Remove {{label}}</paper-button>
+		<paper-button id="cancel" style="display:none;background-color: white" class="animated flipInX" on-tap="{{_cancel}}">Cancel</paper-button>
 	</template>
 	<script>
 		Polymer('esis-ui-delete-button', {

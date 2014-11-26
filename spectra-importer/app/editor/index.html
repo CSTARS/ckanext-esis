@@ -44,6 +44,26 @@
     </script>
 
     <style shim-shadowdom>
+      html /deep/ .green {
+        color: #2f9b45;
+      }
+      html /deep/ .blue {
+        color: #2196F3;
+      }
+      html /deep/ .orange {
+        color: #FF9800;
+      }
+      html /deep/ .red-button {
+        background-color: rgb(210, 63, 49);
+        color: white;
+      }
+
+      html /deep/ paper-tabs::shadow #selectionBar {
+        background-color: rgb(47, 155, 69);
+      }
+      html /deep/ paper-tab::shadow #ink {
+        color: rgb(47, 155, 69);
+      }
 
       body {
         font-family: sans-serif;
@@ -112,7 +132,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.2.109:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.3:5000' : '';
 
     $.ajax({
         type : 'GET',
@@ -246,9 +266,8 @@
 
 
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
-      <esis-item label="Current Resources" tag="current-resources" ele="esis-current-resources"></esis-item>
-      <esis-item label="New Resources" tag="new-resources" ele="esis-add-resource"></esis-item>
-      <esis-item label="Schema Settings" tag="schema-settings" ele="esis-attribute-settings"></esis-item>
+      <esis-item label="Resources" tag="resources" ele="esis-resources"></esis-item>
+      <esis-item label="Schema" tag="schema-settings" ele="esis-attribute-settings"></esis-item>
       <esis-item label="Inspect" tag="inspect" ele="esis-inspect"></esis-item>
       <esis-item label="Cancel" tag="back" style="display:block"></esis-item>
 

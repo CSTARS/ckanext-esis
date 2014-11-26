@@ -1,0 +1,35 @@
+<link rel="import" href="esis-add-resource.html" />
+<link rel="import" href="esis-current-resources.html" />
+
+<polymer-element name="esis-resources">
+    <template>
+        
+        <paper-tabs selected="{{tab}}">
+            <paper-tab>Add</paper-tab>
+            <paper-tab>Current</paper-tab>
+        </paper-tabs>
+
+        <div>
+            <esis-add-resource hidden?="{{tab != 0}}"></esis-add-resource>
+            <esis-current-resources hidden?="{{tab != 1}}"></esis-current-resources>
+        </div>
+    </template>
+    <script>
+        Polymer('esis-resources', {
+            menuItem : null,
+            tab : 0,
+            
+            _updateVisibility : function() {
+                // FOR DEV
+                return this.menuItem.style.display = 'block';
+
+                if( this.ds.data.title.length > 0 ) {
+                    this.menuItem.style.display = 'block';
+                } else {
+                    this.menuItem.style.display = 'none';
+                }
+            }
+
+        });
+    </script>
+</polymer-element>
