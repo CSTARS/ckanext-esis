@@ -3743,6 +3743,12 @@ Putting this together:
 				color : #2f9b45;
 				cursor: pointer;
 			}
+			.gitInfo {
+				margin: 30px;
+				font-size: 12px;
+				color: #888;
+				font-style: italic;
+			}
 		</style>
 
 		<div style="font-size: 14px; color: #888">
@@ -3829,6 +3835,14 @@ Putting this together:
 
 		<template bind="" if="{{ds.data.title != &apos;&apos;}}">
 			<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
+		</template>
+
+		<template bind="" if="{{git.branch != &apos;master&apos;}}">
+			<div class="gitInfo">
+				<div><b>Branch:</b> {{git.branch}}</div>
+				<div><b>Version:</b> {{git.version}}</div>
+				<div><b>Commit:</b> {{git.commit}}</div>
+			</div>
 		</template>
 
 	</template>
@@ -6691,7 +6705,11 @@ Copyright (c) 2013 Daniel Eden
     <esis-dataset-loader>
     <esis-ckan></esis-ckan>
   
-    
+   <!-- <script>
+      window.addEventListener('polymer-ready', function(){
+        CoreStyle.g.paperInput.focusedColor = '#2f9b45';
+      });
+    </script> -->
 
   </esis-dataset-loader><script src="index.js"></script></body>
 

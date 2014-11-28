@@ -88,6 +88,22 @@
 		        });
 			},
 
+			initWorkspace : function(pkgid, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/init?package_id='+pkgid,
+		            xhrFields: {
+				      withCredentials: true
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
 			getUsdaCommonName : function(codes, callback) {
 				$.ajax({
 		            url: esis.host + '/spectra/getUsdaCommonName?codes='+codes,
@@ -109,23 +125,19 @@
 			 * Add a resource to a package using the browsers FormData object
 			 *
 			 * pkgid: id of the package to add to 
-			 * resource: esis-resource element representing the to resource to upload
+			 * file: object representing the to resource to upload
 			 * callback: callback handler
 			 * progress: callback for progress update
 			 **/
-			addResource : function(pkgid, resource, callback, progress) {
+			addResource : function(pkgid, file, callback, progress) {
+
 		        // TODO: if this fails, we have an issue on our hands
 		    	var formData = new FormData();
 
-		        var filename = resource.filename.replace(/.*\//,'');
-		        if( filename.length == 0 ) {
-		            return callback({error:true,message:'Invalid filename: '+resource.filename});
-		        }
-
 		    	formData.append('package_id', pkgid);
-		    	formData.append('mimetype',resource.mimetype);
-		    	formData.append('name', filename);
-		    	formData.append('upload', new Blob([resource.contents], {type: resource.mimetype}), filename);
+		    	formData.append('mimetype',file.mimetype);
+		    	formData.append('name', file.filename);
+		    	formData.append('upload', new Blob([file.contents], {type: file.mimetype}), file.filename);
 
 		        var xhr = $.ajaxSettings.xhr();
 		        // attach progress handler to the XMLHttpRequest Object
@@ -153,7 +165,28 @@
 		            },
 				    success: function(response, status) {
 		                if( response.success || !response.error ) {
-		                    resource.setId(response.result.id);
+				            callback(null, response);
+		                } else {
+		                    callback(response);
+		                }
+				    },
+				    error : function() {
+				        callback({error:true,message:'Request Error'});
+				    }
+				});
+			},
+
+			addUrlResource : function(resource, callback) {
+		    	$.ajax({
+				    url: esis.host + '/api/action/resource_create',
+				    type: "POST",
+				    data: JSON.stringify(resource),
+				    contentType: 'application/json',
+				    xhrFields: {
+				      withCredentials: true
+				    },
+				    success: function(response, status) {
+		                if( response.success || !response.error ) {
 				            callback(null, response);
 		                } else {
 		                    callback(response);
@@ -183,7 +216,7 @@
 		                }
 				    },
 				    error : function(err) {
-				    	debugger;
+				    	//debugger;
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
@@ -208,7 +241,7 @@
 		                }
 				    },
 				    error : function(err) {
-				    	debugger;
+				    	//debugger;
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
@@ -250,14 +283,13 @@
 		                }
 				    },
 				    error : function(err) {
-				    	debugger;
+				    	//debugger;
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
 			},
 
 			addSpectra : function(spectra, updateIndex, callback) {
-				debugger;
 				$.ajax({
 				    url: esis.host + '/spectra/addSpectra',
 				    type: "POST",
@@ -269,7 +301,7 @@
 				      withCredentials: true
 				    },
 				    success: function(response, status) {
-				    	debugger;
+				    	//debugger;
 		                if( response.success || !response.error ) {
 				            callback(null, response);
 		                } else {

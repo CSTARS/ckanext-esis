@@ -110,10 +110,17 @@
                 // first make sure there are no extra rows at top
                 for( cStart = 0; cStart < contents.length; cStart++ ) {
                     empty = false;
-                    if( contents[cStart].length == 0 ) empty = true;
-                    else if( contents[cStart][0].length == 0 ) empty = true;
+                    if( contents[cStart].length == 0 ) {
+                        contents[cStart].push(''); // fill so we don't break
+                        empty = true;
+                    } else if( contents[cStart][0].length == 0 ) {
+                        empty = true;
+                    }
                     if( !empty ) break;
                 }
+                
+                // empty sheet condition
+                if( cStart == contents.length ) cStart--;
                 cStop = cStart;
 
                 for( var i = cStart; i < contents.length; i++ ) {
@@ -554,6 +561,9 @@
                         attrs[key] = this._parseAttributeKey(key);
                     }
                 }
+
+                // sanity check
+                if( content.length == dataRange.stop ) return attrs;
 
                 for( var i = dataRange.start; i <= dataRange.stop; i++ ) {
                     var key = content[i][0];

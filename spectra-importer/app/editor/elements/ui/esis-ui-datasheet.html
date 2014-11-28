@@ -3,242 +3,158 @@
 <link rel="import" href="../../components/paper-button/paper-button.html" />
 <link rel="import" href="../../components/core-collapse/core-collapse.html" />
 
-<polymer-element name="esis-ui-datasheet" attributes="datasheet">
+<polymer-element name="esis-ui-datasheet" attributes="datasheet showName">
 	<template>
 		<style>
-
-            table {
-                width: 100%;
-                border-spacing: 0px;
-                border-collapse: separate;
-                border-top: 1px solid #ddd;
-                border-left: 1px solid #ddd;
-                background-color: white;
+            :host{
+                display: block;
             }
-            table td {
-                padding: 10px;
-                border-right: 1px solid #ddd;
-                border-bottom: 1px solid #ddd;
-            }
-            table th {
-                padding: 10px;
-                border-right: 1px solid #ddd;
-                border-bottom: 1px solid #ddd;
-            }
-
-            .file {
-                background-color: #dff0d8;
-            }
-            .spectra {
-                background-color: #fcf8e3;
-            }
-            .data {
-                background-color: #d9edf7;
-            }
-
-			table tr th {
-				text-align: left;
-			}
-			h4 {
-				margin: 5px;
-			}
-			.float-right {
-				position: absolute;
-				right: -20px;
-				top: -10px;
-			}
-			paper-radio-button[disabled] {
+            .static-info {
                 color: #888;
+                padding: 3px;
+                font-size: 12px;
+                margin-left: 15px;
             }
-            paper-radio-group[disabled] {
-                opacity: .5;
+            h6 {
+                margin: 15px 0 3px 0;
             }
-            .attribute-panel {
-                border-top: 1px dashed #eee;
-                padding: 10px 10px 0 20px;
-                font-size: 13px;
+            .options {
+                margin: 0 5px 30px 5px;
+                padding: 0 5px 5px 5px;
             }
             a {
                 color: #2f9b45;
                 cursor: pointer;
             }
-            .note {
-                color: #777;
-                font-size: 13px;
+            .toggle-btn {
+                margin: 0 0 0 12px;
             }
-
-            .options {
-                background-color: #eee;
-                border-radius: 4px;
-                padding: 15px 10px;
-            }
-
-            esis-ui-card {
-                position: relative;
-            }
-            paper-icon-button {
-                color: #2f9b45;
-            }
-
-            .processing {
-                z-index: 100;
-                position: absolute;
-                width:100%;
-                height: 100%;
-                text-align: center;
-                padding-top: 100px;
-                font-size: 20px;
-                color: #333;
-                background-color: rgba(255,255,255,.7);
-            }
-            .ignored {
-                text-align: center;
-                padding: 35px;
-                color: #888;
-                font-size: 32px;
+            .toggle-label {
+                display: inline-block;
+                padding-top: 12px;
+                vertical-align: top;
             }
 		</style>
 
-		<esis-ui-card style="padding:10px"  class="{{datasheet.updating ? 'updating' : ''}}">
-            <div class="processing" hidden?="{{!datasheet.updating}}">Processing...</div>
-			<h4 style="border-bottom: 1px solid #eee;margin-bottom:25px;padding-bottom:5px">
-                {{datasheet.label}}
-                <!--<div>{{datasheet.contents.name}}</div>
-                <div style="font-size:14px; color: #888" hidden?="{{!datasheet.contents.sheetName || datasheet.contents.sheetName == ''}}">
-                    {{datasheet.contents.sheetName}}
-                </div>-->
-            </h4>
 
-            <div class="options">
-                <span style="float: right">Parser: {{datasheet.contents.info.parser}}</span>
-    			
-    			<template bind if="{{datasheet.contents.error}}">
-    				<div style="color:red">Error: {{datasheet.contents.error}}</div>
-    			</template>
-    			<template bind if="{{datasheet.contents.warning}}">
-    				<div style="color:orange">Warning: {{datasheet.contents.warning}}</div>
-    			</template>
+        <h6 hidden?="{{!showName}}">
+            {{datasheet.name}}
+            <span hidden?="{{!datasheet.sheet}}">({{datasheet.sheet}})</span>
+        </h6>
+            
 
-                <div horizontal layout style="margin: 10px 0 20px 20px">
-                    <paper-checkbox checked="{{datasheet.isMetadata}}" style="margin-right:10px" disabled?="{{datasheet.ignore}}"></paper-checkbox>
-                    <div>
-                        <div>Joinable Metadata File</div>
-                        <div style="color:#888; font-size: 13px">This datasheet only contains metadata to be joined on given data.</div>
-                        
-                        <template bind if="{{datasheet.isMetadata}}">
-                            <esis-ui-metadata 
-                                metadata="{{datasheet.metadata}}"
-                                attributeTypes="{{datasheet.attributeTypes}}">
-                            </esis-ui-metadata>
-                        </template>
-                    </div>
-                </div>
-
-                <div horizontal layout style="margin: 10px 0 20px 20px">
-                    <paper-checkbox checked="{{datasheet.ignore}}" style="margin-right:10px" disabled?="{{datasheet.isMetadata}}"></paper-checkbox>
-                    <div>
-                        <div>Ignore</div>
-                        <div style="color:#888; font-size: 13px">This datasheet should not be parsed.</div>
-                    </div>
-                </div>
-
-
-                <div>
-                    <paper-radio-group selected="{{datasheet.dataType}}" role="radiogroup" style="margin-left: 10px" disabled?="{{datasheet.isMetadata}}">
-                        <paper-radio-button 
-                            name="spectra" 
-                            label="Spectra Data Format" 
-                            role="radio" 
-                            tabindex="0" 
-                            aria-checked="true" 
-                            aria-label="Spectra Data Format" 
-                            class="core-selected" 
-                            disabled?="{{datasheet.isMetadata || datasheet.ignore}}">
-                        </paper-radio-button>
-                        <paper-radio-button 
-                            name="timeseries" 
-                            label="Time Series Data Format" 
-                            role="radio" 
-                            tabindex="0" 
-                            aria-checked="false" 
-                            aria-label="Time Series Data Format"
-                            disabled?="{{datasheet.isMetadata || datasheet.ignore}}">
-                        </paper-radio-button>
-                    </paper-radio-group>
-
-                    <div style="margin-left:55px" hidden?="{{datasheet.isMetadata || datasheet.ignore}}">
-                        <div class="note" hidden?="{{datasheet.dataType != 'spectra'}}">
-                            View datasheet per spectra measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
-                        </div>
-                        <div class="note" hidden?="{{datasheet.dataType != 'timeseries'}}">
-                            View datasheet data per time measurement. <a on-tap="{{_toggleHelp}}">Help.</a>
-                        </div>
-                    </div>
-
-                    <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.isMetadata || datasheet.ignore}}">
-                        <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
-                            <esis-dataformat-help type="{{datasheet.dataType}}"></esis-dataformat-help>
-                        </div>
-                    </core-collapse>
-                </div>
+        <div horizontal layout style="margin: 20px 0 20px 20px" hidden?="{{datasheet.ignore}}">
+            <paper-checkbox checked="{{datasheet.metadata}}" style="margin-right:15px" disabled?="{{datasheet.ignore}}"></paper-checkbox>
+            <div>
+                <div>Joinable Metadata</div>
+                <div style="color:#888; font-size: 13px">This datasheet only contains metadata to be joined on given data.</div>
+                
+                <template bind if="{{datasheet.metadata}}">
+                    <esis-ui-metadata 
+                        metadata="{{datasheet.metadata}}"
+                        attributeTypes="{{datasheet.attributeTypes}}">
+                    </esis-ui-metadata>
+                </template>
             </div>
+        </div>
 
-            <div hidden?="{{datasheet.ignore}}">
-                <h4>
-                    <div layout horizontal>
-                        <div>
-                            <paper-icon-button 
-                                icon="hardware:{{showAttrs ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
-                                on-tap="{{_toggleAttrs}}">
-                            </paper-icon-button>
-                            Parsed Attributes: {{parsedAttributes.length}}
-                        </div>
-                        <div flex style="text-align:right">
-                            <a on-tap="{{goToAttrSettings}}" style="display:block;margin-top:10px">
-                                <core-icon icon="settings"></core-icon> Configure Dataset Schema
-                            </a>
-                        </div>
-                    </div>
-                </h4>
-                <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
-                    <table>
-                        <tr>
-                            <th>Name</th>
-                            <th>Units</th>
-                            <th>Type</th>
-                        </tr>
-                        <tr template repeat="{{info in parsedAttributes}}">
-                            <td class="{{info.class}}">
-                                <esis-attribute-name 
-                                    name="{{info.name}}" 
-                                    esisName="{{ds.metadataDefinitions[info.name]}}"
-                                    mappedName="{{ds.inverseAttributeMap[info.name]}}">
-                                </esis-attribute-name>
-                            </td>
-                            <td class="{{info.class}}">{{info.units}}</td>
-                            <td class="{{info.class}}">{{info.type}}</td>
-                        </tr>
-                    </table>
-                </core-collapse>
+        <div horizontal layout style="margin: 10px 0 7px 20px" hidden?="{{datasheet.metadata}}">
+            <paper-checkbox checked="{{datasheet.ignore}}" style="margin-right:15px"></paper-checkbox>
+            <div>
+                <div>Ignore</div>
+                <div style="color:#888; font-size: 13px">This datasheet should not be parsed.</div>
+            </div>
+        </div>
 
-                <h4>Wavelengths: {{wavelengths.length}} <small><a on-tap="{{_toggleWavelengths}}">show</a></small></h4>
-                <div id="wavelengths" hidden?="{{!showWavelengths}}">
-                    
+
+        <div class="options" hidden?="{{datasheet.metadata || datasheet.ignore}}">
+            <paper-radio-group 
+                selected="{{datasheet.layout}}" 
+                role="radiogroup">
+                <paper-radio-button 
+                    name="row" 
+                    label="Row Format" 
+                    role="radio" 
+                    tabindex="0" 
+                    aria-checked="true" 
+                    aria-label="Row Format" 
+                    class="core-selected">
+                </paper-radio-button>
+                <paper-radio-button 
+                    name="column" 
+                    label="Column Format" 
+                    role="radio" 
+                    tabindex="0" 
+                    aria-checked="false" 
+                    aria-label="Column Format">
+                </paper-radio-button>
+            </paper-radio-group>
+
+            <a on-tap="{{_toggleHelp}}" style="float:right;display:inline-block;padding-top:10px">Format Help.</a>
+
+            <core-collapse opened="{{showHelp}}" hidden?="{{datasheet.metadata || datasheet.ignore}}">
+                <div style="margin: 30px 0 0 20px; padding-top: 10px; border-top: 1px solid #eee">
+                    <esis-dataformat-help type="{{datasheet.layout}}"></esis-dataformat-help>
                 </div>
+            </core-collapse>
+        </div>
+
+        <div hidden?="{{datasheet.ignore}}">
+            <div>
+                <paper-icon-button 
+                    icon="hardware:{{showAttrs ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                    on-tap="{{_toggleAttrs}}"
+                    class="toggle-btn"
+                    disabled?="{{parsedAttributes.length == 0}}">
+                </paper-icon-button>
+                <div class="toggle-label">Attributes: {{parsedAttributes.length}}</div>
             </div>
+            <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Units</th>
+                        <th>Type</th>
+                    </tr>
+                    <tr template repeat="{{info in parsedAttributes}}">
+                        <td class="{{info.class}}">
+                            <esis-attribute-name 
+                                name="{{info.name}}" 
+                                esisName="{{ds.metadataDefinitions[info.name]}}"
+                                mappedName="{{ds.inverseAttributeMap[info.name]}}">
+                            </esis-attribute-name>
+                        </td>
+                        <td class="{{info.class}}">{{info.units}}</td>
+                        <td class="{{info.class}}">{{info.type}}</td>
+                    </tr>
+                </table>
+            </core-collapse>
 
-            <div hidden?="{{!datasheet.ignore}}" class="ignored">
-                Ignored
-            </div>
+            <div hidden?="{{datasheet.metadata}}">
+                <paper-icon-button 
+                    icon="hardware:{{showWavelengths ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                    on-tap="{{_toggleWavelengths}}"
+                    class="toggle-btn"
+                    disabled?="{{wavelengths.length == 0}}">
+                </paper-icon-button>
+                <div class="toggle-label">Wavelengths: {{wavelengths.length}}</div>
+            <div id="wavelengths" hidden?="{{!showWavelengths}}"></div>
+        </div>
+
+        <div hidden?="{{!datasheet.ignore}}" class="ignored">
+            Ignored
+        </div>
 
 
-		</esis-ui-card>
 	</template>
 	<script>
 		Polymer('esis-ui-datasheet', {
 			datasheet : null,
 
+            showName : false,
+
 			open : false,
+            edit: false,
 
             showHelp : false,
 
@@ -246,7 +162,7 @@
             wavelengths : [],
 
             showWavelengths : false,
-            showAttrs : true,
+            showAttrs : false,
 
             ds : null,
 
@@ -268,7 +184,7 @@
 
                 this._setAttributes();
                 this.showWavelengths = false;
-                this.datasheet.addEventListener('datasheet-updated', this._setAttributes.bind(this));
+                //this.datasheet.addEventListener('datasheet-updated', this._setAttributes.bind(this));
 			},
 
             _setAttributes : function() {

@@ -8,17 +8,11 @@
 				border-bottom: 1px solid #eee;
 				padding-bottom: 5px;
 			}
-			paper-tabs::shadow #selectionBar {
-				background-color: rgb(47, 155, 69);
-			}
-			paper-tab::shadow #ink {
-				color: rgb(47, 155, 69);
-			}
 		</style>
 
 		<paper-tabs selected="{{currentTab}}">
-			<paper-tab>Schema</paper-tab>
-			<paper-tab>Dataset</paper-tab>
+			<paper-tab>Customize Schema</paper-tab>
+			<paper-tab>Special Attributes</paper-tab>
 			<paper-tab>Map Names</paper-tab>
 		</paper-tabs>
 
@@ -35,6 +29,8 @@
 	    		</div>
 	    		<div flex>
 	    			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
+
+	    			<input type="file" style="display:none" id="addAttrMap" name="addAttrMap" />
 	    		</div>
 	    	</div>
 
@@ -90,6 +86,9 @@
 				 	});
 				 	this._updateVisibility();
 				}.bind(this));
+
+				// for webdriver
+				this.expose();
 			},
 
 			// fired when element is attached.  For this element we should render the attribute type control
@@ -100,6 +99,9 @@
 			},
 
 			_updateVisibility : function() {
+				this.menuItem.style.display = 'block';
+				return;
+
 				if( this.ds.datasheets.length > 0 || this.ds.existing.data.length > 0 ) {
 					this.menuItem.style.display = 'block';
 				} else {
@@ -163,7 +165,15 @@
 					}
 				}
 				this.menuItem.setSecondaryHtml(c+' Attributes Mapped');
-			}
+			},
+
+			expose : function() {
+		  		this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
+
+		  		// expose file input for tests
+				document.body.appendChild(this.$.addAttrMap);
+				this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
+		  	}
 
 		});
 	</script>
