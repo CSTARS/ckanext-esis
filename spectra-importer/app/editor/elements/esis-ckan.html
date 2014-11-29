@@ -88,9 +88,25 @@
 		        });
 			},
 
-			initWorkspace : function(pkgid, callback) {
+			processWorkspace : function(pkgid, callback) {
 				$.ajax({
-		            url: esis.host + '/workspace/init?package_id='+pkgid,
+		            url: esis.host + '/workspace/process?package_id='+pkgid,
+		            xhrFields: {
+				      withCredentials: true
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
+			processResource : function(pkgid, rid, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/processResource?package_id='+pkgid+'&resource_id='+rid,
 		            xhrFields: {
 				      withCredentials: true
 				    },

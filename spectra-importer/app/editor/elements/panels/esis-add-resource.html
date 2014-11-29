@@ -126,7 +126,9 @@
             <div style="position:relative; text-align:center">
                 <div class="processing-label">
                     <h4>Uploading Files...</h4>
-                    <div>{{currentUpload.name}} {{currentUpload.progress}}</div>
+                    <template repeat="{{file in staggedFiles}}">
+                        <div>{{file.name}} {{file.progress}}%</div>
+                    </template>
                 </div>
             </div>
         </template>
@@ -181,10 +183,6 @@
 
             staggedFiles : [],
             newResourceIds : [],
-            currentUpload : {
-                name : '',
-                progress : 0,
-            },
 
             ready : function() {                
                 this.ds = document.querySelector('esis-datastore');
@@ -228,28 +226,32 @@
                 this.staggedFiles = [];
                 this.newResourceIds = [];
                 for( var i = 0; i < files.length; i++ ) {
-                    this.staggedFiles.push(files[i]);
+                    this.staggedFiles.push({
+                        file : files[i],
+                        name : files[i].name,
+                        progress : 0
+                    });
                 }
 
                 var type = this.options.type;
 
-                this._uploadFiles(type);
+                this._uploadFiles(type, 0, function(){
+                    document.querySelector('esis-dataset-loader').run();
+                    this.fire('resource-add');
+                    this.processing = false;
+                }.bind(this));
             },
 
-            _uploadFiles : function(type) {
-                if( this.staggedFiles.length == 0 ) {
+            _uploadFiles : function(type, index, callback) {
+                if( this.staggedFiles.length == index ) {
                     // now tell server to parse resources with given type
-                    this.processing = false;
+                    callback();
                     return;
                 }
 
-                var file = this.staggedFiles.splice(0, 1)[0];
+                var file = this.staggedFiles[index].file;
                 var reader = new FileReader();
 
-                this.currentUpload = {
-                    name : file.name,
-                    progress : 0,
-                }
 
                 reader.onload = function(e) {
                     document.querySelector('esis-ckan').addResource(
@@ -264,10 +266,12 @@
 
                             // save this, when we are done, we will set default parse type
                             this.newResourceIds.push(resp.result.id);
-                            this._uploadFiles(type);
+
+                            index++
+                            this._uploadFiles(type, index, callback);
                         }.bind(this),
                         function(progress) {
-                            this.currentUpload.progress = progress;
+                            this.staggedFiles[index].progress = progress;
                         }.bind(this)
                     )
                     
