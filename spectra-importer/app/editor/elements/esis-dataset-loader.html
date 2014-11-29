@@ -25,16 +25,19 @@
 				
 				window.addEventListener('polymer-ready', function(e) {
 					this.$.dialog.toggle();
+					this.run(true);
+				}.bind(this));
+			},
 
-					var ckan = document.querySelector('esis-ckan');
-					ckan.initWorkspace(this.pkgid, function(err, result){
-						this.$.dialog.toggle();
+			run : function(toggle) {
+				var ckan = document.querySelector('esis-ckan');
+				ckan.processWorkspace(this.pkgid, function(err, result){
+					if( toggle ) this.$.dialog.toggle();
 
-						if( err || result.error ) return alert('Error loading dataset.');
+					if( err || result.error ) return alert('Error loading dataset.');
 
-						this.data = result;
-						this._setData();
-					}.bind(this));
+					this.data = result;
+					this._setData();
 				}.bind(this));
 			},
 

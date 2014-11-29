@@ -10,7 +10,7 @@
         </paper-tabs>
 
         <div>
-            <esis-add-resource hidden?="{{tab != 0}}"></esis-add-resource>
+            <esis-add-resource hidden?="{{tab != 0}}" on-resource-add="{{onAdd}}"></esis-add-resource>
             <esis-current-resources hidden?="{{tab != 1}}"></esis-current-resources>
         </div>
     </template>
@@ -28,6 +28,11 @@
                 } else {
                     this.menuItem.style.display = 'none';
                 }
+            },
+
+            // switch tabs when a resource is added
+            onAdd : function() {
+                this.tab = 1;
             }
 
         });

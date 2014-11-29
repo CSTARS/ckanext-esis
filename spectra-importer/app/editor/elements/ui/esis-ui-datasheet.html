@@ -172,7 +172,8 @@
 			maxLineCount : 30,
 
 			observe : {
-				datasheet : 'update'
+                'datasheet' : 'update',
+				'datasheet.attributes' : 'update'
 			},
 
             ready : function() {
@@ -181,6 +182,8 @@
 
 			update : function() {
                 if( !this.datasheet ) return;
+
+                if( !this.datasheet.attributes ) this.datasheet.attributes = [];
 
                 this._setAttributes();
                 this.showWavelengths = false;
@@ -191,8 +194,23 @@
 
                 this.parsedAttributes = [];
                 this.wavelengths = [];
+debugger;
+                for( var i = 0; i < this.datasheet.attributes.length; i++ ) {
+                    var attr = this.datasheet.attributes[i];
 
-                var info;
+                    if( attr.type == 'wavelength' ) {
+                        this.wavelengths.push(attr.name+(attr.label ? ' <span style="color:#888">('+attr.label+')</span>' : '') )
+                    } else if ( attr.type == 'metadata' ) {
+                        this.parsedAttributes.push({
+                            name : attr.name,
+                            units : attr.units || '',
+                            type : 'Spectra Metadata',
+                            class : 'spectra'
+                        });
+                    }
+                }
+
+                /*var info;
                 for( var key in this.datasheet.attributeTypes ) {
                     info = this.datasheet.attributeTypes[key];
 
@@ -261,7 +279,7 @@
                         default:
                             break;
                     }
-                }
+                }*/
 
                 this.$.wavelengths.innerHTML = this.wavelengths.join(', ');
 

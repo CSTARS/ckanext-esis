@@ -46,10 +46,13 @@
             <core-icon icon="create" class="blue" hidden?="{{edit}}"></core-icon>
             <core-icon icon="check" class="green" hidden?="{{!edit}}"></core-icon>
         </paper-button>
-        <h4>{{resource.name}}</h4>
+        <h4>{{resource.name}}
+            <template bind if="{{removing}}"><span style="color:red">Removing...</span></template>
+            <template bind if="{{loading}}"><span class="blue">Loading...</span></template>
+        </h4>
 
 
-        <template bind if="{{resource.files.length > 1 && edit}}">
+        <template bind if="{{resource.files.length > 1 && edit && !loading}}">
             <div layout horizontal>
                 <div flex>
                     <div horizontal layout style="margin: 10px 0 20px 20px" hidden?="{{resource.metadata}}">
@@ -89,7 +92,7 @@
                     </tr>
                 </table>
             </core-collapse>
-            <core-collapse opened="{{edit}}">
+            <core-collapse opened="{{edit && !loading}}">
                 <esis-ui-datasheet datasheet="{{resource.files[0]}}" edit></esis-ui-datasheet>
             </core-collapse>
         </template>
@@ -115,7 +118,7 @@
                 </table>
             </core-collapse>
 
-            <core-collapse opened="{{edit}}"> 
+            <core-collapse opened="{{edit && !loading}}"> 
                 <div layout horizontal class="nav">
                     <div>
                         <paper-button style="float:right" on-tap="{{back}}">
@@ -147,19 +150,34 @@
             <span style="font-style:italic;color:#888">Ignored</span>
         </div>
 
-        <paper-button raised class="red-button" hidden?="{{!edit}}" style="margin-top:30px">Remove {{resource.name}}</paper-button>
+        <paper-button 
+            raised 
+            class="red-button" 
+            hidden?="{{!edit}}" 
+            style="margin-top:30px"
+            on-tap="{{remove}}">
+            Remove {{resource.name}}</paper-button>
 
     </template>
     <script>
         Polymer('esis-ui-dataresource',{
             edit : false,
 
+            // is this the summary resource or full resource
+            full : false,
+            ds : null,
+
             showChangeAll : false,
 
             datasheetIndex : 0,
             currentFile : null,
             observe : {
-                datasheetIndex : 'updateSelected'
+                datasheetIndex : 'updateSelected',
+                edit : 'load'
+            },
+
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
             },
 
             toggleEdit : function() {
@@ -199,7 +217,42 @@
                 this.showChangeAll = false;
             },
 
+            remove : function() {
+                if( !confirm("Are you sure you want to remove: "+this.resource.name+"?") ) return;
 
+                this.removing = true;
+
+                document.querySelector('esis-ckan').removeResource(
+                    this.resource.id,
+                    function(err, resp){
+                        this.remove = false;
+
+                        if( err ) return alert("Server error deleting resource");
+                        this.fire('remove', this.resource.id);
+                    }.bind(this)
+                );
+            },
+
+            load : function() {
+                if( !this.edit || this.full ) return;
+
+                this.loading = true;
+
+                document.querySelector('esis-ckan').processResource(
+                    this.ds.package_id,
+                    this.resource.id,
+                    function(err, resp){
+                        if( err ) return alert("Server error fetching resource");
+
+                        for( var key in resp ) {
+                            this.resource[key] = resp[key];
+                        }
+                        this.full = true;
+
+                        this.loading = false;
+                    }.bind(this)
+                );
+            }
 
         })
     </script>

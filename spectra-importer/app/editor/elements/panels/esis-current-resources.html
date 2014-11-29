@@ -37,7 +37,10 @@
 
 		<template repeat="{{resource in ds.resources}}">
 			<div class="card">
-				<esis-ui-dataresource resource="{{resource}}"></esis-ui-dataresource>
+				<esis-ui-dataresource 
+					resource="{{resource}}"
+					on-remove="{{_deleteResource}}">
+				</esis-ui-dataresource>
 			</div>	
 		</template>
 
@@ -129,12 +132,13 @@
 			},
 
 		  	_deleteResource : function(e) {
-		  		var id = e.currentTarget.getAttribute('rid');
-		  		this.ds.removeResource(id);
-		  		document.querySelector('esis-ckan').removeResource(id, function(err, resp){
-		  			console.log(err);
-		  			console.log(resp);
-		  		});	
+		  		var id = e.detail;
+		  		for( var i = 0; i < this.ds.resources.length; i++ ) {
+		  			if( this.ds.resources[i].id == id ) {
+		  				this.ds.resources.splice(i, 1);
+		  				return;
+		  			}
+		  		}
 		  	},
 
 		  	_delete : function() {
