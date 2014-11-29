@@ -24,7 +24,7 @@
     "js-xls": "*",
     "jquery": "*",
     "jquery-csv": "*",
-    "js-md5": "*",
+    "js-md5": "~1.1.0",
     "jszip": "Stuk/jszip#*"
   }
 }

@@ -51,8 +51,7 @@
                 
                 <template bind if="{{datasheet.metadata}}">
                     <esis-ui-metadata 
-                        metadata="{{datasheet.metadata}}"
-                        attributeTypes="{{datasheet.attributeTypes}}">
+                        metadata="{{datasheet}}">
                     </esis-ui-metadata>
                 </template>
             </div>
@@ -194,7 +193,7 @@
 
                 this.parsedAttributes = [];
                 this.wavelengths = [];
-debugger;
+
                 for( var i = 0; i < this.datasheet.attributes.length; i++ ) {
                     var attr = this.datasheet.attributes[i];
 

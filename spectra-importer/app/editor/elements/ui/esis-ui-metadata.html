@@ -1,12 +1,12 @@
 <link rel="import" href="esis-ui-card.html"/>
 <link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
 
-<polymer-element name="esis-ui-metadata" attributes="metadata attributeTypes">
+<polymer-element name="esis-ui-metadata" attributes="metadata">
 	<template>
 		<style>
 			:host {
 				display: block;
-				margin-top: 5px;
+				margin: 25px 0 0 20px;
 				background-color: white;
 			}
 			.resource-type {
@@ -17,58 +17,46 @@
 			}
 		</style>
 
-		<esis-ui-card z="1" style="padding: 1px 20px 10px 20px">
-			<h4>
-				<!-- TODO: move this to the datasheet UI 
-				<div hidden?="{{metadata.isExisting}}" class="resource-type">New Resource</div>
-				<div hidden?="{{!metadata.isExisting}}" class="resource-type">Existing Resource</div>
-				-->
 
-				{{label}}
-				<template bind if="{{metadata.file.sheetName.length > 0}}">
-					- {{metadata.file.sheetName}}
+		<div>
+			Join On:
+			<select id="joinId" value="{{metadata.matchAttribute}}">
+				<option value=""></option>
+				<template repeat="{{attr in joinAttrs}}" >
+					<option value="{{attr}}">{{attr}}</option>
 				</template>
-			</h4>
+			</select>
 
-			<div>
-				Join On:
-				<select id="joinId" value="{{metadata.joinId}}">
-					<option value=""></option>
-					<template repeat="{{attr in joinAttrs}}" >
-						<option value="{{attr}}">{{attr}}</option>
-					</template>
-				</select>
-
-				<div horizontal layout style="margin: 30px 15px">
-				    <paper-checkbox id="filenameMatch" on-tap="{{_onFilenameMatch}}"></paper-checkbox>
-				    <div style="padding-left: 20px">
-				     	Match on Filename
-				    </div>
-				</div>
-				<div horizontal layout style="margin: 30px 45px" hidden?="{{!metadata.filenameMatch}}" >
-				    <paper-checkbox id="looseMatch" on-tap="{{_onLooseMatch}}0" checked></paper-checkbox>
-				    <div style="padding-left: 20px">
-				     	<div>Exact match</div>
-				     	<div style="font-size:12px;color:#888">
-				     		If checked, the attribute value must match the filename exactly.  Otherwise, the filename just needs to contain the attribute value to match.
-				     	</div>
-				    </div>
-				</div>
+			<div horizontal layout style="margin: 30px 15px">
+			    <paper-checkbox id="filenameMatch" on-tap="{{_onFilenameMatch}}"></paper-checkbox>
+			    <div style="padding-left: 20px">
+			     	Match on Filename
+			    </div>
+			</div>
+			<div horizontal layout style="margin: 30px 45px" hidden?="{{metadata.matchType != 'filename'}}" >
+			    <paper-checkbox id="looseMatch" on-tap="{{_onLooseMatch}}0" checked></paper-checkbox>
+			    <div style="padding-left: 20px">
+			     	<div>Exact match</div>
+			     	<div style="font-size:12px;color:#888">
+			     		If checked, the attribute value must match the filename exactly.  Otherwise, the filename just needs to contain the attribute value to match.
+			     	</div>
+			    </div>
+			</div>
 
 
-				<div horizontal layout style="margin: 30px 15px" hidden?="{{metadata.file.sheetName == ''}}" >
-				    <paper-checkbox id="worksheetMatch" on-tap="{{_onWorksheetMatch}}"></paper-checkbox>
-				    <div style="padding-left: 20px">
-				     	Match on Worksheet Name
-				    </div>
-				</div>
+			<div horizontal layout style="margin: 30px 15px" hidden?="{{metadata.sheetname == ''}}" >
+			    <paper-checkbox id="worksheetMatch" on-tap="{{_onWorksheetMatch}}"></paper-checkbox>
+			    <div style="padding-left: 20px">
+			     	Match on Worksheet Name
+			    </div>
+			</div>
 
-				<template bind if="{{metadata.matchCount != null}}">
-					<div>Matched to {{metadata.matchCount}} measurements</div>
-				</template>
+			<template bind if="{{metadata.matchCount != null}}">
+				<div>Matched to {{metadata.matchCount}} measurements</div>
+			</template>
 
-			</div> 
-		</esis-ui-card>
+		</div> 
+
 	</template>
 	<script>
 		Polymer('esis-ui-metadata', {
@@ -76,8 +64,11 @@
 			joinAttrs : [],
 			label : '',
 
+			//observe : {
+			//	'metadata.joinId' : '_updateDatastore',
+			//},
 			observe : {
-				'metadata.joinId' : '_updateDatastore',
+				metadata : 'update'
 			},
 
 			update : function() {
@@ -85,18 +76,21 @@
 
 				this.joinAttrs = [];
 
-				for( var key in this.attributeTypes ) {
-					this.joinAttrs.push(key);
+				for( var i = 0; i < this.metadata.attributes.length; i++ ) {
+					var attr = this.metadata.attributes[i];
+					if( attr.type == 'metadata' ) this.joinAttrs.push(attr.name);
 				}
 
-				if( this.metadata.file && this.metadata.file.info ) {
-					this.label = this.metadata.file.info.name.replace(/.*\//,'');
-				} else {
-					this.label = this.metadata.filename;
-				}
+				this.joinAttrs.sort(function(a, b){
+					if( a < b ) return 1;
+					if( b < a ) return -1;
+					return 0;
+				});
+
+				this.label = this.metadata.name;
 
 				this.async(function(){
-					this.$.joinId.value = this.metadata.joinId;
+					this.$.joinId.value = this.metadata.matchAttribute || '';
 				});
 			},
 
@@ -107,18 +101,16 @@
 
 			_onWorksheetMatch : function() {
 				this.async(function(){
-					this.metadata.filenameMatch = false;
 					this.$.filenameMatch.removeAttribute('checked');
-					this.metadata.worksheetMatch = this.$.worksheetMatch.checked;
+					this.metadata.matchType = 'sheetname';
 					this._updateDatastore();
 				});
 			},
 
 			_onFilenameMatch : function() {
 				this.async(function(){
-					this.metadata.worksheetMatch = false;
 					this.$.worksheetMatch.removeAttribute('checked');
-					this.metadata.filenameMatch = this.$.filenameMatch.checked;
+					this.metadata.matchType = 'filename'
 					this._updateDatastore();
 				});	
 			},
