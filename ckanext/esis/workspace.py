@@ -21,7 +21,7 @@ from bson.son import SON
 import ckan.lib.uploader as uploader
 import hashlib
 
-from ckanext.esis.lib.join import SheetJoin as joinlib
+from ckanext.esis.lib.join import SheetJoin
 
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
@@ -36,6 +36,8 @@ db = client[config._process_configs[1]['esis.mongo.db']]
 
 workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
+
+joinlib = SheetJoin()
 
 class WorkspaceController(PackageController):
     workspaceDir = ""
@@ -69,11 +71,11 @@ class WorkspaceController(PackageController):
         dataResources = []
         wavelengths = []
         for resource in resources:
-            files = []
-            for file in resource['files']:
+            datasheets = []
+            for datasheet in resource['datasheets']:
 
-                if 'attributes' in file:
-                    for attr in file['attributes']:
+                if 'attributes' in datasheet:
+                    for attr in datasheet['attributes']:
                         if not attr['name'] in attrs and attr['type'] != 'wavelength':
                             attrs[attr['name']] = {
                                 "type" : attr["type"],
@@ -84,24 +86,24 @@ class WorkspaceController(PackageController):
                             wavelengths.append(attr['name'])
 
                 f = {
-                    "id" : file["id"],
-                    "name" : file["name"],
-                    "layout" : file.get("layout"),
-                    "spectra_count" : file.get("spectra_count")
+                    "id" : datasheet["id"],
+                    "name" : datasheet["name"],
+                    "layout" : datasheet.get("layout"),
+                    "spectra_count" : datasheet.get("spectra_count")
                 }
-                if 'sheet' in file:
-                    f['sheet'] = file['sheet']
-                if 'error' in file:
-                    f['error'] = file.get('error'),
-                    f['message'] = file.get('message')
-                files.append(f)
+                if 'sheetname' in datasheet:
+                    f['sheetname'] = datasheet['sheetname']
+                if 'error' in datasheet:
+                    f['error'] = datasheet.get('error'),
+                    f['message'] = datasheet.get('message')
+                datasheets.append(f)
 
             dataResources.append(resource["id"])
             arr.append({
                 "name" : resource["name"],
                 "type" : resource["type"],
                 "id"   : resource["id"],
-                "files" : files
+                "datasheets" : datasheets
             })
 
         # now add non-data resources
@@ -208,18 +210,29 @@ class WorkspaceController(PackageController):
         # second is data.  Pass the metadata group along with each data resource
         # so a join can be preformed
         metadataSheets = []
-        for r in pkgWorkspace:
-            if not r.get('metadata') == True:
-                continue
+        metadataResources = []
+        for r in pkgWorkspace['resources']:
             resp = self._processResource(pkg, r, dir, pkgWorkspace, metadataRun=True)
             if resp != None:
-                for sheet in resp['files']:
+                metadataResources.append(resp)
+                for sheet in resp['datasheets']:
                     metadataSheets.append(sheet)
 
+        # now process non-metadata datasheets
         for r in pkg['resources']:
             resp = self._processResource(pkg, r, dir, pkgWorkspace, metadataSheets=metadataSheets)
             if resp != None:
                 resources.append(resp)
+
+        # now merge metadata sheet list back in
+        for resource in metadataResources:
+            r = self._getById(resources, resource['id'])
+            if r == None:
+                resources.append(resource)
+            else:
+                for sheet in resource['datasheets']:
+                    r['datasheets'].append(sheet)
+
         return resources
 
     # process and individual resource
@@ -265,7 +278,7 @@ class WorkspaceController(PackageController):
             # create dir for zip
             zipDir = "%s/%s/files" % (dir, r['id'])
 
-            files = []
+            datasheets = []
             z = zipfile.ZipFile(ckanLocation, "r")
             for info in z.infolist():
                 if self._isDataFile(info.filename):
@@ -282,21 +295,21 @@ class WorkspaceController(PackageController):
                     #extract individual file
                     z.extract(info, "%s" % zipDir)
 
-                    file = {
+                    datasheet = {
                         "id" : id,
                         "name" : name,
                         "location" : "%s/%s" % (re.sub(self.workspaceDir, "", zipDir), zipPath)
                     }
-                    files.append(file)
+                    datasheets.append(datasheet)
 
-                    self._processFile(file, files, r['id'], workspaceResource, metadataSheets, metadataRun)
+                    self._processFile(datasheet, datasheets, r['id'], workspaceResource, metadataSheets, metadataRun)
 
             z.close()
 
             info = {
                 "name" : r["name"],
                 "id"   : r["id"],
-                "files" : files,
+                "datasheets" : datasheets,
                 "type" : "zip",
                 "url_type" : r["url_type"],
                 "md5" : self._hashfile(ckanLocation)
@@ -333,19 +346,19 @@ class WorkspaceController(PackageController):
             # link in file
             os.symlink(ckanLocation, "%s/%s/files/%s" % (dir, r['id'], r['name']))
 
-            file = {
+            datasheet = {
                 "id" : id,
                 "name" : r['name'],
                 "location" : "%s/%s/files/" % (re.sub(self.workspaceDir, "", dir), r['id'])
             }
-            files = [file]
+            datasheets = [datasheet]
 
-            self._processFile(file, files, r['id'], workspaceResource, metadataSheets, metadataRun)
+            self._processFile(datasheet, datasheets, r['id'], workspaceResource, metadataSheets, metadataRun)
 
             info = {
                 "name" : r["name"],
                 "id"   : r["id"],
-                "files" : files,
+                "datasheets" : datasheets,
                 "type" : "datafile",
                 "url_type" : r["url_type"],
                 "md5" : self._hashfile(ckanLocation)
@@ -418,7 +431,7 @@ class WorkspaceController(PackageController):
             parseData['type'] = 'github'
             parseData['repo'] = repoName
 
-        parseData['files'] = []
+        parseData['datasheets'] = []
 
         # now walk tree and get attribute information
         for root, dirs, files in os.walk(gitDir):
@@ -428,16 +441,16 @@ class WorkspaceController(PackageController):
 
             for f in files:
                 if self._isDataFile(f):
-                    parseData['files'].append({
+                    parseData['datasheets'].append({
                         "id" : self._getFileId(r['id'], root, f['name']),
                         "name" : f['name'],
                         "location" : re.sub(self.workspaceDir, "", root)
                     })
 
         # now parse information for known data files
-        for file in parseData['files']:
+        for datasheet in parseData['datasheets']:
             workspaceResource = self._getById(pkgWorkspace['resources'], r['id'])
-            self._processFile(file, parseData['files'], r['id'], workspaceResource, metadataSheets, metadataRun)
+            self._processFile(datasheet, parseData['datasheets'], r['id'], workspaceResource, metadataSheets, metadataRun)
 
         self._saveJson("%s/%s/info.json" % (dir, r['id']), parseData)
 
@@ -445,16 +458,21 @@ class WorkspaceController(PackageController):
 
     # actually parse file information object
     # must have name and location
-    def _processFile(self, f, filesArr, rid, resourceConfig, metadataSheets, metadataRun):
-        ext = self._getFileExtension(f['name'])
+    def _processFile(self, datasheet, datasheets, rid, resourceConfig, metadataSheets, metadataRun):
+        ext = self._getFileExtension(datasheet['name'])
 
         # at this point, check type and bail out if we are on a metadata and this is not metadata or vice versa
-        # TODO: THIS IS WHAT YOU ARE WORKING ON
+        # we have to wait till we open up and look at an excel file before we can make this decision, thus it's in
+        # two places
+        if ext == "csv" or ext == "spectra" or ext == "tsv":
+            if not self._parseOnThisRun(datasheet, resourceConfig, metadataRun):
+                datasheets.remove(datasheet)
+                return
 
         # how should be parse this file?
         dataLayout = 'row'
-        if 'layout' in f:
-            dataLayout = f['layout']
+        if 'layout' in datasheet:
+            dataLayout = datasheet['layout']
         elif config != None:
             if config.get('type') == 'metadata':
                 dataLayout = 'row'
@@ -463,14 +481,14 @@ class WorkspaceController(PackageController):
 
         data = []
         if ext == "csv":
-            self._processCsv(f, dataLayout, resourceConfig, metadataSheets)
+            self._processCsv(datasheet, dataLayout, resourceConfig, metadataSheets)
         elif ext == "tsv" or ext == "spectra":
-            self._processTsv(f, dataLayout, resourceConfig, metadataSheets)
+            self._processTsv(datasheet, dataLayout, resourceConfig, metadataSheets)
         elif ext == "xlsx" or ext == "xls":
             # an excel file is going to actually expand to several files
             # so pass the files array so the placeholder can be removed
             # and the new 'sheet' files can be inserted
-            self._processExcel(f, filesArr, rid, dataLayout, resourceConfig, metadataSheets)
+            self._processExcel(datasheet, datasheets, rid, dataLayout, resourceConfig, metadataSheets, metadataRun)
 
 
 
@@ -486,11 +504,7 @@ class WorkspaceController(PackageController):
         ranges = self._getDataRanges(data)
 
         # get config for sheet if on exists
-        sheetConfig = None
-        for sheet in sheetInfo['files']:
-            if sheet['id'] == sheetInfo['id'] and sheet.get('sheet') == sheetInfo.get('sheet'):
-                sheetConfig = sheet
-                break
+        sheetConfig = self._getById(resourceConfig.get('datasheets'), sheetInfo['id'])
 
         localRange = {}
         globalRange = None
@@ -515,26 +529,123 @@ class WorkspaceController(PackageController):
             for i in range(localRange['start'], localRange['end']):
                 info = self._parseAttrType(data[i][0], [i,0], "local")
                 attrTypes.append(info)
-        sheet['attributes'] = attrTypes
+        sheetInfo['attributes'] = attrTypes
 
-        if sheetConfig.get('metadata') == True:
-            joinlib.processMetadataSheet(data, sheetConfig, sheet)
+        if sheetConfig != None and sheetConfig.get('metadata') == True:
+            joinlib.processMetadataSheet(data, sheetConfig, sheetInfo)
         else:
             # now find the spectra count based on layout
             if layout == "row":
-                sheet['spectra_count'] = localRange['end'] - localRange['start']
+                sheetInfo['spectra_count'] = localRange['end'] - localRange['start']
             else:
                 i = 0
                 for i in reversed(range(len(data[localRange['start']]))):
                     if data[localRange['start']] != None or data[localRange['start']] != '':
                         break
-                sheet['spectra_count'] = i
+                sheetInfo['spectra_count'] = i
 
             # finally find match counts for metadata joins
             joinlib.matchMetadataSheets(data, localRange, layout, sheetInfo, metadataSheets)
 
 
+    # is a row array empty
+    def _isEmptyRow(self, row):
+        if len(row) == 0:
+            return True
 
+        for i in range(0, len(row)):
+            if row[i] != "" or row[i] != None:
+                return False
+
+        return True
+
+    # src:
+    #  https://github.com/python-excel/xlrd
+    # help:
+    #  http://www.youlikeprogramming.com/2012/03/examples-reading-excel-xls-documents-using-pythons-xlrd/
+    #  https://secure.simplistix.co.uk/svn/xlrd/trunk/xlrd/doc/xlrd.html?p=4966
+    def _processExcel(self, datasheet, datasheets, rid, layout, resourceConfig, metadataSheets, metadataRun):
+        # remove the place holder, the sheets will be the actual 'files'
+
+        fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['name'])
+
+        try:
+            workbook = xlrd.open_workbook(fullPath)
+            sheets = workbook.sheet_names()
+
+            for sheet in sheets:
+                sheetInfo = {
+                    "id" : self._getFileId(rid, datasheet['location'], "%s-%s" %  (datasheet['name'], sheet) ),
+                    "sheet" : sheet,
+                    "name" : datasheet['name'],
+                    "location" : datasheet['location'],
+                    "layout" : layout
+                }
+
+                # are we on the metadata run and should we be parsing this sheet?
+                if not self._parseOnThisRun(sheetInfo, resourceConfig, metadataRun):
+                    continue
+
+                data = self._getWorksheetData(workbook.sheet_by_name(sheet))
+                self._processSheetArray(data, layout, sheetInfo, resourceConfig, metadataSheets)
+                datasheets.append(sheetInfo)
+
+        #TODO: how do we really want to handle this?
+        except Exception as e:
+            datasheet['error'] = True
+            datasheet['message'] = e
+
+        if not 'error' in datasheet:
+            datasheets.remove(datasheet)
+
+    def _getWorksheetData(self, sheet):
+        data = []
+        for i in range(sheet.nrows):
+            row = []
+            for j in range(sheet.ncols):
+                row.append(str(sheet.cell_value(i, j)))
+            data.append(row)
+        return data
+
+
+    def _processCsv(self, datasheet, layout, resourceConfig, metadataSheets):
+        self._processSeperatorFile(datasheet, ",", layout, resourceConfig, metadataSheets)
+
+    def _processTsv(self, datasheet, layout, resourceConfig, metadataSheets):
+        self._processSeperatorFile(datasheet, "\t", layout, resourceConfig, metadataSheets)
+
+    # parse a csv or tsv file location into array
+    def _processSeperatorFile(self, datasheet, separator, layout, resourceConfig, metadataSheets):
+        with open("%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['name']), 'rb') as csvfile:
+            reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
+            data = []
+            for row in reader:
+                data.append(row)
+            csvfile.close()
+
+            datasheet['layout'] = layout
+            self._processSheetArray(data, layout, datasheet, resourceConfig, metadataSheets)
+
+    # given information about the current datasheet, the config and if we are on the metadata run,
+    # should we parse this datasheet on this run or not.  Remember, there are always two runs.  First,
+    # one for metadata, second, one for data
+    def _parseOnThisRun(self, datasheet, resourceConfig, metadataRun):
+        sheetConfig = self._getById(resourceConfig.get('datasheets'), datasheet['id'])
+
+        if sheetConfig == None and metadataRun:
+            return False
+        elif sheetConfig == None:
+            return True
+
+        if sheetConfig.get('metadata') == True:
+            if metadataRun:
+                return True
+            else:
+                return False
+
+        if metadataRun:
+            return False
+        return True
 
     # parse out the attribute information from the attribute information
     # TODO: check for units and attribute data type
@@ -565,8 +676,6 @@ class WorkspaceController(PackageController):
             attr["original"] = original
 
         return attr
-
-
 
     # find the table ranges (is there one or two)
     def _getDataRanges(self, data):
@@ -602,90 +711,15 @@ class WorkspaceController(PackageController):
 
         return ranges
 
-
-
-    # is a row array empty
-    def _isEmptyRow(self, row):
-        if len(row) == 0:
-            return True
-
-        for i in range(0, len(row)):
-            if row[i] != "" or row[i] != None:
-                return False
-
-        return True
-
-    # src:
-    #  https://github.com/python-excel/xlrd
-    # help:
-    #  http://www.youlikeprogramming.com/2012/03/examples-reading-excel-xls-documents-using-pythons-xlrd/
-    #  https://secure.simplistix.co.uk/svn/xlrd/trunk/xlrd/doc/xlrd.html?p=4966
-    def _processExcel(self, f, files, rid, layout, resourceConfig, metadataSheets):
-        # remove the place holder, the sheets will be the actual 'files'
-
-        fullPath = "%s%s%s" % (self.workspaceDir, f['location'], f['name'])
-
-        try:
-            workbook = xlrd.open_workbook(fullPath)
-            sheets = workbook.sheet_names()
-
-            for sheet in sheets:
-                sheetInfo = {
-                    "id" : self._getFileId(rid, f['location'], "%s-%s" %  (f['name'], sheet) ),
-                    "sheet" : sheet,
-                    "name" : f['name'],
-                    "location" : f['location'],
-                    "layout" : layout
-                }
-                data = self._getWorksheetData(workbook.sheet_by_name(sheet))
-                self._processSheetArray(data, layout, sheetInfo, resourceConfig, metadataSheets)
-                files.append(sheetInfo)
-
-        #TODO: how do we really want to handle this?
-        except Exception as e:
-            f['error'] = True
-            f['message'] = e
-
-        if not 'error' in f:
-            files.remove(f)
-
-    def _getWorksheetData(self, sheet):
-        data = []
-        for i in range(sheet.nrows):
-            row = []
-            for j in range(sheet.ncols):
-                row.append(str(sheet.cell_value(i, j)))
-            data.append(row)
-        return data
-
-
-    def _processCsv(self, f, layout, resourceConfig, metadataSheets):
-        self._processSeperatorFile(f, ",", layout, resourceConfig, metadataSheets)
-
-    def _processTsv(self, f, layout, resourceConfig, metadataSheets):
-        self._processSeperatorFile(f, "\t", layout, resourceConfig, metadataSheets)
-
-    # parse a csv or tsv file location into array
-    def _processSeperatorFile(self, f, separator, layout, resourceConfig, metadataSheets):
-        with open("%s%s%s" % (self.workspaceDir, f['location'], f['name']), 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
-            data = []
-            for row in reader:
-                data.append(row)
-            csvfile.close()
-
-            f['layout'] = layout
-            self._processSheetArray(data, layout, f, resourceConfig, metadataSheets)
-
-
-
-
     #
     # HELPERS
     #
 
     # given an array of objects that have an id attribute, get one by id
     def _getById(self, arr, id):
+        if arr == None:
+            return None
+
         for obj in arr:
             if obj.get('id') == id:
                 return obj
