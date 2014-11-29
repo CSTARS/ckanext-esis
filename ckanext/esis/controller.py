@@ -7,7 +7,7 @@ from pylons import config
 import urllib2
 import dateutil.parser
 
-
+import ckan.lib.uploader as uploader
 from ckan.lib.base import c, model, BaseController
 import ckan.logic as logic
 import ckan.lib.helpers as h
@@ -15,6 +15,7 @@ from ckan.common import request, response
 import inspect
 from bson.code import Code
 from bson.son import SON
+import os
 
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
@@ -247,6 +248,13 @@ class SpectraController(PackageController):
         id = request.params.get('id')
 
         context = {'model': model, 'user': c.user}
+
+        # remove resource from disk - normally this doesn't happen
+        r = logic.get_action('resource_show')(context, {'id': id})
+        if r.get('url_type') == "upload":
+            upload = uploader.ResourceUpload(r)
+            os.remove(upload.get_path(r['id']))
+
         logic.get_action('resource_delete')(context, {'id': id})
 
         metadata = metadataCollection.find_one({'resource_id': id})
@@ -262,6 +270,8 @@ class SpectraController(PackageController):
 
         # now remove any spectra that were related
         spectraCollection.remove({'ecosis.resource_id': id})
+
+
 
     # rebuild entire search index
     # TODO: this should be admin only!!

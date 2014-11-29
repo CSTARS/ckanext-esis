@@ -94,7 +94,6 @@ class EsisPlugin(plugins.SingletonPlugin,
         # override the routes to delete packages and resources
         map.connect('delete_package', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-        map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
 
         # just use the basic package controller for this on, there is a js hack
@@ -107,7 +106,8 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         # connect workspace calls
         controller = 'ckanext.esis.workspace:WorkspaceController'
-        map.connect('init_workspace', '/workspace/init', controller=controller, action='initWorkspace')
+        map.connect('process_workspace', '/workspace/process', controller=controller, action='processWorkspace')
+        map.connect('process_resource', '/workspace/processResource', controller=controller, action='processResource')
 
 
         return map

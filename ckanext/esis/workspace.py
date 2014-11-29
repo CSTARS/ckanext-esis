@@ -8,7 +8,8 @@ import urllib2
 import dateutil.parser
 import os.path
 import shutil
-import zipfile
+import zipfile, datetime
+import xlrd
 
 from ckan.lib.base import c, model, BaseController
 import ckan.logic as logic
@@ -20,6 +21,8 @@ from bson.son import SON
 import ckan.lib.uploader as uploader
 import hashlib
 
+from ckanext.esis.lib.join import SheetJoin as joinlib
+
 from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
 import subprocess
@@ -30,12 +33,9 @@ log = logging.getLogger(__name__)
 # setup mongo connection
 client = MongoClient(config._process_configs[1]['esis.mongo.url'])
 db = client[config._process_configs[1]['esis.mongo.db']]
-usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
-spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection']]
-packageCollection = db[config._process_configs[1]['esis.mongo.package_collection']]
-metadataCollection = db[config._process_configs[1]['esis.mongo.metadata_collection']]
-searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
-searchCollection = db[searchCollectionName]
+
+workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
+workspaceCollection = db[workspaceCollectionName]
 
 class WorkspaceController(PackageController):
     workspaceDir = ""
@@ -55,38 +55,48 @@ class WorkspaceController(PackageController):
         if not os.path.exists(self.workspaceDir):
             os.makedirs(self.workspaceDir)
 
-    # Takes a package_id and initializes workspace if it doesn't exist
-    # if it does, checks md5 hash and re-parses any new or updates files
-    def initWorkspace(self):
-        context = {'model': model, 'user': c.user}
-        ckanPackage = logic.get_action('package_show')(context, {'id': request.params.get('package_id')})
+    # API CALL
+    # basically runs initWorkspace and responds with workspace overview
+    def processWorkspace(self):
+        response.headers["Content-Type"] = "application/json"
 
-        # TODO: this will be remove and become a check
-        dir = "%s/%s" % (self.workspaceDir, ckanPackage['name'])
+        (packageWorkspace, ckanPackage, dir, fresh) = self._initWorkspace(request.params.get('package_id'))
+        resources = self._processResources(ckanPackage, dir, packageWorkspace)
 
-        #if os.path.exists(dir):
-        #    shutil.rmtree(dir)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        resources = self._processResources(ckanPackage, dir)
-
+        # create response
         attrs = {}
         arr = []
+        dataResources = []
+        wavelengths = []
         for resource in resources:
             files = []
             for file in resource['files']:
-                for attr in file['attributes']:
-                    if not attr['name'] in attrs:
-                        attrs[attr['name']] = {
-                            "type" : attr["type"],
-                            "scope" : attr["scope"],
-                            "units" : attr["units"]
-                        }
-                files.append({
+
+                if 'attributes' in file:
+                    for attr in file['attributes']:
+                        if not attr['name'] in attrs and attr['type'] != 'wavelength':
+                            attrs[attr['name']] = {
+                                "type" : attr["type"],
+                                "scope" : attr["scope"],
+                                "units" : attr["units"]
+                            }
+                        if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
+                            wavelengths.append(attr['name'])
+
+                f = {
+                    "id" : file["id"],
                     "name" : file["name"],
-                    "layout" : file["layout"]
-                })
+                    "layout" : file.get("layout"),
+                    "spectra_count" : file.get("spectra_count")
+                }
+                if 'sheet' in file:
+                    f['sheet'] = file['sheet']
+                if 'error' in file:
+                    f['error'] = file.get('error'),
+                    f['message'] = file.get('message')
+                files.append(f)
+
+            dataResources.append(resource["id"])
             arr.append({
                 "name" : resource["name"],
                 "type" : resource["type"],
@@ -94,28 +104,139 @@ class WorkspaceController(PackageController):
                 "files" : files
             })
 
+        # now add non-data resources
+        for r in ckanPackage['resources']:
+            if not r['id'] in dataResources:
+                arr.append({
+                    "name" : r["name"],
+                    "type" : "generic",
+                    "id"   : r["id"]
+                })
+
+        # save wire space
+        del ckanPackage['resources']
 
         return json.dumps({
             "resources"  : arr,
-            "attributes" : attrs
+            "wavelengths" : wavelengths,
+            "attributes" : attrs,
+            "package" : ckanPackage,
+            "fresh" : fresh
         })
 
+    # set the parse information for a given resource and package
+    # this should be a post
+    def setParseInformation(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+        resources = request.params.get('resources')
+
+        (packageWorkspace, ckanPackage, dir, fresh) = self._initWorkspace(package_id)
+
+        if not 'resources' in packageWorkspace:
+            packageWorkspace['resources'] = []
+
+        # update the package workspace information
+        for r in resources:
+            wResource = self._getById(r['id'])
+            if wResource != None:
+                packageWorkspace['resources'].append(r)
+
+        # save back to mongo
+        workspaceCollection.update({'package_id': package_id}, packageWorkspace)
+
+        return {'success': True}
+
+
+    # API CALL
+    def processResource(self):
+        response.headers["Content-Type"] = "application/json"
+
+        rid = request.params.get('resource_id')
+        (packageWorkspace, ckanPackage, dir, fresh) = self._initWorkspace(request.params.get('package_id'))
+
+        resource = None
+        for r in ckanPackage['resources']:
+            if r["id"] == rid:
+                resource = r
+
+        if r == None:
+            return json.dumps({"error":True,"message":"resource not found"})
+
+        return json.dumps(self._processResource(ckanPackage, resource, dir, packageWorkspace))
+
+
+    # Takes a package_id and initializes workspace if it doesn't exist
+    # if it does, checks md5 hash and re-parses any new or updates files
+    def _initWorkspace(self, package_id):
+        context = {'model': model, 'user': c.user}
+        ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
+
+        # TODO: this will be remove and become a check
+        dir = "%s/%s" % (self.workspaceDir, ckanPackage['name'])
+
+        fresh = False
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+            fresh = True
+
+        # grap the current package import workspace information from mongo
+        packageWorkspace = workspaceCollection.find_one({'package_id': ckanPackage['id']})
+        if packageWorkspace == None:
+            packageWorkspace = {'package_id': ckanPackage['id']}
+        if not 'resources' in packageWorkspace:
+            packageWorkspace['resources'] = []
+
+        # clean up any resources that may have been deleted
+        for rid in os.listdir(dir):
+            if not self._hasResource(rid, ckanPackage):
+                print "Removing deleted resource: %s" % rid
+                shutil.rmtree("%s/%s" % (dir, rid))
+
+        # save package modification info to mongo
+        packageWorkspace['last_used'] = datetime.datetime.utcnow()
+        workspaceCollection.update({'package_id': ckanPackage['id']}, packageWorkspace, upsert=True)
+
+        return (packageWorkspace, ckanPackage, dir, fresh)
+
     # process all of the resources
-    def _processResources(self, pkg, dir):
+    def _processResources(self, pkg, dir, pkgWorkspace):
         resources = []
+
+        # break up into 2 groups, first is metadata, this needs to be parsed first,
+        # second is data.  Pass the metadata group along with each data resource
+        # so a join can be preformed
+        metadataSheets = []
+        for r in pkgWorkspace:
+            if not r.get('metadata') == True:
+                continue
+            resp = self._processResource(pkg, r, dir, pkgWorkspace, metadataRun=True)
+            if resp != None:
+                for sheet in resp['files']:
+                    metadataSheets.append(sheet)
+
         for r in pkg['resources']:
-            resp = self._processResource(pkg, r, dir)
+            resp = self._processResource(pkg, r, dir, pkgWorkspace, metadataSheets=metadataSheets)
             if resp != None:
                 resources.append(resp)
         return resources
 
     # process and individual resource
-    def _processResource(self, pkg, r, dir):
+    def _processResource(self, pkg, r, dir, pkgWorkspace, metadataSheets=[], metadataRun=False):
+
+        workspaceResource = self._getById(pkgWorkspace['resources'], r['id'])
+        if workspaceResource == None:
+            workspaceResource = {}
+
+        if workspaceResource.get('ignore') == True:
+            print "Ignoring resource: %s" % r['name']
+            return
 
         # this is a url link
         if r['url_type'] == None:
             if re.match(r".*github.com.*", r['url']):
-                return self._processGitUrl(pkg, r, dir)
+                return self._processGitUrl(pkg, r, dir, workspaceResource, metadataSheets, metadataRun)
             return self._resourceError(r, 'Unrecognized git url')
 
         ext = self._getFileExtension(r['name'])
@@ -134,7 +255,7 @@ class WorkspaceController(PackageController):
                     return parseData
                 else:
                     print "Found zipfile: %s and changes detected" % r['name']
-                    shutil.rmtree(zipDir = "%s/%s/files" % (dir, r['id']))
+                    shutil.rmtree("%s/%s/files" % (dir, r['id']))
             else:
                 print "Found new zipfile: %s extracting..." % r['name']
 
@@ -154,14 +275,22 @@ class WorkspaceController(PackageController):
                     for i in range(0, len(parts)-1):
                         zipPath += parts[i]+"/"
 
+                    # create id for individual file
+                    name = re.sub(r".*/", "", info.filename)
+                    id = self._getFileId(r['id'], zipPath, name)
+
+                    #extract individual file
                     z.extract(info, "%s" % zipDir)
 
                     file = {
-                        "name" : re.sub(r".*/", "", info.filename),
+                        "id" : id,
+                        "name" : name,
                         "location" : "%s/%s" % (re.sub(self.workspaceDir, "", zipDir), zipPath)
                     }
-                    self._processFile(file, None)
                     files.append(file)
+
+                    self._processFile(file, files, r['id'], workspaceResource, metadataSheets, metadataRun)
+
             z.close()
 
             info = {
@@ -188,10 +317,15 @@ class WorkspaceController(PackageController):
                     return parseData
                 else:
                     print "Found data file: %s and changes detected" % r['name']
-                    os.remove("%s/%s/files/%s" % (dir, r['id'], r['name']))
             else:
                 print "Found new data file: %s extracting..." % r['name']
 
+            # TODO: we shouldn't always have to remove the symlink...
+            if os.path.exists("%s/%s/files/%s" % (dir, r['id'], r['name'])):
+                os.remove("%s/%s/files/%s" % (dir, r['id'], r['name']))
+
+            # get the resource file id
+            id = self._getFileId(r['id'], "", r['name'])
 
             # init resource dir
             self._initResourceDir(r, dir)
@@ -200,15 +334,18 @@ class WorkspaceController(PackageController):
             os.symlink(ckanLocation, "%s/%s/files/%s" % (dir, r['id'], r['name']))
 
             file = {
+                "id" : id,
                 "name" : r['name'],
                 "location" : "%s/%s/files/" % (re.sub(self.workspaceDir, "", dir), r['id'])
             }
-            self._processFile(file, None)
+            files = [file]
+
+            self._processFile(file, files, r['id'], workspaceResource, metadataSheets, metadataRun)
 
             info = {
                 "name" : r["name"],
                 "id"   : r["id"],
-                "files" : [file],
+                "files" : files,
                 "type" : "datafile",
                 "url_type" : r["url_type"],
                 "md5" : self._hashfile(ckanLocation)
@@ -220,7 +357,7 @@ class WorkspaceController(PackageController):
 
         return None
 
-    def _processGitUrl(self, pkg, r, dir):
+    def _processGitUrl(self, pkg, r, dir, pkgWorkspace, metadataSheets, metadataRun):
         print "Found Git Repo"
 
         gitDir = "%s/%s" % (dir, r['id'])
@@ -292,13 +429,15 @@ class WorkspaceController(PackageController):
             for f in files:
                 if self._isDataFile(f):
                     parseData['files'].append({
-                        "name" : f,
+                        "id" : self._getFileId(r['id'], root, f['name']),
+                        "name" : f['name'],
                         "location" : re.sub(self.workspaceDir, "", root)
                     })
 
         # now parse information for known data files
         for file in parseData['files']:
-            self._processFile(file, None)
+            workspaceResource = self._getById(pkgWorkspace['resources'], r['id'])
+            self._processFile(file, parseData['files'], r['id'], workspaceResource, metadataSheets, metadataRun)
 
         self._saveJson("%s/%s/info.json" % (dir, r['id']), parseData)
 
@@ -306,30 +445,52 @@ class WorkspaceController(PackageController):
 
     # actually parse file information object
     # must have name and location
-    def _processFile(self, f, config):
+    def _processFile(self, f, filesArr, rid, resourceConfig, metadataSheets, metadataRun):
         ext = self._getFileExtension(f['name'])
 
+        # at this point, check type and bail out if we are on a metadata and this is not metadata or vice versa
+        # TODO: THIS IS WHAT YOU ARE WORKING ON
+
+        # how should be parse this file?
         dataLayout = 'row'
         if 'layout' in f:
             dataLayout = f['layout']
         elif config != None:
-            if 'layout' in config:
+            if config.get('type') == 'metadata':
+                dataLayout = 'row'
+            elif 'layout' in config:
                 dataLayout = config['layout']
 
         data = []
         if ext == "csv":
-            data = self._processCsv(f)
+            self._processCsv(f, dataLayout, resourceConfig, metadataSheets)
         elif ext == "tsv" or ext == "spectra":
-            data = self._processTsv(f)
+            self._processTsv(f, dataLayout, resourceConfig, metadataSheets)
+        elif ext == "xlsx" or ext == "xls":
+            # an excel file is going to actually expand to several files
+            # so pass the files array so the placeholder can be removed
+            # and the new 'sheet' files can be inserted
+            self._processExcel(f, filesArr, rid, dataLayout, resourceConfig, metadataSheets)
 
-        f['layout'] = dataLayout
-        f['attributes'] = self._processFileArray(data, dataLayout)
+
 
     # given a data array [[]], process based on config
     #  - type row = attribute names are in the first row
     #  - type col = attribute names are in the first col
-    def _processFileArray(self, data, layout):
+    #
+    # layout - row || column
+    # sheetInfo - the sheet response object
+    # TODO: this needs to have access to all metadata file information,
+    #       Should be able to set match counts
+    def _processSheetArray(self, data, layout, sheetInfo, resourceConfig, metadataSheets):
         ranges = self._getDataRanges(data)
+
+        # get config for sheet if on exists
+        sheetConfig = None
+        for sheet in sheetInfo['files']:
+            if sheet['id'] == sheetInfo['id'] and sheet.get('sheet') == sheetInfo.get('sheet'):
+                sheetConfig = sheet
+                break
 
         localRange = {}
         globalRange = None
@@ -339,23 +500,45 @@ class WorkspaceController(PackageController):
             globalRange = ranges[0]
             localRange = ranges[1]
 
+        # no local data
+        if localRange['start'] == localRange['end']:
+            return
+
+        # find all the attribute types based on layout
         attrTypes = []
         if layout == "row":
             for i in range(0, len(data[localRange['start']])):
-                info = self._parseAttrTypes(data[localRange['start']][i], [localRange['start'], i],  "local")
+                info = self._parseAttrType(data[localRange['start']][i], [localRange['start'], i],  "local")
                 attrTypes.append(info)
         else:
             names = []
-            for i in range(localRange['start'], localRange['stop']):
-                info = self._parseAttrTypes(data[i][0], [i,0], "local")
+            for i in range(localRange['start'], localRange['end']):
+                info = self._parseAttrType(data[i][0], [i,0], "local")
                 attrTypes.append(info)
+        sheet['attributes'] = attrTypes
 
-        return attrTypes
+        if sheetConfig.get('metadata') == True:
+            joinlib.processMetadataSheet(data, sheetConfig, sheet)
+        else:
+            # now find the spectra count based on layout
+            if layout == "row":
+                sheet['spectra_count'] = localRange['end'] - localRange['start']
+            else:
+                i = 0
+                for i in reversed(range(len(data[localRange['start']]))):
+                    if data[localRange['start']] != None or data[localRange['start']] != '':
+                        break
+                sheet['spectra_count'] = i
+
+            # finally find match counts for metadata joins
+            joinlib.matchMetadataSheets(data, localRange, layout, sheetInfo, metadataSheets)
+
+
 
 
     # parse out the attribute information from the attribute information
     # TODO: check for units and attribute data type
-    def _parseAttrTypes(self, name, pos, attributeLocality, isData=False):
+    def _parseAttrType(self, name, pos, attributeLocality, isData=False):
         original = name
 
         # clean up string
@@ -368,6 +551,7 @@ class WorkspaceController(PackageController):
         if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
             type = "wavelength"
         elif re.match(r".*__d($|\s)", name) or isData:
+            name = re.sub(r".*__d($|\s)", "", name)
             type = "data"
 
         attr = {
@@ -379,7 +563,9 @@ class WorkspaceController(PackageController):
         }
         if original != name:
             attr["original"] = original
-        
+
+        return attr
+
 
 
     # find the table ranges (is there one or two)
@@ -411,6 +597,8 @@ class WorkspaceController(PackageController):
         if started and len(ranges) < 2:
             r['end'] = i
             ranges.append(r)
+        elif not started and len(ranges) == 0:
+            ranges.append(r)
 
         return ranges
 
@@ -427,22 +615,88 @@ class WorkspaceController(PackageController):
 
         return True
 
-    def _processCsv(self, f):
-        return self._processSeperatorFile(f, ",")
+    # src:
+    #  https://github.com/python-excel/xlrd
+    # help:
+    #  http://www.youlikeprogramming.com/2012/03/examples-reading-excel-xls-documents-using-pythons-xlrd/
+    #  https://secure.simplistix.co.uk/svn/xlrd/trunk/xlrd/doc/xlrd.html?p=4966
+    def _processExcel(self, f, files, rid, layout, resourceConfig, metadataSheets):
+        # remove the place holder, the sheets will be the actual 'files'
 
-    def _processTsv(self, f):
-        return self._processSeperatorFile(f, "\t")
+        fullPath = "%s%s%s" % (self.workspaceDir, f['location'], f['name'])
+
+        try:
+            workbook = xlrd.open_workbook(fullPath)
+            sheets = workbook.sheet_names()
+
+            for sheet in sheets:
+                sheetInfo = {
+                    "id" : self._getFileId(rid, f['location'], "%s-%s" %  (f['name'], sheet) ),
+                    "sheet" : sheet,
+                    "name" : f['name'],
+                    "location" : f['location'],
+                    "layout" : layout
+                }
+                data = self._getWorksheetData(workbook.sheet_by_name(sheet))
+                self._processSheetArray(data, layout, sheetInfo, resourceConfig, metadataSheets)
+                files.append(sheetInfo)
+
+        #TODO: how do we really want to handle this?
+        except Exception as e:
+            f['error'] = True
+            f['message'] = e
+
+        if not 'error' in f:
+            files.remove(f)
+
+    def _getWorksheetData(self, sheet):
+        data = []
+        for i in range(sheet.nrows):
+            row = []
+            for j in range(sheet.ncols):
+                row.append(str(sheet.cell_value(i, j)))
+            data.append(row)
+        return data
+
+
+    def _processCsv(self, f, layout, resourceConfig, metadataSheets):
+        self._processSeperatorFile(f, ",", layout, resourceConfig, metadataSheets)
+
+    def _processTsv(self, f, layout, resourceConfig, metadataSheets):
+        self._processSeperatorFile(f, "\t", layout, resourceConfig, metadataSheets)
 
     # parse a csv or tsv file location into array
-    def _processSeperatorFile(self, f, separator):
+    def _processSeperatorFile(self, f, separator, layout, resourceConfig, metadataSheets):
         with open("%s%s%s" % (self.workspaceDir, f['location'], f['name']), 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
-            arr = []
+            data = []
             for row in reader:
-                arr.append(row)
+                data.append(row)
             csvfile.close()
-            return arr
 
+            f['layout'] = layout
+            self._processSheetArray(data, layout, f, resourceConfig, metadataSheets)
+
+
+
+
+    #
+    # HELPERS
+    #
+
+    # given an array of objects that have an id attribute, get one by id
+    def _getById(self, arr, id):
+        for obj in arr:
+            if obj.get('id') == id:
+                return obj
+        return None
+
+
+    # is a file marked as metadata
+    def _isMetadata(self, f):
+        if 'metadata' in f:
+            return f['metadata']
+        return False
 
     # is this a known data file type (based on extension)
     def _isDataFile(self, filename):
@@ -492,6 +746,13 @@ class WorkspaceController(PackageController):
         json.dump(data, f)
         f.close()
 
+    # get the md5 of a resource file
+    # takes the resource id, local path (if github or expanded zip), and filename
+    def _getFileId(self, rid, path, name):
+        m = hashlib.md5()
+        m.update("%s%s%s" % (rid, path, name))
+        return m.hexdigest()
+
     # returns the md5 hash of a file, file should be a string location
     def _hashfile(self, file):
         f = open(file, 'rb')
@@ -506,3 +767,10 @@ class WorkspaceController(PackageController):
         md5 = hasher.hexdigest()
         f.close()
         return md5
+
+    # does the ckan package contain the resource id
+    def _hasResource(self, rid, pkg):
+        for r in pkg['resources']:
+            if rid == r['id']:
+                return True
+        return False
