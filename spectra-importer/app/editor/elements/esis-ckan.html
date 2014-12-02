@@ -120,7 +120,7 @@
 		        });
 			},
 
-			setParseInfo : function(pkgid, resources, callback) {
+			setParseInfo : function(pkgid, resource, callback) {
 				$.ajax({
 		            url: esis.host + '/workspace/setParseInfo',
 		            type : 'POST',
@@ -129,7 +129,30 @@
 				    },
 				    data : {
 				    	package_id : pkgid,
-				    	resources : JSON.stringify(resources)
+				    	resource : JSON.stringify(resource)
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
+			// very similar to setParseInfo
+			updateJoin : function(pkgid, rid, metadata, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/updateJoin',
+		            type : 'POST',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+				    data : {
+				    	package_id : pkgid,
+				    	resource_id : rid,
+				    	metadata : JSON.stringify(metadata)
 				    },
 		            success: function(response) {
 		                callback(null, response);
