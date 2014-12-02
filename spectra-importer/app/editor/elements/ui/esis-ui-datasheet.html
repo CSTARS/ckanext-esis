@@ -3,7 +3,7 @@
 <link rel="import" href="../../components/paper-button/paper-button.html" />
 <link rel="import" href="../../components/core-collapse/core-collapse.html" />
 
-<polymer-element name="esis-ui-datasheet" attributes="datasheet showName">
+<polymer-element name="esis-ui-datasheet" attributes="resourceId datasheet showName">
 	<template>
 		<style>
             :host{
@@ -51,7 +51,8 @@
                 
                 <template bind if="{{datasheet.metadata}}">
                     <esis-ui-metadata 
-                        metadata="{{datasheet}}">
+                        metadata="{{datasheet}}"
+                        resourceId="{{resourceId}}">
                     </esis-ui-metadata>
                 </template>
             </div>
@@ -77,7 +78,8 @@
                     tabindex="0" 
                     aria-checked="true" 
                     aria-label="Row Format" 
-                    class="core-selected">
+                    class="core-selected"
+                    on-tap="{{updateFormat}}">
                 </paper-radio-button>
                 <paper-radio-button 
                     name="column" 
@@ -85,7 +87,8 @@
                     role="radio" 
                     tabindex="0" 
                     aria-checked="false" 
-                    aria-label="Column Format">
+                    aria-label="Column Format"
+                    on-tap="{{updateFormat}}">
                 </paper-radio-button>
             </paper-radio-group>
 
@@ -188,6 +191,34 @@
                 this.showWavelengths = false;
                 //this.datasheet.addEventListener('datasheet-updated', this._setAttributes.bind(this));
 			},
+
+            updateFormat : function() {
+                var resource = {
+                    id : this.resourceId,
+                    datasheets : [{
+                        id : this.datasheet.id,
+                        layout : this.datasheet.layout,
+                        ignore : this.datasheet.ignore ? true : false
+                    }]
+                };
+
+                document.querySelector('esis-ckan').setParseInfo(
+                    this.ds.package_id, 
+                    resource,
+                    function(err, resp){
+                        if( err ) alert("Error updating datasheet :(");
+
+                        for( var i = 0; i < resp.datasheets.length; i++ ) {
+                            if( resp.datasheets[i].id == this.datasheet.id ) {
+                                for( var key in resp.datasheets[i] ) {
+                                    this.datasheet[key] = resp.datasheets[i][key];
+                                }
+                                return;
+                            }
+                        }
+                    }.bind(this)
+                ); 
+            },
 
             _setAttributes : function() {
 

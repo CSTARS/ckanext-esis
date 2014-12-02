@@ -1,7 +1,7 @@
 <link rel="import" href="esis-ui-card.html"/>
 <link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
 
-<polymer-element name="esis-ui-metadata" attributes="metadata">
+<polymer-element name="esis-ui-metadata" attributes="resourceId metadata">
 	<template>
 		<style>
 			:host {
@@ -34,7 +34,7 @@
 			    </div>
 			</div>
 			<div horizontal layout style="margin: 30px 45px" hidden?="{{metadata.matchType != 'filename'}}" >
-			    <paper-checkbox id="looseMatch" on-tap="{{_onLooseMatch}}0" checked></paper-checkbox>
+			    <paper-checkbox id="looseMatch" on-tap="{{_onLooseMatch}}" ></paper-checkbox>
 			    <div style="padding-left: 20px">
 			     	<div>Exact match</div>
 			     	<div style="font-size:12px;color:#888">
@@ -51,8 +51,9 @@
 			    </div>
 			</div>
 
-			<template bind if="{{metadata.matchCount != null}}">
-				<div>Matched to {{metadata.matchCount}} measurements</div>
+			<template bind if="{{matchCount != -1}}">
+				<div hidden?="{{!loadingMatchCount}}">Joining...</div>
+				<div hidden?="{{loadingMatchCount}}" class="{{matchCount > 0 ? 'green' :''}}">Matched to {{matchCount}} measurements</div>
 			</template>
 
 		</div> 
@@ -64,9 +65,11 @@
 			joinAttrs : [],
 			label : '',
 
-			//observe : {
-			//	'metadata.joinId' : '_updateDatastore',
-			//},
+			matchCount : -1,
+			loadingMatchCount : false,
+			updateTimer : -1,
+
+
 			observe : {
 				metadata : 'update'
 			},
@@ -91,35 +94,114 @@
 
 				this.async(function(){
 					this.$.joinId.value = this.metadata.matchAttribute || '';
-				});
-			},
 
-			_updateDatastore : function() {
-				if( this.metadata.joinId == '' ) return;
-				document.querySelector('esis-datastore').join(this.metadata);
+					if( this.metadata.matchType == 'filename' ) {
+						this.$.filenameMatch.setAttribute('checked','checked');
+						this.$.worksheetMatch.removeAttribute('checked');
+					} else if ( this.metadata.matchType == 'sheetname' ) {
+						this.$.worksheetMatch.setAttribute('checked','checked');
+						this.$.filenameMatch.removeAttribute('checked');
+					} else {
+						this.$.worksheetMatch.removeAttribute('checked');
+						this.$.filenameMatch.removeAttribute('checked');
+					}
+
+					if( this.metadata.looseMatch ) {
+						this.$.looseMatch.setAttribute('checked','checked');
+					} else {
+						this.$.looseMatch.removeAttribute('checked');
+					}
+
+					this._updateCounts();
+				});
 			},
 
 			_onWorksheetMatch : function() {
 				this.async(function(){
 					this.$.filenameMatch.removeAttribute('checked');
-					this.metadata.matchType = 'sheetname';
-					this._updateDatastore();
+
+					if( this.$.worksheetMatch.checked ) {
+						this.metadata.matchType = 'sheetname';
+					} else {
+						this.metadata.matchType = 'attribute';
+					}
+
+					this._updateServer();
 				});
 			},
 
 			_onFilenameMatch : function() {
 				this.async(function(){
 					this.$.worksheetMatch.removeAttribute('checked');
-					this.metadata.matchType = 'filename'
-					this._updateDatastore();
+
+					if( this.$.filenameMatch.checked ) {
+						this.metadata.matchType = 'filename';
+						this.metadata.looseMatch = this.$.looseMatch.checked;
+					} else {
+						this.metadata.matchType = 'attribute';
+					}
+
+					this._updateServer();
 				});	
 			},
 
 			_onLooseMatch : function() {
 				this.async(function(){
 					this.metadata.looseMatch = !this.$.looseMatch.checked;
-					this._updateDatastore();
+
+					this._updateServer();
 				});	
+			},
+
+			_updateServer : function() {
+				this.loadingMatchCount = true;
+				this.matchCount = 0;
+
+				if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
+				this.updateTimer = setTimeout(function(){
+					this.updateTimer = -1;
+					this._join();
+				}.bind(this), 1000);
+			},
+
+			_join : function() {
+
+				var matchType = this.metadata.matchType;
+				if( !matchType || matchType == '' ) matchType = 'attribute';
+
+				document.querySelector('esis-ckan').updateJoin(
+					document.querySelector('esis-datastore').package_id,
+					this.resourceId,
+					{
+						id : this.metadata.id,
+						layout : 'row',
+						matchAttribute : this.metadata.matchAttribute,
+						matchType : matchType,
+						metadata : true,
+						looseMatch : this.metadata.looseMatch ? true : false
+					},
+					function(err, resp){
+						this.loadingMatchCount = false;
+						if( err ) alert('Error updating join information :(');
+						console.log(resp);
+						for( var key in resp ) {
+							this.metadata[key] = resp[key];
+						}
+						this._updateCounts();
+					}.bind(this)
+				);
+			},
+
+			_updateCounts : function() {
+				if( !this.metadata.matches ) {
+					this.matchCount = -1;
+					return;
+				}
+
+				this.matchCount = 0;
+				for( var key in this.metadata.matches ) {
+					this.matchCount += this.metadata.matches[key]
+				}
 			}
 
 		});

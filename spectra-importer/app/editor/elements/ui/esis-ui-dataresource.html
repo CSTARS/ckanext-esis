@@ -93,7 +93,7 @@
                 </table>
             </core-collapse>
             <core-collapse opened="{{edit && !loading}}">
-                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" edit></esis-ui-datasheet>
+                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceId="{{resource.id}}" edit></esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -142,7 +142,7 @@
                     </div>
                 </div>
 
-                <esis-ui-datasheet datasheet="{{currentFile}}" edit showName></esis-ui-datasheet>
+                <esis-ui-datasheet datasheet="{{currentFile}}" resourceId="{{resource.id}}" edit showName></esis-ui-datasheet>
             </core-collapse>
         </template>
 
