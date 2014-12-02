@@ -1,4 +1,5 @@
 # logic for doing joins of data to matadata
+import re
 
 class SheetJoin:
 
@@ -7,9 +8,9 @@ class SheetJoin:
     def processMetadataSheet(self, data, sheetConfig, sheet):
         matchAttr = sheetConfig['matchAttribute']
         matchValues = []
-        for i in range(len(data[0])):
+        for i in range(0, len(data[0])):
             if data[0][i] == matchAttr:
-                for j in range(len(data)):
+                for j in range(1, len(data)):
                     matchValues.append(data[j][i])
                 break
         sheet['matchValues'] = matchValues
@@ -25,25 +26,35 @@ class SheetJoin:
         for metaSheet in metadataSheets:
             self._matchMetadataSheet(data, range, layout, sheetInfo, metaSheet)
 
-    def _matchMatadataSheet(self, data, range, layout, sheetInfo, metaSheet):
-        # are we matching on filename
-        if metaSheet['matchType'] == 'filename':
+    def _matchMetadataSheet(self, data, range, layout, sheetInfo, metaSheet):
+        config = metaSheet['config']
 
-            if sheetInfo['name'] in metaSheet['matchValues']:
-                return True
+        if not 'matches' in metaSheet['datasheet']:
+            metaSheet['datasheet']['matches'] = {}
+
+        # are we matching on filename
+        if config['matchType'] == 'filename':
+
+            if config['looseMatch']:
+                return self._looseMatch(sheetInfo['id'], sheetInfo['name'], metaSheet['datasheet'])
             else:
-                return False
-            # TODO: add exact match
+                if sheetInfo['name'] in metaSheet['datasheet']['matchValues']:
+                    metaSheet['datasheet']['matches'][sheetInfo['id']] = 1
+                else:
+                    self._removeIdFromMeta(metaSheet['datasheet'], sheetInfo['id'])
 
         # are we matching to sheet name
-        elif metaSheet['matchType'] == 'sheetname':
+        elif config['matchType'] == 'sheetname':
 
-            if sheetInfo['name'] in metaSheet['matchValues']:
-                return True
+            if config['looseMatch']:
+                return self._looseMatch(sheetInfo['id'], sheetInfo['sheetname'], metaSheet['datasheet'])
             else:
-                return False
+                if sheetInfo['sheetname'] in metaSheet['datasheet']['matchValues']:
+                    metaSheet['datasheet']['matches'][sheetInfo['id']] = 1
+                else:
+                    self._removeIdFromMeta(metaSheet['datasheet'], sheetInfo['id'])
 
-        elif metaSheet['matchType'] == 'attribute':
+        elif config['matchType'] == 'attribute':
             self._attributeMatch(data, range, layout, sheetInfo, metaSheet)
 
 
@@ -53,12 +64,12 @@ class SheetJoin:
         index = -1
         if layout == 'row':
             for i in range(len(data[dataRange['start']])):
-                if data[dataRange['start']][i] == metaSheet['matchAttribute']:
+                if data[dataRange['start']][i] == metaSheet['config']['matchAttribute']:
                     index = i
                     break
         else:
             for i in range(dataRange['start'], dataRange['stop']):
-                if data[i][0] == metaSheet['matchAttribute']:
+                if data[i][0] == metaSheet['config']['matchAttribute']:
                     index = i
                     break
 
@@ -74,20 +85,18 @@ class SheetJoin:
         count = 0
         if layout == 'row':
             for i in range(dataRange['start']+1, dataRange['stop']):
-                if data[i][index] in metaSheet['matchValue']:
+                if data[i][index] in metaSheet['datasheet']['matchValue']:
                     count += 1
         else:
             for i in range(1, len(data[index])):
-                if data[index][i] in metaSheet['matchValue']:
+                if data[index][i] in metaSheet['datasheet']['matchValue']:
                     count += 1
 
         # if count is 0, just remove, otherwise set count
         if count == 0:
             self._removeIdFromMeta(metaSheet, id)
         else:
-            if not 'matches' in metaSheet:
-                metaSheet['matches'] = {}
-            metaSheet['matches']['id'] = count
+            metaSheet['datasheet']['matches']['id'] = count
 
 
     ### HELPERS ###
@@ -101,3 +110,11 @@ class SheetJoin:
             return sheetInfo['id']
         else:
             return "%s-%s" % (sheetInfo['id'] % sheetInfo['sheet'])
+
+    def _looseMatch(self, id, name, datasheet):
+        for val in datasheet['matchValues']:
+            reg = r".*%s.*" % val
+            if re.match(reg, name):
+                datasheet['matches'][id] = 1
+                return
+        self._removeIdFromMeta(datasheet, id)

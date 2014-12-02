@@ -109,6 +109,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('process_workspace', '/workspace/process', controller=controller, action='processWorkspace')
         map.connect('process_resource', '/workspace/processResource', controller=controller, action='processResource')
         map.connect('set_parse_info', '/workspace/setParseInfo', controller=controller, action='setParseInformation')
+        map.connect('update_join', '/workspace/updateJoin', controller=controller, action='updateJoin')
 
         return map
 
