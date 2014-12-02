@@ -57,7 +57,21 @@ class ProcessWorkspace:
         if workspaceResource.get('ignore') == True:
             return None
 
+        # first we will process any excel sheets
+        # we will group these together by file so we don't keep opening/closing file
+        excelFiles = {}
         for datasheet in datasheets:
+            if 'sheetname' in datasheet:
+                if datasheet['name'] in excelFiles:
+                    excelFiles[datasheet['name']].append(datasheet)
+                else:
+                    excelFiles[datasheet['name']] = [datasheet]
+        for file, sheets in excelFiles.iteritems():
+            self._processExcelSheets(sheets, workspaceResource, metadataSheets, metadataRun)
+
+        for datasheet in datasheets:
+            if 'sheetname' in datasheet: # this isn't a file, it was added by processing a excel file
+                continue
             self._processFile(datasheet, datasheets, ckanResource['id'], workspaceResource, metadataSheets, metadataRun)
 
 
@@ -65,9 +79,6 @@ class ProcessWorkspace:
     # must have name and location
     def _processFile(self, datasheet, datasheets, rid, workspaceResource, metadataSheets, metadataRun):
         ext = self._getFileExtension(datasheet['name'])
-
-        if workspaceResource == None:
-            workspaceResource = {}
 
         # at this point, check type and bail out if we are on a metadata and this is not metadata or vice versa
         # we have to wait till we open up and look at an excel file before we can make this decision, thus it's in
@@ -95,8 +106,6 @@ class ProcessWorkspace:
     #
     # layout - row || column
     # sheetInfo - the sheet response object
-    # TODO: this needs to have access to all metadata file information,
-    #       Should be able to set match counts
     def _processSheetArray(self, data, sheetInfo, resourceConfig, metadataSheets):
         # get config for sheet if on exists
         sheetConfig = self._getById(resourceConfig.get('datasheets'), sheetInfo['id'])
@@ -140,10 +149,15 @@ class ProcessWorkspace:
                 info = self._parseAttrType(data[localRange['start']][i], [localRange['start'], i],  "local")
                 attrTypes.append(info)
         else:
-            names = []
             for i in range(localRange['start'], localRange['stop']):
                 info = self._parseAttrType(data[i][0], [i,0], "local")
                 attrTypes.append(info)
+
+        if globalRange != None:
+            for i in range(globalRange['start'], globalRange['stop']):
+                info = self._parseAttrType(data[i][0], [i,0], "file")
+                attrTypes.append(info)
+
         sheetInfo['attributes'] = attrTypes
 
         if sheetConfig != None and sheetConfig.get('metadata') == True:
@@ -162,18 +176,6 @@ class ProcessWorkspace:
             # finally find match counts for metadata joins
             joinlib.matchMetadataSheets(data, localRange, layout, sheetInfo, metadataSheets)
 
-
-    # is a row array empty
-    def _isEmptyRow(self, row):
-        if len(row) == 0:
-            return True
-
-        for i in range(0, len(row)):
-            if row[i] != "" or row[i] != None:
-                return False
-
-        return True
-
     # src:
     #  https://github.com/python-excel/xlrd
     # help:
@@ -191,7 +193,7 @@ class ProcessWorkspace:
             for sheet in sheets:
                 sheetInfo = {
                     "id" : self._getFileId(rid, datasheet['location'], "%s-%s" %  (datasheet['name'], sheet) ),
-                    "sheet" : sheet,
+                    "sheetname" : sheet,
                     "name" : datasheet['name'],
                     "location" : datasheet['location'],
                 }
@@ -209,8 +211,25 @@ class ProcessWorkspace:
             datasheet['error'] = True
             datasheet['message'] = e.message.message
 
-        if not 'error' in datasheet:
+        # if we are on the second run and there is no error, remove the excel file as a 'sheet'
+        if not 'error' in datasheet and not metadataRun:
             datasheets.remove(datasheet)
+
+    def _processExcelSheets(self, sheets, resourceConfig, metadataSheets, metadataRun):
+        if len(sheets) == 0:
+            return
+
+        fullPath = "%s%s%s" % (self.workspaceDir, sheets[0]['location'], sheets[0]['name'])
+
+        workbook = xlrd.open_workbook(fullPath)
+
+        for sheetInfo in sheets:
+            # are we on the metadata run and should we be parsing this sheet?
+            if not self._parseOnThisRun(sheetInfo, resourceConfig, metadataRun):
+                continue
+
+            data = self._getWorksheetData(workbook.sheet_by_name(sheetInfo['sheetname']))
+            self._processSheetArray(data, sheetInfo, resourceConfig, metadataSheets)
 
     def _getWorksheetData(self, sheet):
         data = []
@@ -304,13 +323,13 @@ class ProcessWorkspace:
             if self._isEmptyRow(data[i]):
                 if started:
                     r['stop'] = i
-                    ranges.push(r)
+                    ranges.append(r)
+                    started = False
                     if len(ranges) == 2:
                         break
                     else:
                         r = {"start":0, "stop":0}
-                else:
-                    continue
+                continue
 
             if not started:
                 r['start'] = i
@@ -323,6 +342,19 @@ class ProcessWorkspace:
             ranges.append(r)
 
         return ranges
+
+
+
+    # is a row array empty
+    def _isEmptyRow(self, row):
+        if len(row) == 0:
+            return True
+
+        for i in range(0, len(row)):
+            if row[i] != "" and row[i] != None:
+                return False
+
+        return True
 
     def _getMetadataSheets(self, resources, workspacePackage):
         sheets = []

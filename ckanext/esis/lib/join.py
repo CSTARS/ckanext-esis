@@ -85,11 +85,11 @@ class SheetJoin:
         count = 0
         if layout == 'row':
             for i in range(dataRange['start']+1, dataRange['stop']):
-                if data[i][index] in metaSheet['datasheet']['matchValue']:
+                if data[i][index] in metaSheet['datasheet']['matchValues']:
                     count += 1
         else:
             for i in range(1, len(data[index])):
-                if data[index][i] in metaSheet['datasheet']['matchValue']:
+                if data[index][i] in metaSheet['datasheet']['matchValues']:
                     count += 1
 
         # if count is 0, just remove, otherwise set count
@@ -106,10 +106,10 @@ class SheetJoin:
                 del metaSheet['matches'][id]
 
     def getMatchId(self, sheetInfo):
-        if not 'sheet' in sheetInfo:
+        if not 'sheetname' in sheetInfo:
             return sheetInfo['id']
         else:
-            return "%s-%s" % (sheetInfo['id'] % sheetInfo['sheet'])
+            return "%s-%s" % (sheetInfo['id'], sheetInfo['sheetname'])
 
     def _looseMatch(self, id, name, datasheet):
         for val in datasheet['matchValues']:
