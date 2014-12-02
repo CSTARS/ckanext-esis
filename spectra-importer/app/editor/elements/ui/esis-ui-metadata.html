@@ -52,7 +52,10 @@
 			</div>
 
 			<template bind if="{{matchCount != -1}}">
-				<div hidden?="{{!loadingMatchCount}}">Joining...</div>
+				<div hidden?="{{!loadingMatchCount}}">
+					<div>Joining...</div>
+           			<paper-progress indeterminate></paper-progress>
+				</div>
 				<div hidden?="{{loadingMatchCount}}" class="{{matchCount > 0 ? 'green' :''}}">Matched to {{matchCount}} measurements</div>
 			</template>
 

@@ -19,6 +19,7 @@
                 margin: 15px 0 3px 0;
             }
             .options {
+                border-top: 1px solid #eee;
                 margin: 0 5px 30px 5px;
                 padding: 0 5px 5px 5px;
             }
@@ -33,6 +34,10 @@
                 display: inline-block;
                 padding-top: 12px;
                 vertical-align: top;
+            }
+            #wavelengths {
+                color: #888;
+                font-size: 12px;
             }
 		</style>
 
@@ -59,7 +64,7 @@
         </div>
 
         <div horizontal layout style="margin: 10px 0 7px 20px" hidden?="{{datasheet.metadata}}">
-            <paper-checkbox checked="{{datasheet.ignore}}" style="margin-right:15px"></paper-checkbox>
+            <paper-checkbox checked="{{datasheet.ignore}}" style="margin-right:15px" on-tap="{{save}}"></paper-checkbox>
             <div>
                 <div>Ignore</div>
                 <div style="color:#888; font-size: 13px">This datasheet should not be parsed.</div>
@@ -79,7 +84,7 @@
                     aria-checked="true" 
                     aria-label="Row Format" 
                     class="core-selected"
-                    on-tap="{{updateFormat}}">
+                    on-tap="{{save}}">
                 </paper-radio-button>
                 <paper-radio-button 
                     name="column" 
@@ -88,7 +93,7 @@
                     tabindex="0" 
                     aria-checked="false" 
                     aria-label="Column Format"
-                    on-tap="{{updateFormat}}">
+                    on-tap="{{save}}">
                 </paper-radio-button>
             </paper-radio-group>
 
@@ -100,6 +105,11 @@
                 </div>
             </core-collapse>
         </div>
+
+        <template bind if="{{saving}}">
+            <div>Updating...</div>
+            <paper-progress indeterminate></paper-progress>
+        </template>
 
         <div hidden?="{{datasheet.ignore}}">
             <div>
@@ -173,6 +183,8 @@
 			chart : null,
 			maxLineCount : 30,
 
+            saving : false,
+
 			observe : {
                 'datasheet' : 'update',
 				'datasheet.attributes' : 'update'
@@ -192,7 +204,8 @@
                 //this.datasheet.addEventListener('datasheet-updated', this._setAttributes.bind(this));
 			},
 
-            updateFormat : function() {
+            save : function() {
+                this.saving = true;
                 var resource = {
                     id : this.resourceId,
                     datasheets : [{
@@ -206,6 +219,7 @@
                     this.ds.package_id, 
                     resource,
                     function(err, resp){
+                        this.saving = false;
                         if( err ) alert("Error updating datasheet :(");
 
                         for( var i = 0; i < resp.datasheets.length; i++ ) {

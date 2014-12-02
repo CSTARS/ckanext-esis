@@ -26,7 +26,10 @@
     <link rel="import" href="components/font-roboto/roboto.html">
     <link rel="import" href="components/core-item/core-item.html">
     <link rel="import" href="components/core-menu/core-submenu.html">
+    <link rel="import" href="components/paper-progress/paper-progress.html">
     <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
+    <link rel="import" href="components/paper-dropdown/paper-dropdown.html">
+    <link rel="import" href="components/paper-item/paper-item.html">
 
     <link rel="import" href="elements/ui/esis-attribute-name.html">
     <link rel="import" href="elements/esis-scaffold.html">
@@ -56,6 +59,9 @@
       html /deep/ .red-button {
         background-color: rgb(210, 63, 49);
         color: white;
+      }
+      html /deep/ paper-progress.red::shadow #activeProgress {
+        background-color: rgb(210, 63, 49);
       }
 
       html /deep/ paper-tabs::shadow #selectionBar {
@@ -132,7 +138,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.4:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.2.109:5000' : '';
 
     $.ajax({
         type : 'GET',

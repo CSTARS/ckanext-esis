@@ -164,6 +164,28 @@
 		        });
 			},
 
+			setDefaultLayout : function(pkgid, resourceList, layout, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/setDefaultLayout',
+		            type : 'POST',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+				    data : {
+				    	package_id : pkgid,
+				    	resources : JSON.stringify(resourceList),
+				    	layout : layout
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
 			getUsdaCommonName : function(codes, callback) {
 				$.ajax({
 		            url: esis.host + '/spectra/getUsdaCommonName?codes='+codes,

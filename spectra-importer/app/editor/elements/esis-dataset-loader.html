@@ -41,6 +41,11 @@
 				}.bind(this));
 			},
 
+			runAfterResourceAdd : function(workspaceData) {
+				this.data = workspaceData;
+				this._setData();
+			},
+
 			_setData : function() {
 				this.ds.editMode = true;
 				this.ds.package_id = this.data.package.id;

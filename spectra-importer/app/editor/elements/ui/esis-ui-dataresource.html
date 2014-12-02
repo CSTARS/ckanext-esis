@@ -8,6 +8,11 @@
                 margin: 0;
                 padding: 16px 8px;
             }
+            h4 span {
+                display: inline-block;
+                vertical-align: top;
+                padding-top: 12px;
+            }
             .nav {
                 text-align: center;
                 background-color: #f8f8f8
@@ -40,44 +45,60 @@
                 padding-top: 12px;
                 vertical-align: top;
             }
+            .menu .item {
+                padding: 10px;
+            }
+            paper-progress {
+                width: 100%
+            }
         </style>
 
         <paper-button style="float:right" on-tap="{{toggleEdit}}" raised?="{{edit}}">
             <core-icon icon="create" class="blue" hidden?="{{edit}}"></core-icon>
             <core-icon icon="check" class="green" hidden?="{{!edit}}"></core-icon>
         </paper-button>
-        <h4>{{resource.name}}
-            <template bind if="{{removing}}"><span style="color:red">Removing...</span></template>
-            <template bind if="{{loading}}"><span class="blue">Loading...</span></template>
+        <h4>
+            <span>{{resource.name}}</span>
+            <paper-icon-button
+                icon="more-vert" 
+                on-tap="{{toggleResourceMenu}}"
+                hidden?="{{!edit || loading || (resource.datasheets.length < 2 && !resource.ignore)}}">
+            </paper-icon-button>
         </h4>
 
+        <template bind if="{{loading || saving}}">
+            <span class="green" hidden?="{{saving}}">Loading...</span>
+            <span class="green" hidden?="{{loading}}">Updating...</span>
+            <paper-progress indeterminate></paper-progress>
+        </template>
 
-        <template bind if="{{resource.datasheets.length > 1 && edit && !loading}}">
-            <div layout horizontal>
-                <div flex>
+        <template bind if="{{removing}}">
+            <span style="color:red">Removing...</span>
+            <paper-progress indeterminate class="red"></paper-progress>
+        </template>
+
+
+        <paper-dropdown id="resourceMenu">
+            <div class="menu">
+                <div>
+                    <paper-icon-button icon="close" on-tap="{{toggleResourceMenu}}" style="float:right"><paper-icon-button>
+                </div>
+                <div class="item">
                     <div horizontal layout style="margin: 10px 0 20px 20px" hidden?="{{resource.metadata}}">
-                        <paper-checkbox checked="{{resource.ignore}}" style="margin-right:10px"></paper-checkbox>
+                        <paper-checkbox checked="{{resource.ignore}}" style="margin-right:10px" on-tap="{{updateIgnore}}"></paper-checkbox>
                         <div>
                             <div>Ignore Entire Resource</div>
                             <div style="color:#888; font-size: 13px">No datasheets in the resourse will be parsed.</div>
                         </div>
                     </div>
                 </div>
-                <div flex hidden?="{{resource.ignore}}">
-                    <paper-button on-tap="{{toggleChangeAll}}">
-                        <core-icon icon="hardware:{{showChangeAll ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}">
-                        </core-icon>
-                        Change All Layouts
-                    </paper-button>
-                    <core-collapse opened="{{showChangeAll}}">
-                        <paper-button raised on-tap="{{setAllToRow}}" style="margin:10px 0px 10px 50px">Set to Row Layout</paper-button>
-                        <paper-button raised on-tap="{{setAllToColumn}}" style="margin:10px 0px 10px 50px">Set to Column Layout</paper-button>
-                    </core-collapse>
+                <div hidden?="{{resource.ignore}}" class="item">
+                    <div style="margin-left:20px">Change All Layouts</div>
+                    <paper-button raised on-tap="{{setAllToRow}}" style="margin:10px 0px 10px 50px">Set to Row Layout</paper-button>
+                    <paper-button raised on-tap="{{setAllToColumn}}" style="margin:10px 0px 10px 50px">Set to Column Layout</paper-button>
                 </div>
             </div>
-
-            <div class="break" hidden?="{{resource.ignore}}"></div>
-        </template>
+        </paper-dropdown>
 
         <template bind if="{{resource.datasheets.length == 1 && !resource.ignore}}">
             <core-collapse opened="{{!edit}}">
@@ -101,19 +122,21 @@
             <core-collapse opened="{{!edit}}">
                 <table class="table">
                     <tr>
-                        <td>Name</td>
-                        <td>Spectra</td>
-                        <td>Format</td>
+                        <td style="font-weight:bold">Name</td>
+                        <td style="font-weight:bold">Spectra</td>
+                        <td style="font-weight:bold">Format</td>
                     </tr>
-                    <tr template repeat="{{file in resource.datasheets}}">
-                        <td class="name" ignore?="{{file.ignore}}">
-                            {{file.name}}
-                            <span hidden?="{{!file.sheet}}">({{file.sheet}})</span>
-                            <span hidden?="{{!file.ignore}}" class="orange"> - Ignored</span>
-                            <span hidden?="{{!file.metadata || file.ignore}}" class="blue"> - Metadata</span>
+                    <tr template repeat="{{datasheet in resource.datasheets}}">
+                        <td class="name" ignore?="{{datasheet.ignore}}">
+                            {{datasheet.name}}
+                            <span hidden?="{{!datasheet.sheet}}">({{file.sheet}})</span>
+                            <span hidden?="{{!datasheet.ignore}}" class="orange"> - Ignored</span>
+                            <span hidden?="{{!datasheet.metadata || datasheet.ignore}}" class="blue"> - Metadata</span>
                         </td>
-                        <td><span hidden?="{{!file.spectra_count || file.ignore || file.metadata}}">{{file.spectra_count}}</span></td>
-                        <td><span hidden?="{{file.ignore}}">{{file.layout}}</span></td>
+                        <td style="color:#888">
+                            <span hidden?="{{!datasheet.spectra_count || datasheet.ignore || datasheet.metadata}}">{{datasheet.spectra_count}}</span>
+                        </td>
+                        <td style="color:#888"><span hidden?="{{datasheet.ignore}}">{{datasheet.layout}}</span></td>
                     </tr>
                 </table>
             </core-collapse>
@@ -146,7 +169,7 @@
             </core-collapse>
         </template>
 
-        <div hidden?="{{!resource.ignore || edit}}">
+        <div hidden?="{{!resource.ignore}}">
             <span style="font-style:italic;color:#888">Ignored</span>
         </div>
 
@@ -166,8 +189,6 @@
             // is this the summary resource or full resource
             full : false,
             ds : null,
-
-            showChangeAll : false,
 
             datasheetIndex : 0,
             currentFile : null,
@@ -196,8 +217,17 @@
                 }
             },
 
+            toggleResourceMenu : function() {
+                this.$.resourceMenu.discoverDimensions();
+                this.$.resourceMenu.resizeHandler();
+                this.$.resourceMenu.toggle();
+            },
+
             updateSelected : function() {
                 var index = parseInt(this.datasheetIndex);
+                if( !this.resource.datasheets ) return;
+                if( this.resource.datasheets.length <= index ) return;
+
                 this.currentFile = this.resource.datasheets[index];
             },
 
@@ -211,22 +241,44 @@
                 this.currentFile = this.resource.datasheets[this.datasheetIndex];
             },
 
-            toggleChangeAll : function() {
-                this.showChangeAll = !this.showChangeAll;
-            },
-
             setAllToRow : function() {
-                for( var i = 0; i < this.resource.datasheets.length; i++ ) {
-                    this.resource.datasheets[i].layout = 'row'
-                }
-                this.showChangeAll = false;
+                this.updateAllLayout('row');
             },
 
             setAllToColumn : function() {
+                this.updateAllLayout('column');
+            },
+
+            updateAllLayout : function(layout) {
+                this.saving = true;
+                this.toggleResourceMenu();
+
+                var arr = [];
                 for( var i = 0; i < this.resource.datasheets.length; i++ ) {
-                    this.resource.datasheets[i].layout = 'column'
+                    arr.push({
+                        id : this.resource.datasheets[i].id,
+                        layout : layout
+                    });
                 }
-                this.showChangeAll = false;
+
+                var resource = {
+                    id : this.resource.id,
+                    datasheets : arr
+                };
+
+                document.querySelector('esis-ckan').setParseInfo(
+                    this.ds.package_id, 
+                    resource,
+                    function(err, resp){
+                        this.saving = false;
+                        if( err ) alert("Error updating datasheet :(");
+
+                        for( var key in resp ) {
+                            this.resource[key] = resp[key];
+                        }
+                        this.updateSelected();
+                    }.bind(this)
+                ); 
             },
 
             remove : function() {
@@ -243,6 +295,32 @@
                         this.fire('remove', this.resource.id);
                     }.bind(this)
                 );
+            },
+
+            updateIgnore : function() {
+                this.saving = true;
+                this.toggleResourceMenu();
+
+
+                var resource = {
+                    id : this.resource.id,
+                    ignore : this.resource.ignore,
+                };
+
+                document.querySelector('esis-ckan').setParseInfo(
+                    this.ds.package_id, 
+                    resource,
+                    function(err, resp){
+                        this.saving = false;
+                        if( err ) alert("Error updating datasheet :(");
+
+                        if( !this.resource.ignore ) {
+                            for( var key in resp ) {
+                                this.resource[key] = resp[key];
+                            }
+                        }
+                    }.bind(this)
+                ); 
             },
 
             save : function() {

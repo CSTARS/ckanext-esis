@@ -236,9 +236,18 @@
                 var type = this.options.type;
 
                 this._uploadFiles(type, 0, function(){
-                    document.querySelector('esis-dataset-loader').run();
-                    this.fire('resource-add');
-                    this.processing = false;
+
+                    // set default layout and parse workspace
+                    document.querySelector('esis-ckan').setDefaultLayout(
+                        this.ds.package_id, this.newResourceIds, this.options.type,
+                        function(err, resp) {
+                            if( err ) return console.log('Error setting default resource layout :(');
+
+                            document.querySelector('esis-dataset-loader').runAfterResourceAdd(resp);
+                            this.fire('resource-add');
+                            this.processing = false;
+                        }.bind(this)
+                    )
                 }.bind(this));
             },
 
