@@ -8,7 +8,7 @@ import ckan.lib.uploader as uploader
 from pylons import config
 
 
-import os, datetime, shutil, re, json, hashlib, zipfile, subprocess
+import os, datetime, shutil, re, json, hashlib, zipfile, subprocess, pickle
 
 class WorkspaceSetup:
 
@@ -18,7 +18,7 @@ class WorkspaceSetup:
     workspaceDir = ""
 
     def __init__(self):
-        self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
+        self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
@@ -320,6 +320,9 @@ class WorkspaceSetup:
         file = open(parsedFile, 'r')
         parseData = json.loads(file.read())
         file.close()
+        #with open(parsedFile, 'rb') as f:
+        #    return pickle.load(f)
+        #    f.close()
 
         return parseData
 

@@ -1,5 +1,5 @@
 # logic for doing joins of data to matadata
-import re
+import re, time
 
 class SheetJoin:
 
