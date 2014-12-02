@@ -74,7 +74,10 @@ class WorkspaceController(PackageController):
         # actually process the files on disk based on given configuration
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
-        # create response
+        return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
+
+    def _createOverviewResponse(self, resources, workspacePackage, ckanPackage, fresh):
+                # create response
         attrs = {}
         arr = []
         dataResources = []
@@ -100,6 +103,8 @@ class WorkspaceController(PackageController):
                     "layout" : datasheet.get("layout"),
                     "spectra_count" : datasheet.get("spectra_count")
                 }
+                if 'ignore' in datasheet:
+                    f['ignore'] = datasheet['ignore']
                 if 'metadata' in datasheet:
                     f['metadata'] = datasheet['metadata']
                 if 'matches' in datasheet:
@@ -119,6 +124,19 @@ class WorkspaceController(PackageController):
                 "datasheets" : datasheets
             })
 
+        # now add data resources that have been ignored
+        if 'resources' in workspacePackage:
+            for workspaceResource in workspacePackage['resources']:
+                if workspaceResource.get('ignore') == True:
+                    r = self._getById(ckanPackage['resources'], workspaceResource['id'])
+                    arr.append({
+                        "name" : r["name"],
+                        "type" : "datafile",
+                        "id"   : r["id"],
+                        "ignore" : True
+                    })
+                    dataResources.append(workspaceResource["id"])
+
         # now add non-data resources
         for r in ckanPackage['resources']:
             if not r['id'] in dataResources:
@@ -131,13 +149,13 @@ class WorkspaceController(PackageController):
         # save wire space
         del ckanPackage['resources']
 
-        return json.dumps({
+        return {
             "resources"  : arr,
             "wavelengths" : wavelengths,
             "attributes" : attrs,
             "package" : ckanPackage,
             "fresh" : fresh
-        })
+        }
 
     # API CALL
     # set the parse information for a given resources and package
@@ -149,13 +167,7 @@ class WorkspaceController(PackageController):
 
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
 
-        if not 'resources' in workspacePackage:
-            workspacePackage['resources'] = []
-
         # update the package workspace information
-        # TODO: Make sure any resource that has an updated config is marked with
-        # a flag for changes detected
-
         workspaceResource = self._getById(workspacePackage['resources'], resource['id'])
 
         if workspaceResource == None:
@@ -166,30 +178,79 @@ class WorkspaceController(PackageController):
                 continue
             workspaceResource[key] = value
 
-        for datasheet in resource['datasheets']:
-            workspaceDatasheet = self._getById(workspaceResource['datasheets'], datasheet['id'])
+        if 'datasheets' in resource:
+            for datasheet in resource['datasheets']:
+                workspaceDatasheet = self._getById(workspaceResource['datasheets'], datasheet['id'])
 
-            if workspaceDatasheet == None:
-                workspaceResource['datasheets'].append(datasheet)
-            else:
-                for key, value in datasheet.iteritems():
-                    workspaceDatasheet[key] = value
+                if workspaceDatasheet == None:
+                    workspaceResource['datasheets'].append(datasheet)
+                else:
+                    for key, value in datasheet.iteritems():
+                        workspaceDatasheet[key] = value
 
         # save back to mongo
-        workspaceCollection.update({'id': package_id}, workspacePackage)
+        workspaceCollection.update({'package_id': package_id}, workspacePackage)
 
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
         # actually process the files on disk based on given configuration
 
         # this will make sure the info.json file is updated
         r = self._getById(resources,  resource['id'])
-        r['changes'] = True
-        r['location'] = "%s/%s/info.json" % (rootDir,  resource['id'])
+        if r == None: # this resource is being ignored
+            if workspaceResource.get('ignore') == True:
+                r = {
+                    "ignore" : True,
+                    "changes" : True,
+                    "location" : "%s/%s/info.json" % (rootDir,  resource['id'])
+                }
+        else:
+            r['changes'] = True
+            r['location'] = "%s/%s/info.json" % (rootDir,  resource['id'])
 
         # TODO: can we optomize this since only one datasheet was update?
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
         return json.dumps(self._getMergedResources(resource['id'], resources, workspacePackage))
+
+    # when resources are first uploaded, use this to set the default layout information
+    def setDefaultLayout(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+        layout = request.params.get('layout')
+        resourceList = json.loads(request.params.get('resources')) # list or resource id's
+
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+        resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
+        # update the package workspace information with the default layout
+        for id in resourceList:
+            workspaceResource = self._getById(workspacePackage['resources'], id)
+            resource = self._getById(resources, id)
+
+            if workspaceResource == None:
+                workspaceResource = {"id": id, "datasheets" : []}
+                workspacePackage['resources'].append(workspaceResource)
+
+            if 'datasheets' in resource:
+                for datasheet in resource['datasheets']:
+                    workspaceDatasheet = self._getById(workspaceResource['datasheets'], datasheet['id'])
+
+                    if workspaceDatasheet == None:
+                        workspaceResource['datasheets'].append({
+                            "id" : datasheet['id'],
+                            "layout" : layout
+                        })
+                    else:
+                        workspaceDatasheet["layout"] = layout
+
+        # save back to mongo
+        workspaceCollection.update({'package_id': package_id}, workspacePackage)
+
+        # now process data
+        process.resources(resources, workspacePackage, ckanPackage, rootDir)
+
+        return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
 
 
     # API CALL
@@ -253,6 +314,23 @@ class WorkspaceController(PackageController):
 
         # initialize the workspace and get the package config as well as the ckan package
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        # see if the resource is ignored before we go any further
+        workspaceResource = self._getById(workspacePackage['resources'], rid)
+        if workspaceResource != None and workspaceResource.get('ignore') == True:
+            ckanResource = self._getById(ckanPackage['resources'], rid)
+            if ckanResource == None:
+                return json.dumps({"error":True,"message":"resource not found"})
+
+            return json.dumps({
+                "id" : rid,
+                "name" : ckanResource["name"],
+                "type" : "datafile",
+                "datasheets" : [],
+                "ignore" : True
+            })
+
+
         # make sure all files on disk are up to date in the package
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
 
@@ -262,7 +340,7 @@ class WorkspaceController(PackageController):
     def _getMergedResources(self, resourceId, resources, workspacePackage):
         resource = self._getById(resources, resourceId)
         if resource == None:
-            return json.dumps({"error":True,"message":"resource not found"})
+            return {"error":True,"message":"resource not found"}
 
         workspaceResource = self._getById(workspacePackage['resources'], resourceId)
         if workspaceResource == None:
@@ -299,8 +377,3 @@ class WorkspaceController(PackageController):
         if 'metadata' in f:
             return f['metadata']
         return False
-
-    def _saveJson(self, file, data):
-        f = open(file, 'w')
-        json.dump(data, f)
-        f.close()

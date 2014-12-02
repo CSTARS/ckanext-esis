@@ -1,6 +1,6 @@
 # actually process the datasheet with given workspace config
 
-import xlrd, csv, re, json
+import xlrd, csv, re, json, time, pickle, hashlib
 
 from ckanext.esis.lib.join import SheetJoin
 from pylons import config
@@ -14,13 +14,15 @@ class ProcessWorkspace:
     workspaceDir = ""
 
     def __init__(self):
-        self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
+        self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
 
     def resources(self, resources, workspacePackage, ckanPackage, rootDir):
         # resourceInfo is the parsed resource information from setup.resources
+
+        runTime = time.time()
 
         # break up into 2 groups, first is metadata, this needs to be parsed first,
         # second is data.  Pass the metadata group along with each data resource
@@ -34,6 +36,8 @@ class ProcessWorkspace:
         for resourceInfo in resources:
             ckanResource =  self._getById(ckanPackage['resources'], resourceInfo['id'])
             self._processResource(ckanResource, resourceInfo['datasheets'], workspacePackage, metadataSheets)
+
+        print "package %s process time: %ss" % (ckanPackage['name'], (time.time() - runTime))
 
         # finally save all json files with current state
         for resourceInfo in resources:
@@ -94,10 +98,15 @@ class ProcessWorkspace:
     # TODO: this needs to have access to all metadata file information,
     #       Should be able to set match counts
     def _processSheetArray(self, data, sheetInfo, resourceConfig, metadataSheets):
-        ranges = self._getDataRanges(data)
-
         # get config for sheet if on exists
         sheetConfig = self._getById(resourceConfig.get('datasheets'), sheetInfo['id'])
+
+        # should we ignore this sheet?
+        if sheetConfig != None:
+            if sheetConfig.get('ignore') == True:
+                sheetInfo['ignore'] = True
+                return
+
 
         # how should be parse this file?
         layout = 'row'
@@ -109,6 +118,9 @@ class ProcessWorkspace:
 
         sheetInfo['layout'] = layout
 
+        # get table ranges in sheet, where is the data
+        ranges = self._getDataRanges(data)
+
         localRange = {}
         globalRange = None
         if len(ranges) == 1:
@@ -118,7 +130,7 @@ class ProcessWorkspace:
             localRange = ranges[1]
 
         # no local data
-        if localRange['start'] == localRange['end']:
+        if localRange['start'] == localRange['stop']:
             return
 
         # find all the attribute types based on layout
@@ -129,7 +141,7 @@ class ProcessWorkspace:
                 attrTypes.append(info)
         else:
             names = []
-            for i in range(localRange['start'], localRange['end']):
+            for i in range(localRange['start'], localRange['stop']):
                 info = self._parseAttrType(data[i][0], [i,0], "local")
                 attrTypes.append(info)
         sheetInfo['attributes'] = attrTypes
@@ -139,7 +151,7 @@ class ProcessWorkspace:
         else:
             # now find the spectra count based on layout
             if layout == "row":
-                sheetInfo['spectra_count'] = localRange['end'] - localRange['start']
+                sheetInfo['spectra_count'] = localRange['stop'] - localRange['start']
             else:
                 i = 0
                 for i in reversed(range(len(data[localRange['start']]))):
@@ -189,13 +201,13 @@ class ProcessWorkspace:
                     continue
 
                 data = self._getWorksheetData(workbook.sheet_by_name(sheet))
-                self._processSheetArray(data, layout, sheetInfo, resourceConfig, metadataSheets)
+                self._processSheetArray(data, sheetInfo, resourceConfig, metadataSheets)
                 datasheets.append(sheetInfo)
 
         #TODO: how do we really want to handle this?
         except Exception as e:
             datasheet['error'] = True
-            datasheet['message'] = e
+            datasheet['message'] = e.message.message
 
         if not 'error' in datasheet:
             datasheets.remove(datasheet)
@@ -283,7 +295,7 @@ class ProcessWorkspace:
         ranges = []
         r = {
             "start" : 0,
-            "end" : 0
+            "stop" : 0
         }
         started = False
 
@@ -291,7 +303,7 @@ class ProcessWorkspace:
         for i in range(0, len(data)):
             if self._isEmptyRow(data[i]):
                 if started:
-                    r['end'] = i
+                    r['stop'] = i
                     ranges.push(r)
                     if len(ranges) == 2:
                         break
@@ -305,7 +317,7 @@ class ProcessWorkspace:
                 started = True
 
         if started and len(ranges) < 2:
-            r['end'] = i
+            r['stop'] = i
             ranges.append(r)
         elif not started and len(ranges) == 0:
             ranges.append(r)
@@ -314,7 +326,11 @@ class ProcessWorkspace:
 
     def _getMetadataSheets(self, resources, workspacePackage):
         sheets = []
+
         for workspaceResource in workspacePackage['resources']:
+            if workspaceResource.get('ignore') == True:
+                continue
+
             r = self._getById(resources, workspaceResource['id'])
             for sheet in workspaceResource['datasheets']:
                 if sheet.get('metadata') == True:
@@ -328,9 +344,19 @@ class ProcessWorkspace:
         return sheets
 
     def _saveJson(self, file, data):
+        # was running into issues with json dump, looks like it might have been IDE
+        #runTime = time.time()
+        #with open(file, 'wb') as f:
+        #    pickle.dump(data, f)
+        #    f.close()
+        #print "  --resource file %s write time:\n      %ss" % (file, (time.time() - runTime))
+
+        # this actually looks to be faster
+        runTime = time.time()
         f = open(file, 'w')
         json.dump(data, f)
         f.close()
+        print "  --resource file %s write time:\n      %ss" % (file, (time.time() - runTime))
 
     def _getById(self, arr, id):
         if arr == None:
@@ -345,3 +371,10 @@ class ProcessWorkspace:
     def _getFileExtension(self, filename):
          return re.sub(r".*\.", "", filename)
 
+
+    # get the md5 of a resource file
+    # takes the resource id, local path (if github or expanded zip), and filename
+    def _getFileId(self, rid, path, name):
+        m = hashlib.md5()
+        m.update("%s%s%s" % (rid, path, name))
+        return m.hexdigest()
