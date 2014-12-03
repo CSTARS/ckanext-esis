@@ -69,8 +69,10 @@ class WorkspaceController(PackageController):
 
         # initialize the workspace and get the package config as well as the ckan package
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
         # make sure all files on disk are up to date in the package
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
         # actually process the files on disk based on given configuration
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
@@ -92,7 +94,7 @@ class WorkspaceController(PackageController):
                             attrs[attr['name']] = {
                                 "type" : attr["type"],
                                 "scope" : attr["scope"],
-                                "units" : attr["units"]
+                                "units" : attr.get("units")
                             }
                         if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
                             wavelengths.append(attr['name'])
@@ -308,6 +310,40 @@ class WorkspaceController(PackageController):
         del ds['location']
 
         return json.dumps(ds)
+
+    # API CALL
+    def getDatasheet(self):
+        response.headers["Content-Type"] = "application/json"
+
+        rid = request.params.get('resource_id')
+        sid = request.params.get('datasheet_id')
+
+        # initialize the workspace and get the package config as well as the ckan package
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        # make sure all files on disk are up to date in the package
+        resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
+        process.resources(resources, workspacePackage, ckanPackage, rootDir)
+
+        r = self._getById(resources, rid)
+        if r == None:
+            r = {'datasheets': []}
+        rWs = self._getById(workspacePackage['resources'], rid)
+        if rWs == None:
+            rWs = {'datasheets': []}
+
+        s = self._getById(r['datasheets'], sid)
+        if s == None:
+            s = {}
+        sWs = self._getById(rWs['datasheets'], sid)
+        if sWs == None:
+            sWs = {}
+
+        for key, value in sWs.iteritems():
+            s[key] = value
+
+        return json.dumps(s)
 
 
     # API CALL

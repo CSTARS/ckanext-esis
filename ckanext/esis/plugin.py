@@ -111,6 +111,8 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('set_parse_info', '/workspace/setParseInfo', controller=controller, action='setParseInformation')
         map.connect('update_join', '/workspace/updateJoin', controller=controller, action='updateJoin')
         map.connect('set_default_layout', '/workspace/setDefaultLayout', controller=controller, action='setDefaultLayout')
+        map.connect('get_datasheet', '/workspace/getDatasheet', controller=controller, action='getDatasheet')
+
 
         return map
 

@@ -120,7 +120,7 @@ class ProcessWorkspace:
         # how should be parse this file?
         layout = 'row'
         if sheetConfig != None:
-            if sheetConfig.get('type') == 'metadata':
+            if sheetConfig.get('metadata') == True:
                 layout = 'row'
             elif 'layout' in sheetConfig:
                 layout = sheetConfig['layout']
@@ -283,6 +283,8 @@ class ProcessWorkspace:
     # TODO: check for units and attribute data type
     def _parseAttrType(self, name, pos, attributeLocality, isData=False):
         original = name
+        units = None
+        declared = False
 
         # clean up string
         name = name.strip()
@@ -293,17 +295,25 @@ class ProcessWorkspace:
         type = "metadata"
         if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
             type = "wavelength"
+            name = re.sub(r"\.0+$", "", name)
         elif re.match(r".*__d($|\s)", name) or isData:
             name = re.sub(r".*__d($|\s)", "", name)
             type = "data"
+            declared = True
 
         attr = {
             "type" : type,
             "name" : name,
-            "units" : "",
-            "pos" : pos,
-            "scope" : attributeLocality,
+            "pos" : "%s-%s" % (pos[0], pos[1]),
+            "scope" : attributeLocality
         }
+
+        if units != None:
+            attr["units"] = units
+
+        if declared:
+            attr['declared'] = True
+
         if original != name:
             attr["original"] = original
 
@@ -372,6 +382,17 @@ class ProcessWorkspace:
                         'config': sheet,
                         'datasheet' : ds
                     })
+                elif r != None and sheet != None:
+                    ds = self._getById(r['datasheets'], sheet['id'])
+                    #make sure the join info is not apart of the ds
+                    if 'matchValues' in ds:
+                        del ds['matchValues']
+                    if 'matches' in ds:
+                        del ds['matches']
+                    if 'looseMatch' in ds:
+                        del ds['looseMatch']
+                    if 'matchType' in ds:
+                        del ds['matchType']
 
         return sheets
 

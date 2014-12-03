@@ -96,7 +96,7 @@ class SheetJoin:
         if count == 0:
             self._removeIdFromMeta(metaSheet, id)
         else:
-            metaSheet['datasheet']['matches']['id'] = count
+            metaSheet['datasheet']['matches'][id] = count
 
 
     ### HELPERS ###
