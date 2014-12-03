@@ -151,7 +151,7 @@
                 icon="hardware:{{showWavelengths ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
                 on-tap="{{_toggleWavelengths}}">
             </paper-icon-button>
-            Wavelengths: {{wavelengthArray.length}}
+            Wavelengths: {{ds.wavelengths.length}}
         </h4>
         <div class="helper">
             These attribute types have been implied because the attribute name is numberic.
@@ -173,8 +173,7 @@
             editableArray : [],
             // attributes who's types are implied by format
             fixedArray : [],
-            // attributes that are wavelengths
-            wavelengthArray : [],
+
 
             // modifications
             modifications : null,
@@ -191,11 +190,14 @@
             update : function() {
                 this.editableArray = [];
                 this.fixedArray = [];
-                this.wavelengthArray = [];
 
                 //var wavelengths = [];
 
-                if( this.modifications == null ) {
+                for( var i = 0; i < this.ds.attributes.length; i++ ) {
+                    
+                }
+
+                /*if( this.modifications == null ) {
                     this.modifications = this.ds.attributeModifications;
                 }
 
@@ -239,9 +241,9 @@
                         default:
                             break;
                     }
-                }
+                }*/
 
-                this.$.wavelengths.innerHTML = this.wavelengthArray.join(', ');
+                this.$.wavelengths.innerHTML = this.ds.wavelengths.join(', ');
             },
 
             _onTypeChanged : function(e) {

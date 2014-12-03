@@ -55,6 +55,15 @@
 					if( this.data.package[key] ) this.ds.data[key] = this.data.package[key];
 				}
 
+				this.ds.attributes = [];
+				for( var attrName in this.data.attributes ) {
+					var attr = this.data.attributes[attrName];
+					attr.name = attrName;
+					this.ds.attributes.push(attr);
+				}
+
+				this.ds.wavelengths = this.data.wavelengths;
+
 
 				if( this.data.ecosis ) {
 					var ecosis = this.data.ecosis;
