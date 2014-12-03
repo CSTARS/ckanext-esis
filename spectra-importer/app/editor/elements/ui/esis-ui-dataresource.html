@@ -129,7 +129,7 @@
                     <tr template repeat="{{datasheet in resource.datasheets}}">
                         <td class="name" ignore?="{{datasheet.ignore}}">
                             {{datasheet.name}}
-                            <span hidden?="{{!datasheet.sheet}}">({{file.sheet}})</span>
+                            <span hidden?="{{!datasheet.sheetname}}">({{datasheet.sheetname}})</span>
                             <span hidden?="{{!datasheet.ignore}}" class="orange"> - Ignored</span>
                             <span hidden?="{{!datasheet.metadata || datasheet.ignore}}" class="blue"> - Metadata</span>
                         </td>
@@ -153,7 +153,7 @@
                             <template repeat="{{file,i in resource.datasheets}}">
                                 <option value="{{i}}">
                                     {{file.name}}
-                                    <span hidden?="{{!file.sheet}}"> {{file.sheet}}</span>
+                                    <span hidden?="{{!file.sheetname}}"> - {{file.sheetname}}</span>
                                 </option>
                             </template>
                         </select>
