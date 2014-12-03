@@ -158,6 +158,9 @@ class WorkspaceController(PackageController):
         }
 
     # API CALL
+    # TODO: updating a resource layout, ignore, etc, may influence to amount of data joined to metadata
+    #       How should we reflect that fact back in this call?  IE, the UI for that piece of metadata
+    #       should be told of this update as well.
     # set the parse information for a given resources and package
     def setParseInformation(self):
         response.headers["Content-Type"] = "application/json"
@@ -172,6 +175,7 @@ class WorkspaceController(PackageController):
 
         if workspaceResource == None:
             workspaceResource = {"id": resource['id'], "datasheets" : []}
+            workspacePackage['resources'].append(workspaceResource)
 
         for key, value in resource.iteritems():
             if key == "datasheets":
