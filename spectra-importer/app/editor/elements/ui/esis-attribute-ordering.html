@@ -18,6 +18,9 @@
             h4 {
                 margin-bottom: 5px;
             }
+            paper-progress {
+                width: 100%;
+            }
         </style>
 
         <div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">
@@ -30,7 +33,7 @@
         </div>
         <div class="input-wrapper">
             Order By:
-            <select value="{{ds.datasetAttributes.sort_on}}">
+            <select value="{{ds.datasetAttributes.sort_on}}" on-change="{{onChange}}">
                 <option value=""></option>
                 <template repeat="{{attr in attributeArray}}">
                     <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.sort_on}}">{{attr.name}}</option>
@@ -40,7 +43,7 @@
             <div hidden?="{{ds.datasetAttributes.sort_on == ''}}">
                 <div style="margin-top:10px">
                     Order Type: 
-                    <select value="{{ds.datasetAttributes.sort_type}}">
+                    <select value="{{ds.datasetAttributes.sort_type}}" on-change="{{onChange}}">
                         <option value="string">Default (String)</option>
                         <option value="datetime">Date</option>
                         <option value="numberic">Numberic</option>
@@ -55,64 +58,39 @@
                     rows="3" 
                     floatingLabel 
                     label="Description" 
-                    value="{{ds.datasetAttributes.sort_description}}" >
+                    value="{{ds.datasetAttributes.sort_description}}" 
+                    on-change="{{onChange}}">
                 </paper-input>
             </div>
         </div>
-
-<!-- TOREMOVE
-        <h4>Grouping for Search</h4>
-        <div class="help">
-            By default your dataset will show up as one result in search.  Sometimes you may wish to split your dataset out into multiple search results.  You can do this by providing a group by attribute below.  Your dataset will then be split up into multiple groups in search.
-        </div>
-        <div class="input-wrapper">
-            Group By:
-            <select value="{{ds.datasetAttributes.group_by}}" on-change="{{_group}}">
-                <option value=""></option>
-                <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.group_by}}">{{attr.name}}</option>
-                </template>
-            </select>
-
-            <template bind if="{{groups.length > 0}}">
-                <div style="padding-bottom: 10px">Grouping Results: </div>
-                <template repeat="{{group in groups}}">
-                    <div style="padding-left: 15px"><b>{{group.key}}:</b> {{group.value}}</div>
-                </template>
-            </template>
-        </div>
--->
         
-
         <h4>Geographic Location</h4>
         <div class="help">
             Select the attribute below that provides a geolocation for this dataset.
         </div>
         <div class="input-wrapper">
             Location:
-            <select value="{{ds.datasetAttributes.location}}">
+            <select value="{{ds.datasetAttributes.location}}" on-change="{{onChange}}">
                 <option value=""></option>
                 <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}">{{attr.name}}</option>
+                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">{{attr.name}}</option>
                 </template>
             </select>
             <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
         </div>
 
+        <div hidden?="{{!saving}}">
+            <div class="green">Updating...</div>
+            <paper-progress indeterminate></paper-progress>
+        </div>
+
     </template>
     <script>
         Polymer('esis-attribute-ordering', {
-
-            attributeTypes : null,
-            
-            // attributes that could be sorted by or grouped by
             attributeArray : [],
-
-            modifications : null,
-
-            sorts : [],
-
+            saving : false,
             ds : null,
+            timer : -1,
 
             ready : function() {
                 this.ds = document.querySelector('esis-datastore');
@@ -121,52 +99,39 @@
             update : function() {
                 this.attributeArray = [];
 
-                if( this.modifications == null ) {
-                    this.modifications = this.ds.attributeModifications;
+                for( var i = 0; i < this.ds.schema.length; i++ ) {
+                    var attr = this.ds.schema[i];
+                    if( attr.type == 'metadata' ) this.attributeArray.push(attr);
                 }
 
-                var key, info;
-                for( key in this.attributeTypes ) {
-                    info = this.attributeTypes[key];
+                this.attributeArray.sort(function(a, b){
+                    if( a.name > b.name ) return 1;
+                    if( a.name < b.name ) return -1;
+                    return 0;
+                });
 
-                    switch(info.flag) {
-                        case this.ds.ATTR_FLAGS.FROM_METADATA:
-                            this._copyToArray(this.attributeArray, key, info);
-                            break;
-
-                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:                           
-                            this._copyToArray(this.attributeArray, key, info);
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
-                            this._copyToArray(this.attributeArray, key, info);
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
-                            this._copyToArray(this.attributeArray, key, info);
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
-                            this._copyToArray(this.attributeArray, key, info);
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
             },
 
-            _copyToArray : function(arr, key, info) {
-                arr.push({
-                    name : key,
-                    type : this.ds.attributeModifications[key] ? this.ds.attributeModifications[key] : info.type,
-                    flag : info.flag,
-                    guess : info.guess
-                });
+            onChange : function() {
+                if( this.timer != -1 ) clearTimeout(this.timer);
+                this.timer = setTimeout(function() {
+                    this.timer = -1;
+                    this.save();
+                }.bind(this), 2000);
+            },
+
+            save : function() {
+                this.saving = true;
+                document.querySelector('esis-ckan').setDatasetAttributes(
+                    this.ds.package_id,
+                    this.ds.datasetAttributes,
+                    function(err, resp) {
+                        this.saving = false;
+                        if( err ) return alert('Error saving :(');
+                    }.bind(this)
+                )
             }
+
 
         });
     </script>
