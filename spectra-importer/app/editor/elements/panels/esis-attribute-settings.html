@@ -17,7 +17,7 @@
 		</paper-tabs>
 
 		<div hidden?="{{currentTab != 0}}">
-			<esis-attribute-editor id="editor" attributeTypes="{{attributeTypes}}"></esis-attribute-editor>
+			<esis-attribute-editor id="editor"></esis-attribute-editor>
 		</div>
 
 		<div hidden?="{{currentTab != 2}}">
@@ -46,7 +46,7 @@
 	    </div>
 
 	    <div hidden?="{{currentTab != 1}}">
-	    	<esis-attribute-ordering id="ordering" attributeTypes="{{attributeTypes}}"></esis-attribute-ordering>
+	    	<esis-attribute-ordering id="ordering"></esis-attribute-ordering>
 	    </div>
 
 	</template>
@@ -59,7 +59,6 @@
 			attrMapList : [],
 			menuItem : null,
 
-			attributeTypes : null,
 			ds : null,
 
 			currentTab : 0,
@@ -93,7 +92,6 @@
 
 			// fired when element is attached.  For this element we should render the attribute type control
 			onShow : function() {
-				this.attributeTypes = this.ds.getAllAttributeTypes();
 				this.$.editor.update();
 				this.$.ordering.update();
 			},

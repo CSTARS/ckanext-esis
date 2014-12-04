@@ -64,6 +64,11 @@
                 on-tap="{{toggleResourceMenu}}"
                 hidden?="{{!edit || loading || (resource.datasheets.length < 2 && !resource.ignore)}}">
             </paper-icon-button>
+            <esis-ui-delete-button 
+                hidden?="{{!edit}}" 
+                style="margin-top:30px"
+                on-delete="{{remove}}">
+            </esis-ui-delete-button>
         </h4>
 
         <template bind if="{{loading || saving}}">
@@ -77,7 +82,7 @@
             <paper-progress indeterminate class="red"></paper-progress>
         </template>
 
-
+        <!-- RESOURCE POPUP MENU -->
         <paper-dropdown id="resourceMenu">
             <div class="menu">
                 <div>
@@ -100,7 +105,9 @@
             </div>
         </paper-dropdown>
 
+        <!-- DATASHEET, SINGLE SHEET -->
         <template bind if="{{resource.datasheets.length == 1 && !resource.ignore}}">
+            <!-- NOT EDITING -->
             <core-collapse opened="{{!edit}}">
                 <table class="table">
                     <tr template repeat="{{file in resource.datasheets}}">
@@ -113,12 +120,16 @@
                     </tr>
                 </table>
             </core-collapse>
+
+            <!-- EDITING -->
             <core-collapse opened="{{edit && !loading}}">
                 <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceId="{{resource.id}}" edit></esis-ui-datasheet>
             </core-collapse>
         </template>
 
+        <!-- LIST OF DATASHEETS (multiple) -->
         <template bind if="{{resource.datasheets.length > 1 && !resource.ignore}}">
+            <!-- NOT EDITING -->
             <core-collapse opened="{{!edit}}">
                 <table class="table">
                     <tr>
@@ -141,6 +152,8 @@
                 </table>
             </core-collapse>
 
+
+            <!-- EDITING -->
             <core-collapse opened="{{edit && !loading}}"> 
                 <div layout horizontal class="nav">
                     <div>
@@ -149,11 +162,10 @@
                         </paper-button>
                     </div>
                     <div flex style="text-align:center">
-                        <select value="{{datasheetIndex}}" style="margin-top: 15px">
+                        <select value="{{datasheetIndex}}" style="margin-top: 15px" on-change="{{onSelect}}">
                             <template repeat="{{file,i in resource.datasheets}}">
                                 <option value="{{i}}">
-                                    {{file.name}}
-                                    <span hidden?="{{!file.sheetname}}"> - {{file.sheetname}}</span>
+                                    {{file.name}} {{file.sheetname}}
                                 </option>
                             </template>
                         </select>
@@ -173,14 +185,6 @@
             <span style="font-style:italic;color:#888">Ignored</span>
         </div>
 
-        <paper-button 
-            raised 
-            class="red-button" 
-            hidden?="{{!edit}}" 
-            style="margin-top:30px"
-            on-tap="{{remove}}">
-            Remove {{resource.name}}</paper-button>
-
     </template>
     <script>
         Polymer('esis-ui-dataresource',{
@@ -193,8 +197,7 @@
             datasheetIndex : 0,
             currentFile : null,
             observe : {
-                datasheetIndex : 'updateSelected',
-                edit : 'load'
+                edit : 'updateSelected'
             },
 
             editMd5 : '',
@@ -206,7 +209,7 @@
 
             toggleEdit : function() {
                 this.edit = !this.edit;
-
+/*
                 if( this.edit ) {
                     this.editMd5 = md5(JSON.stringify(this.resource));
                 } else {
@@ -215,6 +218,7 @@
                         this.save();
                     }
                 }
+*/
             },
 
             toggleResourceMenu : function() {
@@ -225,20 +229,42 @@
 
             updateSelected : function() {
                 var index = parseInt(this.datasheetIndex);
+
                 if( !this.resource.datasheets ) return;
                 if( this.resource.datasheets.length <= index ) return;
 
-                this.currentFile = this.resource.datasheets[index];
+                if( this.resource.datasheets[index].loaded ) {
+                    this.currentFile = this.resource.datasheets[index];
+                } else {
+                    this.load(this.resource.datasheets[index], function(){
+                        this.currentFile = this.resource.datasheets[index];
+                    }.bind(this));
+                }
+
+                
             },
 
             back : function() {
                 this.datasheetIndex = parseInt(this.datasheetIndex) - 1;
-                this.currentFile = this.resource.datasheets[this.datasheetIndex];
+                if( this.datasheetIndex < 0 ) {
+                    this.datasheetIndex = 0;
+                    return;
+                }
+                this.updateSelected();
             },
 
             forward : function() {
                 this.datasheetIndex = parseInt(this.datasheetIndex) + 1;
-                this.currentFile = this.resource.datasheets[this.datasheetIndex];
+                if( this.datasheetIndex >= this.resource.datasheets.length ) {
+                    this.datasheetIndex = this.resource.datasheets.length-1;
+                    return;
+                }
+                this.updateSelected();
+            },
+
+            onSelect : function() {
+                this.datasheetIndex = parseInt(this.datasheetIndex);
+                this.updateSelected();
             },
 
             setAllToRow : function() {
@@ -336,26 +362,24 @@
                 }
             },
 
-            load : function() {
-                if( !this.edit || this.full ) return;
+            load : function(sheet, callback) {
+                if( !this.edit ) return;
 
                 this.loading = true;
 
-                document.querySelector('esis-ckan').processResource(
+                document.querySelector('esis-ckan').getDatasheet(
                     this.ds.package_id,
                     this.resource.id,
+                    sheet.id,
                     function(err, resp){
-                        if( err ) return alert("Server error fetching resource");
+                        if( err ) return alert("Server error fetching datasheet");
 
                         for( var key in resp ) {
-                            this.resource[key] = resp[key];
+                            sheet[key] = resp[key];
                         }
-
-                        this.updateSelected()
-
-                        this.full = true;
-
+                        sheet.loaded = true;
                         this.loading = false;
+                        callback();
                     }.bind(this)
                 );
             }

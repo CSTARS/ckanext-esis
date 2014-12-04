@@ -3,33 +3,28 @@
 
 <polymer-element name="esis-ui-delete-button" attributes="label">
 	<template>
-		<link rel="stylesheet" href="../../components/animate-css/animate.min.css" no-shim>
 
-		<paper-button id="start" class="animated" on-tap="{{_confirm}}">
-			<core-icon icon="close"></core-icon>
-		</paper-button>
+		<paper-icon-button icon="delete" on-click="{{_start}}" hidden?="{{state != 'init'}}"></paper-icon-button>
 
-		<paper-button id="remove" style="display:none;background-color: #d23f31" class="animated flipInX" on-tap="{{_delete}}">Remove {{label}}</paper-button>
-		<paper-button id="cancel" style="display:none;background-color: white" class="animated flipInX" on-tap="{{_cancel}}">Cancel</paper-button>
+		<template bind if="{{state == 'confirm'}}">
+			<paper-button on-click="{{reset}}" raised>
+				<core-icon icon="cancel"></core-icon> Cancel
+			</paper-button>
+			<paper-button on-click="{{_delete}}" class="red-button" raised>
+				<core-icon icon="warning"></core-icon> Delete {{label}}
+			</paper-button>
+		</template>
 	</template>
 	<script>
 		Polymer('esis-ui-delete-button', {
-			_confirm : function() {
-				this.$.start.classList.add('rotateOut');
+			state : 'init',
 
-				setTimeout(function(){
-					this.$.start.style.display = 'none';
-					this.$.start.classList.remove('rotateOut');
-
-					this.$.remove.style.display = 'inline-block';
-					this.$.cancel.style.display = 'inline-block';
-				}.bind(this), 500);
+			reset : function() {
+				this.state = 'init'
 			},
 
-			_cancel : function() {
-				this.$.start.style.display = 'block';
-				this.$.remove.style.display = 'none';
-				this.$.cancel.style.display = 'none';
+			_start : function() {
+				this.state = 'confirm'
 			},
 
 			_delete : function() {

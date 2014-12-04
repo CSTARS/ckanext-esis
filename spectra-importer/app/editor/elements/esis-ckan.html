@@ -164,6 +164,27 @@
 		        });
 			},
 
+			getDatasheet : function(pkgid, rid, sid, callback) {
+				var params = '?package_id=' + pkgid +
+					'&resource_id=' + rid +
+					'&datasheet_id=' + sid;
+
+				$.ajax({
+		            url: esis.host + '/workspace/getDatasheet'+params,
+		            type : 'GET',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
 			setDefaultLayout : function(pkgid, resourceList, layout, callback) {
 				$.ajax({
 		            url: esis.host + '/workspace/setDefaultLayout',

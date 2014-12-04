@@ -1,7 +1,7 @@
 <link rel="import" href="esis-ui-card.html"/>
 <link rel="import" href="../../components/paper-checkbox/paper-checkbox.html" />
 
-<polymer-element name="esis-ui-metadata" attributes="resourceId metadata">
+<polymer-element name="esis-ui-metadata" attributes="resourceId metadata edit">
 	<template>
 		<style>
 			:host {
@@ -53,8 +53,8 @@
 
 			<template bind if="{{matchCount != -1}}">
 				<div hidden?="{{!loadingMatchCount}}">
-					<div>Joining...</div>
-           			<paper-progress indeterminate></paper-progress>
+					<div class="green">Joining...</div>
+           			<paper-progress indeterminate style="width:100%"></paper-progress>
 				</div>
 				<div hidden?="{{loadingMatchCount}}" class="{{matchCount > 0 ? 'green' :''}}">Matched to {{matchCount}} measurements</div>
 			</template>
@@ -74,11 +74,12 @@
 
 
 			observe : {
-				metadata : 'update'
+				metadata : 'update',
+				'metadata.loaded' : 'update'
 			},
 
 			update : function() {
-				if( this.metadata == null ) return;
+				if( this.metadata == null || !this.metadata.loaded ) return;
 
 				this.joinAttrs = [];
 
