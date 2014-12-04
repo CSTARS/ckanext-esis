@@ -91,11 +91,18 @@ class WorkspaceController(PackageController):
                 if 'attributes' in datasheet:
                     for attr in datasheet['attributes']:
                         if not attr['name'] in attrs and attr['type'] != 'wavelength':
-                            attrs[attr['name']] = {
+                            respAttr = {
                                 "type" : attr["type"],
                                 "scope" : attr["scope"],
                                 "units" : attr.get("units")
                             }
+                            if 'attributes' in workspacePackage:
+                                # override with any user modifications
+                                if attr['name'] in workspacePackage['attributes']:
+                                    for key, value in workspacePackage['attributes'][attr['name']].iteritems():
+                                        respAttr[key] = value
+                            attrs[attr['name']] = respAttr
+
                         if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
                             wavelengths.append(attr['name'])
 
@@ -155,6 +162,7 @@ class WorkspaceController(PackageController):
             "resources"  : arr,
             "wavelengths" : wavelengths,
             "attributes" : attrs,
+            "datasetAttributes" : workspacePackage.get("datasetAttributes"),
             "package" : ckanPackage,
             "fresh" : fresh
         }
@@ -375,6 +383,45 @@ class WorkspaceController(PackageController):
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
 
         return json.dumps(self._getMergedResources(rid, resources, workspacePackage))
+
+
+    def setAttributeInfo(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+        attr = json.loads(request.params.get('attribute'))
+
+        # initialize the workspace and get the package config as well as the ckan package
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        if not 'attributes' in workspacePackage:
+            workspacePackage['attributes'] = {}
+
+        name = attr['name']
+        del attr['name']
+
+        if name in workspacePackage['attributes']:
+            del workspacePackage['attributes'][name]
+
+        workspacePackage['attributes'][name] = attr
+        workspaceCollection.update({'package_id': package_id}, workspacePackage)
+
+        return json.dumps({'success': True})
+
+    def setDatasetAttributes(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+        info = json.loads(request.params.get('datasetAttributes'))
+
+        # initialize the workspace and get the package config as well as the ckan package
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        workspacePackage['datasetAttributes'] = info
+
+        workspaceCollection.update({'package_id': package_id}, workspacePackage)
+
+        return json.dumps({'success': True})
 
 
     def _getMergedResources(self, resourceId, resources, workspacePackage):
