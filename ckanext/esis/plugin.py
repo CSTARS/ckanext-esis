@@ -112,6 +112,8 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('update_join', '/workspace/updateJoin', controller=controller, action='updateJoin')
         map.connect('set_default_layout', '/workspace/setDefaultLayout', controller=controller, action='setDefaultLayout')
         map.connect('get_datasheet', '/workspace/getDatasheet', controller=controller, action='getDatasheet')
+        map.connect('set_attribute_info', '/workspace/setAttributeInfo', controller=controller, action='setAttributeInfo')
+        map.connect('set_dataset_attributes', '/workspace/setDatasetAttributes', controller=controller, action='setDatasetAttributes')
 
 
         return map

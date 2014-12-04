@@ -116,11 +116,14 @@ class ProcessWorkspace:
                 sheetInfo['ignore'] = True
                 return
 
+        # for local scope are we parsing a metadata file or a normal datasheet
+        scope = 'local'
 
         # how should be parse this file?
         layout = 'row'
         if sheetConfig != None:
             if sheetConfig.get('metadata') == True:
+                scope = 'metadata'
                 layout = 'row'
             elif 'layout' in sheetConfig:
                 layout = sheetConfig['layout']
@@ -142,15 +145,17 @@ class ProcessWorkspace:
         if localRange['start'] == localRange['stop']:
             return
 
+
+
         # find all the attribute types based on layout
         attrTypes = []
         if layout == "row":
             for i in range(0, len(data[localRange['start']])):
-                info = self._parseAttrType(data[localRange['start']][i], [localRange['start'], i],  "local")
+                info = self._parseAttrType(data[localRange['start']][i], [localRange['start'], i],  scope)
                 attrTypes.append(info)
         else:
             for i in range(localRange['start'], localRange['stop']):
-                info = self._parseAttrType(data[i][0], [i,0], "local")
+                info = self._parseAttrType(data[i][0], [i,0], scope)
                 attrTypes.append(info)
 
         if globalRange != None:
