@@ -1,6 +1,9 @@
-<polymer-element name="esis-attribute-name" attributes="name mappedName esisName" noscript>
+<polymer-element name="esis-attribute-name" attributes="name mappedName esisName enforceSize" noscript>
     <template>
         <style>
+            :host {
+                display: inline-block;
+            }
             .original {
                 color: #888;
                 font-size: 12px;
@@ -10,14 +13,18 @@
                 color: #888;
                 font-style: italic;
             }
+            div[enforce] {
+                word-break: break-all;
+                max-width: 250px;
+            }
         </style>
 
         <template bind if="{{mappedName}}">
             <div>{{mappedName}}</div>
-            <div class="original">{{name}}</div>
+            <div class="original" enforce?="{{enforceSize}}">{{name}}</div>
         </template>
         <template bind if="{{!mappedName}}">
-            <div custom?="{{!esisName}}">{{name}}</div>
+            <div custom?="{{!esisName}}" enforce?="{{enforceSize}}">{{name}}</div>
         </template>
     </template>
 </polymer-element>

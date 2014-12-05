@@ -34,7 +34,7 @@
             .file {
                 background-color: #dff0d8;
             }
-            .spectra {
+            .metadata {
                 background-color: #fcf8e3;
             }
             .data {
@@ -62,6 +62,9 @@
                 width: 100px;
                 height: 40px;
             }
+            paper-progress {
+                width: 125px;
+            }
         </style>
 
         <h4>
@@ -84,14 +87,15 @@
                 <tr template repeat="{{info, i in editableArray}}">
                     <td class="{{info.class}}">
                         <span modified?="{{modifications[info.name] != null}}">
-                            <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
+                            <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}" enforceSize="true"></esis-attribute-name>
                         </span>
+                        <template bind if="{{info.saving}}"><paper-progress indeterminate></paper-progress></template>
                     </td>
                     <td class="{{info.class}}">
-                        <paper-input type="text" inputValue="{{info.units}}" ></paper-input>
+                        <paper-input type="text" value="{{info.units}}" array="editable" index="{{i}}" on-change="{{onAttributeChange}}"></paper-input>
                     </td>
                     <td class="{{info.class}}">
-                        <select index="{{i}}" on-change="{{_onTypeChanged}}">
+                        <select index="{{i}}" value="{{info.type}}" array="editable" on-change="{{onAttributeChange}}">
                             <option value="data" selected?="{{info.type == 'data'}}">Data</option>
                             <option value="metadata" selected?="{{info.type == 'metadata'}}">Metadata</option>
                         </select>
@@ -119,10 +123,11 @@
                 </tr>
                 <tr template repeat="{{info, i in fixedArray}}">
                     <td class="{{info.class}}">
-                        <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}"></esis-attribute-name>
+                        <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}" enforceSize="true"></esis-attribute-name>
+                        <template bind if="{{info.saving}}"><paper-progress indeterminate></paper-progress></template>
                     </td>
                     <td class="{{info.class}}">
-                        <paper-input type="text" inputValue="{{info.units}}" ></paper-input>
+                        <paper-input type="text" value="{{info.units}}" array="fixed" on-change="{{onAttributeChange}}"></paper-input>
                     </td>
                     <td class="{{info.class}}">
                         {{info.type}}<span class="type-flag">{{info.flag}}</span>
@@ -138,10 +143,7 @@
                     <span class="type-flag">4</span> Attribute is from the global metadata section of a file.
                 </div>
                 <div>
-                    <span class="type-flag">5</span> Attribute is from the formatted metadata section of a file.
-                </div>
-                <div>
-                    <span class="type-flag">6</span> Attribute is from the formatted data section of a file.
+                    <span class="type-flag">5</span> Attribute is declared as data with the __d postfix.
                 </div>
             </div>
         </core-collapse>
@@ -193,8 +195,26 @@
 
                 //var wavelengths = [];
 
-                for( var i = 0; i < this.ds.attributes.length; i++ ) {
-                    
+                for( var i = 0; i < this.ds.schema.length; i++ ) {
+                    var attr = this.ds.schema[i];
+
+                    if( attr.declared || attr.scope == 'metadata' || attr.scope == 'file') {
+                        if( attr.declared ) {
+                            attr.flag = '5';
+                            attr.class = 'data';
+                        } else if( attr.scope == 'metadata' ) {
+                            attr.flag = '1';
+                            attr.class = 'metadata';
+                        } else if( attr.scope == 'file' ) {
+                            attr.flag = '4';
+                            attr.class = 'file';
+                        }
+
+                        this.fixedArray.push(attr);
+                    } else {
+                        attr.class = attr.type;
+                        this.editableArray.push(attr);
+                    }
                 }
 
                 /*if( this.modifications == null ) {
@@ -246,7 +266,52 @@
                 this.$.wavelengths.innerHTML = this.ds.wavelengths.join(', ');
             },
 
-            _onTypeChanged : function(e) {
+            timers : {},
+            onAttributeChange : function(e) {
+                var index = parseInt(e.currentTarget.getAttribute('index'));
+                var array = e.currentTarget.getAttribute('array');
+                
+                var id = array+'-'+index;
+                if( this.timers[id] && this.timers[id] != -1 ) {
+                    clearTimeout(this.timers[id]);
+                }
+
+                this.timers[id] = setTimeout(function(){
+                    this.timers[id] = -1;
+                    this.updateAttribute(array, index);
+                }.bind(this), 2000);
+            },
+
+            updateAttribute : function(array, index) {
+                var attr, item;
+                if( array == 'editable' ) {
+                    item = this.editableArray[index];
+                    attr = {
+                        name : item.name,
+                        units : item.units,
+                        type : item.type
+                    }
+                } else {
+                    item = this.fixedArray[index];
+                    attr = {
+                        name : item.name,
+                        units : item.units
+                    }
+                }
+
+                item.saving = true;
+                document.querySelector('esis-ckan').setAttributeInfo(
+                    this.ds.package_id,
+                    attr,
+                    function(err, resp){
+                        if( err ) alert('Error saving '+attr.name+' :(');
+                        item.saving = false;
+                        item.class = item.type;
+                    }
+                );
+            },
+
+            /*_onTypeChanged : function(e) {
                 var index = parseInt(e.currentTarget.getAttribute('index'));
                 var val = e.currentTarget.value;
                 var attr = this.editableArray[index];
@@ -285,7 +350,7 @@
                     guess : info.guess,
                     class : cssClass
                 });
-            },
+            },*/
 
             _toggleWavelengths : function() {
                 this.showWavelengths = !this.showWavelengths;

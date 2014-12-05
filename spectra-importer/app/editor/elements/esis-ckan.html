@@ -207,6 +207,48 @@
 		        });
 			},
 
+			setAttributeInfo : function(pkgid, attr, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/setAttributeInfo',
+		            type : 'POST',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+				    data : {
+				    	package_id : pkgid,
+				    	attribute : JSON.stringify(attr)
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
+			setDatasetAttributes : function(pkgid, attrs, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/setDatasetAttributes',
+		            type : 'POST',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+				    data : {
+				    	package_id : pkgid,
+				    	datasetAttributes : JSON.stringify(attrs)
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
 			getUsdaCommonName : function(codes, callback) {
 				$.ajax({
 		            url: esis.host + '/spectra/getUsdaCommonName?codes='+codes,
