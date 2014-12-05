@@ -163,6 +163,7 @@ class WorkspaceController(PackageController):
             "wavelengths" : wavelengths,
             "attributes" : attrs,
             "datasetAttributes" : workspacePackage.get("datasetAttributes"),
+            "attributeMap" : workspacePackage.get("attributeMap"),
             "package" : ckanPackage,
             "fresh" : fresh
         }
@@ -423,6 +424,43 @@ class WorkspaceController(PackageController):
 
         return json.dumps({'success': True})
 
+    def setAttributeMap(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+        map = json.loads(request.params.get('map'))
+
+        # initialize the workspace and get the package config as well as the ckan package
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        workspacePackage['attributeMap'] = map
+
+        workspaceCollection.update({'package_id': package_id}, workspacePackage)
+
+        return json.dumps({'success': True})
+
+    # important, this will assume all is good with the dataset
+    def getSpectra(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+        resource_id = request.params.get('resource_id')
+        datasheet_id = request.params.get('datasheet_id')
+        index = int(request.params.get('index'))
+
+        # initialize the workspace and get the package config as well as the ckan package
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        # make sure all files on disk are up to date in the package
+        resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+        process.resources(resources, workspacePackage, ckanPackage, rootDir)
+
+        resource = self._getMergedResources(resource_id, resources, workspacePackage)
+
+        package = self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh)
+
+        spectra = process.getSpectra(package, resource, self.workspaceDir, datasheet_id, index)
+        return json.dumps(spectra)
 
     def _getMergedResources(self, resourceId, resources, workspacePackage):
         resource = self._getById(resources, resourceId)

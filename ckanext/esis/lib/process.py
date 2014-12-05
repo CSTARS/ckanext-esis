@@ -19,6 +19,67 @@ class ProcessWorkspace:
     def setCollection(self, collection):
         self.workspaceCollection = collection
 
+    # resource should be merged from setup.parse and the workspace resource
+    def getSpectra(self, package, resource, rootDir, datasheet_id, index):
+        datasheet = self._getById(resource['datasheets'], datasheet_id)
+
+        # TODO: check that index is less than the spectra count
+        # check that datasheet actually exists
+
+        file = "%s%s%s" % (rootDir, datasheet['location'], datasheet['name'])
+
+        data = self._getFileIndex(file, datasheet, index)
+
+        (layout, scope) = self._getLayout(datasheet)
+        spectra = {}
+
+        if layout == 'row':
+            for i in range(len(data[datasheet['localRange']['start']])):
+                spectra[data[datasheet['localRange']['start']][i]] = data[index][i]
+        else:
+            for i in range(datasheet['localRange']['start'], datasheet['localRange']['stop']):
+                spectra[data[i][0]] = data[i][index]
+
+        spectra['datapoints'] = []
+
+        # move wavelengths to datapoints array
+        if "wavelengths" in package:
+            for attr in package["wavelengths"]:
+                if attr in spectra:
+                    spectra['datapoints'].append({
+                        "key" : attr,
+                        "value" : spectra[attr]
+                    })
+                    del spectra[attr]
+
+        # move data attributes to datapoints array
+        if "attributes" in package:
+            for attr in package["attributes"]:
+                if attr in spectra and package["attributes"][attr]["type"] == "data":
+                    spectra['datapoints'].append({
+                        "key" : attr,
+                        "value" : spectra[attr],
+                        "units" : package["attributes"][attr]
+                    })
+                    del spectra[attr]
+
+        # copy any mapped attributes
+        if "attributeMap" in package:
+            for key, value in package["attributeMap"].iteritems():
+                if value in spectra:
+                    spectra[key] = spectra[value]
+
+        # join on many metadata sheets that matched
+        for resource in package['resources']:
+            for sheet in resource['datasheets']:
+                if sheet.get('metadata') == True:
+                    if 'matches' in sheet and datasheet['id'] in sheet['matches']:
+                        # TODO: package should be a full join with nothing redacted
+                        t = 1
+
+
+        return spectra
+
     def resources(self, resources, workspacePackage, ckanPackage, rootDir):
         # resourceInfo is the parsed resource information from setup.resources
 
@@ -37,8 +98,6 @@ class ProcessWorkspace:
             ckanResource =  self._getById(ckanPackage['resources'], resourceInfo['id'])
             self._processResource(ckanResource, resourceInfo['datasheets'], workspacePackage, metadataSheets)
 
-        print "package %s process time: %ss" % (ckanPackage['name'], (time.time() - runTime))
-
         # finally save all json files with current state
         for resourceInfo in resources:
             if resourceInfo.get('changes') == True:
@@ -47,9 +106,15 @@ class ProcessWorkspace:
                 del resourceInfo['changes']
                 self._saveJson(location, resourceInfo)
 
+        print "** Process.resources()  %s time: %ss" % (ckanPackage['name'], (time.time() - runTime))
+
 
     # process any user changes to resource
     def _processResource(self, ckanResource, datasheets, workspacePackage, metadataSheets=[], metadataRun=False):
+        #TODO: IMPORTANT... if we hit here and nothing has changed, we should just quit
+        # nothing has changed needs to track, workspace updates as well as resource additions and removals
+        #return
+
         workspaceResource = self._getById(workspacePackage['resources'], ckanResource['id'])
         if workspaceResource == None:
             workspaceResource = {}
@@ -98,6 +163,36 @@ class ProcessWorkspace:
             # and the new 'sheet' files can be inserted
             self._processExcel(datasheet, datasheets, rid, workspaceResource, metadataSheets, metadataRun)
 
+    def _getFileIndex(self, file, datasheet, index):
+        ext = self._getFileExtension(file)
+        data = None
+
+        if ext == "csv":
+            data = self._readSeperatorFile(file, ",")
+        elif ext == "tsv" or ext == "spectra":
+            data = self._readSeperatorFile(file, "\t")
+        elif ext == "xlsx" or ext == "xls":
+            data = self._readExcelSheet(file, datasheet.get('sheetname'))
+        return data
+
+
+
+    def _readSeperatorFile(self, file, separator):
+        with open(file) as csvfile:
+            reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
+            data = []
+            for row in reader:
+                data.append(row)
+            return data
+        return [[]]
+
+    def _readExcelSheet(self, file, sheetname):
+        workbook = xlrd.open_workbook(file)
+        sheets = workbook.sheet_names()
+
+        for sheet in sheets:
+            if sheet == sheetname:
+                return self._getWorksheetData(workbook.sheet_by_name(sheetname))
 
 
     # given a data array [[]], process based on config
@@ -117,16 +212,8 @@ class ProcessWorkspace:
                 return
 
         # for local scope are we parsing a metadata file or a normal datasheet
-        scope = 'local'
-
         # how should be parse this file?
-        layout = 'row'
-        if sheetConfig != None:
-            if sheetConfig.get('metadata') == True:
-                scope = 'metadata'
-                layout = 'row'
-            elif 'layout' in sheetConfig:
-                layout = sheetConfig['layout']
+        (layout, scope) = self._getLayout(sheetConfig)
 
         sheetInfo['layout'] = layout
 
@@ -164,6 +251,9 @@ class ProcessWorkspace:
                 attrTypes.append(info)
 
         sheetInfo['attributes'] = attrTypes
+        sheetInfo['localRange'] = localRange
+        if globalRange != None:
+            sheetInfo['globalRange'] = globalRange
 
         if sheetConfig != None and sheetConfig.get('metadata') == True:
             joinlib.processMetadataSheet(data, sheetConfig, sheetInfo)
@@ -428,6 +518,17 @@ class ProcessWorkspace:
     # get the extension from a filename
     def _getFileExtension(self, filename):
          return re.sub(r".*\.", "", filename)
+
+    def _getLayout(self, sheetConfig):
+        layout = 'row'
+        scope = 'local'
+        if sheetConfig != None:
+            if sheetConfig.get('metadata') == True:
+                scope = 'metadata'
+                layout = 'row'
+            elif 'layout' in sheetConfig:
+                layout = sheetConfig['layout']
+        return (layout, scope)
 
 
     # get the md5 of a resource file
