@@ -34,6 +34,11 @@
 	    		</div>
 	    	</div>
 
+	    	<div hidden?="{{!saving}}">
+	            <div class="green">Updating...</div>
+	            <paper-progress indeterminate></paper-progress>
+	        </div>
+
 	    	<template bind if="{{attrMapList.length > 0}}">
 	    		<h4 style="margin-top:50px">Current Name Mappings</h4>
 	    		<template repeat="{{item, i in attrMapList}}">
@@ -53,6 +58,7 @@
 	<script>
 		Polymer('esis-attribute-settings', {
 			datasheets : [],
+			saving : false,
 
 			map : {},
 			inverseMap : {},
@@ -71,20 +77,6 @@
 			ready : function() {
 
 				this.ds = document.querySelector('esis-datastore');
-
-				this.ds.addEventListener('attribute-map-update', function(){
-					this.map = this.ds.attributeMap;
-				 	this._updateAttrMapList();
-				}.bind(this));
-
-				window.addEventListener('polymer-ready', function(e) {
-				 	this.async(function(){
-				 		this.files = this.ds.files;
-				 		this.map = this.ds.attributeMap;
-				 		this._updateAttrMapList();
-				 	});
-				 	this._updateVisibility();
-				}.bind(this));
 
 				// for webdriver
 				this.expose();
@@ -151,6 +143,8 @@
 							item = { c1 : [key, map[key]]};
 						}
 						c++;
+					} else {
+						delete map[key]
 					}
 				}
 
@@ -162,8 +156,24 @@
 						if( newMap[key] != '' ) this.ds.inverseAttributeMap[newMap[key]] = key;
 					}
 				}
+
+				this.save(newMap);
+
 				this.menuItem.setSecondaryHtml(c+' Attributes Mapped');
 			},
+
+			save : function(newMap) {
+				this.saving = true;
+				document.querySelector('esis-ckan').setAttributeMap(
+					this.ds.package_id,
+					newMap,
+					function(err, resp) {
+						this.saving = false;
+						if( err ) return alert('Error saving attribute name mapping');
+					}.bind(this)
+				)
+			},
+
 
 			expose : function() {
 		  		this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
