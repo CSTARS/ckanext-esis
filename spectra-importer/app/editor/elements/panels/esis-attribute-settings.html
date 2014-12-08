@@ -10,7 +10,7 @@
 			}
 		</style>
 
-		<paper-tabs selected="{{currentTab}}">
+		<paper-tabs id="tabs" selected="{{currentTab}}">
 			<paper-tab>Customize Schema</paper-tab>
 			<paper-tab>Special Attributes</paper-tab>
 			<paper-tab>Map Names</paper-tab>
@@ -71,7 +71,8 @@
 
 			observe : {
 				'ds.datasheets' : '_updateVisibility',
-				'ds.existing.data' : '_updateVisibility'
+				'ds.existing.data' : '_updateVisibility',
+				'ds.inverseAttributeMap' : '_updateMap'
 			},
 
 			ready : function() {
@@ -86,6 +87,10 @@
 			onShow : function() {
 				this.$.editor.update();
 				this.$.ordering.update();
+
+                setTimeout(function(){
+                    this.$.tabs.updateBar();
+                }.bind(this), 500);
 			},
 
 			_updateVisibility : function() {
@@ -126,6 +131,26 @@
 				}.bind(this);
 
 				reader.readAsText(files[0]);
+			},
+
+			_updateMap : function() {
+				var c = 0, item = {};
+				var map = this.ds.attributeMap;
+				this.attrMapList = [];
+
+				for( var key in map ) {
+					if( map[key] && map[key].length > 0 ) {
+						if( c % 2 != 0 ) {
+							item['c2'] = [key, map[key]];
+							this.attrMapList.push(item);
+						} else {
+							item = { c1 : [key, map[key]]};
+						}
+						c++;
+					} else {
+						delete map[key]
+					}
+				}
 			},
 
 			_updateAttrMapList : function(newMap) {

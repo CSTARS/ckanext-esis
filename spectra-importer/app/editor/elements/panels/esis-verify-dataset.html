@@ -1,6 +1,6 @@
 <link rel="import" href="../../components/paper-shadow/paper-shadow.html" />
 
-<polymer-element name="esis-verify-dataset" attributes="ds counts">
+<polymer-element name="esis-verify-dataset">
 	<template>
 		<style>
 			table {
@@ -35,7 +35,7 @@
 
 		<h2>Push Changes to Ecosis Search</h2>
 		<div>
-			Please verify all information looks correct.  Once everything looks correct, click 'Update' below and your changes will be represented at ecospectra.org.  If this is a private dataset, you can ignore this step.
+			Please verify all information looks correct.  Once everything looks correct, click 'Push' below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
 		</div>
 
 		<div class="card">
@@ -59,15 +59,15 @@
 			<paper-shadow z="1"></paper-shadow>
 			<h4>Resource Information</h4>
 			<table>
-				<tr><td>Total Resources</td><td>{{counts.totalResources}}</td></tr>
-				<tr><td>Metadata Resources</td><td>{{counts.metadataResources}}</td></tr>
-				<tr><td>Spectra Resources</td><td>{{counts.measurementResources}}</td></tr>
+				<tr><td>Total Resources</td><td>{{ds.resources.length}}</td></tr>
+				<tr><td>Metadata Sheets</td><td>{{counts.metadataResources}}</td></tr>
+				<tr><td>Spectra Sheets</td><td>{{counts.measurementResources}}</td></tr>
 				<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
 			</table>
 		</div>
 
-		<paper-button label="Cancel" style="float:right" on-tap="{{cancel}}"></paper-button>
-		<paper-button raisedButton label="{{ds.editMode ? 'Update' : 'Finalize'}}" class="colored" on-tap="{{finalize}}"><paper-button>
+		<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
+		<paper-button raised class="colored" on-tap="{{finalize}}">Push</paper-button>
 
 
 	</template>
@@ -75,10 +75,41 @@
 		Polymer('esis-verify-dataset', {
 			ds : {},
 
+			counts : {},
+
+			observe : {
+				'ds.resources' : 'updateCounts'
+			},
 
 			ready : function() {
-				this.ds = document.querySelector('esis-dataset');
+				this.ds = document.querySelector('esis-datastore');
 			},
+
+			updateCounts : function() {
+				this.counts = {
+					metadataResources : 0,
+					measurementResources : 0,
+					measurements : 0
+				}
+
+				for( var i = 0; i < this.ds.resources.length; i++ ) {
+					var resource = this.ds.resources[i];
+					if( !resource.datasheets || resource.ignore ) continue;
+
+					for( var j = 0; j < resource.datasheets.length; j++ ) {
+						var datasheet = resource.datasheets[j];
+						if( datasheet.ignore ) continue;
+
+						if( datasheet.metadata ) {
+							this.counts.metadataResources++;
+						} else if ( datasheet.spectra_count ) {
+							this.counts.measurementResources++;
+							this.counts.measurements += datasheet.spectra_count;
+						}
+					}
+				}
+			},
+
 			finalize : function(){
 				this.fire('finalize');
 			},

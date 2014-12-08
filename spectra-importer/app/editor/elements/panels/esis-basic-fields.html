@@ -90,34 +90,27 @@
 
 		<div class="form-wrap" >
 			Visibility: <br />
-			<select id="visible" on-change="{{_updateVisibility}}" disabled>
+			<select id="visible" on-change="{{_updateVisibility}}" disabled?="{{!ds.data.owner_org || ds.data.owner_org == ''}}">
 				<option value="false">Public</option>
 				<option value="true">Private</option>
 			</select>
+			<div hidden?="{{ds.data.owner_org != ''}}" style="font-size:12px; color:#888; font-style:italic">
+				You must select an organization if you wish to set the dataset to private, otherwise the dataset must be public.
+			</div>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input-decorator floatingLabel label="Version" >
-				<input type="text" value="{{ds.data.version}}" />
-			</paper-input-decorator>
+			<paper-input type="text" value="{{ds.data.version}}" floatingLabel label="Version"></paper-input>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input-decorator floatingLabel label="Author" >
-				<input type="text" value="{{ds.data.author}}" />
-			</paper-input-decorator>
-			<paper-input-decorator floatingLabel label="Author Email" >
-				<input type="text" value="{{ds.data.author_email}}" />
-			</paper-input-decorator>
+			<paper-input type="text" floatingLabel label="Author" value="{{ds.data.author}}"></paper-input>
+			<paper-input type="text" floatingLabel label="Author Email" value="{{ds.data.author_email}}"></paper-input>
 		</div>
 
 		<div class="form-wrap">
-			<paper-input-decorator floatingLabel label="Maintainer" >
-				<input type="text" value="{{ds.data.maintainer}}" />
-			</paper-input-decorator>
-			<paper-input-decorator floatingLabel label="Maintainer Email" >
-				<input type="text" value="{{ds.data.maintainer_email}}" />
-			</paper-input-decorator>
+			<paper-input type="text" value="{{ds.data.maintainer}}" floatingLabel label="Maintainer" ></paper-input>
+			<paper-input type="text" value="{{ds.data.maintainer_email}}" floatingLabel label="Maintainer Email" ></paper-input>
 		</div>
 
 		<template bind if="{{ds.data.title != ''}}">
@@ -224,9 +217,7 @@
 				if( this.ds.data.owner_org == '' ) {
 					this.ds.owner_org_name = '';
 					this.ds.data.private = false;
-					this.$.visible.setAttribute('disabled','disabled');
 				} else {
-					this.$.visible.removeAttribute('disabled');
 
 					var opt = this.$.organizations.querySelector('option:checked');
 					if( opt ) this.ds.owner_org_name = opt.innerHTML;	
