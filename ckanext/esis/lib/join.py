@@ -3,6 +3,38 @@ import re, time
 
 class SheetJoin:
 
+    # given a spectra object, add join attributes
+    def joinOnSpectra(self, datasheet, spectra, metadata, dataarray):
+        rowIndex = -1
+
+        if not 'matchType' in metadata and 'matchValues' in metadata and 'matchAttribute' in metadata:
+            rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
+
+        elif metadata.get('matchType') == 'attribute':
+            rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
+
+        elif metadata.get('matchType') == 'filename':
+            if metadata.get('looseMatch') == True:
+                for index, val in enumerate(metadata['matchValues']):
+                    reg = r".*%s.*" % val
+                    if re.match(reg, datasheet['name']):
+                        rowIndex = index
+            else:
+                rowIndex = metadata['matchValues'].index(datasheet['name'])
+
+        elif metadata('matchType') == 'sheetname' and 'sheetname' in datasheet:
+            rowIndex = metadata['matchValues'].index(datasheet['sheetname'])
+
+        if rowIndex == -1:
+            return
+
+        rowIndex = rowIndex + 1 + metadata['localRange']['start']
+        for attr in metadata['attributes']:
+            if attr.get('type') == 'metadata':
+                col = int(attr['pos'].split('-')[1])
+                spectra[attr['name']] = dataarray[rowIndex][col]
+
+
     # given a data array [[]] and the sheet configuration, set the matchValues for
     # for a given datasheet object
     def processMetadataSheet(self, data, sheetConfig, sheet):
@@ -15,6 +47,8 @@ class SheetJoin:
                 break
         sheet['matchValues'] = matchValues
         sheet['matchAttribute'] = sheetConfig['matchAttribute']
+        # make sure we save this
+
 
     # given a normal datasheet information, set the match count for all metadata sheets
     # - data: [[]] for resource

@@ -8,7 +8,7 @@ import ckan.lib.uploader as uploader
 from pylons import config
 
 
-import os, datetime, shutil, re, json, hashlib, zipfile, subprocess, pickle
+import os, datetime, shutil, re, json, hashlib, zipfile, subprocess, pickle, time
 
 class WorkspaceSetup:
 
@@ -26,8 +26,9 @@ class WorkspaceSetup:
     # Takes a package_id and initializes workspace if it doesn't exist
     # if it does, checks md5 hash and re-parses any new or updates files
     def init(self, package_id):
-
+        runTime = time.time()
         context = {'model': model, 'user': c.user}
+
         ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
         # TODO: this will be remove and become a check
@@ -55,10 +56,13 @@ class WorkspaceSetup:
         workspacePackage['last_used'] = datetime.datetime.utcnow()
         self.workspaceCollection.update({'package_id': ckanPackage['id']}, workspacePackage, upsert=True)
 
+        print "** Setup.init() time: %ss" % (time.time() - runTime)
+
         return (workspacePackage, ckanPackage, rootDir, fresh)
 
     # make sure  all of the resources are where they should be
     def resources(self, workspacePackage, ckanPackage, rootDir):
+        runTime = time.time()
         resources = []
 
         for ckanResource in ckanPackage['resources']:
@@ -67,6 +71,7 @@ class WorkspaceSetup:
                 if info != None:
                     resources.append(info)
 
+        print "** Setup.resources() time: %ss" % (time.time() - runTime)
         return resources
 
      # process and individual resource
