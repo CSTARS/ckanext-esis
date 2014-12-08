@@ -455,14 +455,14 @@ class WorkspaceController(PackageController):
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
-        resource = self._getMergedResources(resource_id, resources, workspacePackage)
+        resource = self._getMergedResources(resource_id, resources, workspacePackage, removeValues=False)
 
-        package = self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh)
+        package = self._mergeWorkspace(resources, workspacePackage, ckanPackage, fresh)
 
         spectra = process.getSpectra(package, resource, self.workspaceDir, datasheet_id, index)
         return json.dumps(spectra)
 
-    def _getMergedResources(self, resourceId, resources, workspacePackage):
+    def _getMergedResources(self, resourceId, resources, workspacePackage, removeValues=True):
         resource = self._getById(resources, resourceId)
         if resource == None:
             return {"error":True,"message":"resource not found"}
@@ -476,7 +476,7 @@ class WorkspaceController(PackageController):
             if workspaceDs != None:
                 for key, value in workspaceDs.iteritems():
                     datasheet[key] = value
-                if 'matchValues' in datasheet:
+                if 'matchValues' in datasheet and removeValues:
                     del datasheet['matchValues']
 
         return resource
@@ -485,6 +485,71 @@ class WorkspaceController(PackageController):
     #
     # HELPERS
     #
+
+    # this is a lot like createOverviewResponse, but does a full merge... ie
+    # does redact any fields in response
+    def _mergeWorkspace(self, resources, workspacePackage, ckanPackage, fresh):
+                # create response
+        attrs = {}
+        arr = []
+        dataResources = []
+        wavelengths = []
+        for resource in resources:
+            datasheets = []
+            for datasheet in resource['datasheets']:
+
+                if 'attributes' in datasheet:
+                    for attr in datasheet['attributes']:
+                        if not attr['name'] in attrs and attr['type'] != 'wavelength':
+                            if 'attributes' in workspacePackage:
+                                # override with any user modifications
+                                if attr['name'] in workspacePackage['attributes']:
+                                    for key, value in workspacePackage['attributes'][attr['name']].iteritems():
+                                        attr[key] = value
+                            attrs[attr['name']] = attr
+
+                        if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
+                            wavelengths.append(attr['name'])
+                            if 'original' in attr: # this might be needed when we parse
+                                # perhaps it should go in a different array
+                                wavelengths.append(attr['original'])
+                datasheets.append(datasheet)
+
+            dataResources.append(resource["id"])
+            resource["datasheets"] = datasheets
+            arr.append(resource)
+
+        # now add data resources that have been ignored
+        if 'resources' in workspacePackage:
+            for workspaceResource in workspacePackage['resources']:
+                if workspaceResource.get('ignore') == True:
+                    r = self._getById(ckanPackage['resources'], workspaceResource['id'])
+                    arr.append({
+                        "name" : r["name"],
+                        "type" : "datafile",
+                        "id"   : r["id"],
+                        "ignore" : True
+                    })
+                    dataResources.append(workspaceResource["id"])
+
+        # now add non-data resources
+        for r in ckanPackage['resources']:
+            if not r['id'] in dataResources:
+                arr.append({
+                    "name" : r["name"],
+                    "type" : "generic",
+                    "id"   : r["id"]
+                })
+
+        return {
+            "resources"  : arr,
+            "wavelengths" : wavelengths,
+            "attributes" : attrs,
+            "datasetAttributes" : workspacePackage.get("datasetAttributes"),
+            "attributeMap" : workspacePackage.get("attributeMap"),
+            "package" : ckanPackage,
+            "fresh" : fresh
+        }
 
     # given an array of objects that have an id attribute, get one by id
     def _getById(self, arr, id):

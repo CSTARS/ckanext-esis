@@ -34,11 +34,12 @@ class ProcessWorkspace:
         spectra = {}
 
         if layout == 'row':
-            for i in range(len(data[datasheet['localRange']['start']])):
-                spectra[data[datasheet['localRange']['start']][i]] = data[index][i]
+            start = datasheet['localRange']['start']
+            for i in range(len(data[start])):
+                spectra[data[start][i]] = data[start+index+1][i]
         else:
             for i in range(datasheet['localRange']['start'], datasheet['localRange']['stop']):
-                spectra[data[i][0]] = data[i][index]
+                spectra[data[i][0]] = data[i][index+1]
 
         spectra['datapoints'] = []
 
@@ -63,19 +64,21 @@ class ProcessWorkspace:
                     })
                     del spectra[attr]
 
+        # join on many metadata sheets that matched
+        for resource in package['resources']:
+            if 'datasheets' in resource:
+                for sheet in resource['datasheets']:
+                    if sheet.get('metadata') == True:
+                        if 'matches' in sheet and datasheet['id'] in sheet['matches']:
+                            metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
+                            data = self._getFileIndex(metadatafile, sheet, index)
+                            joinlib.joinOnSpectra(datasheet, spectra, sheet, data)
+
         # copy any mapped attributes
         if "attributeMap" in package:
             for key, value in package["attributeMap"].iteritems():
                 if value in spectra:
                     spectra[key] = spectra[value]
-
-        # join on many metadata sheets that matched
-        for resource in package['resources']:
-            for sheet in resource['datasheets']:
-                if sheet.get('metadata') == True:
-                    if 'matches' in sheet and datasheet['id'] in sheet['matches']:
-                        # TODO: package should be a full join with nothing redacted
-                        t = 1
 
 
         return spectra
