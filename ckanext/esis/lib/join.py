@@ -32,7 +32,9 @@ class SheetJoin:
         for attr in metadata['attributes']:
             if attr.get('type') == 'metadata':
                 col = int(attr['pos'].split('-')[1])
-                spectra[attr['name']] = dataarray[rowIndex][col]
+                if dataarray[rowIndex][col]:
+                    val = dataarray[rowIndex][col]
+                    spectra[attr['name']] = dataarray[rowIndex][col]
 
 
     # given a data array [[]] and the sheet configuration, set the matchValues for
