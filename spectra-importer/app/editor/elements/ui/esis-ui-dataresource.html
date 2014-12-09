@@ -105,10 +105,16 @@
             </div>
         </paper-dropdown>
 
+        <div style="padding:5px; color: #888" hidden?="{{edit || resource.datasheets.length == 0}}">
+            <a class="green" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
+            <span style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
+            <span hidden?="{{totalSpectra == 0}}" style="float:right">Spectra: <b>{{totalSpectra}}</b></span>
+        </div>
+
         <!-- DATASHEET, SINGLE SHEET -->
         <template bind if="{{resource.datasheets.length == 1 && !resource.ignore}}">
             <!-- NOT EDITING -->
-            <core-collapse opened="{{!edit}}">
+            <core-collapse opened="{{details}}">
                 <table class="table">
                     <tr template repeat="{{file in resource.datasheets}}">
                         <td class="name" ignore?="{{file.ignore}}">
@@ -130,7 +136,7 @@
         <!-- LIST OF DATASHEETS (multiple) -->
         <template bind if="{{resource.datasheets.length > 1 && !resource.ignore}}">
             <!-- NOT EDITING -->
-            <core-collapse opened="{{!edit}}">
+            <core-collapse opened="{{details}}">
                 <table class="table">
                     <tr>
                         <td style="font-weight:bold">Name</td>
@@ -189,15 +195,19 @@
     <script>
         Polymer('esis-ui-dataresource',{
             edit : false,
+            details : false,
 
             // is this the summary resource or full resource
             full : false,
             ds : null,
 
+            totalSpectra : 0,
+
             datasheetIndex : 0,
             currentFile : null,
             observe : {
-                edit : 'updateSelected'
+                edit : 'updateSelected',
+                'resource' : 'updateCount'
             },
 
             editMd5 : '',
@@ -209,22 +219,27 @@
 
             toggleEdit : function() {
                 this.edit = !this.edit;
-/*
-                if( this.edit ) {
-                    this.editMd5 = md5(JSON.stringify(this.resource));
-                } else {
-                    var cmd5 = md5(JSON.stringify(this.resource));
-                    if( cmd5 != this.editMd5 ) {
-                        this.save();
-                    }
-                }
-*/
+                if( this.edit ) this.details = false;
+            },
+
+            toggleDetails : function() {
+                this.details = !this.details;
+                if( this.details ) this.edit = false;
             },
 
             toggleResourceMenu : function() {
                 this.$.resourceMenu.discoverDimensions();
                 this.$.resourceMenu.resizeHandler();
                 this.$.resourceMenu.toggle();
+            },
+
+            updateCount : function() {
+                this.totalSpectra = 0;
+                if( !this.resource.datasheets ) return;
+
+                for( var i = 0; i < this.resource.datasheets.length; i++ ) {
+                    this.totalSpectra += this.resource.datasheets[i].spectra_count;
+                } 
             },
 
             updateSelected : function() {
