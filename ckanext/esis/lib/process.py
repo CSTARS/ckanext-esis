@@ -2,22 +2,24 @@
 
 import xlrd, csv, re, json, time, pickle, hashlib
 
-from ckanext.esis.lib.join import SheetJoin
 from pylons import config
 
-# helpers from ./lib
-joinlib = SheetJoin()
+
 
 class ProcessWorkspace:
 
     workspaceCollection = None
     workspaceDir = ""
+    joinlib = None
 
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
+
+    def setHelpers(self, joinlib):
+        self.joinlib = joinlib
 
     # resource should be merged from setup.parse and the workspace resource
     def getSpectra(self, package, resource, rootDir, datasheet_id, index):
@@ -28,9 +30,9 @@ class ProcessWorkspace:
 
         file = "%s%s%s" % (rootDir, datasheet['location'], datasheet['name'])
 
-        data = self._getFileIndex(file, datasheet, index)
+        data = self.getFile(file, datasheet)
 
-        (layout, scope) = self._getLayout(datasheet)
+        (layout, scope) = self.getLayout(datasheet)
         spectra = {}
 
         if layout == 'row':
@@ -42,6 +44,8 @@ class ProcessWorkspace:
                 spectra[data[i][0]] = data[i][index+1]
 
         spectra['datapoints'] = []
+
+        # TODO: add global attributes if they exist
 
         # move wavelengths to datapoints array
         if "wavelengths" in package:
@@ -71,8 +75,8 @@ class ProcessWorkspace:
                     if sheet.get('metadata') == True:
                         if 'matches' in sheet and datasheet['id'] in sheet['matches']:
                             metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
-                            data = self._getFileIndex(metadatafile, sheet, index)
-                            joinlib.joinOnSpectra(datasheet, spectra, sheet, data)
+                            data = self.getFile(metadatafile, sheet)
+                            self.joinlib.joinOnSpectra(datasheet, spectra, sheet, data)
 
         # copy any mapped attributes
         if "attributeMap" in package:
@@ -166,7 +170,7 @@ class ProcessWorkspace:
             # and the new 'sheet' files can be inserted
             self._processExcel(datasheet, datasheets, rid, workspaceResource, metadataSheets, metadataRun)
 
-    def _getFileIndex(self, file, datasheet, index):
+    def getFile(self, file, datasheet):
         ext = self._getFileExtension(file)
         data = None
 
@@ -216,7 +220,7 @@ class ProcessWorkspace:
 
         # for local scope are we parsing a metadata file or a normal datasheet
         # how should be parse this file?
-        (layout, scope) = self._getLayout(sheetConfig)
+        (layout, scope) = self.getLayout(sheetConfig)
 
         sheetInfo['layout'] = layout
 
@@ -259,7 +263,7 @@ class ProcessWorkspace:
             sheetInfo['globalRange'] = globalRange
 
         if sheetConfig != None and sheetConfig.get('metadata') == True:
-            joinlib.processMetadataSheet(data, sheetConfig, sheetInfo)
+            self.joinlib.processMetadataSheet(data, sheetConfig, sheetInfo)
         else:
             # now find the spectra count based on layout
             if layout == "row":
@@ -272,7 +276,7 @@ class ProcessWorkspace:
                 sheetInfo['spectra_count'] = i
 
             # finally find match counts for metadata joins
-            joinlib.matchMetadataSheets(data, localRange, layout, sheetInfo, metadataSheets)
+            self.joinlib.matchMetadataSheets(data, localRange, layout, sheetInfo, metadataSheets)
 
     # src:
     #  https://github.com/python-excel/xlrd
@@ -522,7 +526,7 @@ class ProcessWorkspace:
     def _getFileExtension(self, filename):
          return re.sub(r".*\.", "", filename)
 
-    def _getLayout(self, sheetConfig):
+    def getLayout(self, sheetConfig):
         layout = 'row'
         scope = 'local'
         if sheetConfig != None:

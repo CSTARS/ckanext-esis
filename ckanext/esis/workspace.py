@@ -19,14 +19,17 @@ from bson.code import Code
 from bson.son import SON
 
 import hashlib
-
+from ckanext.esis.lib.join import SheetJoin
+from ckanext.esis.lib.push import Push
 from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
 
-from ckan.controllers.package import PackageController
+#from ckan.controllers.package import PackageController
 from multiprocessing import Process, Queue
 import subprocess
 
+# helpers from ./lib
+joinlib = SheetJoin()
 
 log = logging.getLogger(__name__)
 
@@ -40,15 +43,19 @@ workspaceCollection = db[workspaceCollectionName]
 
 setup = WorkspaceSetup()
 process = ProcessWorkspace()
+push = Push()
 
 setup.setCollection(workspaceCollection)
 process.setCollection(workspaceCollection)
 
-class WorkspaceController(PackageController):
+class WorkspaceController(BaseController):
     workspaceDir = ""
 
 
     def __init__(self):
+        push.setHelpers(self, setup, process, joinlib)
+        process.setHelpers(joinlib)
+
         self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
 
         if not os.path.exists(self.workspaceDir):
@@ -78,95 +85,6 @@ class WorkspaceController(PackageController):
 
         return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
 
-    def _createOverviewResponse(self, resources, workspacePackage, ckanPackage, fresh):
-                # create response
-        attrs = {}
-        arr = []
-        dataResources = []
-        wavelengths = []
-        for resource in resources:
-            datasheets = []
-            for datasheet in resource['datasheets']:
-
-                if 'attributes' in datasheet:
-                    for attr in datasheet['attributes']:
-                        if not attr['name'] in attrs and attr['type'] != 'wavelength':
-                            respAttr = {
-                                "type" : attr["type"],
-                                "scope" : attr["scope"],
-                                "units" : attr.get("units")
-                            }
-                            if 'attributes' in workspacePackage:
-                                # override with any user modifications
-                                if attr['name'] in workspacePackage['attributes']:
-                                    for key, value in workspacePackage['attributes'][attr['name']].iteritems():
-                                        respAttr[key] = value
-                            attrs[attr['name']] = respAttr
-
-                        if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
-                            wavelengths.append(attr['name'])
-
-                f = {
-                    "id" : datasheet["id"],
-                    "name" : datasheet["name"],
-                    "layout" : datasheet.get("layout"),
-                    "spectra_count" : datasheet.get("spectra_count")
-                }
-                if 'ignore' in datasheet:
-                    f['ignore'] = datasheet['ignore']
-                if 'metadata' in datasheet:
-                    f['metadata'] = datasheet['metadata']
-                if 'matches' in datasheet:
-                    f['matches'] = datasheet['matches']
-                if 'sheetname' in datasheet:
-                    f['sheetname'] = datasheet['sheetname']
-                if 'error' in datasheet:
-                    f['error'] = datasheet.get('error'),
-                    f['message'] = datasheet.get('message')
-                datasheets.append(f)
-
-            dataResources.append(resource["id"])
-            arr.append({
-                "name" : resource["name"],
-                "type" : resource["type"],
-                "id"   : resource["id"],
-                "datasheets" : datasheets
-            })
-
-        # now add data resources that have been ignored
-        if 'resources' in workspacePackage:
-            for workspaceResource in workspacePackage['resources']:
-                if workspaceResource.get('ignore') == True:
-                    r = self._getById(ckanPackage['resources'], workspaceResource['id'])
-                    arr.append({
-                        "name" : r["name"],
-                        "type" : "datafile",
-                        "id"   : r["id"],
-                        "ignore" : True
-                    })
-                    dataResources.append(workspaceResource["id"])
-
-        # now add non-data resources
-        for r in ckanPackage['resources']:
-            if not r['id'] in dataResources:
-                arr.append({
-                    "name" : r["name"],
-                    "type" : "generic",
-                    "id"   : r["id"]
-                })
-
-        # save wire space
-        del ckanPackage['resources']
-
-        return {
-            "resources"  : arr,
-            "wavelengths" : wavelengths,
-            "attributes" : attrs,
-            "datasetAttributes" : workspacePackage.get("datasetAttributes"),
-            "attributeMap" : workspacePackage.get("attributeMap"),
-            "package" : ckanPackage,
-            "fresh" : fresh
-        }
 
     # API CALL
     # TODO: updating a resource layout, ignore, etc, may influence to amount of data joined to metadata
@@ -462,6 +380,13 @@ class WorkspaceController(PackageController):
         spectra = process.getSpectra(package, resource, self.workspaceDir, datasheet_id, index)
         return json.dumps(spectra)
 
+    def pushToSearch(self):
+        response.headers["Content-Type"] = "application/json"
+
+        package_id = request.params.get('package_id')
+
+        return json.dumps(push.pushToSearch(package_id))
+
     def _getMergedResources(self, resourceId, resources, workspacePackage, removeValues=True):
         resource = self._getById(resources, resourceId)
         if resource == None:
@@ -485,6 +410,95 @@ class WorkspaceController(PackageController):
     #
     # HELPERS
     #
+
+    def _createOverviewResponse(self, resources, workspacePackage, ckanPackage, fresh):
+        attrs = {}
+        arr = []
+        dataResources = []
+        wavelengths = []
+        for resource in resources:
+            datasheets = []
+            for datasheet in resource['datasheets']:
+
+                if 'attributes' in datasheet:
+                    for attr in datasheet['attributes']:
+                        if not attr['name'] in attrs and attr['type'] != 'wavelength':
+                            respAttr = {
+                                "type" : attr["type"],
+                                "scope" : attr["scope"],
+                                "units" : attr.get("units")
+                            }
+                            if 'attributes' in workspacePackage:
+                                # override with any user modifications
+                                if attr['name'] in workspacePackage['attributes']:
+                                    for key, value in workspacePackage['attributes'][attr['name']].iteritems():
+                                        respAttr[key] = value
+                            attrs[attr['name']] = respAttr
+
+                        if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
+                            wavelengths.append(attr['name'])
+
+                f = {
+                    "id" : datasheet["id"],
+                    "name" : datasheet["name"],
+                    "layout" : datasheet.get("layout"),
+                    "spectra_count" : datasheet.get("spectra_count")
+                }
+                if 'ignore' in datasheet:
+                    f['ignore'] = datasheet['ignore']
+                if 'metadata' in datasheet:
+                    f['metadata'] = datasheet['metadata']
+                if 'matches' in datasheet:
+                    f['matches'] = datasheet['matches']
+                if 'sheetname' in datasheet:
+                    f['sheetname'] = datasheet['sheetname']
+                if 'error' in datasheet:
+                    f['error'] = datasheet.get('error'),
+                    f['message'] = datasheet.get('message')
+                datasheets.append(f)
+
+            dataResources.append(resource["id"])
+            arr.append({
+                "name" : resource["name"],
+                "type" : resource["type"],
+                "id"   : resource["id"],
+                "datasheets" : datasheets
+            })
+
+        # now add data resources that have been ignored
+        if 'resources' in workspacePackage:
+            for workspaceResource in workspacePackage['resources']:
+                if workspaceResource.get('ignore') == True:
+                    r = self._getById(ckanPackage['resources'], workspaceResource['id'])
+                    arr.append({
+                        "name" : r["name"],
+                        "type" : "datafile",
+                        "id"   : r["id"],
+                        "ignore" : True
+                    })
+                    dataResources.append(workspaceResource["id"])
+
+        # now add non-data resources
+        for r in ckanPackage['resources']:
+            if not r['id'] in dataResources:
+                arr.append({
+                    "name" : r["name"],
+                    "type" : "generic",
+                    "id"   : r["id"]
+                })
+
+        # save wire space
+        del ckanPackage['resources']
+
+        return {
+            "resources"  : arr,
+            "wavelengths" : wavelengths,
+            "attributes" : attrs,
+            "datasetAttributes" : workspacePackage.get("datasetAttributes"),
+            "attributeMap" : workspacePackage.get("attributeMap"),
+            "package" : ckanPackage,
+            "fresh" : fresh
+        }
 
     # this is a lot like createOverviewResponse, but does a full merge... ie
     # does redact any fields in response
