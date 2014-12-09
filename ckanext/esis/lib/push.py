@@ -2,6 +2,9 @@ import re, time
 
 from pymongo import MongoClient
 from pylons import config
+import dateutil.parser, json, inspect
+from bson.code import Code
+from bson.son import SON
 
 client = MongoClient(config._process_configs[1]['esis.mongo.url'])
 db = client[config._process_configs[1]['esis.mongo.db']]
@@ -16,9 +19,26 @@ class Push:
     process = None
     workspace = None
     joinlib = None
+    mapreduce = {}
+    localdir = ""
 
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
+
+        self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
+
+        # read in mapreduce strings
+        f = open('%s/../mapreduce/map.js' % self.localdir, 'r')
+        self.mapreduce['map'] = f.read()
+        f.close()
+
+        f = open('%s/../mapreduce/reduce.js' % self.localdir, 'r')
+        self.mapreduce['reduce'] = f.read()
+        f.close()
+
+        f = open('%s/../mapreduce/finalize.js' % self.localdir, 'r')
+        self.mapreduce['finalize'] = f.read()
+        f.close()
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
@@ -32,29 +52,39 @@ class Push:
     def pushToSearch(self, package_id):
         runTime = time.time()
         # first clean out data
-        #searchCollection.remove({'package_id':package_id})
-        #spectraCollection.remove({'ecosis.package_id': package_id})
+        searchCollection.remove({'value.ecosis.package_id':package_id})
+        spectraCollection.remove({'ecosis.package_id': package_id})
 
         # next add resources one at a time and join spectra
         (workspacePackage, ckanPackage, rootDir, fresh) = self.setup.init(package_id)
+
+        if ckanPackage['private'] == True:
+            return {'error':True,'message':'This dataset is private'}
+
         resources = self.setup.resources(workspacePackage, ckanPackage, rootDir)
         self.process.resources(resources, workspacePackage, ckanPackage, rootDir)
-
 
         package = self.workspace._mergeWorkspace(resources, workspacePackage, ckanPackage, fresh)
 
         for resource in package['resources']:
             resource = self.workspace._getMergedResources(resource['id'], resources, workspacePackage, removeValues=False)
-            spectra = self._getResourceSpectra(resource, self.workspaceDir, package)
+            spectra = self._getResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
+
             # now insert into mongo
+            if len(spectra) > 0:
+                spectraCollection.insert(spectra)
 
         # finally run map reduce
+        map = Code(self.mapreduce['map'])
+        reduce = Code(self.mapreduce['reduce'])
+        #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+        spectraCollection.map_reduce(map, reduce, searchCollectionName, query={"ecosis.package_id": package_id})
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
     # this is a lot like process._getSpectra() but will be more efficent for access and joining all of
     # a files spectra
-    def _getResourceSpectra(self, resource, rootDir, package):
+    def _getResourceSpectra(self, resource, rootDir, package, ckanPackage):
         if 'datasheets' not in resource:
             return []
 
@@ -73,25 +103,28 @@ class Push:
 
             file = "%s%s%s" % (rootDir, datasheet['location'], datasheet['name'])
             data = self.process.getFile(file, datasheet)
+            spectraList = []
 
             (layout, scope) = self.process.getLayout(datasheet)
 
             if layout == 'row':
                 start = datasheet['localRange']['start']
                 for j in range(start+1, datasheet['localRange']['end']):
-                    m = {}
+                    sp = {}
                     for i in range(len(data[start])):
-                        m[data[start][i]] = data[start+j][i]
-                    spectra.append(m)
+                        if data[start+j][i]:
+                            sp[data[start][i]] = data[start+j][i]
+                    spectraList.append(sp)
             else:
                 start = datasheet['localRange']['start']
                 for j in range(1, len(data[start])):
-                    m = {}
+                    sp = {}
                     for i in range(start, datasheet['localRange']['stop']):
-                        m[data[i][0]] = data[i][j]
-                    spectra.append(m)
+                        if data[i][j]:
+                            sp[data[i][0]] = data[i][j]
+                    spectraList.append(sp)
 
-            for m in spectra:
+            for m in spectraList:
                 m['datapoints'] = []
 
                 # move wavelengths to datapoints array
@@ -115,7 +148,10 @@ class Push:
                             })
                             del m[attr]
 
-                # TODO: add global attributes if they exist
+                # add global attributes if they exist
+                if 'globalRange' in datasheet and len(data[0]) > 1:
+                    for i in range(datasheet['globalRange']['start'], datasheet['globalRange']):
+                        m[data[i][0]] = data[i][1]
 
                 # join on many metadata sheets that matched
                 for resource in package['resources']:
@@ -140,10 +176,51 @@ class Push:
                         if value in m:
                             m[key] = m[value]
 
-                # TODO
                 # finally, set ckan dataset info, as well as specific info on, sort, geolocation
+                self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
+
+                if 'datasetAttributes' in package:
+                    attrInfo = package.get('datasetAttributes')
+                    sort = attrInfo.get('sort_on')
+                    type = attrInfo.get('sort_type')
+                    if sort != None and sort in m:
+                        if type == 'datetime':
+                            m['ecosis']['sort'] = dateutil.parser.parse(m[sort])
+                        elif type == 'numberic':
+                            m['ecosis']['sort'] = float(m[sort])
+                        else:
+                            m['ecosis']['sort'] = m[sort]
+
+                    location = attrInfo.get('location')
+                    if location != None and sort in location:
+                        try:
+                            m['ecosis']['location'] = json.loads(m[location])
+                            del m[location]
+                        except:
+                            t = 1
+
+                spectra.append(m)
+
 
         print " Push resource process time: %ss" % (time.time() - runTime)
 
 
         return spectra
+
+    def _addEcosisNamespace(self, m, ckanPackage, resource, dsid):
+        ecosis = {
+            'push_time' : time.time(),
+            'package_id': ckanPackage['id'],
+            'package_name': ckanPackage['name'],
+            'package_title': ckanPackage['title'],
+            'resource_id' : resource['id'],
+            'filename': resource['name'],
+            'datasheet_id': dsid,
+            'groups': []
+        }
+
+        if ckanPackage.get('organization') != None:
+            ecosis['organization'] = ckanPackage['organization']['title']
+
+
+        m['ecosis'] = ecosis
