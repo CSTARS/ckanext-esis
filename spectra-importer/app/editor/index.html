@@ -31,6 +31,8 @@
     <link rel="import" href="components/paper-dropdown/paper-dropdown.html">
     <link rel="import" href="components/paper-item/paper-item.html">
 
+    <link rel="import" href="elements/ui/esis-ui-chart.html">
+    <link rel="import" href="elements/ui/esis-ui-spectra.html">
     <link rel="import" href="elements/ui/esis-attribute-name.html">
     <link rel="import" href="elements/esis-scaffold.html">
     <link rel="import" href="elements/esis-item.html">
@@ -138,7 +140,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.2.109:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.6:5000' : '';
 
     $.ajax({
         type : 'GET',

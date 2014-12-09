@@ -151,6 +151,24 @@
                 </paper-icon-button>
                 <div class="toggle-label">Wavelengths: {{wavelengths.length}}</div>
             <div id="wavelengths" hidden?="{{!showWavelengths}}"></div>
+
+            <template bind if="{{!datasheet.metadata}}">
+                <div>
+                    <paper-icon-button 
+                        icon="hardware:{{showSpectra ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
+                        on-tap="{{_toggleSpectra}}"
+                        class="toggle-btn">
+                    </paper-icon-button>
+                    <div class="toggle-label">Spectra: {{datasheet.spectra_count}}</div>
+                </div>
+                <core-collapse opened="{{showSpectra}}" style="margin-bottom: 30px">
+                    <esis-ui-spectra 
+                        datasheet="{{datasheet}}" 
+                        resourceId="{{resourceId}}" 
+                        show="{{showSpectra}}">
+                    </esis-ui-spectra>
+                </core-collapse>
+            </template>
         </div>
 
         <div hidden?="{{!datasheet.ignore}}" class="ignored">
@@ -175,6 +193,7 @@
 
             showWavelengths : false,
             showAttrs : false,
+            showSpectra : false,
 
             ds : null,
 
@@ -358,6 +377,10 @@
 
             _toggleAttrs : function() {
                 this.showAttrs = !this.showAttrs;
+            },
+
+            _toggleSpectra : function() {
+                this.showSpectra = !this.showSpectra;
             },
 
 			_createChart : function() {

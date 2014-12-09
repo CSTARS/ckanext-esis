@@ -4,7 +4,7 @@
 <polymer-element name="esis-resources">
     <template>
         
-        <paper-tabs selected="{{tab}}">
+        <paper-tabs id="tabs" selected="{{tab}}">
             <paper-tab>Add</paper-tab>
             <paper-tab>Current</paper-tab>
         </paper-tabs>
@@ -28,6 +28,12 @@
                 } else {
                     this.menuItem.style.display = 'none';
                 }
+            },
+
+            onShow : function() {
+                setTimeout(function(){
+                    this.$.tabs.updateBar();
+                }.bind(this), 500);
             },
 
             // switch tabs when a resource is added

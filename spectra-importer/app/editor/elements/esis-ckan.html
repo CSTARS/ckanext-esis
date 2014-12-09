@@ -185,6 +185,28 @@
 		        });
 			},
 
+			getSpectra : function(pkgid, rid, sid, index, callback) {
+				var params = '?package_id=' + pkgid +
+					'&resource_id=' + rid +
+					'&datasheet_id=' + sid +
+					'&index='+index;
+
+				$.ajax({
+		            url: esis.host + '/workspace/getSpectra'+params,
+		            type : 'GET',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
 			setDefaultLayout : function(pkgid, resourceList, layout, callback) {
 				$.ajax({
 		            url: esis.host + '/workspace/setDefaultLayout',
@@ -238,6 +260,27 @@
 				    data : {
 				    	package_id : pkgid,
 				    	datasetAttributes : JSON.stringify(attrs)
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
+			setAttributeMap : function(pkgid, map, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/setAttributeMap',
+		            type : 'POST',
+		            xhrFields: {
+				      withCredentials: true
+				    },
+				    data : {
+				    	package_id : pkgid,
+				    	map : JSON.stringify(map)
 				    },
 		            success: function(response) {
 		                callback(null, response);

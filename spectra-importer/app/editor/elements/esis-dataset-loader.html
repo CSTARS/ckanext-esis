@@ -68,6 +68,13 @@
 					this.ds.datasetAttributes = this.data.datasetAttributes;
 				}
 
+				if( this.data.attributeMap ) {
+					this.ds.inverseAttributeMap = this.data.attributeMap;
+					for( var key in this.data.attributeMap ) {
+						this.ds.attributeMap[this.data.attributeMap[key]] = key;
+					}
+				}
+
 				if( this.data.ecosis ) {
 					var ecosis = this.data.ecosis;
 
