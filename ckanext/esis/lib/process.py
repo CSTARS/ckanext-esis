@@ -79,7 +79,7 @@ class ProcessWorkspace:
                             self.joinlib.joinOnSpectra(datasheet, spectra, sheet, data)
 
         # copy any mapped attributes
-        if "attributeMap" in package:
+        if package.get('attributeMap') != None:
             for key, value in package["attributeMap"].iteritems():
                 if value in spectra:
                     spectra[key] = spectra[value]
@@ -133,6 +133,9 @@ class ProcessWorkspace:
         # we will group these together by file so we don't keep opening/closing file
         excelFiles = {}
         for datasheet in datasheets:
+            if self._ignoreDatasheet(datasheet, workspaceResource):
+                continue
+
             if 'sheetname' in datasheet:
                 if datasheet['name'] in excelFiles:
                     excelFiles[datasheet['name']].append(datasheet)
@@ -142,7 +145,9 @@ class ProcessWorkspace:
             self._processExcelSheets(sheets, workspaceResource, metadataSheets, metadataRun)
 
         for datasheet in datasheets:
-            if 'sheetname' in datasheet: # this isn't a file, it was added by processing a excel file
+            if self._ignoreDatasheet(datasheet, workspaceResource):
+                continue
+            elif 'sheetname' in datasheet: # this isn't a file, it was added by processing a excel file
                 continue
             self._processFile(datasheet, datasheets, ckanResource['id'], workspaceResource, metadataSheets, metadataRun)
 
@@ -477,6 +482,9 @@ class ProcessWorkspace:
 
             r = self._getById(resources, workspaceResource['id'])
             for sheet in workspaceResource['datasheets']:
+                if sheet.get('ignore') == True:
+                    continue
+
                 if sheet.get('metadata') == True:
                     ds = self._getById(r['datasheets'], sheet['id'])
                     ds['metadata'] = True
@@ -485,6 +493,7 @@ class ProcessWorkspace:
                         'datasheet' : ds
                     })
                 elif r != None and sheet != None:
+                    # TODO: got an error where ds ends up being None
                     ds = self._getById(r['datasheets'], sheet['id'])
                     #make sure the join info is not apart of the ds
                     if 'matchValues' in ds:
@@ -495,6 +504,8 @@ class ProcessWorkspace:
                         del ds['looseMatch']
                     if 'matchType' in ds:
                         del ds['matchType']
+                    if 'metadata' in ds:
+                        del ds['metadata']
 
         return sheets
 
@@ -525,6 +536,20 @@ class ProcessWorkspace:
     # get the extension from a filename
     def _getFileExtension(self, filename):
          return re.sub(r".*\.", "", filename)
+
+    def _ignoreDatasheet(self, datasheet, resourceConfig):
+        datasheetConfig = self._getById(resourceConfig.get('datasheets'), datasheet['id'])
+        if datasheetConfig == None:
+            if 'ignore' in datasheet:
+                del datasheet['ignore']
+            return False
+
+        if datasheetConfig.get('ignore') == True:
+            datasheet['ignore'] = True
+            return True
+        elif datasheet.get('ignore') == True:
+            del datasheet['ignore']
+        return False
 
     def getLayout(self, sheetConfig):
         layout = 'row'

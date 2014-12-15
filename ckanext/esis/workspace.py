@@ -143,7 +143,7 @@ class WorkspaceController(BaseController):
         # TODO: can we optomize this since only one datasheet was update?
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
-        return json.dumps(self._getMergedResources(resource['id'], resources, workspacePackage))
+        return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
 
     # when resources are first uploaded, use this to set the default layout information
     def setDefaultLayout(self):
@@ -155,6 +155,9 @@ class WorkspaceController(BaseController):
 
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
+        # process data... need to expand things like excel and zip files
+        process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
         # update the package workspace information with the default layout
         for id in resourceList:
@@ -177,10 +180,14 @@ class WorkspaceController(BaseController):
                     else:
                         workspaceDatasheet["layout"] = layout
 
+            # make sure we save
+            resource['changes'] = True
+            resource['location'] = "%s/%s/info.json" % (rootDir,  resource['id'])
+
         # save back to mongo
         workspaceCollection.update({'package_id': package_id}, workspacePackage)
 
-        # now process data
+        # now re-process data
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
         return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
@@ -420,7 +427,7 @@ class WorkspaceController(BaseController):
             datasheets = []
             for datasheet in resource['datasheets']:
 
-                if 'attributes' in datasheet:
+                if 'attributes' in datasheet and datasheet.get('ignore') != True:
                     for attr in datasheet['attributes']:
                         if not attr['name'] in attrs and attr['type'] != 'wavelength':
                             respAttr = {
@@ -512,7 +519,7 @@ class WorkspaceController(BaseController):
             datasheets = []
             for datasheet in resource['datasheets']:
 
-                if 'attributes' in datasheet:
+                if 'attributes' in datasheet and datasheet.get('ignore') != True:
                     for attr in datasheet['attributes']:
                         if not attr['name'] in attrs and attr['type'] != 'wavelength':
                             if 'attributes' in workspacePackage:

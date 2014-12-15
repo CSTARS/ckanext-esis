@@ -42,17 +42,17 @@ class SpectraController(PackageController):
         self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
 
         # read in mapreduce strings
-        f = open('%s/map.js' % self.localdir, 'r')
-        self.mapreduce['map'] = f.read()
-        f.close()
+        #f = open('%s/map.js' % self.localdir, 'r')
+        #self.mapreduce['map'] = f.read()
+        #f.close()
 
-        f = open('%s/reduce.js' % self.localdir, 'r')
-        self.mapreduce['reduce'] = f.read()
-        f.close()
+        #f = open('%s/reduce.js' % self.localdir, 'r')
+        #self.mapreduce['reduce'] = f.read()
+        #f.close()
 
-        f = open('%s/finalize.js' % self.localdir, 'r')
-        self.mapreduce['finalize'] = f.read()
-        f.close()
+        #f = open('%s/finalize.js' % self.localdir, 'r')
+        #self.mapreduce['finalize'] = f.read()
+        #f.close()
 
 
     def test(self):
