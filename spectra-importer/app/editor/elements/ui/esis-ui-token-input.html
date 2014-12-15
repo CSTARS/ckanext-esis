@@ -1,7 +1,6 @@
 <link rel="import" href="../../components/paper-input/paper-input.html"/>
 <link rel="import" href="../../components/paper-icon-button/paper-icon-button.html"/>
 <link rel="import" href="../../components/core-icons/core-icons.html"/>
-<link rel="import" href="../ui/esis-paper-button.html"/>
 
 <polymer-element name="esis-ui-token-input" attributes="value">
     <template>
@@ -15,7 +14,14 @@
                 color: white;
             }
         </style>
-        <paper-input id="input" type="text" on-keypress="{{_onInputKey}}" value="{{inputValue}}" floatingLabel label="Keywords" ></paper-input>
+        <paper-input 
+            id="input" 
+            type="text" 
+            on-keypress="{{_onInputKey}}" 
+            value="{{inputValue}}" 
+            floatingLabel 
+            label="Keywords" >
+        </paper-input>
 
         <div>
             <template bind if="{{searching}}">
@@ -23,7 +29,9 @@
             </template>
             <template bind if="{{!searching}}">
                 <template repeat="{{result in results}}">
-                    <esis-paper-button label="{{result.name}}" icon="add" on-click="{{_addResult}}" size="14"></esis-paper-button>
+                    <paper-button on-click="{{_addResult}}" size="14" raised>
+                        <core-icon icon="add"></core-icon> {{result.name}}
+                    </esis-paper>
                 </template>
             </template>
         </div>
