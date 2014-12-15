@@ -6,13 +6,16 @@ from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
 from pylons import config
+from datetime import datetime, timedelta
 
-
-import os, datetime, shutil, re, json, hashlib, zipfile, subprocess, pickle, time
+import os, shutil, re, json, hashlib, zipfile, subprocess, pickle, time
 
 class WorkspaceSetup:
 
     dataExtension = ["xlsx","xls","spectra","csv","tsv"]
+
+    # a package will expire after two days of not being used
+    packageExpireTime = timedelta(days=2)
 
     workspaceCollection = None
     workspaceDir = ""
@@ -39,10 +42,16 @@ class WorkspaceSetup:
             os.makedirs(rootDir)
             fresh = True
 
+            # cleanup packages that have expired if this is a fresh pull
+            self._cleanup()
+
         # grab the current package import workspace information from mongo
         workspacePackage = self.workspaceCollection.find_one({'package_id': ckanPackage['id']})
         if workspacePackage == None:
-            workspacePackage = {'package_id': ckanPackage['id']}
+            workspacePackage = {
+                'package_id': ckanPackage['id'],
+                'package_name': ckanPackage['name']
+            }
         if not 'resources' in workspacePackage:
             workspacePackage['resources'] = []
 
@@ -53,12 +62,26 @@ class WorkspaceSetup:
                 shutil.rmtree("%s/%s" % (rootDir, rid))
 
         # save package modification info to mongo
-        workspacePackage['last_used'] = datetime.datetime.utcnow()
+        workspacePackage['last_used'] = datetime.utcnow()
         self.workspaceCollection.update({'package_id': ckanPackage['id']}, workspacePackage, upsert=True)
 
         print "** Setup.init() time: %ss" % (time.time() - runTime)
 
         return (workspacePackage, ckanPackage, rootDir, fresh)
+
+    def _cleanup(self):
+        openPackageNames = os.listdir(self.workspaceDir)
+        print 'Checking open packages for expired: '
+        print openPackageNames
+
+        expired = datetime.utcnow() - self.packageExpireTime
+        packages = self.workspaceCollection.find({'package_name': {'$in' : openPackageNames}})
+        for package in packages:
+            if package['last_used'] < expired:
+                print ' - Cleaning expired package: %s' % package['package_name']
+                shutil.rmtree("%s/%s" % (self.workspaceDir, package['package_name']))
+
+
 
     # make sure  all of the resources are where they should be
     def resources(self, workspacePackage, ckanPackage, rootDir):

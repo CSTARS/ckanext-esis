@@ -40,7 +40,13 @@ class SheetJoin:
     # given a data array [[]] and the sheet configuration, set the matchValues for
     # for a given datasheet object
     def processMetadataSheet(self, data, sheetConfig, sheet):
-        matchAttr = sheetConfig['matchAttribute']
+        matchAttr = sheetConfig.get('matchAttribute')
+
+        # badness
+        if matchAttr == None:
+            sheetConfig['matchAttribute'] = '';
+            matchAttr = '';
+
         matchValues = []
         for i in range(0, len(data[0])):
             if data[0][i] == matchAttr:
@@ -69,9 +75,9 @@ class SheetJoin:
             metaSheet['datasheet']['matches'] = {}
 
         # are we matching on filename
-        if config['matchType'] == 'filename':
+        if config.get('matchType') == 'filename':
 
-            if config['looseMatch']:
+            if config.get('looseMatch') == True:
                 return self._looseMatch(sheetInfo['id'], sheetInfo['name'], metaSheet['datasheet'])
             else:
                 if sheetInfo['name'] in metaSheet['datasheet']['matchValues']:
@@ -80,7 +86,7 @@ class SheetJoin:
                     self._removeIdFromMeta(metaSheet['datasheet'], sheetInfo['id'])
 
         # are we matching to sheet name
-        elif config['matchType'] == 'sheetname':
+        elif config.get('matchType') == 'sheetname':
 
             if config['looseMatch']:
                 return self._looseMatch(sheetInfo['id'], sheetInfo['sheetname'], metaSheet['datasheet'])
@@ -90,7 +96,7 @@ class SheetJoin:
                 else:
                     self._removeIdFromMeta(metaSheet['datasheet'], sheetInfo['id'])
 
-        elif config['matchType'] == 'attribute':
+        elif config.get('matchType') == 'attribute':
             self._attributeMatch(data, range, layout, sheetInfo, metaSheet)
 
 
