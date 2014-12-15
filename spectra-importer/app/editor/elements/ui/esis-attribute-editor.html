@@ -77,31 +77,39 @@
         <div class="helper">
             These attribute types have been infered and can be modified below
         </div>
+
         <core-collapse opened="{{showEditable}}">
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Units</th>
-                    <th>Type</th>
-                </tr>
-                <tr template repeat="{{info, i in editableArray}}">
-                    <td class="{{info.class}}">
-                        <span modified?="{{modifications[info.name] != null}}">
-                            <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}" enforceSize="true"></esis-attribute-name>
-                        </span>
-                        <template bind if="{{info.saving}}"><paper-progress indeterminate></paper-progress></template>
-                    </td>
-                    <td class="{{info.class}}">
-                        <paper-input type="text" value="{{info.units}}" array="editable" index="{{i}}" on-change="{{onAttributeChange}}"></paper-input>
-                    </td>
-                    <td class="{{info.class}}">
-                        <select index="{{i}}" value="{{info.type}}" array="editable" on-change="{{onAttributeChange}}">
-                            <option value="data" selected?="{{info.type == 'data'}}">Data</option>
-                            <option value="metadata" selected?="{{info.type == 'metadata'}}">Metadata</option>
-                        </select>
-                    </td>
-                </tr>
-            </table>
+            <div style="max-height:400px">
+                <core-list id="editList" data="{{editableArray}}" height="60" style="height:400px" >
+                    <template>
+                        <!--<span modified?="{{modifications[info.name] != null}}">-->
+                        <table style="height:60px">
+                            <tr>
+                                <td class="{{model.class}}" style="width:50%">
+                                    <span>
+                                        <esis-attribute-name name="{{model.name}}" mappedName="{{ds.inverseAttributeMap[model.name]}}" enforceSize="true"></esis-attribute-name>
+                                    </span>
+                                    <div class="saving" hidden?="{{!model.saving}}">Saving...</div>
+                                </td><td class="{{model.class}}" style="width:25%">
+                                    <paper-input 
+                                        type="text" 
+                                        value="{{model.units}}" 
+                                        array="editable" 
+                                        index="{{index}}" 
+                                        on-change="{{onAttributeChange}}"
+                                        style="width:125px">
+                                    </paper-input>
+                                </td><td class="{{model.class}}" style="width:25%">
+                                    <select index="{{index}}" value="{{model.type}}" array="editable" on-change="{{onAttributeChange}}">
+                                            <option value="data" selected?="{{model.type == 'data'}}">Data</option>
+                                            <option value="metadata" selected?="{{model.type == 'metadata'}}">Metadata</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </div>
+                    </template>
+                </core-list>
+            </div>
         </core-collapse>
 
         <h4>
@@ -115,25 +123,34 @@
             These attribute types have been implied by their import format.
         </div> 
         <core-collapse opened="{{showFixed}}">
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Units</th>
-                    <th>Type</th>
-                </tr>
-                <tr template repeat="{{info, i in fixedArray}}">
-                    <td class="{{info.class}}">
-                        <esis-attribute-name name="{{info.name}}" mappedName="{{ds.inverseAttributeMap[info.name]}}" enforceSize="true"></esis-attribute-name>
-                        <template bind if="{{info.saving}}"><paper-progress indeterminate></paper-progress></template>
-                    </td>
-                    <td class="{{info.class}}">
-                        <paper-input type="text" value="{{info.units}}" array="fixed" on-change="{{onAttributeChange}}"></paper-input>
-                    </td>
-                    <td class="{{info.class}}">
-                        {{info.type}}<span class="type-flag">{{info.flag}}</span>
-                    </td>
-                </tr>
-            </table>
+            <div style="max-height:400px">
+                <core-list id="fixedList" data="{{fixedArray}}" height="60" style="height:400px" >
+                    <template>
+                        <!--<span modified?="{{modifications[info.name] != null}}">-->
+                        <table style="height:60px">
+                            <tr>
+                                <td class="{{model.class}}" style="width:50%">
+                                    <span>
+                                        <esis-attribute-name name="{{model.name}}" mappedName="{{ds.inverseAttributeMap[model.name]}}" enforceSize="true"></esis-attribute-name>
+                                    </span>
+                                    <div class="saving" hidden?="{{!model.saving}}">Saving...</div>
+                                </td><td class="{{model.class}}" style="width:25%">
+                                    <paper-input 
+                                        type="text" 
+                                        value="{{model.units}}" 
+                                        array="editable" 
+                                        index="{{index}}" 
+                                        on-change="{{onAttributeChange}}"
+                                        style="width:125px">
+                                    </paper-input>
+                                </td><td class="{{model.class}}" style="width:25%">
+                                    {{model.type}}<span class="type-flag">{{model.flag}}</span>
+                                </td>
+                            </tr>
+                        </div>
+                    </template>
+                </core-list>
+            </div>
 
             <div style="padding:10px;font-size:12px">
                 <div>
@@ -217,52 +234,6 @@
                     }
                 }
 
-                /*if( this.modifications == null ) {
-                    this.modifications = this.ds.attributeModifications;
-                }
-
-                var key, info;
-                for( key in this.attributeTypes ) {
-                    info = this.attributeTypes[key];
-
-                    switch(info.flag) {
-                        case this.ds.ATTR_FLAGS.FROM_METADATA:
-                            this._copyToArray(this.fixedArray, key, info, '');
-                            break;
-
-                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
-                            var css = (info.type == 'data') ? 'data' : 'spectra';
-
-                            if( this.modifications[key] ) {
-                                if( this.modifications[key] == 'data' ) css = 'data';
-                                else css = 'spectra';
-                            }
-                           
-                            this._copyToArray(this.editableArray, key, info, css);
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            this.wavelengthArray.push(key+(info.label ? ' <span style="font-style:italic">('+info.label+')</span>' : '') );
-                            //this._copyToArray(this.wavelengthArray, key, info, 'data');
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
-                            this._copyToArray(this.fixedArray, key, info, 'file');
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
-                            this._copyToArray(this.fixedArray, key, info, 'spectra');
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
-                            this._copyToArray(this.fixedArray, key, info, 'data');
-                            break;
-
-                        default:
-                            break;
-                    }
-                }*/
-
                 this.$.wavelengths.innerHTML = this.ds.wavelengths.join(', ');
             },
 
@@ -311,57 +282,26 @@
                 );
             },
 
-            /*_onTypeChanged : function(e) {
-                var index = parseInt(e.currentTarget.getAttribute('index'));
-                var val = e.currentTarget.value;
-                var attr = this.editableArray[index];
-
-                if( this.modifications == null ) {
-                    this.modifications = this.ds.attributeModifications;
-                }
-
-                if( val == 'data' ) attr.class = 'data';
-                else attr.class = 'spectra';
-
-                if( attr.type == val ) {
-                    if( this.modifications[attr.name] ) {
-                        delete this.modifications[attr.name];
-                    }
-                } else {
-                    this.modifications[attr.name] = val;
-                }
-
-                // now actually update known measurements
-                var i, j, f, m, index;
-                for( i = 0; i < this.ds.datasheets.length; i++ ) {
-                    f = this.ds.datasheets[i];
-                    for( j = 0; j < f.measurements.length; j++ ) {
-                        f.measurements[j].switchAttributeType(attr.name, val);
-                    }
-                }
-            },
-
-            _copyToArray : function(arr, key, info, cssClass) {
-                arr.push({
-                    name : key,
-                    type : this.ds.attributeModifications[key] ? this.ds.attributeModifications[key] : info.type,
-                    flag : info.flag,
-                    units : info.units || '',
-                    guess : info.guess,
-                    class : cssClass
-                });
-            },*/
-
             _toggleWavelengths : function() {
                 this.showWavelengths = !this.showWavelengths;
             },
 
             _toggleEditable : function() {
                 this.showEditable = !this.showEditable;
+                if( this.showEditable ) {
+                    this.async(function(){
+                        this.$.editList.updateSize();
+                    });
+                }
             },
 
             _toggleFixed : function() {
                 this.showFixed = !this.showFixed;
+                if( this.showFixed ) {
+                    this.async(function(){
+                        this.$.fixedList.updateSize();
+                    });
+                }
             }
 
         });

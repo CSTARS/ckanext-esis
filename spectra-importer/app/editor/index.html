@@ -26,6 +26,7 @@
     <link rel="import" href="components/font-roboto/roboto.html">
     <link rel="import" href="components/core-item/core-item.html">
     <link rel="import" href="components/core-menu/core-submenu.html">
+    <link rel="import" href="components/core-list/core-list.html">
     <link rel="import" href="components/paper-progress/paper-progress.html">
     <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
     <link rel="import" href="components/paper-dropdown/paper-dropdown.html">
@@ -98,9 +99,7 @@
       html /deep/ paper-input {
         width: 350px;
       }
-      html /deep/ paper-input-decorator {
-        width: 350px;
-      }
+
 
 
 
@@ -140,7 +139,7 @@
   <body unresolved>
     <script>
     if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.6:5000' : '';
+    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.2:5000' : '';
 
     $.ajax({
         type : 'GET',

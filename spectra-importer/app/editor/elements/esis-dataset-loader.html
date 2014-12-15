@@ -17,12 +17,11 @@
 
 			ready : function() {
 				this.pkgid = this._getVar('id');
-				if( this.pkgid == null ) return;
-
+				
 				this.ds = document.querySelector('esis-datastore');
 				this.ckan = document.querySelector('esis-ckan');
 
-				
+				if( this.pkgid == null ) return;
 				window.addEventListener('polymer-ready', function(e) {
 					this.$.dialog.toggle();
 					this.run(true);
@@ -72,43 +71,6 @@
 					this.ds.inverseAttributeMap = this.data.attributeMap;
 					for( var key in this.data.attributeMap ) {
 						this.ds.attributeMap[this.data.attributeMap[key]] = key;
-					}
-				}
-
-				if( this.data.ecosis ) {
-					var ecosis = this.data.ecosis;
-
-					// set the existing user modifications
-					if( ecosis.attributes ) {
-						this.ds.attributeModifications = ecosis.attributes.modifications;
-
-						// set the known attribute name mappings
-						this.ds.inverseAttributeMap = ecosis.attributes.map;
-						for( var key in ecosis.attributes.map ) {
-							this.ds.attributeMap[ecosis.attributes.map[key]] = key;
-						}
-						this.async(function(){
-							this.ds.fire('attribute-map-update');
-						});
-						
-
-						// set the known attribute types
-						// add the wavelengths back into the types array
-						for( var i = 0; i < ecosis.attributes.wavelengths.length; i++ ) {
-							ecosis.attributes.types.push({
-								type : 'data',
-								flag : this.ds.ATTR_FLAGS.IS_WAVELENGTH,
-								name : ecosis.attributes.wavelengths[i]
-							});
-						}
-						this.ds.existingAttributeTypes = ecosis.attributes.types;
-
-						// set the dataset attributes
-						for( var key in this.ds.datasetAttributes ) {
-							if( ecosis.attributes.dataset[key] ) {
-								this.ds.datasetAttributes[key] = ecosis.attributes.dataset[key];
-							}
-						}
 					}
 				}
 

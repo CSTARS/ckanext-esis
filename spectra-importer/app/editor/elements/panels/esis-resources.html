@@ -18,16 +18,18 @@
         Polymer('esis-resources', {
             menuItem : null,
             tab : 0,
-            
-            _updateVisibility : function() {
-                // FOR DEV
-                return this.menuItem.style.display = 'block';
+            ds : null,
 
-                if( this.ds.data.title.length > 0 ) {
-                    this.menuItem.style.display = 'block';
-                } else {
-                    this.menuItem.style.display = 'none';
-                }
+            observe : {
+                'ds.editMode' : '_updateVisibility'
+            },
+
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+            },
+
+            _updateVisibility : function() {
+                this.menuItem.style.display = this.ds.editMode ? 'block' : 'none';
             },
 
             onShow : function() {

@@ -132,6 +132,20 @@
 				    	resource : JSON.stringify(resource)
 				    },
 		            success: function(response) {
+		            	if( !response.error ) {
+		            		// set new state of dataset schema
+		            		var ds = document.querySelector('esis-datastore');
+	                        ds.wavelengths = response.wavelengths || [];
+	                        ds.schema = [];
+	                        if( !response.attributes ) return;
+
+	                        for( var attrName in response.attributes ) {
+	                            var attr = response.attributes[attrName];
+	                            attr.name = attrName;
+	                            ds.schema.push(attr);
+	                        }
+		            	}
+		                
 		                callback(null, response);
 		            },
 		            error: function(response) {
@@ -281,6 +295,22 @@
 				    data : {
 				    	package_id : pkgid,
 				    	map : JSON.stringify(map)
+				    },
+		            success: function(response) {
+		                callback(null, response);
+		            },
+		            error: function(response) {
+		            	if( response && response.responseJSON ) return callback(response.responseJSON);
+		            	callback({error:true, message:'Request Error'});
+		            }
+		        });
+			},
+
+			pushToSearch : function(pkgid, callback) {
+				$.ajax({
+		            url: esis.host + '/workspace/push?package_id='+pkgid,
+		            xhrFields: {
+				      withCredentials: true
 				    },
 		            success: function(response) {
 		                callback(null, response);

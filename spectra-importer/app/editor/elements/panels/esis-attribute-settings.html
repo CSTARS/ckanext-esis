@@ -70,8 +70,8 @@
 			currentTab : 0,
 
 			observe : {
-				'ds.datasheets' : '_updateVisibility',
-				'ds.existing.data' : '_updateVisibility',
+				'ds.resources' : '_updateVisibility',
+				'ds.editMode' : '_updateVisibility',
 				'ds.inverseAttributeMap' : '_updateMap'
 			},
 
@@ -94,15 +94,8 @@
 			},
 
 			_updateVisibility : function() {
-				this.menuItem.style.display = 'block';
-				return;
-
-				if( this.ds.datasheets.length > 0 || this.ds.existing.data.length > 0 ) {
-					this.menuItem.style.display = 'block';
-				} else {
-					this.menuItem.style.display = 'none';
-				}
-			},
+                this.menuItem.style.display = (this.ds.editMode && this.ds.resources.length > 0) ? 'block' : 'none';
+            },
 
 			_processMap : function(e) {
 				e.stopPropagation();

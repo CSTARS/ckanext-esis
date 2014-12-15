@@ -11,7 +11,7 @@
             h4 span {
                 display: inline-block;
                 vertical-align: top;
-                padding-top: 12px;
+                padding-top: 2px;
             }
             .nav {
                 text-align: center;
@@ -51,6 +51,9 @@
             paper-progress {
                 width: 100%
             }
+            esis-ui-delete-button /deep/ paper-icon-button {
+                padding: 0 8px !important;
+            }
         </style>
 
         <paper-button style="float:right" on-tap="{{toggleEdit}}" raised?="{{edit}}">
@@ -61,12 +64,12 @@
             <span>{{resource.name}}</span>
             <paper-icon-button
                 icon="more-vert" 
+                style="padding: 0 8px"
                 on-tap="{{toggleResourceMenu}}"
                 hidden?="{{!edit || loading || (resource.datasheets.length < 2 && !resource.ignore)}}">
             </paper-icon-button>
             <esis-ui-delete-button 
                 hidden?="{{!edit}}" 
-                style="margin-top:30px"
                 on-delete="{{remove}}">
             </esis-ui-delete-button>
         </h4>
@@ -107,7 +110,7 @@
 
         <div style="padding:5px; color: #888" hidden?="{{edit || resource.datasheets.length == 0}}">
             <a class="green" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
-            <span style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
+            <span hidden?="{{resource.datasheets.length < 2}}" style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
             <span hidden?="{{totalSpectra == 0}}" style="float:right">Spectra: <b>{{totalSpectra}}</b></span>
         </div>
 
@@ -238,17 +241,18 @@
                 if( !this.resource.datasheets ) return;
 
                 for( var i = 0; i < this.resource.datasheets.length; i++ ) {
+                    if( this.resource.datasheets[i].metadata ) continue;
                     this.totalSpectra += this.resource.datasheets[i].spectra_count;
                 } 
             },
 
-            updateSelected : function() {
+            updateSelected : function(forceReload) {
                 var index = parseInt(this.datasheetIndex);
 
                 if( !this.resource.datasheets ) return;
                 if( this.resource.datasheets.length <= index ) return;
 
-                if( this.resource.datasheets[index].loaded ) {
+                if( this.resource.datasheets[index].loaded && !forceReload) {
                     this.currentFile = this.resource.datasheets[index];
                 } else {
                     this.load(this.resource.datasheets[index], function(){
@@ -314,10 +318,17 @@
                         this.saving = false;
                         if( err ) alert("Error updating datasheet :(");
 
-                        for( var key in resp ) {
-                            this.resource[key] = resp[key];
+                        for( var i = 0; i < resp.resources.length; i++ ) {
+                            if( resp.resources[i].id != this.resource.id ) continue;
+                            var r = resp.resources[i];
+
+                            for( var key in r ) {
+                                this.resource[key] = r[key];
+                            }
+                            break;
                         }
-                        this.updateSelected();
+                        
+                        this.updateSelected(true);
                     }.bind(this)
                 ); 
             },
@@ -355,11 +366,15 @@
                         this.saving = false;
                         if( err ) alert("Error updating datasheet :(");
 
-                        if( !this.resource.ignore ) {
-                            for( var key in resp ) {
-                                this.resource[key] = resp[key];
+                        for( var i = 0; i < resp.resources.length; i++ ) {
+                            if( resp.resources[i].id != this.resource.id ) continue;
+                            var r = resp.resources[i];
+
+                            for( var key in r ) {
+                                this.resource[key] = r[key];
                             }
-                        }
+                            break;
+                        } 
                     }.bind(this)
                 ); 
             },

@@ -158,6 +158,8 @@
 			},
 
 			_updateServer : function() {
+				if( !this.metadata.matchAttribute || this.metadata.matchAttribute == '' ) return;
+				
 				this.loadingMatchCount = true;
 				this.matchCount = 0;
 

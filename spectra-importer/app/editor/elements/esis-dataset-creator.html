@@ -115,35 +115,17 @@
 
             // create a new ckan package
             create : function() {
-                var pkg = $.extend(true, {}, this.ds.data);
-                
                 this.uploading = true,
-                this.statusText = (this.ds.editMode ? 'Updating' : 'Creating initial') + ' dataset package...';
+                this.statusText = 'Pushing dataset to search (please wait, this may take a moment)...';
 
-                var pkg = document.querySelector('esis-dataset-loader').data;
-                for( var key in this.ds.data ) {
-                    if( this.ds.editMode && (key == 'name' || key == 'title') ) continue;
-                    pkg[key] = this.ds.data[key];
-                }
-
-                // TESTING...
-                /*this._uploadMeasurementResource('1233-12332-1232', function(){
-                    console.log(this._createDatasetJson('1233-12332-1232'));
-                    console.log('done');
-                }.bind(this));
-                return;*/
-                // TESTING...
-
-                var action = this.ds.editMode ? this.ckan.updatePackage : this.ckan.createPackage;
-                action(pkg, function(err, resp){
-                    if( err ) {
-                        alert('Error '+(this.ds.editMode ? 'updating' : 'creating')+' dataset');
+                document.querySelector('esis-ckan').pushToSearch(
+                    this.ds.package_id,
+                    function(err, resp){
                         this.uploading = false;
-                        return;
-                    }
-
-                    this._addResources(resp);
-                }.bind(this));
+                        if( err ) alert('Error pushing dataset to search :(');
+                        else alert('Success!');
+                    }.bind(this)
+                );
             },
 
             _addResources : function(pkg) {

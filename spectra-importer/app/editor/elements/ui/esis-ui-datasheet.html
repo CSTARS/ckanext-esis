@@ -242,12 +242,17 @@
                         this.saving = false;
                         if( err ) alert("Error updating datasheet :(");
 
-                        for( var i = 0; i < resp.datasheets.length; i++ ) {
-                            if( resp.datasheets[i].id == this.datasheet.id ) {
-                                for( var key in resp.datasheets[i] ) {
-                                    this.datasheet[key] = resp.datasheets[i][key];
+                        for( var i = 0; i < resp.resources.length; i++ ) {
+                            if( resp.resources[i].id != this.resourceId ) continue;
+                            var r = resp.resources[i];
+
+                            for( var j = 0; j < r.datasheets.length; j++ ) {
+                                if( r.datasheets[j].id == this.datasheet.id ) {
+                                    for( var key in r.datasheets[j] ) {
+                                        this.datasheet[key] = r.datasheets[j][key];
+                                    }
+                                    return;
                                 }
-                                return;
                             }
                         }
                     }.bind(this)

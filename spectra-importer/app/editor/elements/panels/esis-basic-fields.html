@@ -113,8 +113,21 @@
 			<paper-input type="text" value="{{ds.data.maintainer_email}}" floatingLabel label="Maintainer Email" ></paper-input>
 		</div>
 
-		<template bind if="{{ds.data.title != ''}}">
+		<template bind if="{{!ds.editMode && !creating && ds.data.title.length > 2}}">
+			<paper-button class="btn-green" raised on-click="{{create}}">Create Dataset</paper-button>
+		</template>
+		<template bind if="{{creating}}">
+			Creating Dataset...
+		</template>
+
+		<template bind if="{{ds.editMode}}">
 			<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
+
+			<div style="margin-top: 30px;" >
+				<esis-ui-delete-button 
+	                on-delete="{{_delete}}" label="Dataset">
+	            </esis-ui-delete-button>
+			</div>
 		</template>
 
 		<template bind if="{{git.branch != 'master'}}">
@@ -130,6 +143,8 @@
 		Polymer('esis-basic-fields', {
 			ds : {},
 			ckan : {},
+
+			creating : false,
 
 			validName : true,
 			verifingName : false,
@@ -225,7 +240,7 @@
 			},
 
 			_addResources : function() {
-				window.location.hash = "#new-resources";
+				window.location.hash = "#resources";
 			},
 
 			_setKeywords : function(e) {
@@ -252,6 +267,37 @@
 			_setVisibility : function() {
 				this.$.visible.value = (this.ds.hidden)+'';
 			},
+
+			create : function() {
+				this.creating = true;
+				document.querySelector('esis-ckan').createPackage(
+					this.ds.data,
+					function(err, resp) {
+						this.creating = false;
+						if( err ) return alert('Failed to create dataset :(');
+						if( !resp ) return alert('Failed to create dataset :(');
+						if( !resp.id ) return alert('Failed to create dataset :(');
+
+						this.ds.editMode = true;
+						this.ds.package_id = resp.id;
+						console.log(resp)
+					}.bind(this)
+				);
+			},
+
+			_delete : function() {
+		  		if( confirm('Are you sure your want to remove this dataset?') ) {
+		  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+		  				document.querySelector('esis-ckan').deletePackage(
+		  					this.ds.package_id, 
+		  					function(err, resp) {
+		  						alert('package deleted');
+		  						window.location = '/dataset';
+		  					}
+		  				);
+		  			}
+		  		}
+		  	},
 
 		  	_getVar : function(variable) {
        			var query = window.location.search.substring(1);

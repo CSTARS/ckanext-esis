@@ -44,10 +44,6 @@
 			</div>	
 		</template>
 
-
-		<paper-button style="margin-top" on-click="{{_delete}}" raised>
-			<core-icon icon="warning"></core-icon> Delete Dataset
-		</paper-button>
 	</template>
 	<script>
 		Polymer('esis-current-resources',{
@@ -140,20 +136,6 @@
 		  			}
 		  		}
 		  	},
-
-		  	_delete : function() {
-		  		if( confirm('Are you sure your want to remove this dataset?') ) {
-		  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
-		  				document.querySelector('esis-ckan').deletePackage(
-		  					this.ds.package_id, 
-		  					function(err, resp) {
-		  						alert('package deleted');
-		  						window.location = '/dataset';
-		  					}
-		  				);
-		  			}
-		  		}
-		  	}
 		});
 	</script>
 <polymer-element>

@@ -243,6 +243,7 @@
                         function(err, resp) {
                             if( err ) return console.log('Error setting default resource layout :(');
 
+                            this.$.file.value = '';
                             document.querySelector('esis-dataset-loader').runAfterResourceAdd(resp);
                             this.fire('resource-add');
                             this.processing = false;
