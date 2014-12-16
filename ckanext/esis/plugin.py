@@ -82,6 +82,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
 
         map.connect('git_info', '/spectra/gitInfo', controller=controller, action='gitInfo')
+        map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
 
         # route all resource edit screens to main ecosis dataset editor
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
@@ -94,7 +95,6 @@ class EsisPlugin(plugins.SingletonPlugin,
         # override the routes to delete packages and resources
         map.connect('delete_package', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-        map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
 
         # just use the basic package controller for this on, there is a js hack
         # to select the correct menu as the menu select is action based :/
