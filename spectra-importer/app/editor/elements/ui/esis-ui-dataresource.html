@@ -123,6 +123,9 @@
                         <td class="name" ignore?="{{file.ignore}}">
                             <span hidden?="{{!file.ignore}}" class="orange">Ignored</span>
                             <span hidden?="{{!file.metadata || file.ignore}}" class="blue">Metadata</span>
+                            <span hidden?="{{!file.error}}" style="color:red">
+                                Error parsing file
+                            </span>
                         </td>
                         <td><span hidden?="{{!file.spectra_count || file.ignore || file.metadata}}">Spectra: {{file.spectra_count}}</span></td>
                         <td><span hidden?="{{file.ignore}}">Layout: {{file.layout}}</span></td>
@@ -132,7 +135,11 @@
 
             <!-- EDITING -->
             <core-collapse opened="{{edit && !loading}}">
-                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceId="{{resource.id}}" edit></esis-ui-datasheet>
+                <esis-ui-datasheet 
+                    datasheet="{{resource.datasheets[0]}}" 
+                    resourceId="{{resource.id}}" 
+                    edit
+                    on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -152,6 +159,9 @@
                             <span hidden?="{{!datasheet.sheetname}}">({{datasheet.sheetname}})</span>
                             <span hidden?="{{!datasheet.ignore}}" class="orange"> - Ignored</span>
                             <span hidden?="{{!datasheet.metadata || datasheet.ignore}}" class="blue"> - Metadata</span>
+                            <span hidden?="{{!datasheet.error}}" style="color:red">
+                                Error parsing file
+                            </span>
                         </td>
                         <td style="color:#888">
                             <span hidden?="{{!datasheet.spectra_count || datasheet.ignore || datasheet.metadata}}">{{datasheet.spectra_count}}</span>
@@ -186,7 +196,12 @@
                     </div>
                 </div>
 
-                <esis-ui-datasheet datasheet="{{currentFile}}" resourceId="{{resource.id}}" edit showName></esis-ui-datasheet>
+                <esis-ui-datasheet 
+                    datasheet="{{currentFile}}" 
+                    resourceId="{{resource.id}}" 
+                    edit 
+                    showName
+                    on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -258,9 +273,23 @@
                     this.load(this.resource.datasheets[index], function(){
                         this.currentFile = this.resource.datasheets[index];
                     }.bind(this));
-                }
+                }                
+            },
 
-                
+            onDatasheetUpdate : function() {
+                this.uncacheMetadata();
+                this.fire('datasheet-updated', this.resource.id);
+            },
+
+            /* any cached metadata file should be cleared out */
+            uncacheMetadata : function(closeEdit) {
+                if( closeEdit ) this.edit = false;
+
+                for( var i = 0; i < this.resource.datasheets.length; i++ ) {
+                    if( this.resource.datasheets[i].metadata ) {
+                        this.resource.datasheets[i].loaded = false;
+                    }
+                }
             },
 
             back : function() {

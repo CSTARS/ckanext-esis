@@ -234,7 +234,10 @@
                     }
                 }
 
-                this.$.wavelengths.innerHTML = this.ds.wavelengths.join(', ');
+                // WTF
+                if( this.$.wavelengths ) {
+                    this.$.wavelengths.innerHTML = this.ds.wavelengths.join(', ');
+                }
             },
 
             timers : {},

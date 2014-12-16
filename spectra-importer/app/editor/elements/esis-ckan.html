@@ -120,17 +120,25 @@
 		        });
 			},
 
-			setParseInfo : function(pkgid, resource, callback) {
+			setParseInfo : function(pkgid, resource, datasheet_id,  callback) {
+				var data = {
+				   	package_id : pkgid,
+				  	resource : JSON.stringify(resource)
+				}
+
+				if( typeof datasheet_id == 'function' ) {
+					callback = datasheet_id;
+				} else {
+					data['datasheet_id'] = datasheet_id
+				}
+
 				$.ajax({
 		            url: esis.host + '/workspace/setParseInfo',
 		            type : 'POST',
 		            xhrFields: {
 				      withCredentials: true
 				    },
-				    data : {
-				    	package_id : pkgid,
-				    	resource : JSON.stringify(resource)
-				    },
+				    data : data,
 		            success: function(response) {
 		            	if( !response.error ) {
 		            		// set new state of dataset schema

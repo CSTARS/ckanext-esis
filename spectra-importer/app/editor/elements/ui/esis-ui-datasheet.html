@@ -46,6 +46,10 @@
             {{datasheet.name}}
             <span hidden?="{{!datasheet.sheet}}">({{datasheet.sheetname}})</span>
         </h6>
+
+        <span hidden?="{{!datasheet.error}}" style="color:red">
+            Error parsing file
+        </span>
             
 
         <div horizontal layout style="margin: 20px 0 20px 20px" hidden?="{{datasheet.ignore}}">
@@ -238,10 +242,12 @@
                 document.querySelector('esis-ckan').setParseInfo(
                     this.ds.package_id, 
                     resource,
+                    this.datasheet.id,
                     function(err, resp){
                         this.saving = false;
                         if( err ) alert("Error updating datasheet :(");
-
+                        
+                        
                         for( var i = 0; i < resp.resources.length; i++ ) {
                             if( resp.resources[i].id != this.resourceId ) continue;
                             var r = resp.resources[i];
@@ -251,10 +257,14 @@
                                     for( var key in r.datasheets[j] ) {
                                         this.datasheet[key] = r.datasheets[j][key];
                                     }
-                                    return;
+                                    break;
                                 }
                             }
                         }
+                        var ele = this.shadowRoot.querySelector('esis-ui-spectra');
+                        if( ele ) ele.clearCache();
+
+                        this.fire('update');
                     }.bind(this)
                 ); 
             },

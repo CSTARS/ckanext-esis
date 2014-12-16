@@ -67,6 +67,11 @@
                 this.update();
             },
 
+            clearCache : function() {
+                this.spectraCache = {};
+                this.show = false;
+            },
+
             update : function() {
                 if( !this.show ) return;
 

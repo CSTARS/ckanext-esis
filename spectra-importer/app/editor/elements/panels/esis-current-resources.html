@@ -35,11 +35,13 @@
 			<span style="font-size:12px;color:#888">Resource Type and Parsed Spectra below will be incomplete till package is loaded.</span>
 		</div>
 
-		<template repeat="{{resource in ds.resources}}">
+		<template repeat="{{resource, i in ds.resources}}">
 			<div class="card">
 				<esis-ui-dataresource 
+					index="{{i}}"
 					resource="{{resource}}"
-					on-remove="{{_deleteResource}}">
+					on-remove="{{_deleteResource}}"
+					on-datasheet-updated="{{clearMetadata}}">
 				</esis-ui-dataresource>
 			</div>	
 		</template>
@@ -49,8 +51,6 @@
 		Polymer('esis-current-resources',{
 			ds : {},
 			loader : {},
-
-			resources : [],
 
 			loading : false,
 
@@ -76,6 +76,16 @@
 					}.bind(this));
 				}
 				
+			},
+
+			clearMetadata : function(e) {
+				var id = e.detail;
+				for( var i = 0; i < this.ds.resources.length; i++ ) {
+					if( this.ds.resources[i].id != id ) {
+						var ele = this.shadowRoot.querySelector('esis-ui-dataresource[index="'+i+'"]');
+						ele.uncacheMetadata(true);
+					}
+				}
 			},
 
 			_update : function() {
