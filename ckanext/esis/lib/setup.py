@@ -43,7 +43,7 @@ class WorkspaceSetup:
             fresh = True
 
             # cleanup packages that have expired if this is a fresh pull
-            self._cleanup()
+            self._cleanup(ckanPackage['name'])
 
         # grab the current package import workspace information from mongo
         workspacePackage = self.workspaceCollection.find_one({'package_id': ckanPackage['id']})
@@ -69,7 +69,7 @@ class WorkspaceSetup:
 
         return (workspacePackage, ckanPackage, rootDir, fresh)
 
-    def _cleanup(self):
+    def _cleanup(self, currentPackageName):
         openPackageNames = os.listdir(self.workspaceDir)
         print 'Checking open packages for expired: '
         print openPackageNames
@@ -77,7 +77,7 @@ class WorkspaceSetup:
         expired = datetime.utcnow() - self.packageExpireTime
         packages = self.workspaceCollection.find({'package_name': {'$in' : openPackageNames}})
         for package in packages:
-            if package['last_used'] < expired:
+            if package['last_used'] < expired and package['package_name'] != currentPackageName:
                 print ' - Cleaning expired package: %s' % package['package_name']
                 shutil.rmtree("%s/%s" % (self.workspaceDir, package['package_name']))
 

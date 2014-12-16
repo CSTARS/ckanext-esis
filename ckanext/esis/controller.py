@@ -33,6 +33,8 @@ packageCollection = db[config._process_configs[1]['esis.mongo.package_collection
 metadataCollection = db[config._process_configs[1]['esis.mongo.metadata_collection']]
 searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
 searchCollection = db[searchCollectionName]
+workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
+workspaceCollection = db[workspaceCollectionName]
 
 class SpectraController(PackageController):
     mapreduce = {}
@@ -238,6 +240,7 @@ class SpectraController(PackageController):
         spectraCollection.remove({'ecosis.package_id':params['id']})
         packageCollection.remove({'package_id':params['id']})
         metadataCollection.remove({'package_id': params['id']})
+        workspaceCollection.remove({'package_id': params['id']})
 
         return json.dumps({'success': True})
 
@@ -257,19 +260,19 @@ class SpectraController(PackageController):
 
         logic.get_action('resource_delete')(context, {'id': id})
 
-        metadata = metadataCollection.find_one({'resource_id': id})
-        if metadata != None:
-            pkg = packageCollection.find_one({'package_id': metadata['package_id']})
-            metadataCollection.remove({'resource_id': id})
-            metadata = self._get_metadata_for_package(pkg['id'])
-
-            cur = spectraCollection.find({'ecosis.package_id': pkg['package_id']})
-            for spectra in cur:
-                self._rejoin_metadata(spectra, metadata, pkg['attributes'])
-                spectraCollection.update(spectra)
-
         # now remove any spectra that were related
         spectraCollection.remove({'ecosis.resource_id': id})
+
+        # remove from workspace
+        workspace = workspaceCollection.find_one({'resources.id', id})
+
+        r = None
+        for resource in workspace['resources']:
+            if resource.id == id:
+                r = resource
+                break
+        workspace['resource'].remove(r)
+        workspaceCollection.update({'package_id': workspace['package_id']}, workspace)
 
 
 
@@ -402,6 +405,44 @@ class SpectraController(PackageController):
 
 
         return json.dumps(resp)
+
+    def clean(self):
+        response.headers["Content-Type"] = "application/json"
+
+        context = {'model': model, 'user': c.user}
+
+        if not c.userobj.sysadmin:
+            return json.dumps({'error':True, 'message':'nope'})
+
+        cmd = "git branch"
+        process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=self.localdir)
+        branches = process.communicate()[0].split("\n")
+        for branch in branches:
+            if "*" in branch:
+                branch = branch.replace("* ","")
+                if branch == 'master':
+                    return json.dumps({'error':True, 'message':'operation can\'t be preformed on branch master'})
+
+        packages = logic.get_action('package_list')(context, {})
+
+        for package in packages:
+            package = logic.get_action('package_show')(context, {'id': package})
+            # make sure all resources are removed from disk
+            if 'resources' in package:
+                for r in package['resources']:
+                    if r.get('url_type') == "upload":
+                        upload = uploader.ResourceUpload(r)
+                        path = upload.get_path(r['id'])
+                        if os.path.exists(path):
+                            os.remove(path)
+            logic.get_action('package_delete')(context, {'id': package['id']})
+
+        # clear mongo
+        workspaceCollection.remove({})
+        spectraCollection.remove({})
+        searchCollection.remove({})
+
+        return json.dumps({'removed': packages})
 
 
     # make sure all mapped names are set

@@ -97,6 +97,10 @@ class WorkspaceController(BaseController):
         package_id = request.params.get('package_id')
         resource = json.loads(request.params.get('resource'))
 
+
+        # option, if a resource id and a datasheet id are passed, then the full 'merged' view will be return
+        datasheet_id = request.params.get('datasheet_id')
+
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
 
         # update the package workspace information
@@ -143,7 +147,17 @@ class WorkspaceController(BaseController):
         # TODO: can we optomize this since only one datasheet was update?
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
-        return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
+        resp = self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh)
+
+        if resource.get('id') != None and datasheet_id != None:
+            newds = self._mergeDatasheet(resources, workspacePackage, resource.get('id'), datasheet_id)
+            r = self._getById(resp['resources'], resource.get('id'))
+            if r != None:
+                ds = self._getById(r['datasheets'], datasheet_id)
+                r['datasheets'].remove(ds)
+                r['datasheets'].append(newds)
+
+        return json.dumps(resp)
 
     # when resources are first uploaded, use this to set the default layout information
     def setDefaultLayout(self):
@@ -260,6 +274,9 @@ class WorkspaceController(BaseController):
 
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
+        return json.dumps(self._mergeDatasheet(resources, workspacePackage, rid, sid))
+
+    def _mergeDatasheet(self, resources, workspacePackage, rid, sid):
         r = self._getById(resources, rid)
         if r == None:
             r = {'datasheets': []}
@@ -277,7 +294,7 @@ class WorkspaceController(BaseController):
         for key, value in sWs.iteritems():
             s[key] = value
 
-        return json.dumps(s)
+        return s
 
 
     # API CALL

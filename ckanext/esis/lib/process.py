@@ -107,14 +107,25 @@ class ProcessWorkspace:
 
         # finally save all json files with current state
         for resourceInfo in resources:
+            hasChanges = False
+
             if resourceInfo.get('changes') == True:
-                location = resourceInfo['location']
-                del resourceInfo['location']
+                if 'location' in resourceInfo:
+                    del resourceInfo['location']
                 del resourceInfo['changes']
+                hasChanges = True
+
+            for ds in resourceInfo['datasheets']:
+                if ds.get('changed') == True:
+                    del ds['changed']
+                    hasChanges = True
+
+            if hasChanges:
+                location = "%s/%s/info.json" % (rootDir,  resourceInfo['id'])
                 self._saveJson(location, resourceInfo)
 
-        print "** Process.resources()  %s time: %ss" % (ckanPackage['name'], (time.time() - runTime))
 
+        print "** Process.resources()  %s time: %ss" % (ckanPackage['name'], (time.time() - runTime))
 
     # process any user changes to resource
     def _processResource(self, ckanResource, datasheets, workspacePackage, metadataSheets=[], metadataRun=False):
@@ -244,8 +255,6 @@ class ProcessWorkspace:
         if localRange['start'] == localRange['stop']:
             return
 
-
-
         # find all the attribute types based on layout
         attrTypes = []
         if layout == "row":
@@ -292,6 +301,7 @@ class ProcessWorkspace:
         # remove the place holder, the sheets will be the actual 'files'
 
         fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['name'])
+        error = False
 
         try:
             workbook = xlrd.open_workbook(fullPath)
@@ -315,12 +325,17 @@ class ProcessWorkspace:
 
         #TODO: how do we really want to handle this?
         except Exception as e:
-            datasheet['error'] = True
-            datasheet['message'] = e.message.message
+            error = True
+            datasheet['error'] = {
+                'message' : 'Error parsing excel file',
+                'note' : 'There are known compatibility issues with OfficeLibre'
+            }
 
         # if we are on the second run and there is no error, remove the excel file as a 'sheet'
-        if not 'error' in datasheet and not metadataRun:
+        if not error and not metadataRun:
             datasheets.remove(datasheet)
+        if not error and 'error' in datasheet:
+            del datasheet['error']
 
     def _processExcelSheets(self, sheets, resourceConfig, metadataSheets, metadataRun):
         if len(sheets) == 0:
@@ -397,7 +412,9 @@ class ProcessWorkspace:
         name = name.strip()
 
         # parse out units
-        # TODO
+        if re.match(r".*\(.*\)\s*$", name):
+            units = re.sub(r".*\(","", name)
+            units = re.sub(r"\)\s*","", units)
 
         type = "metadata"
         if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
@@ -495,6 +512,13 @@ class ProcessWorkspace:
                 elif r != None and sheet != None:
                     # TODO: got an error where ds ends up being None
                     ds = self._getById(r['datasheets'], sheet['id'])
+
+                    # you hit this condition if you have excel files that have not been processed yet
+                    # happens on a fresh pull, you see the excel file but not sheets at this point
+                    # when you are asking for metadata because we haven't needed to parse yet
+                    if ds == None:
+                        continue
+
                     #make sure the join info is not apart of the ds
                     if 'matchValues' in ds:
                         del ds['matchValues']
