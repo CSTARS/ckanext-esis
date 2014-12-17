@@ -5,7 +5,6 @@ import xlrd, csv, re, json, time, pickle, hashlib
 from pylons import config
 
 
-
 class ProcessWorkspace:
 
     workspaceCollection = None
@@ -198,8 +197,6 @@ class ProcessWorkspace:
             data = self._readExcelSheet(file, datasheet.get('sheetname'))
         return data
 
-
-
     def _readSeperatorFile(self, file, separator):
         with open(file) as csvfile:
             reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
@@ -297,6 +294,7 @@ class ProcessWorkspace:
     # help:
     #  http://www.youlikeprogramming.com/2012/03/examples-reading-excel-xls-documents-using-pythons-xlrd/
     #  https://secure.simplistix.co.uk/svn/xlrd/trunk/xlrd/doc/xlrd.html?p=4966
+    # FYI:  Looks like there are some bugs with OfficeLibra and
     def _processExcel(self, datasheet, datasheets, rid, resourceConfig, metadataSheets, metadataRun):
         # remove the place holder, the sheets will be the actual 'files'
 

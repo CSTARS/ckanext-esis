@@ -1,12 +1,5 @@
-import logging
-
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
-import json
-from ckan.common import c
-from ckan.lib.base import model
-import ckan.lib.uploader as uploader
-import ckan.logic as logic
 
 
 class EsisPlugin(plugins.SingletonPlugin,
@@ -25,32 +18,12 @@ class EsisPlugin(plugins.SingletonPlugin,
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
-        # setting up Fanstatic directory.  In here you will find a resource.config file
-        tk.add_resource('public','esis')
 
+    # set helpers for esis templates
     def get_helpers(self):
-        return {
-            'to_json' : self.to_json,
-            'getUser' : self.getUser,
-            'getPackage' : self.getPackage
-        }
-
-
-    def getUser(self):
-        user = tk.get_action('user_show')({},{'id': c.userobj.id});
-        del user['datasets']
-        del user['activity']
-        return user
-
-    def getPackage(self):
-        pkg = tk.get_action('package_show')({},{'id': c.id})
-        return pkg
-
-    def to_json(self, data):
-        try:
-            return json.dumps(data)
-        except Exception:
-            return "{}"
+        # Example:
+        # return { 'to_json' : 'self.to_json' }
+        return {}
 
     def is_fallback(self):
         # Return True to register this plugin as the default handler for
@@ -63,24 +36,9 @@ class EsisPlugin(plugins.SingletonPlugin,
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
-
-        # new routes
-        # list all packages with spectra.json files
-        map.connect('all_spectra_packages', '/spectra/all', controller=controller, action='all')
-        map.connect('add_spectra_package', '/spectra/addInfo', controller=controller, action='addInfo')
-        map.connect('update_spectra_package', '/spectra/addData', controller=controller, action='addData')
-        map.connect('get_spectra_package', '/spectra/get', controller=controller, action='get')
-
-        map.connect('add_spectra_test', '/spectra/test', controller=controller, action='test')
-
-        map.connect('add_spectra_data', '/spectra/addSpectra', controller=controller, action='addSpectra')
-        map.connect('add_update_package', '/spectra/addUpdatePackage', controller=controller, action='addUpdatePackage')
-        map.connect('get_package', '/spectra/getPackage', controller=controller, action='getPackage')
-        map.connect('get_metadata', '/spectra/getMetadata', controller=controller, action='getMetadata')
-        map.connect('get_usda_common_name', '/spectra/getUsdaCommonName', controller=controller, action='getUSDACommonName')
+         # new routes
         map.connect('rebuild_index', '/spectra/rebuildIndex', controller=controller, action='rebuildIndex')
         map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
-
         map.connect('git_info', '/spectra/gitInfo', controller=controller, action='gitInfo')
         map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
 
@@ -95,14 +53,6 @@ class EsisPlugin(plugins.SingletonPlugin,
         # override the routes to delete packages and resources
         map.connect('delete_package', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-
-        # just use the basic package controller for this on, there is a js hack
-        # to select the correct menu as the menu select is action based :/
-        #map.connect('spectralSearch', '/spectral', controller='package', action='search')
-
-        # attach the upload handle to the SpectralController
-        #map.connect('upload', '/spectral/api/upload', controller=controller, action='upload')
-
 
         # connect workspace calls
         controller = 'ckanext.esis.workspace:WorkspaceController'
