@@ -1,0 +1,224 @@
+<polymer-element name="esis-table-renderer">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <div layout horizontal>
+            <div flex id="canvasParent">
+                <canvas width="{{width}}" height="{{height}}" 
+                    on-mousewheel="{{onMouseWheel}}"
+                    on-mousedown="{{onMouseDown}}"
+                    on-mousemove="{{onMouseMove}}"
+                    on-mouseup="{{onMouseUp}}"
+                    on-mouseout="{{onMouseOut}}">
+                </canvas>
+            </div>
+            <div>
+                <div layout vertical>
+                    <div>
+                        <paper-button>
+                            <core-icon icon="add-circle-outline" on-click="{{zoomIn}}"></core-icon>
+                        </paper-button>
+                    </div>
+                    <div>
+                        <paper-button>
+                            <core-icon icon="remove-circle-outline" on-click="{{zoomOut}}"></core-icon>
+                        </paper-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer('esis-table-renderer', {
+            top : 0,
+            left : 0,
+            width : 400,
+            height : 400,
+            data : null,
+
+            zoom : 7,
+
+            cell : {
+                width : 3,
+                height : 1
+            },
+
+            ctx : null,
+
+
+            type : 'row',
+            ranges : {
+                global : {
+                    start : 0,
+                    end : 1
+                },
+                local : {
+                    start : 2,
+                    end : 4,
+                }
+            },
+
+            dragging : false,
+            dragStart : [0, 0],
+            dragPos : [0, 0],
+
+            observe : {
+                width : 'redraw',
+                height : 'redraw',
+                data : 'redraw',
+                zoom : 'redraw'
+            },
+
+            ready : function() {
+                this.ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
+                $(window).on('resize', this.resize.bind(this));
+            },
+
+            attached : function() {
+                this.data = [
+                    ['foo', '1','', ''],
+                    ['', '','', ''],
+                    ['bar', '324', '343', '234'],
+                    ['baz', 'another', '', '']
+                ]
+                this.async(function(){
+                    this.resize();
+                })
+                
+            },
+
+            resize : function() {
+                this.width = $(this.$.canvasParent).width()-30;
+                if( this.width < 250 ) this.width = 250;
+                
+                this.async(function(){
+                    this.redraw();
+                });
+            },
+
+            onMouseDown : function(e) {
+                this.dragging = true;
+                this.dragStart = [e.x,e.y];
+                this.dragPos = [this.left,this.top];
+            },
+
+            onMouseUp : function(e) {
+                this.dragging = false;
+            },
+            onMouseOut : function(e) {
+                this.dragging = false;
+            },
+
+            onMouseMove : function(e) {
+                if( !this.dragging ) return;
+
+                this.left = this.dragPos[0] + (e.x - this.dragStart[0]);
+                this.top = this.dragPos[1] + (e.y - this.dragStart[1]);
+                this.redraw();
+            },
+
+            onMouseWheel : function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var delta = Math.max(-1, Math.min(1, e.wheelDelta));
+                this.adjustZoom(delta);
+            },
+
+            zoomIn : function() {
+                this.adjustZoom(1);
+            },
+
+            zoomOut : function() {
+                this.adjustZoom(-1);
+            },
+
+            adjustZoom : function(delta) {
+                this.zoom += delta;
+
+                if( this.zoom < 1 ) this.zoom = 1;
+                if( this.zoom > 12 ) this.zoom = 12;
+            },
+            
+            redraw : function() {
+                console.log('table renderer redraw');
+                this.clear();
+
+                var w = this.cell.width * this.zoom * 10;
+                var h = this.cell.height * this.zoom * 10;
+                var t = this.top, l = this.left, row, i, j, color, half;
+                
+                this.ctx.lineWidth = "2";
+
+                this.ctx.fillStyle = '#000000';
+                this.ctx.font = (h - 8)+"px Arial";
+
+                for( i = 0; i < this.data.length; i++ ) {
+                    row = this.data[i];
+
+                    for( j = 0; j < row.length; j++ ) {
+
+                        color = this.getColor(i, j);
+
+                        if( color == 'blue' ) {
+                            this.ctx.beginPath();
+                            this.ctx.strokeStyle ='#888888';
+
+                            if( this.type = 'row') {
+                                half = (h / 2) - 1;
+                                this.ctx.moveTo(l, t+half);
+                                this.ctx.lineTo(l+w-2, t+half);
+                            } else {
+                                half = (w / 2) - 1;
+                                this.ctx.moveTo(l+half, t);
+                                this.ctx.lineTo(l+half, t+h-2);
+                            }
+                            
+                            this.ctx.stroke();
+                        }
+
+                        this.ctx.strokeStyle = color;
+                        this.ctx.fillStyle = color;
+
+                        this.ctx.beginPath();
+                        this.ctx.rect(l,t,w-2,h-2);
+                        this.ctx.stroke();
+
+                        this.ctx.fillText(row[j], l, t+h-2, w-2);
+
+                        l += w;
+                        if( l > this.width ) break;
+                    }
+
+                    l = this.left;
+                    t += h;
+                    if( t > this.height ) break;
+                }
+            },
+
+            getColor : function(i, j) {
+                if( i >= this.ranges.global.start && i < this.ranges.global.end && j < 2 ) {
+                    return 'green'
+                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' && j == 0 ) {
+                    return 'red';
+                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' ) {
+                    return 'blue';
+                } else if( i == this.ranges.local.start && this.type == 'row' ) {
+                    return 'red';
+                } else if( i > this.ranges.local.start && i < this.ranges.local.end && this.type == 'row' ) {
+                    return 'blue';
+                } else {
+                    return '#cccccc';
+                }
+            },
+
+            clear : function() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+            }
+        })
+    </script>
+</polymer-element>
