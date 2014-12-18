@@ -1,8 +1,4 @@
-<link rel="import" href="structures/esis-file.html">
-<link rel="import" href="structures/esis-datasheet.html">
-<link rel="import" href="structures/esis-resource.html">
-
-<polymer-element name="esis-datastore" attributes="files">
+<polymer-element name="esis-datastore">
 	<script>
 		Polymer('esis-datastore', {
 			// is this an existing dataset
@@ -45,13 +41,6 @@
 				location : '',
 			},
 
-			// field that should be used to create uids for measurements
-			measurementDisambiguator : '',
-
-			// list of all new files
-			files : [],
-			// list of all datasheets
-			datasheets : [],
 			// list of all new resources
 			resources  : [],
 
@@ -64,201 +53,10 @@
 
 			metadataDefinitions : {},
 
-			// list of currently known attributes for this dataset for existing data
-			//   - this is a list of objects.  each object has the structure
-			//       |- name : attribute name
-			//       |- type : (data | metadata)
-			//       \- flag : (1, 2, etc) 
-			existingAttributeTypes : [],
-
-			ATTR_FLAGS : {
-				// the attribute is from a joined metadata file, always metadata
-				FROM_METADATA : 1,
-				// the attribute type could be data or metadata
-				FROM_MIXED_FILE : 2,
-				// the attribute name is numberic and is there for a wavelength
-				IS_WAVELENGTH : 3,
-				// the attribute is from global metadata
-				IS_FILE_METADATA : 4,
-				// the attribute is measurement level metadata
-				IS_MEASUREMENT_METADATA : 5,
-				// the attribute is measurement level data, from the data section of the file
-				IS_FILE_DATA : 6
-			},
-
-			// attributes who's infered type has been overridden by the user
-			attributeModifications : {},
-
-			// the key is the attribute name, the value is an object describing what we know about the attribute
-			// this combined with the attributeModifications object describes the current state of the attribute
-			// use getAllAttributeTypes() to access
-			//attributeTypes : {},
-
-			// list of resources that are scheduled to be deleted
-			deleted : [],
-
-			observe : {
-			//	attributeMap : '_onAttributeMapUpdate'
-			},
-
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
 				this.metadataDefinitions = esis.metadata;
-			},
-
-			addFile : function(raw, parseZip, defaultDataType) {
-				var ele = document.createElement('esis-file');
-				ele.raw = raw;
-				ele.parseZip = parseZip;
-				ele.defaultDataType = defaultDataType;
-				this.files.push(ele);
-				return ele;
-			},
-
-			removeFile : function(file) {
-				var index = this.files.indexOf(file);
-				if( index > -1 ) {
-					this.files.splice(index, 1);
-
-					// remove anything from the datasheet or resource list
-					for( var i = 0; i < file.datasheets.length; i++ ) {
-						index = this.datasheets.indexOf(file.datasheets[i]);
-						if( index > -1 ) this.datasheets.splice(index, 1);
-					}
-
-					for( var i = 0; i < file.resources.length; i++ ) {
-						index = this.resources.indexOf(file.resources[i]);
-						if( index > -1 ) this.resources.splice(index, 1);
-					}
-				}
-			},
-
-			addDatasheet : function(contents) {
-				var ele = document.createElement('esis-datasheet');
-
-				// attach listener for when attributes have been aggregated
-				// add to known list when done
-				ele.addEventListener('datasheet-updated', function(e){
-					//this._addKnownAttributes(e.detail);
-					this.datasheetJoin(ele);
-				}.bind(this));
-
-				ele.contents = contents;
-
-				// move attributeTypes to first class citizen 
-				if( ele.contents.attributeTypes ) {
-					ele.attributeTypes = ele.contents.attributeTypes;
-					delete ele.contents.attributeTypes;
-				}
-
-				this.datasheets.push(ele);
-				
-				return ele;
-			},
-
-			addResource : function(resource, datasheets) {
-				var ele = document.createElement('esis-resource');
-				ele.filename = resource.name || resource.info.name;
-				ele.mimetype = resource.file ? resource.file.type : resource.info.mime;
-				ele.ext = resource.info.ext;
-				ele.datasheets = datasheets;
-				ele.contents = resource.contents
-				this.resources.push(ele);
-				return ele;
-			},
-
-			removeResource : function(id) {
-				// remove resource
-				for( var i = 0; i < this.existing.resources.length; i++ ) {
-					if( this.existing.resources[i].id == id ) {
-						this.existing.resources.splice(i,1);
-						break;
-					}
-				}
-
-				// remove any measurements associated with this resource
-				for( var i = this.existing.data.length-1; i >= 0; i-- ) {
-					if( this.existing.data[i].resource_id == id ) {
-						this.existing.data.splice(i,1);
-					}
-				}
-
-				// remove any metadata associated with this resource
-				for( var i = this.existing.metadata.length-1; i >= 0; i-- ) {
-					if( this.existing.metadata[i].resource_id == id ) {
-						this.existing.metadata.splice(i, 1);
-					}
-				}
-
-				this.deleted.push(id);
-			},
-
-			// when a datasheet is first added, make sure all metadata is properly joined in
-			datasheetJoin : function(datasheet) {
-				if( datasheet.isMetadata ) return;
-
-
-				// make sure currently joined (new) metadata is joined
-				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( !this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
-
-					var count = 0;
-					for( var j = 0; j < datasheet.measurements.length; j++ ) {
-						if( this.datasheets[i].metadata.join(datasheet.measurements[j]) ) count++;
-					}
-					this.datasheets[i].metadata.matchCount += count;
-				}
-			},
-
-			getAllAttributeTypes : function() {
-				var attrTypes = {}, item;
-
-				// add metadata first, that way file / spectra level data overrides
-				// this is required for when the server 'rejoins' on update.  have fields
-				// that are in both metadata and spectra show as joinable makes things foobar
-				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( !this.datasheets[i].isMetadata || this.datasheets[i].ignore) continue;
-
-					for( var key in this.datasheets[i].attributeTypes ) {
-						attrTypes[key] = this.datasheets[i].attributeTypes[key];
-					}
-				}
-
-				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
-
-					for( var key in this.datasheets[i].attributeTypes ) {
-						attrTypes[key] = this.datasheets[i].attributeTypes[key];
-					}
-				}
-
-				// override the current datasheets with what's already known
-				for( var i = 0; i < this.existingAttributeTypes.length; i++ ) {
-					item = this.existingAttributeTypes[i];
-					attrTypes[item.name] = {
-						type : item.type,
-						flag : item.flag
-					}
-				}
-
-				return attrTypes;
-			},
-
-			join : function(metadata) {
-				var count = 0;
-				
-				// join on new measurements
-				for( var i = 0; i < this.datasheets.length; i++ ) {
-					if( this.datasheets[i].isMetadata || this.datasheets[i].ignore ) continue;
-
-					for( var j = 0; j < this.datasheets[i].measurements.length; j++ ) {
-						if( metadata.join(this.datasheets[i].measurements[j]) ) count++;
-					}
-				}
-
-				metadata.matchCount = count;
 			}
-
 		});
 	</script>
 </polymer-element>

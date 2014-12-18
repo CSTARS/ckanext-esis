@@ -289,78 +289,16 @@
                     }
                 }
 
-                /*var info;
-                for( var key in this.datasheet.attributeTypes ) {
-                    info = this.datasheet.attributeTypes[key];
-
-                    switch(info.flag) {
-                        case this.ds.ATTR_FLAGS.FROM_METADATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'Joinable Metadata',
-                                class : '',
-                            });
-                            break;
-
-                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
-                            var type = info.type;
-                            if( this.ds.attributeModifications[key] ) type = this.ds.attributeModifications[key];
-
-                            if( type == 'metadata' ) {
-                                this.parsedAttributes.push({
-                                    name : key,
-                                    units : info.units || '',
-                                    type : 'Spectra Metadata',
-                                    class : 'spectra'
-                                });
-                            } else {
-                                this.parsedAttributes.push({
-                                    name : key,
-                                    units : info.units || '',
-                                    type : 'Data',
-                                    class : 'data'
-                                });
-                            }
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            this.wavelengths.push(key+(info.label ? ' <span style="color:#888">('+info.label+')</span>' : '') );
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'File Metadata',
-                                class : 'file'
-                            });
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'Spectra Metadata',
-                                class : 'spectra'
-                            });
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'Derived Data',
-                                class : 'data'
-                            });
-                            break;
-
-                        default:
-                            break;
-                    }
-                }*/
-
-                this.$.wavelengths.innerHTML = this.wavelengths.join(', ');
+                // hack
+                if( this.$.wavelengths ) {
+                    this.$.wavelengths.innerHTML = this.wavelengths.join(', ');
+                } else {
+                    this.async(function(){
+                        var ele = this.shadowRoot.querySelector("#wavelengths");
+                        if( ele ) ele.innerHTML = this.wavelengths.join(', ');
+                    }); 
+                    
+                }
 
                 if( this.datasheet.isMetadata ){
                     this.async(function(){
