@@ -1,32 +1,20 @@
 import logging
-import re, zlib, StringIO
-#import simplejson as json
+import re
 import ujson as json
 from pymongo import MongoClient
 from pylons import config
 import urllib2
-import dateutil.parser
+
 import os.path
-import shutil
 
-
-from ckan.lib.base import c, model, BaseController
-import ckan.logic as logic
-import ckan.lib.helpers as h
+from ckan.lib.base import BaseController
 from ckan.common import request, response
-import inspect
-from bson.code import Code
-from bson.son import SON
 
-import hashlib
 from ckanext.esis.lib.join import SheetJoin
 from ckanext.esis.lib.push import Push
 from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
 
-#from ckan.controllers.package import PackageController
-from multiprocessing import Process, Queue
-import subprocess
 
 # helpers from ./lib
 joinlib = SheetJoin()
@@ -39,6 +27,9 @@ db = client[config._process_configs[1]['esis.mongo.db']]
 
 workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
+
+# TODO: need to add usda parsing to getSpectra
+usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 
 
 setup = WorkspaceSetup()
@@ -429,6 +420,26 @@ class WorkspaceController(BaseController):
                     del datasheet['matchValues']
 
         return resource
+
+    def rebuildUSDACollection(self):
+        usdaCollection.remove({})
+        rows = []
+
+        try:
+            resp = urllib2.urlopen('http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on')
+            rows = re.sub(r'\r', '', resp.read()).split('\n')
+            header = re.sub(r'"', '', rows[0]).split(',')
+
+            for i in range(1, len(rows)-1):
+                row = re.sub(r'"', '', rows[i]).split(',')
+                item = {}
+                for j in range(0, len(header)-1):
+                    item[header[j]] = row[j]
+                usdaCollection.insert(item)
+
+        except Exception as e:
+            return json.dumps({'error': True})
+        return json.dumps({'success':True, 'count': len(rows)-2})
 
 
     #
