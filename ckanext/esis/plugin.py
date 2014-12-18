@@ -65,6 +65,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('set_attribute_info', '/workspace/setAttributeInfo', controller=controller, action='setAttributeInfo')
         map.connect('set_dataset_attributes', '/workspace/setDatasetAttributes', controller=controller, action='setDatasetAttributes')
         map.connect('set_attribute_map', '/workspace/setAttributeMap', controller=controller, action='setAttributeMap')
+        map.connect('get_layout_overview', '/workspace/getLayoutOverview', controller=controller, action='getLayoutOverview')
         map.connect('get_spectra', '/workspace/getSpectra', controller=controller, action='getSpectra')
         map.connect('push_to_search', '/workspace/push', controller=controller, action='pushToSearch')
 
