@@ -1,8 +1,3 @@
-<link rel="import" href="esis-ui-card.html" />
-<link rel="import" href="esis-ui-metadata.html" />
-<link rel="import" href="../../components/paper-button/paper-button.html" />
-<link rel="import" href="../../components/core-collapse/core-collapse.html" />
-
 <polymer-element name="esis-ui-datasheet" attributes="resourceId datasheet showName">
 	<template>
 		<style>
@@ -20,7 +15,7 @@
             }
             .options {
                 border-top: 1px solid #eee;
-                margin: 0 5px 30px 5px;
+                margin: 0 5px 5px 5px;
                 padding: 0 5px 5px 5px;
             }
             a {
@@ -110,6 +105,13 @@
             </core-collapse>
         </div>
 
+        <div hidden?="{{datasheet.ignore}}" class="options">
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">Current Layout Overview</a>
+            <esis-table-renderer sheetId="{{datasheet.id}}" resourceId="{{resourceId}}" show="{{showCurrentParse}}"></esis-table-renderer>
+        </div>
+
+        
+
         <template bind if="{{saving}}">
             <div class="green">Updating...</div>
             <paper-progress indeterminate style="width:100%"></paper-progress>
@@ -191,6 +193,7 @@
             edit: false,
 
             showHelp : false,
+            showCurrentParse : false,
 
             parsedAttributes : [],
             wavelengths : [],
@@ -229,6 +232,8 @@
 
             save : function() {
                 this.saving = true;
+                this.showCurrentParse = false;
+                
                 var resource = {
                     id : this.resourceId,
                     datasheets : [{
@@ -334,6 +339,10 @@
 
             _toggleSpectra : function() {
                 this.showSpectra = !this.showSpectra;
+            },
+
+            _toggleCurrentParse : function() {
+                this.showCurrentParse = !this.showCurrentParse;
             },
 
 			_createChart : function() {

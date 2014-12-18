@@ -23,7 +23,7 @@
         
         <paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom" autoCloseDisabled="true">
             <div hidden?="{{uploading}}">
-                <esis-verify-dataset ds="{{ds}}" counts="{{counts}}" on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
+                <esis-verify-dataset on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
             </div>
             <div hidden?="{{!uploading}}" style="min-width: 300px; min-height:250px">
                 <h4>{{ds.editMode ? 'Updating' : 'Creating'}} Dataset...</h4>
@@ -69,40 +69,11 @@
             },
 
             show : function() {
-                this._update();
                 this.$.dialog.toggle();
             },
 
-            _update : function() {
-                this.counts = {
-                    totalResources : 0,
-                    measurementResources : 0,
-                    metadataResources : 0,
-                    measurements : 0
-                };
-
-                for( var i = 0; i < this.ds.datasheets.length; i++ ) {
-                    if( this.ds.datasheets[i].ignore ) continue;
-
-                    if( this.ds.datasheets[i].isMetadata ) {
-                        this.counts.metadataResources++;
-                    } else if ( this.ds.datasheets[i].measurements.length > 0 ) {
-                        this.counts.measurementResources++;
-                        this.counts.measurements += this.ds.datasheets[i].measurements.length;
-                    }
-                }
-
-                for( var i = 0; i < this.ds.existing.data.length; i++ ) {
-                    this.counts.measurements += this.ds.existing.data[i].spectra_count;
-                }
-
-                this.counts.measurementResources += this.ds.existing.data.length;
-
-                this.counts.totalResources = this.ds.files.length + this.ds.existing.data.length + this.ds.existing.metadata.length;
-            },
-
             _updateVisibility : function() {
-                if( (this.ds.data.name != '' && this.ds.files.length > 0) || this.ds.editMode ) {
+                if( (this.ds.data.name != '' && this.ds.resources.length > 0) || this.ds.editMode ) {
                     this.hide = false;
                 } else {
                     this.hide = true;

@@ -29,7 +29,7 @@
             </template>
             <template bind if="{{!searching}}">
                 <template repeat="{{result in results}}">
-                    <paper-button on-click="{{_addResult}}" size="14" raised>
+                    <paper-button on-click="{{_addResult}}" size="14" raised value="{{result.name}}">
                         <core-icon icon="add"></core-icon> {{result.name}}
                     </esis-paper>
                 </template>
@@ -131,7 +131,7 @@
             },
 
             _addResult : function(e) {
-                var l = e.currentTarget.label;
+                var l = e.currentTarget.getAttribute('value');
                 this.addToken({label:l, value:l});
                 this.results = '';
                 this.inputValue = '';
