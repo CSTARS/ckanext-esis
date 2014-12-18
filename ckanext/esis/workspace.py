@@ -68,6 +68,10 @@ class WorkspaceController(BaseController):
         # initialize the workspace and get the package config as well as the ckan package
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
 
+        # TODO: need more sanity checking like this for all requests...
+        if ckanPackage.get('state') == 'deleted':
+            return json.dumps({'error':True, 'message':'Package has been deleted'})
+
         # make sure all files on disk are up to date in the package
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
 
@@ -78,9 +82,6 @@ class WorkspaceController(BaseController):
 
 
     # API CALL
-    # TODO: updating a resource layout, ignore, etc, may influence to amount of data joined to metadata
-    #       How should we reflect that fact back in this call?  IE, the UI for that piece of metadata
-    #       should be told of this update as well.
     # set the parse information for a given resources and package
     def setParseInformation(self):
         response.headers["Content-Type"] = "application/json"
@@ -266,6 +267,44 @@ class WorkspaceController(BaseController):
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
         return json.dumps(self._mergeDatasheet(resources, workspacePackage, rid, sid))
+
+    def getLayoutOverview(self):
+        response.headers["Content-Type"] = "application/json"
+
+        rid = request.params.get('resource_id')
+        sid = request.params.get('datasheet_id')
+
+        # initialize the workspace and get the package config as well as the ckan package
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+
+        # make sure all files on disk are up to date in the package
+        resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
+        r = self._getById(resources, rid)
+        if r == None:
+            return json.dumps({'error':True, 'message':'resource does not exist'})
+
+        s = self._getById(r['datasheets'], sid)
+        if s == None:
+            return json.dumps({'error':True, 'message':'datasheet does not exist'})
+
+        file = "%s%s%s" % (self.workspaceDir, s['location'], s['name'])
+        s['data'] = process.getFile(file, s)
+
+        # limit to 250 x 250
+        if len(s['data']) > 250:
+            s['data'] = s['data'][0:250]
+        for row in s['data']:
+            if len(row) > 250:
+                row = row[0:250]
+
+        removeAttr = ['location', 'attributes']
+        for attr in removeAttr:
+            if attr in s:
+                del s[attr]
+
+        return json.dumps(s)
+
 
     def _mergeDatasheet(self, resources, workspacePackage, rid, sid):
         r = self._getById(resources, rid)
