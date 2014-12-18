@@ -84,7 +84,8 @@ module.exports = function (grunt) {
                         '*.{html,handlebars}',
                         'components/**',
                         'elements/**',
-                        'workers/**'
+                        'workers/**',
+                        'styles/**'
                     ]
                 },
                 {
@@ -107,8 +108,7 @@ module.exports = function (grunt) {
                     stderr: true
                 },
                 command: 'rm -rf <%= yeoman.dist %>/editor/components && '+
-                         'rm -rf <%= yeoman.dist %>/editor/elements && '+
-                         'rm -rf <%= yeoman.dist %>/editor/scripts'
+                         'rm -rf <%= yeoman.dist %>/editor/elements'
             },
             server : {
                 options: {
@@ -132,7 +132,7 @@ module.exports = function (grunt) {
                     inline : true
                 },
                 files : {
-                    '<%= yeoman.dist %>/editor/index.html': ['<%= yeoman.dist %>/editor/index.html']
+                    '<%= yeoman.dist %>/editor/elements.html': ['<%= yeoman.dist %>/editor/elements.html']
                 }
             }
         },
