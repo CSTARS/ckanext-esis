@@ -309,7 +309,7 @@ class ProcessWorkspace:
         error = False
         parsed = False
 
-        runTime = time.time()
+        #runTime = time.time()
 
         # we are dealing with a excel datasheet that has already been csv'ifed
         if 'csv' in datasheet:
@@ -322,7 +322,7 @@ class ProcessWorkspace:
                 return
 
             self._processSheetArray(data, datasheet, resourceConfig, metadataSheets)
-            print "  --_processExcel_csv process time: %ss" % (time.time() - runTime)
+            #print "  --_processExcel_csv process time: %ss" % (time.time() - runTime)
             return
 
 
@@ -339,13 +339,10 @@ class ProcessWorkspace:
                     "location" : datasheet['location'],
                 }
 
-
-
                 data = self._getWorksheetData(workbook.sheet_by_name(sheet))
 
                 # write sheet as csv for faster sheet access
                 fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], sheetInfo['csv'])
-                print fullPath
                 csvfile = open(fullPath, 'wb')
                 wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
                 for row in data:
@@ -368,7 +365,7 @@ class ProcessWorkspace:
                 'note' : 'There are known compatibility issues with OfficeLibre'
             }
 
-        print "  --_processExcel process time: %ss" % (time.time() - runTime)
+        #print "  --_processExcel process time: %ss" % (time.time() - runTime)
 
         # if we are on the second run and there is no error, remove the excel file as a 'sheet'
         if not error and not parsed:
@@ -385,7 +382,7 @@ class ProcessWorkspace:
         #fullPath = "%s%s%s" % (self.workspaceDir, sheets[0]['location'], sheets[0]['name'])
         #workbook = xlrd.open_workbook(fullPath)
 
-        runTime = time.time()
+        #runTime = time.time()
 
         for datasheet in sheets:
 
@@ -398,7 +395,7 @@ class ProcessWorkspace:
             #data = self._getWorksheetData(workbook.sheet_by_name(sheetInfo['sheetname']))
             self._processSheetArray(data, datasheet, resourceConfig, metadataSheets)
 
-        print "  --_processExcelSheets process time: %ss" % (time.time() - runTime)
+        #print "  --_processExcelSheets process time: %ss" % (time.time() - runTime)
 
     def _getWorksheetData(self, sheet):
         data = []
