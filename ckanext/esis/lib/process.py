@@ -5,7 +5,6 @@ import xlrd, csv, re, json, time, pickle, hashlib
 from pylons import config
 
 
-
 class ProcessWorkspace:
 
     workspaceCollection = None
@@ -201,8 +200,6 @@ class ProcessWorkspace:
             else: # we should never hit this!! but just in case
                 data = self._readExcelSheet(file, datasheet.get('sheetname'))
         return data
-
-
 
     def _readSeperatorFile(self, file, separator):
         with open(file) as csvfile:

@@ -45,6 +45,7 @@
       
       <core-menu id="menu" on-core-select="{{menuSelect}}">
         <content select="esis-item"></content>
+        <esis-item label="Back" on-click="{{back}}"></esis-item>
       </core-menu>
 
     </core-header-panel>
@@ -81,25 +82,18 @@
       }
       this.$.menu.selected = this.$.menu.selected || 0;
     },
+
+    back : function() {
+      if( confirm('Are you sure you want to exit the dataset editor?') ) {
+        var url = '/dataset';
+        if( document.querySelector('esis-dataset-loader').pkgid ) {
+          url += '/'+document.querySelector('esis-dataset-loader').pkgid;
+        }
+        window.location = url;
+      }
+    },
     
     menuSelect: function(e, detail) {
-      // check for back button
-      if (detail.isSelected) {
-        var tag = detail.item.getAttribute('tag');
-
-        if( tag == 'back' ) {
-          if( confirm('Are you sure you want to exit the dataset editor?') ) {
-            var url = '/dataset';
-            if( document.querySelector('esis-dataset-loader').pkgid ) {
-              url += '/'+document.querySelector('esis-dataset-loader').pkgid;
-            }
-            window.location = url;
-          } else {
-            return;
-          }
-        }
-      }
-
       if (detail.isSelected) {
         this.item = detail.item;
 

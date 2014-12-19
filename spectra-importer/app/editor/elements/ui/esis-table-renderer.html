@@ -1,0 +1,312 @@
+<polymer-element name="esis-table-renderer" attributes="sheetId resourceId show">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <div layout horizontal hidden?="{{!show}}">
+            <div flex id="canvasParent">
+                <div hidden?="{{!loading}}">Loading...</div>
+
+                <canvas style="border:1px solid #ccc" width="{{width}}" height="{{height}}" 
+                    on-mousewheel="{{onMouseWheel}}"
+                    on-mousedown="{{onMouseDown}}"
+                    on-mousemove="{{onMouseMove}}"
+                    on-mouseup="{{onMouseUp}}"
+                    on-mouseout="{{onMouseOut}}">
+                </canvas>
+            </div>
+            <div>
+                <div layout vertical>
+                    <div>
+                        <paper-button>
+                            <core-icon icon="add-circle-outline" on-click="{{zoomIn}}"></core-icon>
+                        </paper-button>
+                    </div>
+                    <div>
+                        <paper-button>
+                            <core-icon icon="remove-circle-outline" on-click="{{zoomOut}}"></core-icon>
+                        </paper-button>
+                    </div>
+                    <div>
+                        <paper-button>
+                            <core-icon icon="fullscreen-exit" on-click="{{zoomStart}}"></core-icon>
+                        </paper-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div hidden?="{{!show}}">
+            <span style="color:{{colors.green}}">Global Metadata</span>
+            <span style="color:{{colors.red}}">Schema Attribute Names</span>
+            <span style="color:{{colors.blue}}">Spectra Data/Metadata</span>
+        </div>
+    </template>
+    <script>
+        Polymer('esis-table-renderer', {
+            top : 0,
+            left : 0,
+            width : 400,
+            height : 400,
+            data : null,
+
+            show : false,
+
+            zoom : 5,
+
+            cell : {
+                width : 3,
+                height : 1
+            },
+
+            ctx : null,
+            colors : {
+                blue : '#2196F3',
+                red : '#FF9800',
+                green : '#2f9b45',
+                grey : '#888888',
+                light_grey : '#cccccc'
+            },
+
+            type : 'row',
+            ranges : {
+                global : {
+                    start : 0,
+                    end : 1
+                },
+                local : {
+                    start : 2,
+                    end : 4,
+                }
+            },
+
+            dragging : false,
+            dragStart : [0, 0],
+            dragPos : [0, 0],
+
+            observe : {
+                width : 'redraw',
+                height : 'redraw',
+                data : 'redraw',
+                zoom : 'redraw',
+                show : 'load',
+                sheetId : 'load',
+                resourceId : 'load'
+            },
+
+            ready : function() {
+                this.ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
+                $(window).on('resize', this.resize.bind(this));
+            },
+
+            attached : function() {
+                /*this.data = [
+                    ['foo', '1','', ''],
+                    ['', '','', ''],
+                    ['bar', '324', '343', '234'],
+                    ['baz', 'another', '', '']
+                ]*/
+                this.async(function(){
+                    this.resize();
+                })
+            },
+
+            reset : function() {
+                this.clear();
+                this.data = null;
+                this.ranges = {
+                    global : {
+                        start : 0,
+                        end : 0
+                    },
+                    local : {
+                        start : 0,
+                        end : 0,
+                    }
+                },
+                this.top = 0;
+                this.left = 0;
+                this.zoom = 5;
+            },
+
+            load : function() {
+                this.loading = true;
+                this.reset();
+
+                document.querySelector('esis-ckan').getLayoutOverview(
+                    document.querySelector('esis-datastore').package_id,
+                    this.resourceId,
+                    this.sheetId,
+                    function(err, resp) {
+                        this.loading = false;
+
+                        if( err ) return alert('Error loading layout overview :(');
+                        if( resp.error ) return alert('Error loading layout overview :(');
+
+                        this.type = resp.layout;
+                        if( resp.localRange ) {
+                            this.ranges.local.start = resp.localRange.start;
+                            this.ranges.local.end = resp.localRange.stop;
+                        }
+                        if( resp.globalRange ) {
+                            this.ranges.global.start = resp.globalRange.start;
+                            this.ranges.global.end = resp.globalRange.stop;
+                        }
+                        this.data = resp.data;
+
+                        this.resize();
+                    }.bind(this)
+                );
+            },
+
+            resize : function() {
+                this.width = $(this.$.canvasParent).width()-30;
+                if( this.width < 250 ) this.width = 250;
+                
+                this.async(function(){
+                    this.redraw();
+                });
+            },
+
+            onMouseDown : function(e) {
+                this.dragging = true;
+                this.dragStart = [e.x,e.y];
+                this.dragPos = [this.left,this.top];
+            },
+
+            onMouseUp : function(e) {
+                this.dragging = false;
+            },
+            onMouseOut : function(e) {
+                this.dragging = false;
+            },
+
+            onMouseMove : function(e) {
+                if( !this.dragging ) return;
+
+                this.left = this.dragPos[0] + (e.x - this.dragStart[0]);
+                this.top = this.dragPos[1] + (e.y - this.dragStart[1]);
+                this.redraw();
+            },
+
+            onMouseWheel : function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var delta = Math.max(-1, Math.min(1, e.wheelDelta));
+                this.adjustZoom(delta);
+            },
+
+            zoomStart : function() {
+                this.top = 0;
+                this.left = 0;
+                this.zoom = 5;
+            },
+
+            zoomIn : function() {
+                this.adjustZoom(1);
+            },
+
+            zoomOut : function() {
+                this.adjustZoom(-1);
+            },
+
+            adjustZoom : function(delta) {
+                this.zoom += delta;
+
+                if( this.zoom < 1 ) this.zoom = 1;
+                if( this.zoom > 12 ) this.zoom = 12;
+            },
+            
+            redraw : function() {
+                if( !this.data ) return;
+
+                this.clear();
+
+                var w = this.cell.width * this.zoom * 10;
+                var h = this.cell.height * this.zoom * 10;
+                var t = this.top, l = this.left, row, i, j, color, half, fh;
+                
+                this.ctx.lineWidth = "2";
+
+                this.ctx.fillStyle = '#000000';
+
+                for( i = 0; i < this.data.length; i++ ) {
+                    row = this.data[i];
+
+                    for( j = 0; j < row.length; j++ ) {
+
+                        color = this.getColor(i, j);
+
+                        if( color == this.colors.blue ) {
+                            this.ctx.beginPath();
+                            this.ctx.strokeStyle = this.colors.light_grey;
+
+                            if( this.type == 'row') {
+                                half = (h / 2) - 1;
+                                this.ctx.moveTo(l, t+half);
+                                this.ctx.lineTo(l+w-2, t+half);
+                            } else {
+                                half = (w / 2) - 1;
+                                this.ctx.moveTo(l+half, t);
+                                this.ctx.lineTo(l+half, t+h-2);
+                            }
+                            
+                            this.ctx.stroke();
+
+                            fh = Math.floor(h*.2);
+                            this.ctx.font = fh+"px Arial";
+                            this.ctx.fillStyle = this.colors.light_grey;
+
+                            if( this.type == 'row') {
+                                this.ctx.fillText(this.data[0][j], l+2, t+fh+1, w-2);
+                            } else {
+                                this.ctx.fillText(this.data[i][0], l+2, t+fh+1, w-2);
+                            }
+                        }
+
+                        this.ctx.strokeStyle = color;
+                        this.ctx.fillStyle = color;
+
+                        this.ctx.beginPath();
+                        this.ctx.rect(l,t,w-2,h-2);
+                        this.ctx.stroke();
+
+                        this.ctx.font = Math.floor(h*.7)+"px Arial";
+                        this.ctx.fillStyle = color;
+                        this.ctx.fillText(row[j], l, t+h-2, w-2);
+
+                        l += w;
+                        if( l > this.width ) break;
+                    }
+
+                    l = this.left;
+                    t += h;
+                    if( t > this.height ) break;
+                }
+            },
+
+            getColor : function(i, j) {
+                if( i >= this.ranges.global.start && i < this.ranges.global.end && j < 2 ) {
+                    return this.colors.green
+                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' && j == 0 ) {
+                    return this.colors.red;
+                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' ) {
+                    return this.colors.blue;
+                } else if( i == this.ranges.local.start && this.type == 'row' ) {
+                    return this.colors.red;
+                } else if( i > this.ranges.local.start && i < this.ranges.local.end && this.type == 'row' ) {
+                    return this.colors.blue;
+                } else {
+                    return this.colors.light_grey;
+                }
+            },
+
+            clear : function() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+            }
+        })
+    </script>
+</polymer-element>

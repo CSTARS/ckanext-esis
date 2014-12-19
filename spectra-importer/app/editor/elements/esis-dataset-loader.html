@@ -1,5 +1,3 @@
-<link rel="import" href="../components/paper-dialog/paper-dialog.html">
-
 <polymer-element name="esis-dataset-loader">
 	<template>
 		<paper-dialog id="dialog" transition="paper-transition-bottom" backdrop layered autoCloseDisabled>
@@ -75,63 +73,6 @@
 				}
 
 				this.ds.resources = this.data.resources;
-
-				//if( !this.data.resources ) return;
-
-				//for( var i = 0; i < this.data.resources.length; i++ ) {
-            	//	this.ds.resources.push(this.data.resources[i]);
-            	//}
-
-           		//this.ds.existing.metadata = ecosis.metadata;
-           		//this.ds.existing.data = ecosis.data;
-
-            	//this._getExistingMetadata(0);
-			},
-
-			_getExistingMetadata : function(index) {
-				var len = this.data.ecosis.metadata.length;
-
-				if( len > 0 ) {
-					this.fire('get-data-resource-progress', index / len );
-				}
-
-				if( index == len ) {
-					this.fire('get-data-resource-complete');
-					this.dataPackageLoaded = true;
-				} else {
-					this.ckan.getMetadataResource(
-						this.data.ecosis.metadata[index].resource_id, 
-						function(err, resp) {
-							if( err ) return;
-							
-							var mdObj = resp.ecosis;
-
-							var datasheet = document.createElement('esis-datasheet');
-							datasheet.isMetadata = true;
-							datasheet.isExisting = true;
-
-							var metadata = document.createElement('esis-metadata');
-							metadata.metadata = mdObj.metadata;
-							metadata.joinId = mdObj.join_id;
-							metadata.resourceId = mdObj.resource_id;
-							metadata.isExisting = true;
-							metadata.filename = resp.name;
-
-							// set join information
-							if( mdObj.join_on.type == 'filename' ) {
-								metadata.filenameMatch = true;
-								if( mdObj.join_on.loose ) metadata.looseMatch = true;
-							} else if ( mdObj.join_on.type == 'worksheet' ) {
-								metadata.worksheetMatch = true;
-							}
-
-							datasheet.metadata = metadata;
-							this.ds.datasheets.push(datasheet);
-
-							index++;
-							this._getExistingMetadata(index);
-					}.bind(this));
-				}
 			},
 
 			_getVar : function(variable) {

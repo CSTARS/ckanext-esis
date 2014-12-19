@@ -18,13 +18,7 @@
   "dependencies": {
     "polymer": "Polymer/polymer#*",
     "core-elements": "Polymer/core-elements#*",
-    "paper-elements": "Polymer/paper-elements#*",
-    "animate-css": "*",
-    "js-xlsx": "*",
-    "js-xls": "*",
-    "jquery": "*",
-    "jquery-csv": "*",
-    "js-md5": "~1.1.0",
-    "jszip": "Stuk/jszip#*"
+    "paper-elements": "Polymer/paper-elements#*",    
+    "jquery": "*"
   }
 }

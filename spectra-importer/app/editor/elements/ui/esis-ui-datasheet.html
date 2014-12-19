@@ -1,8 +1,3 @@
-<link rel="import" href="esis-ui-card.html" />
-<link rel="import" href="esis-ui-metadata.html" />
-<link rel="import" href="../../components/paper-button/paper-button.html" />
-<link rel="import" href="../../components/core-collapse/core-collapse.html" />
-
 <polymer-element name="esis-ui-datasheet" attributes="resourceId datasheet showName">
 	<template>
 		<style>
@@ -20,7 +15,7 @@
             }
             .options {
                 border-top: 1px solid #eee;
-                margin: 0 5px 30px 5px;
+                margin: 0 5px 5px 5px;
                 padding: 0 5px 5px 5px;
             }
             a {
@@ -110,6 +105,13 @@
             </core-collapse>
         </div>
 
+        <div hidden?="{{datasheet.ignore}}" class="options">
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">Current Layout Overview</a>
+            <esis-table-renderer sheetId="{{datasheet.id}}" resourceId="{{resourceId}}" show="{{showCurrentParse}}"></esis-table-renderer>
+        </div>
+
+        
+
         <template bind if="{{saving}}">
             <div class="green">Updating...</div>
             <paper-progress indeterminate style="width:100%"></paper-progress>
@@ -191,6 +193,7 @@
             edit: false,
 
             showHelp : false,
+            showCurrentParse : false,
 
             parsedAttributes : [],
             wavelengths : [],
@@ -229,6 +232,8 @@
 
             save : function() {
                 this.saving = true;
+                this.showCurrentParse = false;
+                
                 var resource = {
                     id : this.resourceId,
                     datasheets : [{
@@ -289,78 +294,16 @@
                     }
                 }
 
-                /*var info;
-                for( var key in this.datasheet.attributeTypes ) {
-                    info = this.datasheet.attributeTypes[key];
-
-                    switch(info.flag) {
-                        case this.ds.ATTR_FLAGS.FROM_METADATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'Joinable Metadata',
-                                class : '',
-                            });
-                            break;
-
-                        case this.ds.ATTR_FLAGS.FROM_MIXED_FILE:
-                            var type = info.type;
-                            if( this.ds.attributeModifications[key] ) type = this.ds.attributeModifications[key];
-
-                            if( type == 'metadata' ) {
-                                this.parsedAttributes.push({
-                                    name : key,
-                                    units : info.units || '',
-                                    type : 'Spectra Metadata',
-                                    class : 'spectra'
-                                });
-                            } else {
-                                this.parsedAttributes.push({
-                                    name : key,
-                                    units : info.units || '',
-                                    type : 'Data',
-                                    class : 'data'
-                                });
-                            }
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_WAVELENGTH:
-                            this.wavelengths.push(key+(info.label ? ' <span style="color:#888">('+info.label+')</span>' : '') );
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_METADATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'File Metadata',
-                                class : 'file'
-                            });
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_MEASUREMENT_METADATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'Spectra Metadata',
-                                class : 'spectra'
-                            });
-                            break;
-
-                        case this.ds.ATTR_FLAGS.IS_FILE_DATA:
-                            this.parsedAttributes.push({
-                                name : key,
-                                units : info.units || '',
-                                type : 'Derived Data',
-                                class : 'data'
-                            });
-                            break;
-
-                        default:
-                            break;
-                    }
-                }*/
-
-                this.$.wavelengths.innerHTML = this.wavelengths.join(', ');
+                // hack
+                if( this.$.wavelengths ) {
+                    this.$.wavelengths.innerHTML = this.wavelengths.join(', ');
+                } else {
+                    this.async(function(){
+                        var ele = this.shadowRoot.querySelector("#wavelengths");
+                        if( ele ) ele.innerHTML = this.wavelengths.join(', ');
+                    }); 
+                    
+                }
 
                 if( this.datasheet.isMetadata ){
                     this.async(function(){
@@ -396,6 +339,10 @@
 
             _toggleSpectra : function() {
                 this.showSpectra = !this.showSpectra;
+            },
+
+            _toggleCurrentParse : function() {
+                this.showCurrentParse = !this.showCurrentParse;
             },
 
 			_createChart : function() {

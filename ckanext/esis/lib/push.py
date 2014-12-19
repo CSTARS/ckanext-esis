@@ -176,6 +176,9 @@ class Push:
                         if value in m:
                             m[key] = m[value]
 
+                # TODO: Look up USDA Plant Codes
+
+
                 # finally, set ckan dataset info, as well as specific info on, sort, geolocation
                 self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
 
@@ -222,5 +225,17 @@ class Push:
         if ckanPackage.get('organization') != None:
             ecosis['organization'] = ckanPackage['organization']['title']
 
-
         m['ecosis'] = ecosis
+
+    def getUSDACommonName(self, codes):
+        resp = {}
+        #for code in codes:
+            #item = usdaCollection.find_one({'Accepted Symbol': code.upper()},{'_id':0})
+            #if item != None:
+            #    resp[code] = item
+            #else:
+            #    resp[code] = {
+            #        'error' : True,
+            #        'message' : 'Unknown Code'
+            #    }
+        return resp

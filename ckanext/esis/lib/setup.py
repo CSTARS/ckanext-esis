@@ -34,6 +34,9 @@ class WorkspaceSetup:
 
         ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
+        if ckanPackage.get('state') == 'deleted':
+            return ({}, ckanPackage, '', False)
+
         # TODO: this will be remove and become a check
         rootDir = "%s/%s" % (self.workspaceDir, ckanPackage['name'])
 

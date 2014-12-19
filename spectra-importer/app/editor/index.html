@@ -7,41 +7,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <script src="components/webcomponentsjs/webcomponents.js"></script>
-    
-
-    <link rel="stylesheet" href="components/animate-css/animate.min.css" shim-shadowdom>
-
     <!-- build:js scripts/build.js -->
-    <script src="components/jquery/dist/jquery.min.js"></script>
-    <script src="components/jszip/dist/jszip.min.js"></script>
-    <script src="components/js-xlsx/dist/xlsx.min.js"></script>
-    <script src="components/js-xls/dist/xls.min.js"></script>
-    <script src="components/jquery-csv/src/jquery.csv.js"></script>
-    <script src="components/js-md5/js/md5.min.js"></script>
+      <script src="components/webcomponentsjs/webcomponents.js"></script>
+      <script src="components/jquery/dist/jquery.min.js"></script>
+      <script src="scripts/app.js"></script>
     <!-- endbuild -->
 
-    <link rel="import" href="components/core-icons/core-icons.html">
-    <link rel="import" href="components/core-icons/editor-icons.html">
-    <link rel="import" href="components/font-roboto/roboto.html">
-    <link rel="import" href="components/core-item/core-item.html">
-    <link rel="import" href="components/core-menu/core-submenu.html">
-    <link rel="import" href="components/core-list/core-list.html">
-    <link rel="import" href="components/paper-progress/paper-progress.html">
-    <link rel="import" href="components/paper-icon-button/paper-icon-button.html">
-    <link rel="import" href="components/paper-dropdown/paper-dropdown.html">
-    <link rel="import" href="components/paper-item/paper-item.html">
-
-    <link rel="import" href="elements/ui/esis-ui-chart.html">
-    <link rel="import" href="elements/ui/esis-ui-spectra.html">
-    <link rel="import" href="elements/ui/esis-attribute-name.html">
-    <link rel="import" href="elements/esis-scaffold.html">
-    <link rel="import" href="elements/esis-item.html">
-    <link rel="import" href="elements/esis-datastore.html">
-    <link rel="import" href="elements/esis-parser.html">
-    <link rel="import" href="elements/esis-dataset-loader.html">
-    <link rel="import" href="elements/esis-dataset-creator.html">
-    <link rel="import" href="elements/esis-ckan.html">
+    <link rel="stylesheet" href="styles/app.css" shim-shadowdom />
 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
@@ -49,249 +21,25 @@
       google.load('visualization', '1.0', {'packages':['corechart']});
     </script>
 
-    <style shim-shadowdom>
-      html /deep/ .green {
-        color: #2f9b45;
-      }
-      html /deep/ .blue {
-        color: #2196F3;
-      }
-      html /deep/ .orange {
-        color: #FF9800;
-      }
-      html /deep/ .red-button {
-        background-color: rgb(210, 63, 49);
-        color: white;
-      }
-      html /deep/ paper-progress.red::shadow #activeProgress {
-        background-color: rgb(210, 63, 49);
-      }
-
-      html /deep/ paper-tabs::shadow #selectionBar {
-        background-color: rgb(47, 155, 69);
-      }
-      html /deep/ paper-tab::shadow #ink {
-        color: rgb(47, 155, 69);
-      }
-
-      body {
-        font-family: sans-serif;
-        color: #333;
-        margin: 0;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        -webkit-tap-highlight-color: rgba(0,0,0,0);
-        -webkit-touch-callout: none;
-      }
-
-      html /deep/ .focused-underline {
-        color: #2f9b45 !important;
-        background-color: #2f9b45 !important;
-      }
-      html /deep/ paper-input-decorator /deep/ .label-text {
-        color: #2f9b45 !important;
-      }
-      paper-input-decorator /deep/ .cursor {
-        background-color: #2f9b45 !important;
-      }
-      html /deep/ paper-input {
-        width: 350px;
-      }
-
-
-
-
-      html /deep/ core-toolbar {
-        background-color: #2f9b45 !important;
-      }
-      html /deep/ .element-label {
-        color: #2f9b45;
-      }
-      html /deep/ .bs-label.info-label {
-        background-color: #3a87ad;
-      }
-      html /deep/ .bs-label.warning-label {
-        background-color: #f89406;
-      }
-      html /deep/ .bs-label.success-label {
-        background-color: #468847;
-      }
-      html /deep/ .bs-label {
-        display: inline-block;
-        padding: 2px 4px;
-        font-size: 11.844px;
-        font-weight: bold;
-        line-height: 14px;
-        color: #ffffff;
-        vertical-align: baseline;
-        white-space: nowrap;
-        text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
-        -webkit-border-radius: 3px;
-        -moz-border-radius: 3px;
-        border-radius: 3px;
-      }
-    </style>
-
+    <link rel="import" href="elements.html" />
   </head>
 
   <body unresolved>
-    <script>
-    if( !window.esis ) window.esis = {};
-    esis.host = window.location.host.match(/.*localhost.*/) ? 'http://192.168.1.2:5000' : '';
-
-    $.ajax({
-        type : 'GET',
-        url : '/metadata.js',
-        dataType : 'json',
-        success :function(resp) {
-            esis.metadata = resp;
-        },
-        error : function(err, err2) {
-            console.log(err);
-        }
-    });
-
-      esis.extensions = {
-  pdf : {
-    type : 'resource',
-    icon : 'fa-file-text-o',
-    mime : 'application/pdf'
-  },
-  spectra : {
-    type : 'both',
-    parser : 'csv-tab',
-    format : 'string',
-    icon : 'fa-table',
-    mime : 'text/plain'
-  },
-  zip : {
-    type   : 'compressed',
-    format : 'binary',
-    type : 'resource',
-    isZip  : true,
-    mime : 'application/zip'
-  },
-  csv : {
-    type : 'both',
-    parser : 'csv-comma',
-    format : 'string',
-    icon : 'fa-table',
-    mime : 'text/plain'
-  },
-  xlsx : {
-    type : 'both',
-    parser : 'excel',
-    format : 'binary',
-    icon : 'fa-table',
-    mime : 'application/excel'
-  },
-  xls : {
-    type : 'both',
-    parser : 'excel',
-    format : 'binary',
-    icon : 'fa-table',
-    mime : 'application/excel'
-  },
-  kml : {
-    type : 'resource',
-    icon : 'fa-globe',
-    mime : 'application/vnd.google-earth.kml+xml'
-  },
-  kmz : {
-    type : 'resource',
-    icon : 'fa-globe',
-    kmz  : 'application/vnd.google-earth.kmz'
-  },
-  xml : {
-    type : 'resource',
-    icon : 'fa-code',
-    mime : 'text/xml'
-  },
-  html : {
-    type : 'resource',
-    icon : 'fa-code',
-    mime : 'text/html'
-  },
-  rtf : {
-    type : 'resource',
-    icon : 'fa-file-text-o',
-    mime : 'application/rtf'
-  },
-  jpg : {
-    type : 'resource',
-    icon : 'fa-picture-o',
-    mime : 'image/jpeg'
-  },
-  jpeg : {
-    type : 'resource',
-    icon : 'fa-picture-o',
-    mime : 'image/jpeg'
-  },
-  png : {
-    type : 'resource',
-    icon : 'fa-picture-o',
-    mime : 'image/png'
-  },
-  gif : {
-    type : 'resource',
-    icon : 'fa-picture-o',
-    mime : 'image/gif'
-  },
-  tiff : {
-    type : 'resource',
-    icon : 'fa-picture-o',
-    mime : 'image/tiff'
-  },
-  tif : {
-    type : 'resource',
-    icon : 'fa-picture-o',
-    mime : 'image/tiff'
-  },
-  txt : {
-    format : 'string',
-    type   : 'both',
-    parser : 'csv-tab',
-    mime   : 'text/plain'
-  },
-  doc : {
-    icon : 'fa-file-text-o',
-    mime : 'application/msword'
-  },
-  docx : {
-    icon : 'fa-file-text-o',
-    mime : 'application/msword'
-  }
-};
-    </script>
 
     <esis-scaffold label="Ecosis Dataset Editor" fit touch-action="auto">
 
       <paper-icon-button class="menuButton" icon="menu" ></paper-icon-button>
       <esis-dataset-creator class="sourceButton bottom"></esis-dataset-creator>
 
-
       <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
       <esis-item label="Resources" tag="resources" ele="esis-resources"></esis-item>
-      <esis-item label="Schema" tag="schema-settings" ele="esis-attribute-settings"></esis-item>
-      <esis-item label="Inspect" tag="inspect" ele="esis-inspect"></esis-item>
-      <esis-item label="Cancel" tag="back" style="display:block"></esis-item>
+      <esis-item label="Schema" tag="schema-settings" ele="esis-schema-settings"></esis-item>
 
     </esis-scaffold>
 
     <esis-datastore></esis-datastore>
-    <esis-parser></esis-parser>
-    <esis-extractor></esis-extractor>
     <esis-dataset-loader></esis-dataset-load>
     <esis-ckan></esis-ckan>
-  
-   <!-- <script>
-      window.addEventListener('polymer-ready', function(){
-        CoreStyle.g.paperInput.focusedColor = '#2f9b45';
-      });
-    </script> -->
-
   </body>
 
 </html>
