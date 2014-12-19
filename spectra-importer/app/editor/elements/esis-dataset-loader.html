@@ -1,7 +1,7 @@
 <polymer-element name="esis-dataset-loader">
 	<template>
 		<paper-dialog id="dialog" transition="paper-transition-bottom" backdrop layered autoCloseDisabled>
-			Loading Dataset...
+			Initializing Workspace & Loading Dataset...
 		</paper-dialog>
 	</template>
 	<script>
@@ -72,6 +72,11 @@
 					}
 				}
 
+				this.data.resources.sort(function(a, b){
+					if( a.name > b.name ) return 1;
+					if( a.name < b.name ) return -1;
+					return 0;
+				});
 				this.ds.resources = this.data.resources;
 			},
 

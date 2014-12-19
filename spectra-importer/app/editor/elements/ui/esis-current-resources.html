@@ -35,12 +35,26 @@
 
 		<template repeat="{{resource, i in ds.resources}}">
 			<div class="card">
-				<esis-ui-dataresource 
-					index="{{i}}"
-					resource="{{resource}}"
-					on-remove="{{_deleteResource}}"
-					on-datasheet-updated="{{clearMetadata}}">
-				</esis-ui-dataresource>
+				<template bind if="{{resource.type == 'datafile'}}">
+					<esis-ui-dataresource 
+						index="{{i}}"
+						resource="{{resource}}"
+						on-remove="{{_deleteResource}}"
+						on-datasheet-updated="{{clearMetadata}}">
+					</esis-ui-dataresource>
+				</template>
+				<template bind if="{{resource.type != 'datafile'}}">
+					<span>{{resource.name}}</span>
+					<esis-ui-delete-button index="{{i}}"
+		                on-delete="{{_deleteGenericResource}}">
+		            </esis-ui-delete-button>
+		            <template bind if="{{resource.removing}}">
+		            	<div>
+			            	<span style="color:red">Removing...</span>
+	            			<paper-progress indeterminate class="red"></paper-progress>
+	            		</div>
+		            </template>
+				</template>
 			</div>	
 		</template>
 
@@ -133,6 +147,25 @@
 					if( this.ds.existing.data[i].resource_id == id ) return this.ds.existing.data[i].spectra_count;
 				}
 				return -1;
+			},
+
+			_deleteGenericResource : function(e) {
+				var index = parseInt(e.currentTarget.getAttribute('index'));
+				var r = this.ds.resources[index];
+
+				if( !confirm("Are you sure you want to remove: "+r.name+"?") ) return;
+
+                r.removing = true;
+
+                document.querySelector('esis-ckan').removeResource(
+                    r.id,
+                    function(err, resp){
+                        r.removing = false;
+
+                        if( err ) return alert("Server error deleting resource");
+                        this.ds.resources.splice(index, 1);
+                    }.bind(this)
+                );
 			},
 
 		  	_deleteResource : function(e) {

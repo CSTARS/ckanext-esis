@@ -116,10 +116,17 @@
         <template bind if="{{processing}}">
             <div style="position:relative; text-align:center">
                 <div class="processing-label">
-                    <h4>Uploading Files...</h4>
-                    <template repeat="{{file in staggedFiles}}">
-                        <div>{{file.name}} {{file.progress}}%</div>
-                    </template>
+                    <h4>Uploading & Processing Files...</h4>
+                    <table style="width:100%; text-align: left">
+                        <tr template repeat="{{file in staggedFiles}}">
+                            <td><b>{{file.name}}</b></td>
+                            <td style="color:#888">
+                                <span hidden?="{{file.progress == 100}}">Uploading: {{file.progress}}%</span>
+                                <span hidden?="{{file.progress != 100}}">Upload Complete. Processing...</span>
+                            </td>
+                        </tr>
+                    </table>
+                   
                 </div>
             </div>
         </template>
