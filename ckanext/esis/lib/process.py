@@ -195,7 +195,11 @@ class ProcessWorkspace:
         elif ext == "tsv" or ext == "spectra":
             data = self._readSeperatorFile(file, "\t")
         elif ext == "xlsx" or ext == "xls":
-            data = self._readExcelSheet(file, datasheet.get('sheetname'))
+            if 'csv' in datasheet:
+                path = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['csv'])
+                data = self._readSeperatorFile(path, ",")
+            else: # we should never hit this!! but just in case
+                data = self._readExcelSheet(file, datasheet.get('sheetname'))
         return data
 
 
@@ -297,31 +301,67 @@ class ProcessWorkspace:
     # help:
     #  http://www.youlikeprogramming.com/2012/03/examples-reading-excel-xls-documents-using-pythons-xlrd/
     #  https://secure.simplistix.co.uk/svn/xlrd/trunk/xlrd/doc/xlrd.html?p=4966
+    # Known Issues:
+    #  Looks like some versions of officelibre and badness that xlrd doesn't like...
+    #  TODO: verify some slowness from open large excel files, if so, write sheets as csv so we only do this
+    #       parse once and then access as csv from then on
     def _processExcel(self, datasheet, datasheets, rid, resourceConfig, metadataSheets, metadataRun):
         # remove the place holder, the sheets will be the actual 'files'
 
         fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['name'])
         error = False
+        parsed = False
+
+        runTime = time.time()
+
+        # we are dealing with a excel datasheet that has already been csv'ifed
+        if 'csv' in datasheet:
+            parsed = True
+
+            fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['csv'])
+            data = self._readSeperatorFile(fullPath, ",")
+
+            if not self._parseOnThisRun(datasheet, resourceConfig, metadataRun):
+                return
+
+            self._processSheetArray(data, datasheet, resourceConfig, metadataSheets)
+            print "  --_processExcel_csv process time: %ss" % (time.time() - runTime)
+            return
+
 
         try:
             workbook = xlrd.open_workbook(fullPath)
             sheets = workbook.sheet_names()
 
-            for sheet in sheets:
+            for i, sheet in enumerate(sheets):
                 sheetInfo = {
                     "id" : self._getFileId(rid, datasheet['location'], "%s-%s" %  (datasheet['name'], sheet) ),
                     "sheetname" : sheet,
+                    "csv" : "__%s__%s.csv" % (re.sub(r"\.xls.*", "", datasheet['name']), i),
                     "name" : datasheet['name'],
                     "location" : datasheet['location'],
                 }
+
+
+
+                data = self._getWorksheetData(workbook.sheet_by_name(sheet))
+
+                # write sheet as csv for faster sheet access
+                fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], sheetInfo['csv'])
+                print fullPath
+                csvfile = open(fullPath, 'wb')
+                wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+                for row in data:
+                    wr.writerow(row)
+                csvfile.close()
+
+                datasheets.append(sheetInfo)
 
                 # are we on the metadata run and should we be parsing this sheet?
                 if not self._parseOnThisRun(sheetInfo, resourceConfig, metadataRun):
                     continue
 
-                data = self._getWorksheetData(workbook.sheet_by_name(sheet))
                 self._processSheetArray(data, sheetInfo, resourceConfig, metadataSheets)
-                datasheets.append(sheetInfo)
 
         #TODO: how do we really want to handle this?
         except Exception as e:
@@ -331,27 +371,37 @@ class ProcessWorkspace:
                 'note' : 'There are known compatibility issues with OfficeLibre'
             }
 
+        print "  --_processExcel process time: %ss" % (time.time() - runTime)
+
         # if we are on the second run and there is no error, remove the excel file as a 'sheet'
-        if not error and not metadataRun:
+        if not error and not parsed:
             datasheets.remove(datasheet)
+            # remove excel file from workspace
         if not error and 'error' in datasheet:
             del datasheet['error']
 
+    # REMINDER: at this point, an excel file's sheets should actually be a list of csv files
     def _processExcelSheets(self, sheets, resourceConfig, metadataSheets, metadataRun):
         if len(sheets) == 0:
             return
 
-        fullPath = "%s%s%s" % (self.workspaceDir, sheets[0]['location'], sheets[0]['name'])
+        #fullPath = "%s%s%s" % (self.workspaceDir, sheets[0]['location'], sheets[0]['name'])
+        #workbook = xlrd.open_workbook(fullPath)
 
-        workbook = xlrd.open_workbook(fullPath)
+        runTime = time.time()
 
-        for sheetInfo in sheets:
+        for datasheet in sheets:
+
             # are we on the metadata run and should we be parsing this sheet?
-            if not self._parseOnThisRun(sheetInfo, resourceConfig, metadataRun):
+            if not self._parseOnThisRun(datasheet, resourceConfig, metadataRun):
                 continue
 
-            data = self._getWorksheetData(workbook.sheet_by_name(sheetInfo['sheetname']))
-            self._processSheetArray(data, sheetInfo, resourceConfig, metadataSheets)
+            fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['csv'])
+            data = self._readSeperatorFile(fullPath, ",")
+            #data = self._getWorksheetData(workbook.sheet_by_name(sheetInfo['sheetname']))
+            self._processSheetArray(data, datasheet, resourceConfig, metadataSheets)
+
+        print "  --_processExcelSheets process time: %ss" % (time.time() - runTime)
 
     def _getWorksheetData(self, sheet):
         data = []

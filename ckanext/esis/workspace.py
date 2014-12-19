@@ -178,6 +178,11 @@ class WorkspaceController(BaseController):
             workspaceResource = self._getById(workspacePackage['resources'], id)
             resource = self._getById(resources, id)
 
+            # this is most likely a non-data resource included in the upload,  the client doesn't
+            # know this, just ignore
+            if resource == None:
+                continue
+
             if workspaceResource == None:
                 workspaceResource = {"id": id, "datasheets" : []}
                 workspacePackage['resources'].append(workspaceResource)
