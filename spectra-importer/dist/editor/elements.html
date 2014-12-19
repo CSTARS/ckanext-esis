@@ -24546,6 +24546,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             },
 
             load : function() {
+                if( !this.show ) return;
+
                 this.loading = true;
                 this.reset();
 
@@ -24634,7 +24636,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             },
             
             redraw : function() {
-                if( !this.data ) return;
+                if( !this.data || !this.show ) return;
 
                 this.clear();
 
@@ -24704,13 +24706,13 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             getColor : function(i, j) {
                 if( i >= this.ranges.global.start && i < this.ranges.global.end && j < 2 ) {
                     return this.colors.green
-                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' && j == 0 ) {
+                } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' && j == 0 ) {
                     return this.colors.red;
-                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' ) {
+                } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' ) {
                     return this.colors.blue;
                 } else if( i == this.ranges.local.start && this.type == 'row' ) {
                     return this.colors.red;
-                } else if( i > this.ranges.local.start && i < this.ranges.local.end && this.type == 'row' ) {
+                } else if( i > this.ranges.local.start && i <= this.ranges.local.end && this.type == 'row' ) {
                     return this.colors.blue;
                 } else {
                     return this.colors.light_grey;

@@ -106,8 +106,15 @@
         </div>
 
         <div hidden?="{{datasheet.ignore}}" class="options">
-            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">Current Layout Overview</a>
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">
+                <core-icon icon="{{showCurrentParse ? 'visibility-off' : 'visibility'}}"></core-icon> Format Overview
+            </a>
+            <div style="padding: 5px 0 0 15px; color:#888; font-size: 13px">
+                Visually inspect how EcoSIS is parsing this sheet.
+            </div>
+            <div hidden?="{{!showCurrentParse}}" style="padding-top:5px;margin-bottom:5px"></div>
             <esis-table-renderer sheetId="{{datasheet.id}}" resourceId="{{resourceId}}" show="{{showCurrentParse}}"></esis-table-renderer>
+            <div hidden?="{{!showCurrentParse}}" style="padding-top:10px;border-bottom:1px #ccc solid;margin-bottom:15px"></div>
         </div>
 
         

@@ -9,7 +9,7 @@
             <div flex id="canvasParent">
                 <div hidden?="{{!loading}}">Loading...</div>
 
-                <canvas style="border:1px solid #ccc" width="{{width}}" height="{{height}}" 
+                <canvas style="border:1px solid #333" width="{{width}}" height="{{height}}" 
                     on-mousewheel="{{onMouseWheel}}"
                     on-mousedown="{{onMouseDown}}"
                     on-mousemove="{{onMouseMove}}"
@@ -38,8 +38,8 @@
             </div>
         </div>
         <div hidden?="{{!show}}">
-            <span style="color:{{colors.green}}">Global Metadata</span>
-            <span style="color:{{colors.red}}">Schema Attribute Names</span>
+            <span style="color:{{colors.green}}">Global Metadata</span> | 
+            <span style="color:{{colors.red}}">Schema Attribute Names</span> | 
             <span style="color:{{colors.blue}}">Spectra Data/Metadata</span>
         </div>
     </template>
@@ -131,6 +131,8 @@
             },
 
             load : function() {
+                if( !this.show ) return;
+
                 this.loading = true;
                 this.reset();
 
@@ -219,13 +221,13 @@
             },
             
             redraw : function() {
-                if( !this.data ) return;
+                if( !this.data || !this.show ) return;
 
                 this.clear();
 
                 var w = this.cell.width * this.zoom * 10;
                 var h = this.cell.height * this.zoom * 10;
-                var t = this.top, l = this.left, row, i, j, color, half, fh;
+                var t = this.top, l = this.left, row, i, j, color, half, fh, text;
                 
                 this.ctx.lineWidth = "2";
 
@@ -259,9 +261,9 @@
                             this.ctx.fillStyle = this.colors.light_grey;
 
                             if( this.type == 'row') {
-                                this.ctx.fillText(this.data[0][j], l+2, t+fh+1, w-2);
+                                this.ctx.fillText(this.data[0][j], l+2, t+fh+3, w-2);
                             } else {
-                                this.ctx.fillText(this.data[i][0], l+2, t+fh+1, w-2);
+                                this.ctx.fillText(this.data[i][0], l+2, t+fh+3, w-2);
                             }
                         }
 
@@ -272,9 +274,9 @@
                         this.ctx.rect(l,t,w-2,h-2);
                         this.ctx.stroke();
 
-                        this.ctx.font = Math.floor(h*.7)+"px Arial";
+                        this.ctx.font = Math.floor(h*.6)+"px Arial";
                         this.ctx.fillStyle = color;
-                        this.ctx.fillText(row[j], l, t+h-2, w-2);
+                        this.ctx.fillText(row[j].substring(0, 10), l+2, t+h-7, w);
 
                         l += w;
                         if( l > this.width ) break;
@@ -289,13 +291,13 @@
             getColor : function(i, j) {
                 if( i >= this.ranges.global.start && i < this.ranges.global.end && j < 2 ) {
                     return this.colors.green
-                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' && j == 0 ) {
+                } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' && j == 0 ) {
                     return this.colors.red;
-                } else if( i >= this.ranges.local.start && i < this.ranges.local.end && this.type == 'column' ) {
+                } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' ) {
                     return this.colors.blue;
                 } else if( i == this.ranges.local.start && this.type == 'row' ) {
                     return this.colors.red;
-                } else if( i > this.ranges.local.start && i < this.ranges.local.end && this.type == 'row' ) {
+                } else if( i > this.ranges.local.start && i <= this.ranges.local.end && this.type == 'row' ) {
                     return this.colors.blue;
                 } else {
                     return this.colors.light_grey;
