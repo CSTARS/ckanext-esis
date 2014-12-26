@@ -5,7 +5,10 @@
                 display: block;
             }
         </style>
-        <div id="root" style="height:{{height}}px"></div>
+        <div id="root" style="height:{{height}}px" hidden?="{{!hasData}}"></div>
+        <div hidden?="{{hasData}}" style="color:#888">
+            No spectral data to chart.
+        </div>
     </template>
     <script>
         Polymer('esis-ui-chart',{
@@ -13,6 +16,8 @@
             chart : null,
             height : 400,
             animate : false,
+
+            hasData : true,
 
             updateTimer : -1,
 
@@ -49,9 +54,7 @@
                 if( !window.google.visualization ) return this.setOnloadHandler();
                 if( !window.google.visualization.LineChart ) return this.setOnloadHandler();
 
-                if( !this.data ) return;
-                if( this.data.length == 0 ) return;
-                if( this.data[0].length == 0 ) return;
+                if( this._isEmpty() ) return;
 
                 if( !this.chart ) {
                     if( this.type ) {
@@ -80,6 +83,23 @@
                 }
                 
                 this.redraw();
+            },
+
+            _isEmpty : function() {
+                if( !this.data ) {
+                    this.hasData = false;
+                    return true;
+                }
+                if( this.data.length < 2 ) {
+                    this.hasData = false;
+                    return true;
+                }
+                if( this.data[0].length == 0 ) {
+                    this.hasData = false;
+                    return true;
+                }
+                this.hasData = true;
+                return false;
             },
 
             redraw : function() {
