@@ -3,7 +3,9 @@
 import xlrd, csv, re, json, time, pickle, hashlib
 
 from pylons import config
+from controlledVocab import ControlledVocab
 
+vocab = ControlledVocab()
 
 class ProcessWorkspace:
 
@@ -14,8 +16,9 @@ class ProcessWorkspace:
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
-    def setCollection(self, collection):
+    def setCollection(self, collection, usda):
         self.workspaceCollection = collection
+        vocab.setCollection(usda)
 
     def setHelpers(self, joinlib):
         self.joinlib = joinlib
@@ -42,9 +45,12 @@ class ProcessWorkspace:
             for i in range(datasheet['localRange']['start'], datasheet['localRange']['stop']):
                 spectra[data[i][0]] = data[i][index+1]
 
-        spectra['datapoints'] = []
+        # add global attributes if they exist
+        if 'globalRange' in datasheet:
+            for i in range(datasheet['globalRange']['start'], datasheet['globalRange']['stop']):
+                spectra[data[i][0]] = data[i][1]
 
-        # TODO: add global attributes if they exist
+        spectra['datapoints'] = []
 
         # move wavelengths to datapoints array
         if "wavelengths" in package:
@@ -83,6 +89,8 @@ class ProcessWorkspace:
                 if value in spectra:
                     spectra[key] = spectra[value]
 
+        # set controlled vocab
+        vocab.set(spectra)
 
         return spectra
 

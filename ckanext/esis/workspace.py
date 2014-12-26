@@ -37,7 +37,7 @@ process = ProcessWorkspace()
 push = Push()
 
 setup.setCollection(workspaceCollection)
-process.setCollection(workspaceCollection)
+process.setCollection(workspaceCollection, usdaCollection)
 
 class WorkspaceController(BaseController):
     workspaceDir = ""
@@ -603,9 +603,11 @@ class WorkspaceController(BaseController):
 
                         if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:
                             wavelengths.append(attr['name'])
-                            if 'original' in attr: # this might be needed when we parse
-                                # perhaps it should go in a different array
-                                wavelengths.append(attr['original'])
+
+                        if attr['type'] == 'wavelength' and 'original' in attr and not attr.get('original') in wavelengths:
+                            # this might be needed when we parse
+                            # perhaps it should go in a different array
+                            wavelengths.append(attr['original'])
                 datasheets.append(datasheet)
 
             dataResources.append(resource["id"])
