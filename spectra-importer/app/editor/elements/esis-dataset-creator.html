@@ -21,7 +21,7 @@
 
         <paper-fab icon="{{ds.data.private ? 'cloud-off' : 'cloud-upload'}}" on-tap="{{show}}" hidden?="{{hide}}" class="animated rollIn" disabled?="{{ds.data.private}}"></paper-fab>
         
-        <paper-dialog id="dialog" layered backdrop transition="paper-transition-bottom" autoCloseDisabled="true">
+        <paper-dialog id="dialog" backdrop transition="core-transition-center" autoCloseDisabled>
             <div hidden?="{{uploading}}">
                 <esis-verify-dataset on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
             </div>
@@ -69,14 +69,14 @@
             },
 
             show : function() {
-                this.$.dialog.toggle();
+                this.$.dialog.open();
             },
 
             _updateVisibility : function() {
-                if( (this.ds.data.name != '' && this.ds.resources.length > 0) || this.ds.editMode ) {
-                    this.hide = false;
-                } else {
+                if( this.ds.data.name == '' || this.ds.resources.length == 0 || !this.ds.editMode ) {
                     this.hide = true;
+                } else {
+                    this.hide = false;
                 }
             },
 

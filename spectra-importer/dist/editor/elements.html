@@ -23258,7 +23258,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
 			observe : {
 				metadata : 'update',
-				'metadata.loaded' : 'update'
+				'metadata.loaded' : 'update',
+				'metadata.attributes' : 'update'
 			},
 
 			update : function() {
@@ -23393,6 +23394,41 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 				}
 			}
 
+		});
+	</script>
+</polymer-element></div>
+<div hidden>
+
+
+<polymer-element name="esis-ui-delete-button" attributes="label" assetpath="elements/ui/">
+	<template>
+
+		<paper-icon-button icon="delete" on-click="{{_start}}" hidden?="{{state != &apos;init&apos;}}"></paper-icon-button>
+
+		<template bind="" if="{{state == &apos;confirm&apos;}}">
+			<paper-button on-click="{{reset}}" raised="">
+				<core-icon icon="cancel"></core-icon> Cancel
+			</paper-button>
+			<paper-button on-click="{{_delete}}" class="red-button" raised="">
+				<core-icon icon="warning"></core-icon> Delete {{label}}
+			</paper-button>
+		</template>
+	</template>
+	<script>
+		Polymer('esis-ui-delete-button', {
+			state : 'init',
+
+			reset : function() {
+				this.state = 'init'
+			},
+
+			_start : function() {
+				this.state = 'confirm'
+			},
+
+			_delete : function() {
+				this.fire('delete');
+			}
 		});
 	</script>
 </polymer-element></div>
@@ -23673,6 +23709,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                         this.resource.datasheets[i].loaded = false;
                     }
                 }
+
+                if( !closeEdit ) {
+                    // reload current resource
+                    this.load(this.resource.datasheets[parseInt(this.datasheetIndex)]);
+                }
             },
 
             back : function() {
@@ -23753,7 +23794,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 document.querySelector('esis-ckan').removeResource(
                     this.resource.id,
                     function(err, resp){
-                        this.remove = false;
+                        this.removing = false;
 
                         if( err ) return alert("Server error deleting resource");
                         this.fire('remove', this.resource.id);
@@ -23821,7 +23862,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                         }
                         sheet.loaded = true;
                         this.loading = false;
-                        callback();
+                        if( callback ) callback();
                     }.bind(this)
                 );
             }
@@ -23918,8 +23959,15 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </div>
 
         <div hidden?="{{datasheet.ignore}}" class="options">
-            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">Current Layout Overview</a>
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">
+                <core-icon icon="{{showCurrentParse ? &apos;visibility-off&apos; : &apos;visibility&apos;}}"></core-icon> Format Overview
+            </a>
+            <div style="padding: 5px 0 0 15px; color:#888; font-size: 13px">
+                Visually inspect how EcoSIS is parsing this sheet.
+            </div>
+            <div hidden?="{{!showCurrentParse}}" style="padding-top:5px;margin-bottom:5px"></div>
             <esis-table-renderer sheetid="{{datasheet.id}}" resourceid="{{resourceId}}" show="{{showCurrentParse}}"></esis-table-renderer>
+            <div hidden?="{{!showCurrentParse}}" style="padding-top:10px;border-bottom:1px #ccc solid;margin-bottom:15px"></div>
         </div>
 
         
@@ -24429,7 +24477,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <div flex="" id="canvasParent">
                 <div hidden?="{{!loading}}">Loading...</div>
 
-                <canvas style="border:1px solid #ccc" width="{{width}}" height="{{height}}" on-mousewheel="{{onMouseWheel}}" on-mousedown="{{onMouseDown}}" on-mousemove="{{onMouseMove}}" on-mouseup="{{onMouseUp}}" on-mouseout="{{onMouseOut}}">
+                <canvas style="border:1px solid #333" width="{{width}}" height="{{height}}" on-mousewheel="{{onMouseWheel}}" on-mousedown="{{onMouseDown}}" on-mousemove="{{onMouseMove}}" on-mouseup="{{onMouseUp}}" on-mouseout="{{onMouseOut}}">
                 </canvas>
             </div>
             <div>
@@ -24453,8 +24501,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             </div>
         </div>
         <div hidden?="{{!show}}">
-            <span style="color:{{colors.green}}">Global Metadata</span>
-            <span style="color:{{colors.red}}">Schema Attribute Names</span>
+            <span style="color:{{colors.green}}">Global Metadata</span> | 
+            <span style="color:{{colors.red}}">Schema Attribute Names</span> | 
             <span style="color:{{colors.blue}}">Spectra Data/Metadata</span>
         </div>
     </template>
@@ -24642,7 +24690,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
                 var w = this.cell.width * this.zoom * 10;
                 var h = this.cell.height * this.zoom * 10;
-                var t = this.top, l = this.left, row, i, j, color, half, fh;
+                var t = this.top, l = this.left, row, i, j, color, half, fh, text;
                 
                 this.ctx.lineWidth = "2";
 
@@ -24676,9 +24724,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                             this.ctx.fillStyle = this.colors.light_grey;
 
                             if( this.type == 'row') {
-                                this.ctx.fillText(this.data[0][j], l+2, t+fh+1, w-2);
+                                this.ctx.fillText(this.data[0][j], l+2, t+fh+3, w-2);
                             } else {
-                                this.ctx.fillText(this.data[i][0], l+2, t+fh+1, w-2);
+                                this.ctx.fillText(this.data[i][0], l+2, t+fh+3, w-2);
                             }
                         }
 
@@ -24689,9 +24737,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                         this.ctx.rect(l,t,w-2,h-2);
                         this.ctx.stroke();
 
-                        this.ctx.font = Math.floor(h*.7)+"px Arial";
+                        this.ctx.font = Math.floor(h*.6)+"px Arial";
                         this.ctx.fillStyle = color;
-                        this.ctx.fillText(row[j], l, t+h-2, w-2);
+                        this.ctx.fillText(row[j].substring(0, 10), l+2, t+h-7, w);
 
                         l += w;
                         if( l > this.width ) break;
@@ -24734,7 +24782,10 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 display: block;
             }
         </style>
-        <div id="root" style="height:{{height}}px"></div>
+        <div id="root" style="height:{{height}}px" hidden?="{{!hasData}}"></div>
+        <div hidden?="{{hasData}}" style="color:#888">
+            No spectral data to chart.
+        </div>
     </template>
     <script>
         Polymer('esis-ui-chart',{
@@ -24742,6 +24793,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             chart : null,
             height : 400,
             animate : false,
+
+            hasData : true,
 
             updateTimer : -1,
 
@@ -24778,9 +24831,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 if( !window.google.visualization ) return this.setOnloadHandler();
                 if( !window.google.visualization.LineChart ) return this.setOnloadHandler();
 
-                if( !this.data ) return;
-                if( this.data.length == 0 ) return;
-                if( this.data[0].length == 0 ) return;
+                if( this._isEmpty() ) return;
 
                 if( !this.chart ) {
                     if( this.type ) {
@@ -24809,6 +24860,23 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 }
                 
                 this.redraw();
+            },
+
+            _isEmpty : function() {
+                if( !this.data ) {
+                    this.hasData = false;
+                    return true;
+                }
+                if( this.data.length < 2 ) {
+                    this.hasData = false;
+                    return true;
+                }
+                if( this.data[0].length == 0 ) {
+                    this.hasData = false;
+                    return true;
+                }
+                this.hasData = true;
+                return false;
             },
 
             redraw : function() {
@@ -24959,6 +25027,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                         value: spectra[attrName]
                     });
                 }
+
             },
 
             setIndex : function(e) {
@@ -25719,8 +25788,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 		<template repeat="{{resource, i in ds.resources}}">
 			<div class="card">
-				<esis-ui-dataresource index="{{i}}" resource="{{resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
-				</esis-ui-dataresource>
+				<template bind="" if="{{resource.type == &apos;datafile&apos;}}">
+					<esis-ui-dataresource index="{{i}}" resource="{{resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
+					</esis-ui-dataresource>
+				</template>
+				<template bind="" if="{{resource.type != &apos;datafile&apos;}}">
+					<span>{{resource.name}}</span>
+					<esis-ui-delete-button index="{{i}}" on-delete="{{_deleteGenericResource}}">
+		            </esis-ui-delete-button>
+		            <template bind="" if="{{resource.removing}}">
+		            	<div>
+			            	<span style="color:red">Removing...</span>
+	            			<paper-progress indeterminate="" class="red"></paper-progress>
+	            		</div>
+		            </template>
+				</template>
 			</div>	
 		</template>
 
@@ -25813,6 +25895,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 					if( this.ds.existing.data[i].resource_id == id ) return this.ds.existing.data[i].spectra_count;
 				}
 				return -1;
+			},
+
+			_deleteGenericResource : function(e) {
+				var index = parseInt(e.currentTarget.getAttribute('index'));
+				var r = this.ds.resources[index];
+
+				if( !confirm("Are you sure you want to remove: "+r.name+"?") ) return;
+
+                r.removing = true;
+
+                document.querySelector('esis-ckan').removeResource(
+                    r.id,
+                    function(err, resp){
+                        r.removing = false;
+
+                        if( err ) return alert("Server error deleting resource");
+                        this.ds.resources.splice(index, 1);
+                    }.bind(this)
+                );
 			},
 
 		  	_deleteResource : function(e) {
@@ -25931,10 +26032,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <template bind="" if="{{processing}}">
             <div style="position:relative; text-align:center">
                 <div class="processing-label">
-                    <h4>Uploading Files...</h4>
-                    <template repeat="{{file in staggedFiles}}">
-                        <div>{{file.name}} {{file.progress}}%</div>
-                    </template>
+                    <h4>Uploading &amp; Processing Files...</h4>
+                    <table style="width:100%; text-align: left">
+                        <tr template="" repeat="{{file in staggedFiles}}">
+                            <td><b>{{file.name}}</b></td>
+                            <td style="color:#888">
+                                <span hidden?="{{file.progress == 100}}">Uploading: {{file.progress}}%</span>
+                                <span hidden?="{{file.progress != 100}}">Upload Complete. Processing...</span>
+                            </td>
+                        </tr>
+                    </table>
+                   
                 </div>
             </div>
         </template>
@@ -26270,7 +26378,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				'ds.data.name' : '_verifyName',
 				'ds.data.license_id' : '_updateLicenseName',
 				'ds.data.hidden' : '_setVisibility',
-				'ds.data.tags' : '_updateTokens'
+				'ds.data.tags' : '_updateTokens',
+				'ds.data.notes' : '_updateServer',
+				'ds.data.version' : '_updateServer',
+				'ds.data.maintainer' : '_updateServer',
+				'ds.data.maintainer_email' : '_updateServer',
+				'ds.data.author' : '_updateServer',
+				'ds.data.author_email' : '_updateServer'
 			},
 
 			ready : function() {
@@ -26323,6 +26437,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				this.ds.data.name = this.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
 				if( this.ds.data.title == '' ) return;
 				this.menuItem.setSecondaryHtml('<b>Dataset:</b> '+this.ds.data.title);
+				this._updateServer();
+			},
+
+			
+			updateTimer : -1,
+			_updateServer : function() {
+				if( !this.ds.loaded || !this.ds.editMode ) return;
+
+				if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
+
+				this.updateTimer = setTimeout(function(){
+					this.updateTimer = -1;
+					this._actuallyUpdateServer();
+				}.bind(this), 3000);
+			},
+
+			_actuallyUpdateServer : function() {
+				// make sure we have the correct package state
+				document.querySelector('esis-ckan').getPackage(
+					this.ds.data.name,
+					function(err, resp) {
+						if( err ) return alert('Failed to fetch for dataset update :(');
+						if( !resp ) return alert('Failed to fetch for dataset update dataset :(');
+
+						var metadata = resp;
+						for( var key in this.ds.data ) {
+							metadata[key] = this.ds.data[key];
+						}
+
+						document.querySelector('esis-ckan').updatePackage(
+							metadata,
+							function(err, resp) {
+								this.creating = false;
+								if( err ) return alert('Failed to update dataset :(');
+								if( !resp ) return alert('Failed to update dataset :(');
+								if( !resp.id ) return alert('Failed to update dataset :(');
+
+							}.bind(this)
+						);
+					}.bind(this)
+				);
 			},
 
 			_onOrgChange : function() {
@@ -26330,10 +26485,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 					this.ds.owner_org_name = '';
 					this.ds.data.private = false;
 				} else {
-
 					var opt = this.$.organizations.querySelector('option:checked');
 					if( opt ) this.ds.owner_org_name = opt.innerHTML;	
 				}
+				this._updateServer();
 			},
 
 			_addResources : function() {
@@ -26342,27 +26497,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 			_setKeywords : function(e) {
 				this.ds.data.tags = e.detail;
+				this._updateServer();
 			},
 
 			_updateTokens : function() {
-				//this.$.keywords.tokens = [];
 				for( var i = 0; i < this.ds.data.tags.length; i++ ) {
 					this.$.keywords.addToken({value:this.ds.data.tags[i].display_name});
 				}
+				this._updateServer();
 			},
 
 			_updateLicenseName : function() {
 				var opt = this.$.license.querySelector('option:checked');
 				if( opt ) this.ds.data.license_title = opt.innerHTML;
+				this._updateServer();
 			},
 
 			_updateVisibility : function() {
 				if( this.$.visible.value == 'false' ) this.ds.data.hidden = true;
 				else this.ds.data.hidden = false;
+				this._updateServer();
 			},
 
 			_setVisibility : function() {
 				this.$.visible.value = (this.ds.hidden)+'';
+				this._updateServer();
 			},
 
 			create : function() {
@@ -28627,6 +28786,10 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 
 			metadataDefinitions : {},
 
+			// this flag prevents up from making updates when we are initially 
+			// setting the data
+			loaded : false,
+
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
 				this.metadataDefinitions = esis.metadata;
@@ -28637,7 +28800,7 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 <div hidden><polymer-element name="esis-dataset-loader" assetpath="elements/">
 	<template>
 		<paper-dialog id="dialog" transition="paper-transition-bottom" backdrop="" layered="" autoclosedisabled="">
-			Loading Dataset...
+			Initializing Workspace &amp; Loading Dataset...
 		</paper-dialog>
 	</template>
 	<script>
@@ -28656,7 +28819,8 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 				this.ckan = document.querySelector('esis-ckan');
 
 				if( this.pkgid == null ) return;
-				window.addEventListener('polymer-ready', function(e) {
+
+				Polymer.whenPolymerReady(function() {
 					this.$.dialog.toggle();
 					this.run(true);
 				}.bind(this));
@@ -28671,6 +28835,10 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 
 					this.data = result;
 					this._setData();
+
+					setTimeout(function(){
+						this.ds.loaded = true;
+					}.bind(this), 1000);
 				}.bind(this));
 			},
 
@@ -28708,6 +28876,11 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 					}
 				}
 
+				this.data.resources.sort(function(a, b){
+					if( a.name > b.name ) return 1;
+					if( a.name < b.name ) return -1;
+					return 0;
+				});
 				this.ds.resources = this.data.resources;
 			},
 
@@ -28751,7 +28924,7 @@ Copyright (c) 2013 Daniel Eden
 
         <paper-fab icon="{{ds.data.private ? &apos;cloud-off&apos; : &apos;cloud-upload&apos;}}" on-tap="{{show}}" hidden?="{{hide}}" class="animated rollIn" disabled?="{{ds.data.private}}"></paper-fab>
         
-        <paper-dialog id="dialog" layered="" backdrop="" transition="paper-transition-bottom" autoclosedisabled="true">
+        <paper-dialog id="dialog" backdrop="" transition="core-transition-center" autoclosedisabled="">
             <div hidden?="{{uploading}}">
                 <esis-verify-dataset on-finalize="{{create}}" on-cancel="{{_cancel}}"></esis-verify-dataset>
             </div>
@@ -28799,14 +28972,14 @@ Copyright (c) 2013 Daniel Eden
             },
 
             show : function() {
-                this.$.dialog.toggle();
+                this.$.dialog.open();
             },
 
             _updateVisibility : function() {
-                if( (this.ds.data.name != '' && this.ds.resources.length > 0) || this.ds.editMode ) {
-                    this.hide = false;
-                } else {
+                if( this.ds.data.name == '' || this.ds.resources.length == 0 || !this.ds.editMode ) {
                     this.hide = true;
+                } else {
+                    this.hide = false;
                 }
             },
 
@@ -28905,7 +29078,7 @@ Copyright (c) 2013 Daniel Eden
 			 **/
 			getPackage : function(pkgid, callback) {
 				$.ajax({
-		            url: esis.host + '/api/action/package_show?id='+pkgid,
+		            url: esis.host + '/api/3/action/package_show?id='+pkgid,
 		            xhrFields: {
 				      withCredentials: true
 				    },
@@ -29233,7 +29406,7 @@ Copyright (c) 2013 Daniel Eden
 		        } catch(e) {}
 
 		    	$.ajax({
-				    url: esis.host + '/api/action/resource_create',
+				    url: esis.host + '/api/3/action/resource_create',
 				    type: "POST",
 				    data: formData,
 				    processData: false,
@@ -29259,7 +29432,7 @@ Copyright (c) 2013 Daniel Eden
 
 			addUrlResource : function(resource, callback) {
 		    	$.ajax({
-				    url: esis.host + '/api/action/resource_create',
+				    url: esis.host + '/api/3/action/resource_create',
 				    type: "POST",
 				    data: JSON.stringify(resource),
 				    contentType: 'application/json',
@@ -29434,7 +29607,7 @@ Copyright (c) 2013 Daniel Eden
 			removeResource: function(resourceId, callback) {
 		        $.ajax({
 	                type: 'POST',
-	                url: esis.host + '/api/action/resource_delete',
+	                url: esis.host + '/api/3/action/resource_delete',
 	                data : JSON.stringify({id : resourceId }),
 	                xhrFields: {
 				      withCredentials: true
