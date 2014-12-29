@@ -290,6 +290,11 @@
                         this.resource.datasheets[i].loaded = false;
                     }
                 }
+
+                if( !closeEdit ) {
+                    // reload current resource
+                    this.load(this.resource.datasheets[parseInt(this.datasheetIndex)]);
+                }
             },
 
             back : function() {
@@ -370,7 +375,7 @@
                 document.querySelector('esis-ckan').removeResource(
                     this.resource.id,
                     function(err, resp){
-                        this.remove = false;
+                        this.removing = false;
 
                         if( err ) return alert("Server error deleting resource");
                         this.fire('remove', this.resource.id);
@@ -438,7 +443,7 @@
                         }
                         sheet.loaded = true;
                         this.loading = false;
-                        callback();
+                        if( callback ) callback();
                     }.bind(this)
                 );
             }
