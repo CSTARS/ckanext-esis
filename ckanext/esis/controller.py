@@ -14,7 +14,7 @@ from ckan.common import request, response
 import inspect
 from bson.code import Code
 from bson.son import SON
-import os
+import os, shutil
 
 from ckan.controllers.package import PackageController
 import subprocess
@@ -38,9 +38,19 @@ class SpectraController(PackageController):
     mapreduce = {}
     # used for git commands
     localdir = ""
+    workspaceDir = ""
 
     def __init__(self):
         self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
+
+        self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
+        if not os.path.exists(self.workspaceDir):
+            raise NameError("Workspace %s doesn't exist" % self.workspaceDir)
+            exit(-1)
+
+        if not re.match(r".*/$", self.workspaceDir):
+           self.workspaceDir += "/"
+        self.workspaceDir += "workspace"
 
 
     def deletePackage(self):
@@ -52,7 +62,15 @@ class SpectraController(PackageController):
 
         searchCollection.remove({'_id':params['id']})
         spectraCollection.remove({'ecosis.package_id':params['id']})
-        workspaceCollection.remove({'package_id': params['id']})
+
+        workspace = workspaceCollection.find_one({'package_id': params['id']})
+        if workspace != None:
+            workspaceCollection.remove({'package_id': params['id']})
+
+            # remove from workspace if there
+            if os.path.exists("%s/%s" % (self.workspaceDir, workspace["package_name"])):
+                print "REMOVING %s/%s" % (self.workspaceDir, workspace["package_name"])
+                shutil.rmtree("%s/%s" % (self.workspaceDir, workspace["package_name"]))
 
         return json.dumps({'success': True})
 
@@ -60,33 +78,41 @@ class SpectraController(PackageController):
     # if it is, this complicates things, otherwise just pull from
     # spectra collection and then do normal delete
     def deleteResource(self):
-        id = request.params.get('id')
+        params = self._get_request_data(request)
 
         context = {'model': model, 'user': c.user}
 
         # remove resource from disk - normally this doesn't happen
-        r = logic.get_action('resource_show')(context, {'id': id})
+        r = logic.get_action('resource_show')(context, params)
         if r.get('url_type') == "upload":
             upload = uploader.ResourceUpload(r)
-            os.remove(upload.get_path(r['id']))
+            path = upload.get_path(r['id'])
+            if os.path.exists(path):
+                os.remove(path)
 
-        logic.get_action('resource_delete')(context, {'id': id})
+        logic.get_action('resource_delete')(context, params)
+        id = params.get('id')
 
         # now remove any spectra that were related
         spectraCollection.remove({'ecosis.resource_id': id})
 
         # remove from workspace
-        workspace = workspaceCollection.find_one({'resources.id', id})
+        workspace = workspaceCollection.find_one({"resources.id": id})
 
         r = None
-        for resource in workspace['resources']:
-            if resource.id == id:
-                r = resource
-                break
-        workspace['resource'].remove(r)
-        workspaceCollection.update({'package_id': workspace['package_id']}, workspace)
+        if workspace != None:
+            for resource in workspace['resources']:
+                if resource['id'] == id:
+                    r = resource
+                    break
 
+            workspace['resources'].remove(r)
+            workspaceCollection.update({'package_id': workspace['package_id']}, workspace)
 
+            # remove from workspace if there
+            if os.path.exists("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])):
+                print "REMOVING %s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])
+                shutil.rmtree("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id']))
 
     # rebuild entire search index
     # TODO: this should be admin only!!
@@ -192,6 +218,8 @@ class SpectraController(PackageController):
 
         context = {'model': model, 'user': c.user}
 
+        if c.userobj == None:
+            return json.dumps({'error':True, 'message':'nope'})
         if not c.userobj.sysadmin:
             return json.dumps({'error':True, 'message':'nope'})
 
@@ -223,19 +251,10 @@ class SpectraController(PackageController):
         spectraCollection.remove({})
         searchCollection.remove({})
 
-        return json.dumps({'removed': packages})
-
-
-    def deleteResource(self):
-        params = self._get_request_data(request)
-
-        context = {'model': model, 'user': c.user}
-        logic.get_action('resource_delete')(context, params)
-
-        spectraCollection.remove({'resource_id':params['id']})
-
-        response.headers["Content-Type"] = "application/json"
-        return json.dumps({'success': True})
+        return json.dumps({
+            'removed': packages,
+            'message' : 'Go to /ckan-admin/trash to finish cleanup'
+        })
 
     # replicating default param parsing in ckan... really python... really...
     # TODO: see if this is really needed

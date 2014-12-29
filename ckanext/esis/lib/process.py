@@ -554,8 +554,9 @@ class ProcessWorkspace:
                 if sheet.get('ignore') == True:
                     continue
 
-                if sheet.get('metadata') == True:
+                if r != None and sheet.get('metadata') == True:
                     ds = self._getById(r['datasheets'], sheet['id'])
+
                     ds['metadata'] = True
                     sheets.append({
                         'config': sheet,

@@ -109,7 +109,7 @@ class Push:
 
             if layout == 'row':
                 start = datasheet['localRange']['start']
-                for j in range(start+1, datasheet['localRange']['end']):
+                for j in range(start+1, datasheet['localRange']['stop']):
                     sp = {}
                     for i in range(len(data[start])):
                         if data[start+j][i]:
@@ -128,7 +128,7 @@ class Push:
                 m['datapoints'] = []
 
                 # move wavelengths to datapoints array
-                if "wavelengths" in package:
+                if package.get("wavelengths") != None:
                     for attr in package["wavelengths"]:
                         if attr in m:
                             m['datapoints'].append({
@@ -138,7 +138,7 @@ class Push:
                             del m[attr]
 
                 # move data attributes to datapoints array
-                if "attributes" in package:
+                if package.get("attributes") != None:
                     for attr in package["attributes"]:
                         if attr in m and package["attributes"][attr]["type"] == "data":
                             m['datapoints'].append({
@@ -149,16 +149,16 @@ class Push:
                             del m[attr]
 
                 # add global attributes if they exist
-                if 'globalRange' in datasheet and len(data[0]) > 1:
+                if datasheet.get("globalRange") != None and len(data[0]) > 1:
                     for i in range(datasheet['globalRange']['start'], datasheet['globalRange']):
                         m[data[i][0]] = data[i][1]
 
                 # join on many metadata sheets that matched
                 for resource in package['resources']:
-                    if 'datasheets' in resource:
+                    if resource.get('datasheets') != None:
                         for sheet in resource['datasheets']:
                             if sheet.get('metadata') == True:
-                                if 'matches' in sheet and datasheet['id'] in sheet['matches']:
+                                if sheet.get('matches') != None and sheet['matches'].get(datasheet['id'] ) != None:
                                     metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
                                     data = None
 
@@ -171,7 +171,7 @@ class Push:
                                     self.joinlib.joinOnSpectra(datasheet, m, sheet, data)
 
                 # copy any mapped attributes
-                if "attributeMap" in package:
+                if package.get("attributeMap") != None:
                     for key, value in package["attributeMap"].iteritems():
                         if value in m:
                             m[key] = m[value]
@@ -182,7 +182,7 @@ class Push:
                 # finally, set ckan dataset info, as well as specific info on, sort, geolocation
                 self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
 
-                if 'datasetAttributes' in package:
+                if package.get('datasetAttributes'):
                     attrInfo = package.get('datasetAttributes')
                     sort = attrInfo.get('sort_on')
                     type = attrInfo.get('sort_type')

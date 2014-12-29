@@ -30,8 +30,12 @@ class EsisPlugin(plugins.SingletonPlugin,
         # spectral types not handled by any other IDatasetForm plugin.
         return False
 
-
     def before_map(self, map):
+        self.set_map(map);
+        return map
+
+    # override?
+    def set_map(self, map):
         controller = 'ckanext.esis.controller:SpectraController'
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
@@ -51,8 +55,10 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
         # override the routes to delete packages and resources
-        map.connect('delete_package', '/api/3/action/package_delete', controller=controller, action='deletePackage')
-        map.connect('delete_resource', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
+        map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
+        map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
+        map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
+        map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
 
         # connect workspace calls
         controller = 'ckanext.esis.workspace:WorkspaceController'

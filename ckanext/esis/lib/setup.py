@@ -84,6 +84,8 @@ class WorkspaceSetup:
                 print ' - Cleaning expired package: %s' % package['package_name']
                 shutil.rmtree("%s/%s" % (self.workspaceDir, package['package_name']))
 
+        # now check that all packages in workspace have not been deleted
+
 
 
     # make sure  all of the resources are where they should be
