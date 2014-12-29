@@ -20,7 +20,8 @@
 				this.ckan = document.querySelector('esis-ckan');
 
 				if( this.pkgid == null ) return;
-				window.addEventListener('polymer-ready', function(e) {
+
+				Polymer.whenPolymerReady(function() {
 					this.$.dialog.toggle();
 					this.run(true);
 				}.bind(this));
@@ -35,6 +36,10 @@
 
 					this.data = result;
 					this._setData();
+
+					setTimeout(function(){
+						this.ds.loaded = true;
+					}.bind(this), 1000);
 				}.bind(this));
 			},
 

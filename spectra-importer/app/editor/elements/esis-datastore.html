@@ -53,6 +53,10 @@
 
 			metadataDefinitions : {},
 
+			// this flag prevents up from making updates when we are initially 
+			// setting the data
+			loaded : false,
+
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
 				this.metadataDefinitions = esis.metadata;

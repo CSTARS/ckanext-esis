@@ -170,7 +170,13 @@
 				'ds.data.name' : '_verifyName',
 				'ds.data.license_id' : '_updateLicenseName',
 				'ds.data.hidden' : '_setVisibility',
-				'ds.data.tags' : '_updateTokens'
+				'ds.data.tags' : '_updateTokens',
+				'ds.data.notes' : '_updateServer',
+				'ds.data.version' : '_updateServer',
+				'ds.data.maintainer' : '_updateServer',
+				'ds.data.maintainer_email' : '_updateServer',
+				'ds.data.author' : '_updateServer',
+				'ds.data.author_email' : '_updateServer'
 			},
 
 			ready : function() {
@@ -223,6 +229,47 @@
 				this.ds.data.name = this.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
 				if( this.ds.data.title == '' ) return;
 				this.menuItem.setSecondaryHtml('<b>Dataset:</b> '+this.ds.data.title);
+				this._updateServer();
+			},
+
+			
+			updateTimer : -1,
+			_updateServer : function() {
+				if( !this.ds.loaded || !this.ds.editMode ) return;
+
+				if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
+
+				this.updateTimer = setTimeout(function(){
+					this.updateTimer = -1;
+					this._actuallyUpdateServer();
+				}.bind(this), 3000);
+			},
+
+			_actuallyUpdateServer : function() {
+				// make sure we have the correct package state
+				document.querySelector('esis-ckan').getPackage(
+					this.ds.data.name,
+					function(err, resp) {
+						if( err ) return alert('Failed to fetch for dataset update :(');
+						if( !resp ) return alert('Failed to fetch for dataset update dataset :(');
+
+						var metadata = resp;
+						for( var key in this.ds.data ) {
+							metadata[key] = this.ds.data[key];
+						}
+
+						document.querySelector('esis-ckan').updatePackage(
+							metadata,
+							function(err, resp) {
+								this.creating = false;
+								if( err ) return alert('Failed to update dataset :(');
+								if( !resp ) return alert('Failed to update dataset :(');
+								if( !resp.id ) return alert('Failed to update dataset :(');
+
+							}.bind(this)
+						);
+					}.bind(this)
+				);
 			},
 
 			_onOrgChange : function() {
@@ -230,10 +277,10 @@
 					this.ds.owner_org_name = '';
 					this.ds.data.private = false;
 				} else {
-
 					var opt = this.$.organizations.querySelector('option:checked');
 					if( opt ) this.ds.owner_org_name = opt.innerHTML;	
 				}
+				this._updateServer();
 			},
 
 			_addResources : function() {
@@ -242,27 +289,31 @@
 
 			_setKeywords : function(e) {
 				this.ds.data.tags = e.detail;
+				this._updateServer();
 			},
 
 			_updateTokens : function() {
-				//this.$.keywords.tokens = [];
 				for( var i = 0; i < this.ds.data.tags.length; i++ ) {
 					this.$.keywords.addToken({value:this.ds.data.tags[i].display_name});
 				}
+				this._updateServer();
 			},
 
 			_updateLicenseName : function() {
 				var opt = this.$.license.querySelector('option:checked');
 				if( opt ) this.ds.data.license_title = opt.innerHTML;
+				this._updateServer();
 			},
 
 			_updateVisibility : function() {
 				if( this.$.visible.value == 'false' ) this.ds.data.hidden = true;
 				else this.ds.data.hidden = false;
+				this._updateServer();
 			},
 
 			_setVisibility : function() {
 				this.$.visible.value = (this.ds.hidden)+'';
+				this._updateServer();
 			},
 
 			create : function() {
