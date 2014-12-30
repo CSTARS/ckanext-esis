@@ -34,7 +34,6 @@ usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 
 setup = WorkspaceSetup()
 process = ProcessWorkspace()
-push = Push()
 
 setup.setCollection(workspaceCollection)
 process.setCollection(workspaceCollection, usdaCollection)
@@ -44,7 +43,6 @@ class WorkspaceController(BaseController):
 
 
     def __init__(self):
-        push.setHelpers(self, setup, process, joinlib)
         process.setHelpers(joinlib)
 
         self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
@@ -443,6 +441,9 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+
+        push = Push()
+        push.setHelpers(self, setup, process, joinlib)
 
         return json.dumps(push.pushToSearch(package_id))
 

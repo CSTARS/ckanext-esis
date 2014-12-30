@@ -215,6 +215,7 @@ class ProcessWorkspace:
             data = []
             for row in reader:
                 data.append(row)
+            csvfile.close()
             return data
         return [[]]
 
