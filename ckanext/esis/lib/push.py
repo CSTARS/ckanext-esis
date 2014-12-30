@@ -1,4 +1,4 @@
-import re, time
+import re, time, gc
 
 from pymongo import MongoClient
 from pylons import config
@@ -68,11 +68,8 @@ class Push:
 
         for resource in package['resources']:
             resource = self.workspace._getMergedResources(resource['id'], resources, workspacePackage, removeValues=False)
-            spectra = self._getResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
-
-            # now insert into mongo
-            if len(spectra) > 0:
-                spectraCollection.insert(spectra)
+            #spectra = self._getResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
+            self._insertResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
 
         # finally run map reduce
         map = Code(self.mapreduce['map'])
@@ -82,9 +79,7 @@ class Push:
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
-    # this is a lot like process._getSpectra() but will be more efficent for access and joining all of
-    # a files spectra
-    def _getResourceSpectra(self, resource, rootDir, package, ckanPackage):
+    def _insertResourceSpectra(self, resource, rootDir, package, ckanPackage):
         if 'datasheets' not in resource:
             return []
 
@@ -101,11 +96,19 @@ class Push:
             if datasheet.get('ignore') == True or datasheet.get('metadata') == True:
                 continue
 
+            # has no data
+            if datasheet.get('localRange') == None:
+                continue
+
             file = "%s%s%s" % (rootDir, datasheet['location'], datasheet['name'])
             data = self.process.getFile(file, datasheet)
+
             spectraList = []
 
             (layout, scope) = self.process.getLayout(datasheet)
+
+            # stupid hack for memory leaks
+            #arr = []
 
             if layout == 'row':
                 start = datasheet['localRange']['start']
@@ -114,7 +117,14 @@ class Push:
                     for i in range(len(data[start])):
                         if data[start+j][i]:
                             sp[data[start][i]] = data[start+j][i]
-                    spectraList.append(sp)
+                    self._formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir);
+
+                    # push in 50 at a time to avoid memory leak
+                    #arr.append(m)
+                    #if len(arr) > 100:
+                    #    spectraCollection.insert(arr)
+                    #    arr = []
+
             else:
                 start = datasheet['localRange']['start']
                 for j in range(1, len(data[start])):
@@ -122,93 +132,106 @@ class Push:
                     for i in range(start, datasheet['localRange']['stop']):
                         if data[i][j]:
                             sp[data[i][0]] = data[i][j]
-                    spectraList.append(sp)
+                    self._formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir);
 
-            for m in spectraList:
-                m['datapoints'] = []
+                    # push in 50 at a time to avoid memory leak
+                    #arr.append(m)
+                    #if len(arr) > 50:
+                    #    spectraCollection.insert(arr)
+                    #    arr = []
 
-                # move wavelengths to datapoints array
-                if package.get("wavelengths") != None:
-                    for attr in package["wavelengths"]:
-                        if attr in m:
-                            m['datapoints'].append({
-                                "key" : attr,
-                                "value" : m[attr]
-                            })
-                            del m[attr]
-
-                # move data attributes to datapoints array
-                if package.get("attributes") != None:
-                    for attr in package["attributes"]:
-                        if attr in m and package["attributes"][attr]["type"] == "data":
-                            m['datapoints'].append({
-                                "key" : attr,
-                                "value" : m[attr],
-                                "units" : package["attributes"][attr]
-                            })
-                            del m[attr]
-
-                # add global attributes if they exist
-                if datasheet.get("globalRange") != None and len(data[0]) > 1:
-                    for i in range(datasheet['globalRange']['start'], datasheet['globalRange']):
-                        m[data[i][0]] = data[i][1]
-
-                # join on many metadata sheets that matched
-                for resource in package['resources']:
-                    if resource.get('datasheets') != None:
-                        for sheet in resource['datasheets']:
-                            if sheet.get('metadata') == True:
-                                if sheet.get('matches') != None and sheet['matches'].get(datasheet['id'] ) != None:
-                                    metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
-                                    data = None
-
-                                    if metadatafile in metadataCache:
-                                        data = metadataCache[metadatafile]
-                                    else:
-                                        data = self.process.getFile(metadatafile, sheet)
-                                        metadataCache[metadatafile] = data
-
-                                    self.joinlib.joinOnSpectra(datasheet, m, sheet, data)
-
-                # copy any mapped attributes
-                if package.get("attributeMap") != None:
-                    for key, value in package["attributeMap"].iteritems():
-                        if value in m:
-                            m[key] = m[value]
-
-                # TODO: Look up USDA Plant Codes
+            # if len(arr) > 0:
+            #    spectraCollection.insert(arr)
+            #del arr
 
 
-                # finally, set ckan dataset info, as well as specific info on, sort, geolocation
-                self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
+    def _formatAndInsertSpectra(self, m, datasheet, data, package, ckanPackage, metadataCache, rootDir):
+        m['datapoints'] = []
 
-                if package.get('datasetAttributes'):
-                    attrInfo = package.get('datasetAttributes')
-                    sort = attrInfo.get('sort_on')
-                    type = attrInfo.get('sort_type')
-                    if sort != None and sort in m:
-                        if type == 'datetime':
-                            m['ecosis']['sort'] = dateutil.parser.parse(m[sort])
-                        elif type == 'numberic':
-                            m['ecosis']['sort'] = float(m[sort])
-                        else:
-                            m['ecosis']['sort'] = m[sort]
+        # move wavelengths to datapoints array
+        if package.get("wavelengths") != None:
+            for attr in package["wavelengths"]:
+                if attr in m:
+                    m['datapoints'].append({
+                        "key" : attr,
+                        "value" : m[attr]
+                    })
+                    del m[attr]
 
-                    location = attrInfo.get('location')
-                    if location != None and sort in location:
-                        try:
-                            m['ecosis']['location'] = json.loads(m[location])
-                            del m[location]
-                        except:
-                            t = 1
+        # move data attributes to datapoints array
+        if package.get("attributes") != None:
+            for attr in package["attributes"]:
+                if attr in m and package["attributes"][attr]["type"] == "data":
+                    m['datapoints'].append({
+                        "key" : attr,
+                        "value" : m[attr],
+                        "units" : package["attributes"][attr]
+                    })
+                    del m[attr]
 
-                spectra.append(m)
+        # add global attributes if they exist
+        if datasheet.get("globalRange") != None and len(data[0]) > 1:
+            for i in range(datasheet['globalRange']['start'], datasheet['globalRange']['stop']):
+                m[data[i][0]] = data[i][1]
+
+        # join on many metadata sheets that matched
+        for resource in package['resources']:
+            if resource.get('datasheets') != None:
+                for sheet in resource['datasheets']:
+                    if sheet.get('metadata') == True:
+                        if sheet.get('matches') != None and sheet['matches'].get(datasheet['id'] ) != None:
+                            metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
+                            data = None
+
+                            if metadatafile in metadataCache:
+                                data = metadataCache[metadatafile]
+                            else:
+                                data = self.process.getFile(metadatafile, sheet)
+                                metadataCache[metadatafile] = data
+
+                            self.joinlib.joinOnSpectra(datasheet, m, sheet, data)
+
+        # copy any mapped attributes
+        if package.get("attributeMap") != None:
+            for key, value in package["attributeMap"].iteritems():
+                if value in m:
+                    m[key] = m[value]
+
+        # TODO: Look up USDA Plant Codes
 
 
-        print " Push resource process time: %ss" % (time.time() - runTime)
+        # finally, set ckan dataset info, as well as specific info on, sort, geolocation
+        self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
 
+        if package.get('datasetAttributes'):
+            attrInfo = package.get('datasetAttributes')
+            sort = attrInfo.get('sort_on')
+            type = attrInfo.get('sort_type')
+            if sort != None and sort in m:
+                if type == 'datetime':
+                    try:
+                        m['ecosis']['sort'] = dateutil.parser.parse(m[sort])
+                    except:
+                        pass
+                elif type == 'numberic':
+                    try:
+                        m['ecosis']['sort'] = float(m[sort])
+                    except:
+                        pass
+                else:
+                    m['ecosis']['sort'] = m[sort]
 
-        return spectra
+            location = attrInfo.get('location')
+            if location != None and sort in location:
+                try:
+                    m['ecosis']['location'] = json.loads(m[location])
+                    del m[location]
+                except:
+                    t = 1
+
+        spectraCollection.insert(m)
+        #return m
+
 
     def _addEcosisNamespace(self, m, ckanPackage, resource, dsid):
         ecosis = {
@@ -239,3 +262,4 @@ class Push:
             #        'message' : 'Unknown Code'
             #    }
         return resp
+

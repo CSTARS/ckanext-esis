@@ -69,7 +69,6 @@ class SpectraController(PackageController):
 
             # remove from workspace if there
             if os.path.exists("%s/%s" % (self.workspaceDir, workspace["package_name"])):
-                print "REMOVING %s/%s" % (self.workspaceDir, workspace["package_name"])
                 shutil.rmtree("%s/%s" % (self.workspaceDir, workspace["package_name"]))
 
         return json.dumps({'success': True})
@@ -111,7 +110,6 @@ class SpectraController(PackageController):
 
             # remove from workspace if there
             if os.path.exists("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])):
-                print "REMOVING %s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])
                 shutil.rmtree("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id']))
 
     # rebuild entire search index
