@@ -35,7 +35,7 @@
 
 		<template repeat="{{resource, i in ds.resources}}">
 			<div class="card">
-				<template bind if="{{resource.type == 'datafile'}}">
+				<template bind if="{{resource.type == 'datafile' || resource.type == 'zip'}}">
 					<esis-ui-dataresource 
 						index="{{i}}"
 						resource="{{resource}}"
@@ -43,7 +43,7 @@
 						on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
-				<template bind if="{{resource.type != 'datafile'}}">
+				<template bind if="{{resource.type != 'datafile' && resource.type != 'zip'}}">
 					<span>{{resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}"
 		                on-delete="{{_deleteGenericResource}}">

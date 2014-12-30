@@ -273,10 +273,22 @@
                                 }
                             }
                         }
+                        
+                        // any time we perform an update like this, the state of joins may have changed,
+                        // so clear any cached spectra and datasheet information using spectra.clearCache()
+                        // and the update event to alert the rest of the app
                         var ele = this.shadowRoot.querySelector('esis-ui-spectra');
                         if( ele ) ele.clearCache();
 
                         this.fire('update');
+
+                        // this 'update' event actually sets the entire resource as not loaded
+                        // but we have set the correct datasheet attributes above, so go ahead 
+                        // and mark just this datasheet as loaded.  This will make sure things
+                        // like the attribute list in the metadata panel are set correctly.
+                        setTimeout(function(){
+                            this.datasheet.loaded = true;
+                        }.bind(this));
                     }.bind(this)
                 ); 
             },

@@ -23709,11 +23709,6 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                         this.resource.datasheets[i].loaded = false;
                     }
                 }
-
-                if( !closeEdit ) {
-                    // reload current resource
-                    this.load(this.resource.datasheets[parseInt(this.datasheetIndex)]);
-                }
             },
 
             back : function() {
@@ -24109,10 +24104,22 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                                 }
                             }
                         }
+                        
+                        // any time we perform an update like this, the state of joins may have changed,
+                        // so clear any cached spectra and datasheet information using spectra.clearCache()
+                        // and the update event to alert the rest of the app
                         var ele = this.shadowRoot.querySelector('esis-ui-spectra');
                         if( ele ) ele.clearCache();
 
                         this.fire('update');
+
+                        // this 'update' event actually sets the entire resource as not loaded
+                        // but we have set the correct datasheet attributes above, so go ahead 
+                        // and mark just this datasheet as loaded.  This will make sure things
+                        // like the attribute list in the metadata panel are set correctly.
+                        setTimeout(function(){
+                            this.datasheet.loaded = true;
+                        }.bind(this));
                     }.bind(this)
                 ); 
             },
@@ -25788,11 +25795,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 		<template repeat="{{resource, i in ds.resources}}">
 			<div class="card">
-				<template bind="" if="{{resource.type == &apos;datafile&apos;}}">
+				<template bind="" if="{{resource.type == &apos;datafile&apos; || resource.type == &apos;zip&apos;}}">
 					<esis-ui-dataresource index="{{i}}" resource="{{resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
-				<template bind="" if="{{resource.type != &apos;datafile&apos;}}">
+				<template bind="" if="{{resource.type != &apos;datafile&apos; &amp;&amp; resource.type != &apos;zip&apos;}}">
 					<span>{{resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}" on-delete="{{_deleteGenericResource}}">
 		            </esis-ui-delete-button>
@@ -28954,7 +28961,8 @@ Copyright (c) 2013 Daniel Eden
             observe : {
                 'ds.data.name' : '_updateVisibility',
                 'ds.deleted' : '_updateVisibility',
-                'ds.files' : '_updateVisibility'
+                'ds.resources' : '_updateVisibility',
+                'ds.editMode' : '_updateVisibility'
             },
 
             // local memory cache for usda common names
@@ -28996,8 +29004,12 @@ Copyright (c) 2013 Daniel Eden
                     this.ds.package_id,
                     function(err, resp){
                         this.uploading = false;
-                        if( err ) alert('Error pushing dataset to search :(');
-                        else alert('Success!');
+                        if( err ) {
+                            alert('Error pushing dataset to search :(');
+                        } else {
+                            alert('Success!');
+                            this.$.dialog.close();
+                        }
                     }.bind(this)
                 );
             }

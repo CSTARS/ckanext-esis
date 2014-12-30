@@ -51,7 +51,8 @@
             observe : {
                 'ds.data.name' : '_updateVisibility',
                 'ds.deleted' : '_updateVisibility',
-                'ds.files' : '_updateVisibility'
+                'ds.resources' : '_updateVisibility',
+                'ds.editMode' : '_updateVisibility'
             },
 
             // local memory cache for usda common names
@@ -93,8 +94,12 @@
                     this.ds.package_id,
                     function(err, resp){
                         this.uploading = false;
-                        if( err ) alert('Error pushing dataset to search :(');
-                        else alert('Success!');
+                        if( err ) {
+                            alert('Error pushing dataset to search :(');
+                        } else {
+                            alert('Success!');
+                            this.$.dialog.close();
+                        }
                     }.bind(this)
                 );
             }
