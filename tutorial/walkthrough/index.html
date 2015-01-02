@@ -43,8 +43,8 @@
 					<h1>EcoSIS Tutorial</h1>
 					<h3>Step by step tutorial for adding datasets to EcoSIS</h3>
 					<p>
-						<small>Presented by <a href="http://forestandwildlifeecology.wisc.edu/townsend-phil-current-faculty-profile">Phil Townsend</a> / <a href="mailto:ptownsend@wisc.edu">ptownsend@wisc.edu</a></small><br />
-						<small>Created by <a href="http://cstars.metro.ucdavis.edu/people/technical-staff/justin-merz/">Justin Merz</a> / <a href="mailto:jrmerz@ucdavis.edu">jrmerz@ucdavis.edu</a></small>
+						<small>PI: <a href="http://forestandwildlifeecology.wisc.edu/townsend-phil-current-faculty-profile">Phil Townsend</a> / <a href="mailto:ptownsend@wisc.edu">ptownsend@wisc.edu</a></small><br />
+						<small>Developer: <a href="http://cstars.metro.ucdavis.edu/people/technical-staff/justin-merz/">Justin Merz</a> / <a href="mailto:jrmerz@ucdavis.edu">jrmerz@ucdavis.edu</a></small>
 					</p>
 				</section>
 
@@ -65,7 +65,8 @@
 					<section>
 						<h2>Create EcoSIS Account</h2>
 						<p>
-							First your will need to create an account at <a href="http://data.ecospectra.org" target="_blank">data.ecospectra.org</a>
+							First your will need to create an account at <a href="http://data.ecospectra.org" target="_blank">data.ecospectra.org</a> <br />
+							Or try the sandbox located at <a href="http://dev-data.ecospectra.org" target="_blank">dev-data.ecospectra.org</a>
 						</p>
 					</section>
 					<section>
@@ -121,7 +122,7 @@
 					<section>
 						<h2>Basic Information</h2>
 						<p>In the dataset editor fill out the preliminary data for your dataset including name, description, license (if any) and visibility flag.  Make sure your description gives people a brief overview of what this dataset is.</p>
-						<p>Then click 'New Resources' on the left hand navigation.  The menu item will show once you have given the dataset a valid title.</p>
+						<p>Then click  the 'Create Dataset' button at the bottom.  Once the dataset is created, click the 'add resources' link or the 'Resources' left hand menu item.</p>
 					</section>
 					<section>
 						<img src="ss/addDataset.png">
@@ -131,15 +132,15 @@
 				<section>
 					<section>
 						<h2>Data Formats</h2>
-						<p>EcoSIS utilizes user-defined schema and recommends names for certain metadata attributes. EcoSIS uses the format of <b>your</b> files, with some guidance, to figure out your dataset's scheme.</p>
+						<p>EcoSIS utilizes user-defined schema and recommends names for certain metadata attributes. EcoSIS uses the format of <b style="color:orange">your</b> files, with some guidance, to figure out your dataset's scheme.</p>
 						
 					</section>
 					<section>
 						<p>EcoSIS expects data to be uploaded with each measurement either:</p>
 
 						<ul>
-							<li><b>In a single row -</b> where the first column is your attribute name and the proceeding columns are the data values, including spectra</b></li>
-							<li><b>In a single column -</b> where the first row is your attribute name and the proceeding rows are data values, including</b></li>
+							<li><b style="color:orange">In a single row -</b> where the first column is your attribute name and the proceeding columns are the data values, including spectra</b></li>
+							<li><b style="color:orange">In a single column -</b> where the first row is your attribute name and the proceeding rows are data values, including</b></li>
 						</ul>
 
 						<table style="width:100%; text-align:center">
@@ -158,18 +159,19 @@
 						<p style="font-size:70%;margin-top:20px;color:#888">Note: wavelengths are still considered to be an attribute name.</p>
 					</section>
 					<section>
-						<p>You can add <b>additional</b>/<b>optional</b> formatting to your files to specify type (data vs metadata) if you are providing both in the same file.  You can also specify global metadata for a file.</p>
+						<p>You can add <b style="color:orange">additional/optional</b> formatting to your files to specify attribute type (data vs metadata), units and global metadata for a file.</p>
 
 						<ul style="font-size:70%;margin-top:20px">
-							<li>Adding the row break between the two bottom tables helps define your schema by telling the importer your attribute types.  The middle table will be set as type 'metadata' while the bottom table as type 'data'.  If you don't use the break you will be given a chance to manually define attributes after the file has been added.</li>
-							<li>At the top of a file columns A and B can be used to define global metadata for the file with Column A being the attribute name and Column B being the attribute value.</li>
+							<li>At the top of a file columns A and B can be used to define global metadata for the file with Column A being the attribute name and Column B being the attribute value.  This metadata will be applied to every spectra in the file</li>
+							<li>After the attribute name, you can add units in ().  Ex: Steam Biomas (tha)</li>
+							<li>Adding the '__d' postfix to your attribute name will tell the parser the attribute should be considered as data.  Ex: NDVI__d</li>
 						</ul>
 
 						<img src="ss/formatSpecial.png">
 					</section>
 
 					<section>
-						<p>Finally, regardless of table format, only assign numeric attribute names to wavelengths. Data following any attribute name that is numeric will always be considered spectral data.</p>
+						<p>Finally, regardless of any formatting, only assign numeric attribute names to wavelengths. Data following any attribute name that is numeric will always be considered spectral data.</p>
 
 						<img src="ss/formatWavelength.png">
 					</section>
@@ -178,7 +180,7 @@
 				<section>
 					<section>
 						<h2>Add Resource Files</h2>
-						<p>Select which format your files will be provided in.  Spectral (by column) where your wavelengths are provided in Column A or Time Series (by row) where your attribute names are provided in row 1.  Then select the files you wish to upload by clicking the file selector next to 'Select File' or by dragging and dropping the files over the 'Drop files here' box.</p>
+						<p>Select which format your files will be provided in (By Column or By Row).  Then select the files you wish to upload by clicking the file selector next to 'Select File' or by dragging and dropping the files over the 'Drop files here' box.</p>
 						<p>Sample spectra and metadata files can be downloaded by clicking <a href="/demo_data.xlsx">here</a> and <a href="/demo_metadata.xlsx">here</a> (recommended).
 					</section>
 					<section>
@@ -189,7 +191,7 @@
 				<section>
 					<section>
 						<h2>Configure Datasheets</h2>
-						<p>After the files have finished parsing you will be redirected to the 'Configure Datasheets' tab in the 'New Resources' page.  Here you can see how the importer interpreted your files.</p>
+						<p>After the files have finished uploaded and being parsed by the EcoSIS you will be redirected to the 'Current' tab in the 'Resources' page.  Here you can see how the importer interpreted your files.  Click 'Details' to see a brief overview.</p>
 						<p style="margin-top:20px">It's very important to look over your files and make sure everything is correct. Pay special attention to joinable metadata files as you will always need to mark these files and define how the metadata is to be joined with the rest of your data.</p>
 					</section>
 					<section>

@@ -123,6 +123,13 @@ module.exports = function (grunt) {
                     stderr: true
                 },
                 command: 'node server'
+            },
+            'tutorial-server' : {
+                options: {
+                    stdout: true,
+                    stderr: true
+                },
+                command: 'node server --tutorial'
             }
         },
 
@@ -159,6 +166,10 @@ module.exports = function (grunt) {
     grunt.registerTask('build-server', [
         'build',
         'shell:build-server'
+    ]);
+
+    grunt.registerTask('tutorial-server', [
+        'shell:tutorial-server'
     ]);
 
 };
