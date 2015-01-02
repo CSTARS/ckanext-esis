@@ -262,12 +262,11 @@
 					</section>
 
 					<section>
-						<h4>Dataset</h4>
+						<h4>Special Attributes</h4>
 						<p>In the dataset section you can specify special attributes that further describe your dataset.</p>
 						<ul>
-							<li><b>Order.</b> If your dataset has ordering (ex: the dataset is a time series) you can specify an attribute to order by. You can also specify how to parse the 'order by' attribute (string, number or date).</li>
-							<li><b>Group.</b> If you would like to split up your dataset into several groups for searching purposes, you can provide a 'group by' attribute.</li>
-							<li><b>Location.</b> If you would like to specify a geographic location for your dataset, you can set a location attribute.  The location attribute should be GeoJson in EPSG: 4326.</li>
+							<li><b style="color:orange">Order.</b> If your dataset has ordering (ex: the dataset is a time series) you can specify an attribute to order by. You can also specify how to parse the 'Order By' attribute (string, number or date).</li>
+							<li><b style="color:orange">Location.</b> If you would like to specify a geographic location for your dataset, you can set a location attribute.  The location attribute should be GeoJson in EPSG: 4326.</li>
 						</ul>
 					</section>
 
@@ -283,33 +282,16 @@
 					</section>
 				</section>
 				
-				<section>
-					<section>
-						<h2>Inspect Dataset</h2>
-						<p>So far you have provided EcoSIS with file format information as well as supplemental schema information for your dataset.  Now it's time to make sure the importer has correctly understood you.  Using the 'Inspect' menu item in the left navigation you can inspect and veryify your spectral data.</p>
-					</section>
-					<section>
-						<img src="ss/spinspect1.png" />
-						<p>Click the arrow next to 'Metadata' to inspect.</p>
-					</section>
-
-					<section>
-						<p>Here you can inspect the attribute types as well as values.</p>
-						<img src="ss/spinspect2.png" />
-						<p style="font-size:70%;color: #888">Note: Non-standard ecosis attribute names are in <i>italic</i> while mapped attribute names show both the standard name as well as the non-standard name.</p>
-					</section>
-				</section>
-
 				
 				<section>
 					<section>
-						<h2>Upload Resources</h2>
-						<p>We are now ready to upload our data.  Click the 'check' button on the right hand side to give the dataset one final review before upload.</p>
+						<h2>Push to Search</h2>
+						<p>At this point, everything we have done has been saved on the data management server but none of the changes have been pushed to Search, the primary interface for users to find your data.  Click the 'Cloud' icon to start the push.</p>
 
 						<img src="ss/upload1.png" />
 					</section>
 					<section>
-						<p>Review your upload the click 'Finalize' to start the upload process or 'Cancel' to go back and make edits.</p>
+						<p>Review your dataset, then click 'Push' to start the process or 'Cancel' to go back and make edits.</p>
 						<img src="ss/upload2.png"  />
 					</section>
 				</section>
