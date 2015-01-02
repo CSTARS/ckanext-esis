@@ -196,37 +196,53 @@
 					</section>
 					<section>
 						<h4>Configure Joinable Metadata</h4>
-						<p>For metadata sheets, click the 'Joinable Metadata File' checkbox.</p>
+						<p>For metadata sheets, click the 'Pencil' icon then click the 'Joinable Metadata' checkbox.</p>
 
 						<table style="width:100%; text-align:center">
 							<tr>
-								<td>
-									<img src="ss/inspect1.png"><br />
-									Before configuration
+								<td style="vertical-align: top">
+									<div>
+										<img src="ss/inspect1.png"><br />
+										Before configuration
+									</div>
+									<div>
+										<img src="ss/inspect1_5.png"><br />
+										After configuration
+									</div>
 								</td>
 								<td>
 									<img src="ss/inspect2.png"><br />
-									After configuration
+									Configure Metadata
 								</td>
 							</tr>
 						</table>
 					</section>
 
 					<section>
-						Metadata can be joined by</p>
+						<p>Metadata can be joined by</p>
 						<ul>
-							<li><b>Attribute Name:</b> Using 'Join On' select the attribute that should be used as a unique id to join the metadata with the data.</li>
-							<li><b>Filename:</b> If you have one spectrum per file you can match the selected attribute to a filename.  The 'exact match' option lets specify if the filename should be loosely matched or exactly matched to the attribute value.</li>
-							<li><b>Sheetname:</b> Similar to filename, but lets you match the selected attribute to a sheetname inside a excel file.</li>
+							<li><b style="color:orange">Attribute Name:</b> Using 'Join On' select the attribute that should be used as a unique id to join the metadata with the data.</li>
+							<li><b style="color:orange">Filename:</b> If you have one spectrum per file you can match the selected attribute to a filename.  The 'exact match' option lets specify if the filename should be loosely matched or exactly matched to the attribute value.</li>
+							<li><b style="color:orange">Sheetname:</b> Similar to filename, but lets you match the selected attribute to a sheetname inside a excel file.</li>
 						</ul>
 					</section>
 
 					<section>
-						<p>Inspect your datasheets to make sure they have been interpreted correctly.  You can click the 'Configure Attributes' button or 'Attribute Settings' on the left hand navigation to configure your datasets schema if any of your attribute types are incorrect.</p>
+						<p>Inspect your datasheets to make sure they have been interpreted correctly.  You can click the 'Pencil' icon then click the 'Arrow' icon next to the 'Spectra' label.  You will be able to visibly inspect each spectra parsed in the file.</p>
 						<img src="ss/inspect3.png">
 					</section>
+
 					<section>
-						Technical note.  At this point the importer hasn’t really uploaded anything.  The app is using the HTML5 File Reader API to read the file(s) directly into your browser and parse them on your client.  This saves users having to upload all of their data on to the server before they can manipulate it.   Actual file upload happens later on.
+						<p>Datasheet Types.  Currently the following file extensions will be parsed as datasheets.</p>
+						<ul>
+							<li>.xls</li>
+							<li>.xlsx</li>
+							<li>.csv</li>
+							<li>.tsv (Tab Separated Value)</li>
+							<li>.spectra (parsed as .tsv)</li>
+							<li>.zip<span style="color:orange">*</span></li>
+						</ul>
+						<p><span style="color:orange">*</span>Zip files will be extracted on the server.  Any files contained within the zip file that have datasheet extension will be parsed.</p>
 					</section>
 				</section>
 
