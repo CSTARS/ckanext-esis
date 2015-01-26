@@ -22,6 +22,7 @@
 		</style>
 
 		<div style="font-size: 14px; color: #888">
+			<div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome {{user.username}}.</div>
 			Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
 		</div>
 
@@ -160,6 +161,8 @@
 
 			verifyNameTimer : -1,
 
+			user : {},
+
 			git : {
 				branch : '',
 			},
@@ -176,10 +179,12 @@
 				'ds.data.maintainer' : '_updateServer',
 				'ds.data.maintainer_email' : '_updateServer',
 				'ds.data.author' : '_updateServer',
-				'ds.data.author_email' : '_updateServer'
+				'ds.data.author_email' : '_updateServer',
+				'user' : 'updateOrgs'
 			},
 
 			ready : function() {
+				this.user = esis.activeUser;
 				this.baseUrl = esis.host+'/dataset/';
 
 				this.group = this._getVar('group');
@@ -191,7 +196,7 @@
 					this.licenses = resp.result;
 				}.bind(this));
 
-				$.get(esis.host+'/api/3/action/organization_list?all_fields=true', function(resp){
+				/*$.get(esis.host+'/api/3/action/organization_list?all_fields=true', function(resp){
 					this.organizations = resp.result;
 					this.organizations.splice(0,0, {
 						id : '',
@@ -200,11 +205,23 @@
 					
 					if( this.group ) this.ds.data.owner_org = this.group;
 
-				}.bind(this));
+				}.bind(this));*/
+				this.updateOrgs();
+
 
 				$.get(esis.host+'/spectra/gitInfo', function(resp){
 					this.git = resp;
 				}.bind(this));
+			},
+
+			updateOrgs : function() {
+				if( !this.user.organizations ) return;
+				this.organizations = $.extend(true, [], this.user.organizations);
+				this.organizations.splice(0,0, {
+					id : '',
+					display_name : 'No Organization'
+				});
+				if( this.group ) this.ds.data.owner_org = this.group;
 			},
 
 			_verifyName : function() {
