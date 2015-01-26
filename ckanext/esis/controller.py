@@ -131,6 +131,20 @@ class SpectraController(PackageController):
 
         return json.dumps({'success': True, 'rebuildCount': len(list)})
 
+    def userInfo(self):
+        response.headers["Content-Type"] = "application/json"
+        if len(c.user) == 0:
+            return json.dumps({"loggedIn": False})
+
+        context = {'model': model, 'user': c.user}
+        orgs = logic.get_action('organization_list_for_user')(context,{})
+
+        return json.dumps({
+            "loggedIn": True,
+            "username": c.user,
+            "organizations" : orgs
+        })
+
     # TODO: this needs to be called whenever an organization is updated
     def _update_mapReduce(self, pkg):
         # if the package is private, remove a return
