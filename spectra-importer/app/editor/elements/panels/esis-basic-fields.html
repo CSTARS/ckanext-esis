@@ -172,7 +172,7 @@
 				'ds.data.owner_org' : '_onOrgChange',
 				'ds.data.name' : '_verifyName',
 				'ds.data.license_id' : '_updateLicenseName',
-				'ds.data.hidden' : '_setVisibility',
+				'ds.data.private' : '_setVisibility',
 				'ds.data.tags' : '_updateTokens',
 				'ds.data.notes' : '_updateServer',
 				'ds.data.version' : '_updateServer',
@@ -323,13 +323,20 @@
 			},
 
 			_updateVisibility : function() {
-				if( this.$.visible.value == 'false' ) this.ds.data.hidden = true;
-				else this.ds.data.hidden = false;
+				// this of this as hidden == 'true'
+				if( this.$.visible.value == 'true' ) {
+					if( this.ds.editMode ) {
+					  if( !confirm('Are you sure you want to do this?  Any data in search will be removed?') ) return;
+					}
+					this.ds.data.private = true;
+				} else {
+					this.ds.data.private = false;
+				}
 				this._updateServer();
 			},
 
 			_setVisibility : function() {
-				this.$.visible.value = (this.ds.hidden)+'';
+				this.$.visible.value = (this.ds.data.private)+'';
 				this._updateServer();
 			},
 

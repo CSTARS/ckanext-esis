@@ -32,37 +32,48 @@
 		</style>
 
 		<h2>Push Changes to Ecosis Search</h2>
-		<div>
-			Please verify all information looks correct.  Once everything looks correct, click 'Push' below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+
+		<div hidden?="{{!ds.data.hidden}}">
+			<div>
+				You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+			</div>
+
+			<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
 		</div>
 
-		<div class="card">
-			<h4>Basic Information</h4>
-			<table>
-				<tr><td>Title</td><td>{{ds.data.title}}</td></tr>
-				<tr><td>Name</td><td>{{ds.data.name}}</td></tr>
-				<tr><td>Description</td><td>{{ds.data.notes}}</td></tr>
-				<tr><td>License</td><td>{{ds.data.license_title}}</td></tr>
-				<tr><td>Organization</td><td>{{ds.owner_org_name}}</td></tr>
-				<tr><td>Visibility</td><td>{{ds.data.hidden ? 'Private' : 'Public'}}</td></tr>
-				<tr><td>Version</td><td>{{ds.data.version}}</td></tr>
-				<tr><td>Author</td><td><b>{{ds.data.author}}</b> <i>{{ds.data.author_email}}</i></td></tr>
-				<tr><td>Maintainer</td><td><b>{{ds.data.maintainer}}</b> <i>{{ds.data.maintainer_email}}</i></td></tr>
-			</table>
-		</div>
+		<div hidden?="{{ds.data.hidden}}">
+			<div>
+				Please verify all information looks correct.  Once everything looks correct, click 'Push' below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+			</div>
 
-		<div class="card">
-			<h4>Resource Information</h4>
-			<table>
-				<tr><td>Total Resources</td><td>{{ds.resources.length}}</td></tr>
-				<tr><td>Metadata Sheets</td><td>{{counts.metadataResources}}</td></tr>
-				<tr><td>Spectra Sheets</td><td>{{counts.measurementResources}}</td></tr>
-				<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
-			</table>
-		</div>
+			<div class="card">
+				<h4>Basic Information</h4>
+				<table>
+					<tr><td>Title</td><td>{{ds.data.title}}</td></tr>
+					<tr><td>Name</td><td>{{ds.data.name}}</td></tr>
+					<tr><td>Description</td><td>{{ds.data.notes}}</td></tr>
+					<tr><td>License</td><td>{{ds.data.license_title}}</td></tr>
+					<tr><td>Organization</td><td>{{ds.owner_org_name}}</td></tr>
+					<tr><td>Visibility</td><td>{{ds.data.hidden ? 'Private' : 'Public'}}</td></tr>
+					<tr><td>Version</td><td>{{ds.data.version}}</td></tr>
+					<tr><td>Author</td><td><b>{{ds.data.author}}</b> <i>{{ds.data.author_email}}</i></td></tr>
+					<tr><td>Maintainer</td><td><b>{{ds.data.maintainer}}</b> <i>{{ds.data.maintainer_email}}</i></td></tr>
+				</table>
+			</div>
 
-		<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
-		<paper-button raised class="colored" on-tap="{{finalize}}">Push</paper-button>
+			<div class="card">
+				<h4>Resource Information</h4>
+				<table>
+					<tr><td>Total Resources</td><td>{{ds.resources.length}}</td></tr>
+					<tr><td>Metadata Sheets</td><td>{{counts.metadataResources}}</td></tr>
+					<tr><td>Spectra Sheets</td><td>{{counts.measurementResources}}</td></tr>
+					<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
+				</table>
+			</div>
+
+			<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
+			<paper-button raised class="colored" on-tap="{{finalize}}">Push</paper-button>
+		</div>
 
 
 	</template>

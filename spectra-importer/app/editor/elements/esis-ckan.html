@@ -46,10 +46,38 @@
 			},
 
 			updatePackage : function(pkg, callback) {
+				if( pkg.private ) {
+					this.verifyPrivate(
+						pkg.id,
+						function(err, resp) {
+							console.log(err);
+							console.log(resp);		
+						}
+					);
+				}
+
 				$.ajax({
 					url : esis.host+'/api/3/action/package_update',
 					type : 'POST',
 					data : JSON.stringify(pkg),
+					xhrFields: {
+				      withCredentials: true
+				    },
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, resp.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
+			verifyPrivate : function(id, callback) {
+				console.log('Setting to private');
+				$.ajax({
+					url : esis.host+'/ecosis/verifyPrivate?id='+id,
+					type : 'GET',
 					xhrFields: {
 				      withCredentials: true
 				    },
