@@ -73,6 +73,17 @@ class SpectraController(PackageController):
 
         return json.dumps({'success': True})
 
+    def verifyPrivate(self):
+        response.headers["Content-Type"] = "application/json"
+        package_id = request.params.get('id')
+
+        context = {'model': model, 'user': c.user}
+
+        searchCollection.remove({'_id': package_id})
+        spectraCollection.remove({'ecosis.package_id': package_id})
+
+        return json.dumps({'success': True})
+
     # first we need to look up if this resource is a metadata resource
     # if it is, this complicates things, otherwise just pull from
     # spectra collection and then do normal delete
