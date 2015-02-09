@@ -19,6 +19,10 @@
 				color: #888;
 				font-style: italic;
 			}
+			.bugs {
+				margin: 15px 0;
+				color: #888;
+			}
 		</style>
 
 		<div style="font-size: 14px; color: #888">
@@ -127,6 +131,11 @@
 	            </esis-ui-delete-button>
 			</div>
 		</template>
+
+
+		<div class="bugs">
+		    Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+		</div>
 
 		<template bind if="{{git.branch != 'master'}}">
 			<div class="gitInfo">
