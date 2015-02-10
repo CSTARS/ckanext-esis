@@ -95,7 +95,7 @@ class Push:
         map = Code(self.mapreduce['map'])
         reduce = Code(self.mapreduce['reduce'])
         #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
-        spectraCollection.map_reduce(map, reduce, searchCollectionName, query={"ecosis.package_id": package_id})
+        spectraCollection.map_reduce(map, reduce, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": package_id})
 
         # hack, set description
         searchCollection.update(
