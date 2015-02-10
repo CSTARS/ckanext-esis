@@ -47,6 +47,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
         map.connect('userInfo', '/ecosis/userInfo', controller=controller, action='userInfo')
         map.connect('verifyPrivate', '/ecosis/verifyPrivate', controller=controller, action='verifyPrivate')
+        map.connect('getSchema', '/ecosis/getSchema', controller=controller, action='getSchema')
 
         # route all resource edit screens to main ecosis dataset editor
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')

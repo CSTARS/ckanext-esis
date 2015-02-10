@@ -12,6 +12,10 @@ spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection
 searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
 searchCollection = db[searchCollectionName]
 
+schemaCollection = db[config._process_configs[1]['esis.mongo.schema_collection']]
+usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
+searchCollection = db[config._process_configs[1]['esis.mongo.search_collection']]
+
 class Push:
 
     workspaceDir = ""
@@ -54,6 +58,7 @@ class Push:
         # first clean out data
         searchCollection.remove({'value.ecosis.package_id':package_id})
         spectraCollection.remove({'ecosis.package_id': package_id})
+        schemaCollection.remove({'package_id': package_id})
 
         # next add resources one at a time and join spectra
         (workspacePackage, ckanPackage, rootDir, fresh) = self.setup.init(package_id)
@@ -71,11 +76,32 @@ class Push:
             #spectra = self._getResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
             self._insertResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
 
+        # push schema
+        attrs = {}
+        if package.get("attributes") != None:
+            attrList = package.get("attributes")
+            for attr in attrList:
+                attrs[attr] = {
+                    "type" : attrList[attr].get("type"),
+                    "units" : attrList[attr].get("units")
+                }
+
+        schemaCollection.insert({
+            "package_id" : package_id,
+            "attributes" : attrs
+        })
+
         # finally run map reduce
         map = Code(self.mapreduce['map'])
         reduce = Code(self.mapreduce['reduce'])
         #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
         spectraCollection.map_reduce(map, reduce, searchCollectionName, query={"ecosis.package_id": package_id})
+
+        # hack, set description
+        searchCollection.update(
+            {"value.ecosis.package_id": package_id},
+            {"$set": {"value.ecosis.description": ckanPackage["notes"]}}
+        )
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
@@ -198,7 +224,7 @@ class Push:
                     m[key] = m[value]
 
         # TODO: Look up USDA Plant Codes
-
+        self.setUSDACode(m)
 
         # finally, set ckan dataset info, as well as specific info on, sort, geolocation
         self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
@@ -242,13 +268,28 @@ class Push:
             'resource_id' : resource['id'],
             'filename': resource['name'],
             'datasheet_id': dsid,
-            'groups': []
+            'groups': [],
+            'keywords' : []
         }
 
         if ckanPackage.get('organization') != None:
             ecosis['organization'] = ckanPackage['organization']['title']
 
+        if ckanPackage.get('tags') != None:
+            for tag in ckanPackage['tags']:
+                if tag.get('state') == 'active':
+                    ecosis['keywords'].append(tag.get('display_name'))
+
         m['ecosis'] = ecosis
+
+    def setUSDACode(self, m):
+        if m.get('USDA Code') == None:
+            return
+
+        item = usdaCollection.find_one({'Accepted Symbol': m.get('USDA Code').upper()},{'_id':0})
+        if item != None:
+            for key, value in item.iteritems():
+                m[key] = value
 
     def getUSDACommonName(self, codes):
         resp = {}

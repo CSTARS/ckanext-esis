@@ -72,6 +72,8 @@ function(key, spectra){
             searchObj.ecosis.package_title = spectra[0].ecosis.package_title;
             searchObj.ecosis.created = spectra[0].ecosis.created;
             searchObj.ecosis.modified = spectra[0].ecosis.modified;
+            searchObj.ecosis.organization = spectra[0].ecosis.organization;
+            searchObj.ecosis.keywords = spectra[0].ecosis.keywords;
         }
 
         return searchObj;

@@ -34,6 +34,9 @@ searchCollection = db[searchCollectionName]
 workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
 
+schemaCollectionName = config._process_configs[1]['esis.mongo.schema_collection']
+schemaCollection = db[schemaCollectionName]
+
 class SpectraController(PackageController):
     mapreduce = {}
     # used for git commands
@@ -62,6 +65,7 @@ class SpectraController(PackageController):
 
         searchCollection.remove({'_id':params['id']})
         spectraCollection.remove({'ecosis.package_id':params['id']})
+        schemaCollection.remove({'package_id':params['id']})
 
         workspace = workspaceCollection.find_one({'package_id': params['id']})
         if workspace != None:
@@ -81,8 +85,17 @@ class SpectraController(PackageController):
 
         searchCollection.remove({'_id': package_id})
         spectraCollection.remove({'ecosis.package_id': package_id})
+        schemaCollection.remove({'package_id': package_id})
 
         return json.dumps({'success': True})
+
+    def getSchema(self):
+        response.headers["Content-Type"] = "application/json"
+        package_id = request.params.get('id')
+
+        context = {'model': model, 'user': c.user}
+
+        return json.dumps(schemaCollection.find_one({'package_id': package_id},{'_id':0}))
 
     # first we need to look up if this resource is a metadata resource
     # if it is, this complicates things, otherwise just pull from
@@ -122,6 +135,7 @@ class SpectraController(PackageController):
             # remove from workspace if there
             if os.path.exists("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])):
                 shutil.rmtree("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id']))
+
 
     # rebuild entire search index
     # TODO: this should be admin only!!
@@ -273,6 +287,7 @@ class SpectraController(PackageController):
         workspaceCollection.remove({})
         spectraCollection.remove({})
         searchCollection.remove({})
+        schemaCollection.remove({})
 
         return json.dumps({
             'removed': packages,
