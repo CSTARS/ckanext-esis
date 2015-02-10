@@ -26235,6 +26235,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				color: #888;
 				font-style: italic;
 			}
+			.bugs {
+				margin: 15px 0;
+				color: #888;
+			}
 		</style>
 
 		<div style="font-size: 14px; color: #888">
@@ -26343,6 +26347,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			</div>
 		</template>
 
+
+		<div class="bugs">
+		    Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+		</div>
+
 		<template bind="" if="{{git.branch != &apos;master&apos;}}">
 			<div class="gitInfo">
 				<div><b>Branch:</b> {{git.branch}}</div>
@@ -26387,7 +26396,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				'ds.data.owner_org' : '_onOrgChange',
 				'ds.data.name' : '_verifyName',
 				'ds.data.license_id' : '_updateLicenseName',
-				'ds.data.hidden' : '_setVisibility',
+				'ds.data.private' : '_setVisibility',
 				'ds.data.tags' : '_updateTokens',
 				'ds.data.notes' : '_updateServer',
 				'ds.data.version' : '_updateServer',
@@ -26538,13 +26547,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			},
 
 			_updateVisibility : function() {
-				if( this.$.visible.value == 'false' ) this.ds.data.hidden = true;
-				else this.ds.data.hidden = false;
+				// this of this as hidden == 'true'
+				if( this.$.visible.value == 'true' ) {
+					if( this.ds.editMode ) {
+					  if( !confirm('Are you sure you want to do this?  Any data in search will be removed?') ) return;
+					}
+					this.ds.data.private = true;
+				} else {
+					this.ds.data.private = false;
+				}
 				this._updateServer();
 			},
 
 			_setVisibility : function() {
-				this.$.visible.value = (this.ds.hidden)+'';
+				this.$.visible.value = (this.ds.data.private)+'';
 				this._updateServer();
 			},
 
@@ -26874,37 +26890,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		</style>
 
 		<h2>Push Changes to Ecosis Search</h2>
-		<div>
-			Please verify all information looks correct.  Once everything looks correct, click &apos;Push&apos; below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+
+		<div hidden?="{{!ds.data.hidden}}">
+			<div>
+				You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+			</div>
+
+			<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
 		</div>
 
-		<div class="card">
-			<h4>Basic Information</h4>
-			<table>
-				<tr><td>Title</td><td>{{ds.data.title}}</td></tr>
-				<tr><td>Name</td><td>{{ds.data.name}}</td></tr>
-				<tr><td>Description</td><td>{{ds.data.notes}}</td></tr>
-				<tr><td>License</td><td>{{ds.data.license_title}}</td></tr>
-				<tr><td>Organization</td><td>{{ds.owner_org_name}}</td></tr>
-				<tr><td>Visibility</td><td>{{ds.data.hidden ? &apos;Private&apos; : &apos;Public&apos;}}</td></tr>
-				<tr><td>Version</td><td>{{ds.data.version}}</td></tr>
-				<tr><td>Author</td><td><b>{{ds.data.author}}</b> <i>{{ds.data.author_email}}</i></td></tr>
-				<tr><td>Maintainer</td><td><b>{{ds.data.maintainer}}</b> <i>{{ds.data.maintainer_email}}</i></td></tr>
-			</table>
-		</div>
+		<div hidden?="{{ds.data.hidden}}">
+			<div>
+				Please verify all information looks correct.  Once everything looks correct, click &apos;Push&apos; below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+			</div>
 
-		<div class="card">
-			<h4>Resource Information</h4>
-			<table>
-				<tr><td>Total Resources</td><td>{{ds.resources.length}}</td></tr>
-				<tr><td>Metadata Sheets</td><td>{{counts.metadataResources}}</td></tr>
-				<tr><td>Spectra Sheets</td><td>{{counts.measurementResources}}</td></tr>
-				<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
-			</table>
-		</div>
+			<div class="card">
+				<h4>Basic Information</h4>
+				<table>
+					<tr><td>Title</td><td>{{ds.data.title}}</td></tr>
+					<tr><td>Name</td><td>{{ds.data.name}}</td></tr>
+					<tr><td>Description</td><td>{{ds.data.notes}}</td></tr>
+					<tr><td>License</td><td>{{ds.data.license_title}}</td></tr>
+					<tr><td>Organization</td><td>{{ds.owner_org_name}}</td></tr>
+					<tr><td>Visibility</td><td>{{ds.data.hidden ? &apos;Private&apos; : &apos;Public&apos;}}</td></tr>
+					<tr><td>Version</td><td>{{ds.data.version}}</td></tr>
+					<tr><td>Author</td><td><b>{{ds.data.author}}</b> <i>{{ds.data.author_email}}</i></td></tr>
+					<tr><td>Maintainer</td><td><b>{{ds.data.maintainer}}</b> <i>{{ds.data.maintainer_email}}</i></td></tr>
+				</table>
+			</div>
 
-		<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
-		<paper-button raised="" class="colored" on-tap="{{finalize}}">Push</paper-button>
+			<div class="card">
+				<h4>Resource Information</h4>
+				<table>
+					<tr><td>Total Resources</td><td>{{ds.resources.length}}</td></tr>
+					<tr><td>Metadata Sheets</td><td>{{counts.metadataResources}}</td></tr>
+					<tr><td>Spectra Sheets</td><td>{{counts.measurementResources}}</td></tr>
+					<tr><td># Parsed Spectra</td><td>{{counts.measurements}}</td></tr>
+				</table>
+			</div>
+
+			<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
+			<paper-button raised="" class="colored" on-tap="{{finalize}}">Push</paper-button>
+		</div>
 
 
 	</template>
@@ -29082,10 +29109,38 @@ Copyright (c) 2013 Daniel Eden
 			},
 
 			updatePackage : function(pkg, callback) {
+				if( pkg.private ) {
+					this.verifyPrivate(
+						pkg.id,
+						function(err, resp) {
+							console.log(err);
+							console.log(resp);		
+						}
+					);
+				}
+
 				$.ajax({
 					url : esis.host+'/api/3/action/package_update',
 					type : 'POST',
 					data : JSON.stringify(pkg),
+					xhrFields: {
+				      withCredentials: true
+				    },
+					success : function(resp) {
+						if( !resp.success ) return callback(resp);						
+						callback(null, resp.result);
+					},
+					error : function() {
+						callback({error:true, message:'Request Error'});
+					}
+				});
+			},
+
+			verifyPrivate : function(id, callback) {
+				console.log('Setting to private');
+				$.ajax({
+					url : esis.host+'/ecosis/verifyPrivate?id='+id,
+					type : 'GET',
 					xhrFields: {
 				      withCredentials: true
 				    },
