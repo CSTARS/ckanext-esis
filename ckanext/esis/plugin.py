@@ -42,7 +42,6 @@ class EsisPlugin(plugins.SingletonPlugin,
 
          # new routes
         map.connect('rebuild_index', '/spectra/rebuildIndex', controller=controller, action='rebuildIndex')
-        map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('git_info', '/spectra/gitInfo', controller=controller, action='gitInfo')
         map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
         map.connect('userInfo', '/ecosis/userInfo', controller=controller, action='userInfo')
@@ -65,6 +64,7 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         # connect workspace calls
         controller = 'ckanext.esis.workspace:WorkspaceController'
+        map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('process_workspace', '/workspace/process', controller=controller, action='processWorkspace')
         map.connect('process_resource', '/workspace/processResource', controller=controller, action='processResource')
         map.connect('set_parse_info', '/workspace/setParseInfo', controller=controller, action='setParseInformation')
