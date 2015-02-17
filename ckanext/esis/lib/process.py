@@ -90,7 +90,7 @@ class ProcessWorkspace:
                     spectra[key] = spectra[value]
 
         # set controlled vocab
-        vocab.set(spectra)
+        spectra['usda_code_status'] = vocab.set(spectra)
 
         return spectra
 

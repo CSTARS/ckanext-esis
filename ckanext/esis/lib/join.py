@@ -7,23 +7,28 @@ class SheetJoin:
     def joinOnSpectra(self, datasheet, spectra, metadata, dataarray):
         rowIndex = -1
 
-        if not 'matchType' in metadata and 'matchValues' in metadata and 'matchAttribute' in metadata:
-            rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
+        # if .index() fails, python throws an exception
+        # I hate python...
+        try:
+            if not 'matchType' in metadata and 'matchValues' in metadata and 'matchAttribute' in metadata:
+                rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
 
-        elif metadata.get('matchType') == 'attribute':
-            rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
+            elif metadata.get('matchType') == 'attribute':
+                rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
 
-        elif metadata.get('matchType') == 'filename':
-            if metadata.get('looseMatch') == True:
-                for index, val in enumerate(metadata['matchValues']):
-                    reg = r".*%s.*" % val
-                    if re.match(reg, datasheet['name']):
-                        rowIndex = index
-            else:
-                rowIndex = metadata['matchValues'].index(datasheet['name'])
+            elif metadata.get('matchType') == 'filename':
+                if metadata.get('looseMatch') == True:
+                    for index, val in enumerate(metadata['matchValues']):
+                        reg = r".*%s.*" % val
+                        if re.match(reg, datasheet['name']):
+                            rowIndex = index
+                else:
+                    rowIndex = metadata['matchValues'].index(datasheet['name'])
 
-        elif metadata('matchType') == 'sheetname' and 'sheetname' in datasheet:
-            rowIndex = metadata['matchValues'].index(datasheet['sheetname'])
+            elif metadata('matchType') == 'sheetname' and 'sheetname' in datasheet:
+                rowIndex = metadata['matchValues'].index(datasheet['sheetname'])
+        except:
+            pass
 
         if rowIndex == -1:
             return
