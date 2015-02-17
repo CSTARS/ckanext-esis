@@ -15,16 +15,19 @@
 			table td {
 				padding: 5px;
 			}
-			paper-button {
+			/*paper-button {
 				margin-top: 100px;
 				background-color: rgb(210, 63, 49) !important;
 				color: white;
-			}
+			}*/
 
 			.card {
 				padding: 10px;
 				margin: 10px;
 				box-shadow: 0 0 5px #888;
+			}
+			.card[metadata] {
+				box-shadow: 0 0 5px #2196F3;
 			}
 		</style>
 
@@ -33,22 +36,23 @@
 			<span style="font-size:12px;color:#888">Resource Type and Parsed Spectra below will be incomplete till package is loaded.</span>
 		</div>
 
-		<template repeat="{{resource, i in ds.resources}}">
-			<div class="card">
-				<template bind if="{{resource.type == 'datafile' || resource.type == 'zip'}}">
+		<template repeat="{{r, i in resourceList}}">
+			<div class="card" metadata?="{{r.isSingleSheetMetadata}}">
+				<template bind if="{{r.resource.type == 'datafile' || r.resource.type == 'zip'}}">
 					<esis-ui-dataresource 
+						isSingleSheetMetadata="{{r.isSingleSheetMetadata}}"
 						index="{{i}}"
-						resource="{{resource}}"
+						resource="{{r.resource}}"
 						on-remove="{{_deleteResource}}"
 						on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
-				<template bind if="{{resource.type != 'datafile' && resource.type != 'zip'}}">
-					<span>{{resource.name}}</span>
+				<template bind if="{{r.resource.type != 'datafile' && r.resource.type != 'zip'}}">
+					<span>{{r.resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}"
 		                on-delete="{{_deleteGenericResource}}">
 		            </esis-ui-delete-button>
-		            <template bind if="{{resource.removing}}">
+		            <template bind if="{{r.resource.removing}}">
 		            	<div>
 			            	<span style="color:red">Removing...</span>
 	            			<paper-progress indeterminate class="red"></paper-progress>
@@ -66,11 +70,14 @@
 
 			loading : false,
 
+			resoucesList : [],
+
 			observe : {
 				'ds.deleted' : '_update',
 				'ds.existing.dataset' : '_update',
 				'ds.existing.resources' : '_update',
-				'ds.editMode' : '_updateVisibility'
+				'ds.editMode' : '_updateVisibility',
+				'ds.resources' : 'updateResourceList'
 			},
 
 			ready : function() {
@@ -87,7 +94,28 @@
 						this.loading = false;
 					}.bind(this));
 				}
-				
+			},
+
+			updateResourceList : function() {
+				this.resourceList = [];
+				for( var i = 0; i < this.ds.resources.length; i++ ) {
+					var isSingleSheetMetadata = false;
+
+					if( this.ds.resources[i].datasheets.length == 1 && this.ds.resources[i].datasheets[0].metadata ) {
+						isSingleSheetMetadata = true;
+					}
+
+					this.resourceList.push({
+						resource : this.ds.resources[i],
+						isSingleSheetMetadata : isSingleSheetMetadata
+					});
+				}
+
+				this.resourceList.sort(function(a, b){
+					if( a.isSingleSheetMetadata && !b.isSingleSheetMetadata) return 1;
+					if( !a.isSingleSheetMetadata && b.isSingleSheetMetadata) return -1;
+					return 0;
+				});
 			},
 
 			clearMetadata : function(e) {
