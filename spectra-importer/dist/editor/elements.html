@@ -23432,7 +23432,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 		});
 	</script>
 </polymer-element></div>
-<div hidden><polymer-element name="esis-ui-dataresource" attributes="resource" assetpath="elements/ui/">
+<div hidden><polymer-element name="esis-ui-dataresource" attributes="resource isSingleSheetMetadata" assetpath="elements/ui/">
     <template>
         <style>
             :host{
@@ -23488,6 +23488,13 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             esis-ui-delete-button /deep/ paper-icon-button {
                 padding: 0 8px !important;
             }
+            .metadata-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2196F3;
+                border-radius: 3px;
+            }
         </style>
 
         <paper-button style="float:right" on-tap="{{toggleEdit}}" raised?="{{edit}}">
@@ -23495,7 +23502,10 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <core-icon icon="check" class="green" hidden?="{{!edit}}"></core-icon>
         </paper-button>
         <h4>
-            <span>{{resource.name}}</span>
+            <span>
+                {{resource.name}}
+                <span hidden?="{{!isSingleSheetMetadata}}" class="metadata-label">Metadata</span>
+            </span>
             <paper-icon-button icon="more-vert" style="padding: 0 8px" on-tap="{{toggleResourceMenu}}" hidden?="{{!edit || loading || (resource.datasheets.length &lt; 2 &amp;&amp; !resource.ignore)}}">
             </paper-icon-button>
             <esis-ui-delete-button hidden?="{{!edit}}" on-delete="{{remove}}">
@@ -25251,7 +25261,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </div>
 
         <div class="note">
-            Any <b>numberic</b><span style="color:red">*</span> attribute name will be considered wavelength <span class="data note-label">data</span>.  Any attribute name with a <b>__d</b> postfix will be considered <span class="data note-label">data</span>.  All other fields will be considered <span class="column note-label">metadata</span>.  You will have the opportunity to manually specify the difference later on as well.
+            Any <b>numeric</b><span style="color:red">*</span> attribute name will be considered wavelength <span class="data note-label">data</span>.  Any attribute name with a <b>__d</b> postfix will be considered <span class="data note-label">data</span>.  All other fields will be considered <span class="column note-label">metadata</span>.  You will have the opportunity to manually specify the difference later on as well.
         </div>
 
         <div class="note">
@@ -25489,7 +25499,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             Wavelengths: {{ds.wavelengths.length}}
         </h4>
         <div class="helper">
-            These attribute types have been implied because the attribute name is numberic.
+            These attribute types have been implied because the attribute name is numeric.
         </div>
         <core-collapse opened="{{showWavelengths}}">
             <div class="helper" id="wavelengths"></div>
@@ -25674,7 +25684,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     <select value="{{ds.datasetAttributes.sort_type}}" on-change="{{onChange}}">
                         <option value="string">Default (String)</option>
                         <option value="datetime">Date</option>
-                        <option value="numberic">Numberic</option>
+                        <option value="numeric">Numeric</option>
                     </select>
                 </div>
                 <div class="help" hidden?="{{ds.datasetAttributes.sort_type != &apos;datetime&apos;}}" style="padding: 5px">
@@ -25775,16 +25785,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			table td {
 				padding: 5px;
 			}
-			paper-button {
+			/*paper-button {
 				margin-top: 100px;
 				background-color: rgb(210, 63, 49) !important;
 				color: white;
-			}
+			}*/
 
 			.card {
 				padding: 10px;
 				margin: 10px;
 				box-shadow: 0 0 5px #888;
+			}
+			.card[metadata] {
+				box-shadow: 0 0 5px #2196F3;
 			}
 		</style>
 
@@ -25793,17 +25806,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			<span style="font-size:12px;color:#888">Resource Type and Parsed Spectra below will be incomplete till package is loaded.</span>
 		</div>
 
-		<template repeat="{{resource, i in ds.resources}}">
-			<div class="card">
-				<template bind="" if="{{resource.type == &apos;datafile&apos; || resource.type == &apos;zip&apos;}}">
-					<esis-ui-dataresource index="{{i}}" resource="{{resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
+		<template repeat="{{r, i in resourceList}}">
+			<div class="card" metadata?="{{r.isSingleSheetMetadata}}">
+				<template bind="" if="{{r.resource.type == &apos;datafile&apos; || r.resource.type == &apos;zip&apos;}}">
+					<esis-ui-dataresource issinglesheetmetadata="{{r.isSingleSheetMetadata}}" index="{{i}}" resource="{{r.resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
-				<template bind="" if="{{resource.type != &apos;datafile&apos; &amp;&amp; resource.type != &apos;zip&apos;}}">
-					<span>{{resource.name}}</span>
+				<template bind="" if="{{r.resource.type != &apos;datafile&apos; &amp;&amp; r.resource.type != &apos;zip&apos;}}">
+					<span>{{r.resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}" on-delete="{{_deleteGenericResource}}">
 		            </esis-ui-delete-button>
-		            <template bind="" if="{{resource.removing}}">
+		            <template bind="" if="{{r.resource.removing}}">
 		            	<div>
 			            	<span style="color:red">Removing...</span>
 	            			<paper-progress indeterminate="" class="red"></paper-progress>
@@ -25811,6 +25824,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		            </template>
 				</template>
 			</div>	
+		</template>
+
+		<template bind="" if="{{resourceList.length == 0}}">
+			<div style="padding: 10px">
+				Your dataset does not contain any resource files.  Click the &apos;Add&apos; tab to upload resources.
+			</div>
+		</template>
+		<template bind="" if="{{resourceList.length &gt; 0}}">
+			<div style="padding: 50px 10px 10px 10px">
+				Click the <core-icon icon="create" class="blue"></core-icon> icon to edit or inspect your resources.
+			</div>
 		</template>
 
 	</template>
@@ -25821,11 +25845,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 			loading : false,
 
+			resoucesList : [],
+
 			observe : {
 				'ds.deleted' : '_update',
 				'ds.existing.dataset' : '_update',
 				'ds.existing.resources' : '_update',
-				'ds.editMode' : '_updateVisibility'
+				'ds.editMode' : '_updateVisibility',
+				'ds.resources' : 'updateResourceList'
 			},
 
 			ready : function() {
@@ -25842,7 +25869,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 						this.loading = false;
 					}.bind(this));
 				}
-				
+			},
+
+			updateResourceList : function() {
+				this.resourceList = [];
+				for( var i = 0; i < this.ds.resources.length; i++ ) {
+					var isSingleSheetMetadata = false;
+
+					if( this.ds.resources[i].datasheets.length == 1 && this.ds.resources[i].datasheets[0].metadata ) {
+						isSingleSheetMetadata = true;
+					}
+
+					this.resourceList.push({
+						resource : this.ds.resources[i],
+						isSingleSheetMetadata : isSingleSheetMetadata
+					});
+				}
+
+				this.resourceList.sort(function(a, b){
+					if( a.isSingleSheetMetadata && !b.isSingleSheetMetadata) return 1;
+					if( !a.isSingleSheetMetadata && b.isSingleSheetMetadata) return -1;
+					return 0;
+				});
 			},
 
 			clearMetadata : function(e) {
@@ -28873,7 +28921,10 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 
 				Polymer.whenPolymerReady(function() {
 					this.$.dialog.toggle();
-					this.run(true);
+
+					this.async(function(){
+						this.run(true);
+					});
 				}.bind(this));
 			},
 
