@@ -23,7 +23,10 @@
 
 				Polymer.whenPolymerReady(function() {
 					this.$.dialog.toggle();
-					this.run(true);
+
+					this.async(function(){
+						this.run(true);
+					});
 				}.bind(this));
 			},
 
