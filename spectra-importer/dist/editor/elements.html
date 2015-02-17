@@ -25077,6 +25077,12 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                     });
                 }
 
+                this.attrs.sort(function(a, b){
+                    if( a.name > b.name ) return 1;
+                    if( a.name < b.name ) return -1;
+                    return 0;
+                });
+
             },
 
             setIndex : function(e) {
@@ -25733,14 +25739,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             Select the attribute below that provides a geolocation for this dataset.
         </div>
         <div class="input-wrapper">
-            Location:
-            <select value="{{ds.datasetAttributes.location}}" on-change="{{onChange}}">
-                <option value=""></option>
-                <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">{{attr.name}}</option>
-                </template>
-            </select>
-            <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+            <div style="margin-bottom: 10px">
+                Format:
+                <select value="{{ds.datasetAttributes.locationType}}" on-change="{{onChange}}">
+                    <option value="geojson">GeoJson</option>
+                    <option value="latlng">Lat / Lng</option>
+                </select>
+            </div>
+
+            <template bind="" if="{{!ds.datasetAttributes.locationType || ds.datasetAttributes.locationType == &apos;geojson&apos;}}">
+                Location:
+                <select value="{{ds.datasetAttributes.location}}" on-change="{{onChange}}">
+                    <option value=""></option>
+                    <template repeat="{{attr in attributeArray}}">
+                        <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">{{attr.name}}</option>
+                    </template>
+                </select>
+                <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+            </template>
+
+            <template bind="" if="{{ds.datasetAttributes.locationType == &apos;latlng&apos;}}">
+                <div style="margin-bottom: 10px">
+                    Latitude:
+                    <select value="{{ds.datasetAttributes.locationLat}}" on-change="{{onChange}}">
+                        <option value=""></option>
+                        <template repeat="{{attr in attributeArray}}">
+                            <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLat}}">{{attr.name}}</option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    Longitude:
+                    <select value="{{ds.datasetAttributes.locationLng}}" on-change="{{onChange}}">
+                        <option value=""></option>
+                        <template repeat="{{attr in attributeArray}}">
+                            <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLng}}">{{attr.name}}</option>
+                        </template>
+                    </select>
+                </div>
+
+                <div style="padding:10px" class="help">The selected lat/lng attributes should be in <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+            </template>
         </div>
 
         <div hidden?="{{!saving}}">
