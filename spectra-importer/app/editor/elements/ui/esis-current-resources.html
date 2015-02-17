@@ -62,6 +62,17 @@
 			</div>	
 		</template>
 
+		<template bind if="{{resourceList.length == 0}}">
+			<div style="padding: 10px">
+				Your dataset does not contain any resource files.  Click the 'Add' tab to upload resources.
+			</div>
+		</template>
+		<template bind if="{{resourceList.length > 0}}">
+			<div style="padding: 50px 10px 10px 10px">
+				Click the <core-icon icon="create" class="blue"></core-icon> icon to edit or inspect your resources.
+			</div>
+		</template>
+
 	</template>
 	<script>
 		Polymer('esis-current-resources',{
