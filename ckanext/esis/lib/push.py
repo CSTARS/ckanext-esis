@@ -239,7 +239,7 @@ class Push:
                         m['ecosis']['sort'] = dateutil.parser.parse(m[sort])
                     except:
                         pass
-                elif type == 'numberic':
+                elif type == 'numeric':
                     try:
                         m['ecosis']['sort'] = float(m[sort])
                     except:
