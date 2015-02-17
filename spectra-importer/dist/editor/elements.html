@@ -23239,7 +23239,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 					<div class="green">Joining...</div>
            			<paper-progress indeterminate="" style="width:100%"></paper-progress>
 				</div>
-				<div hidden?="{{loadingMatchCount}}" class="{{matchCount &gt; 0 ? &apos;green&apos; :&apos;&apos;}}">Matched to {{matchCount}} measurements</div>
+				<div hidden?="{{loadingMatchCount}}" class="{{matchCount &gt; 0 ? &apos;blue&apos; :&apos;&apos;}}">Matched to {{matchCount}} measurements</div>
 			</template>
 
 		</div> 
@@ -23495,6 +23495,13 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 background-color: #2196F3;
                 border-radius: 3px;
             }
+            .package-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2f9b45;
+                border-radius: 3px;
+            }
         </style>
 
         <paper-button style="float:right" on-tap="{{toggleEdit}}" raised?="{{edit}}">
@@ -23505,6 +23512,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <span>
                 {{resource.name}}
                 <span hidden?="{{!isSingleSheetMetadata}}" class="metadata-label">Metadata</span>
+                <span hidden?="{{resource.type != &apos;zip&apos;}}" class="package-label">Package</span>
             </span>
             <paper-icon-button icon="more-vert" style="padding: 0 8px" on-tap="{{toggleResourceMenu}}" hidden?="{{!edit || loading || (resource.datasheets.length &lt; 2 &amp;&amp; !resource.ignore)}}">
             </paper-icon-button>
@@ -23513,8 +23521,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </h4>
 
         <template bind="" if="{{loading || saving}}">
-            <span class="green" hidden?="{{saving}}">Loading...</span>
-            <span class="green" hidden?="{{loading}}">Updating...</span>
+            <span class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" hidden?="{{saving}}">Loading...</span>
+            <span class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" hidden?="{{loading}}">Updating...</span>
             <paper-progress indeterminate=""></paper-progress>
         </template>
 
@@ -23547,7 +23555,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </paper-dropdown>
 
         <div style="padding:5px; color: #888" hidden?="{{edit || resource.datasheets.length == 0}}">
-            <a class="green" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
+            <a class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
             <span hidden?="{{resource.datasheets.length &lt; 2}}" style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
             <span hidden?="{{totalSpectra == 0}}" style="float:right">Spectra: <b>{{totalSpectra}}</b></span>
         </div>
@@ -23573,7 +23581,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
             <!-- EDITING -->
             <core-collapse opened="{{edit &amp;&amp; !loading}}">
-                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceid="{{resource.id}}" edit="" on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceid="{{resource.id}}" edit="" on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -23630,7 +23639,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                     </div>
                 </div>
 
-                <esis-ui-datasheet datasheet="{{currentFile}}" resourceid="{{resource.id}}" edit="" showname="" on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                <esis-ui-datasheet datasheet="{{currentFile}}" resourceid="{{resource.id}}" edit="" showname="" on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -23911,6 +23921,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 color: #888;
                 font-size: 12px;
             }
+            a[metadata] {
+                color: #2196F3;
+            }
 		</style>
 
 
@@ -23964,7 +23977,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </div>
 
         <div hidden?="{{datasheet.ignore}}" class="options">
-            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;" metadata?="{{datasheet.metadata}}">
                 <core-icon icon="{{showCurrentParse ? &apos;visibility-off&apos; : &apos;visibility&apos;}}"></core-icon> Format Overview
             </a>
             <div style="padding: 5px 0 0 15px; color:#888; font-size: 13px">
@@ -23982,14 +23995,14 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <paper-progress indeterminate="" style="width:100%"></paper-progress>
         </template>
 
-        <div hidden?="{{datasheet.ignore}}">
+        <div hidden?="{{datasheet.ignore}}" style="box-shadow: 0 0 5px #888; margin: 5px; padding: 5px">
             <div>
                 <paper-icon-button icon="hardware:{{showAttrs ? &apos;keyboard-arrow-down&apos; : &apos;keyboard-arrow-right&apos;}}" on-tap="{{_toggleAttrs}}" class="toggle-btn" disabled?="{{parsedAttributes.length == 0}}">
                 </paper-icon-button>
                 <div class="toggle-label">Attributes: {{parsedAttributes.length}}</div>
             </div>
             <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
-                <table>
+                <table class="table">
                     <tr>
                         <th>Name</th>
                         <th>Units</th>
@@ -24919,13 +24932,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 <div hidden><polymer-element name="esis-ui-spectra" attributes="show resourceId datasheet" assetpath="elements/ui/">
     <template>
         <style>
-            table {
-                width: 100%;
+            .help {
+                color: #888;
+                font-size: 12px;
             }
-            table td {
-                padding: 3px;
-            }
-        </style>
+        </style>    
 
         <template bind="" if="{{loading}}">
             <div class="green">Loading Spectra #{{index+1}}...</div>
@@ -24933,6 +24944,16 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </template>
 
         <div hidden?="{{loading}}">
+            <div hidden?="{{currentSpectra.usda_code_status != 1}}" style="padding: 20px 10px">
+                <h4 style="color: red">No &apos;USDA Code&apos; attribute set.</h4>
+                <div class="help">It is highly recommended that you set the <a href="http://plants.usda.gov/" target="_blank">USDA plant codes</a> for your dataset so EcoSIS can properly fill out the plant information</div>
+            </div>
+
+            <div hidden?="{{currentSpectra.usda_code_status != 2}}" style="padding: 20px 10px">
+                <h4 style="color: red">Invalid USDA Code.</h4>
+                <div class="help">EcoSIS does not recognize the <a href="http://plants.usda.gov/" target="_blank">USDA plant code</a> <b>{{data[&apos;USDA Code&apos;]}}</b>.  Please provide a correct code so EcoSIS can properly fill out the plant information.</div>
+            </div>
+
             <div style="text-align:right" hidden?="{{indexes.length &lt;= 1}}">
                 Spectra #
                 <select on-change="{{setIndex}}">
@@ -24944,12 +24965,16 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
             <esis-ui-chart data="{{data}}" options="{{chartOptions}}" height="500"></esis-ui-chart>
 
-            <table>
+            <table class="table">
                 <tr template="" repeat="{{attr in attrs}}">
-                    <td><b>{{attr.name}}</b></td>
+                    <td class="{{attr.isUSDACode ? &apos;green&apos; : &apos;&apos;}}"><b>{{attr.name}}</b></td>
                     <td style="color: #888">{{attr.value}}</td>
                 </tr>
             </table>
+
+            <div hidden?="{{currentSpectra.usda_code_status != 3}}" style="padding: 20px 10px">
+                Attributes in <span class="green">green</span> were filled in from the given <a href="http://plants.usda.gov/" target="_blank">USDA plant code.</a>
+            </div>
         </div>
 
     </template>
@@ -24963,6 +24988,10 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             attrs : [],
             indexes : [],
             spectraCache : {},
+
+            currentSpectra : {},
+
+            plantAttrs : ['Common Name', 'Accepted Symbol', 'Genus', 'Synonym Symbol', 'Scientific Name', 'Category'],
 
             chartOptions : {
                 explorer : {}
@@ -25015,6 +25044,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             },
 
             _renderSpectra : function(spectra) {
+                this.currentSpectra = spectra;
+
                 var re1Wave = /^-?\d+\.?\d*/;
                 var re2Wave = /^-?\d*\.\d+/; 
 
@@ -25038,10 +25069,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
                 this.attrs = [];
                 for( var attrName in spectra ) {
-                    if( attrName == 'datapoints' ) continue;
+                    if( attrName == 'datapoints' || attrName == 'usda_code_status') continue;
                     this.attrs.push({
                         name: attrName, 
-                        value: spectra[attrName]
+                        value: spectra[attrName],
+                        isUSDACode : ( this.plantAttrs.indexOf(attrName) > -1 ) ? true : false
                     });
                 }
 
@@ -25799,6 +25831,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			.card[metadata] {
 				box-shadow: 0 0 5px #2196F3;
 			}
+			.card[zip] {
+				box-shadow: 0 0 5px #2f9b45;
+			}
 		</style>
 
 		<div hidden?="{{!loading}}" style="margin-bottom:25px">
@@ -25806,17 +25841,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			<span style="font-size:12px;color:#888">Resource Type and Parsed Spectra below will be incomplete till package is loaded.</span>
 		</div>
 
-		<template repeat="{{r, i in resourceList}}">
-			<div class="card" metadata?="{{r.isSingleSheetMetadata}}">
-				<template bind="" if="{{r.resource.type == &apos;datafile&apos; || r.resource.type == &apos;zip&apos;}}">
-					<esis-ui-dataresource issinglesheetmetadata="{{r.isSingleSheetMetadata}}" index="{{i}}" resource="{{r.resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
+		<template repeat="{{r, i in ds.resources}}">
+			<div class="card" metadata?="{{r.datasheets.length == 1 &amp;&amp; r.datasheets[0].metadata}}" zip?="{{r.type == &apos;zip&apos;}}">
+
+				<template bind="" if="{{r.type == &apos;datafile&apos; || r.type == &apos;zip&apos;}}">
+					<esis-ui-dataresource issinglesheetmetadata="{{r.datasheets.length == 1 &amp;&amp; r.datasheets[0].metadata}}" index="{{i}}" resource="{{r}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
-				<template bind="" if="{{r.resource.type != &apos;datafile&apos; &amp;&amp; r.resource.type != &apos;zip&apos;}}">
+				<template bind="" if="{{r.type != &apos;datafile&apos; &amp;&amp; r.type != &apos;zip&apos;}}">
 					<span>{{r.resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}" on-delete="{{_deleteGenericResource}}">
 		            </esis-ui-delete-button>
-		            <template bind="" if="{{r.resource.removing}}">
+		            <template bind="" if="{{r.removing}}">
 		            	<div>
 			            	<span style="color:red">Removing...</span>
 	            			<paper-progress indeterminate="" class="red"></paper-progress>
@@ -25826,12 +25862,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			</div>	
 		</template>
 
-		<template bind="" if="{{resourceList.length == 0}}">
+		<template bind="" if="{{ds.resources.length == 0}}">
 			<div style="padding: 10px">
 				Your dataset does not contain any resource files.  Click the &apos;Add&apos; tab to upload resources.
 			</div>
 		</template>
-		<template bind="" if="{{resourceList.length &gt; 0}}">
+		<template bind="" if="{{ds.resources.length &gt; 0}}">
 			<div style="padding: 50px 10px 10px 10px">
 				Click the <core-icon icon="create" class="blue"></core-icon> icon to edit or inspect your resources.
 			</div>
@@ -25844,8 +25880,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			loader : {},
 
 			loading : false,
-
-			resoucesList : [],
 
 			observe : {
 				'ds.deleted' : '_update',
@@ -25872,23 +25906,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			},
 
 			updateResourceList : function() {
-				this.resourceList = [];
-				for( var i = 0; i < this.ds.resources.length; i++ ) {
-					var isSingleSheetMetadata = false;
+				this.ds.resources.sort(function(a, b){
+					a = a.datasheets.length == 1 && a.datasheets[0].metadata;
+					b = b.datasheets.length == 1 && b.datasheets[0].metadata;
 
-					if( this.ds.resources[i].datasheets.length == 1 && this.ds.resources[i].datasheets[0].metadata ) {
-						isSingleSheetMetadata = true;
-					}
-
-					this.resourceList.push({
-						resource : this.ds.resources[i],
-						isSingleSheetMetadata : isSingleSheetMetadata
-					});
-				}
-
-				this.resourceList.sort(function(a, b){
-					if( a.isSingleSheetMetadata && !b.isSingleSheetMetadata) return 1;
-					if( !a.isSingleSheetMetadata && b.isSingleSheetMetadata) return -1;
+					if( a && !b) return 1;
+					if( !a && b) return -1;
 					return 0;
 				});
 			},
@@ -26010,6 +26033,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 margin: 15px 0 0 0;
             }
             .processing-label {
+                width: 100%;
                 position: absolute;
                 top: 0;
             }
@@ -26088,7 +26112,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div style="position:relative; text-align:center">
                 <div class="processing-label">
                     <h4>Uploading &amp; Processing Files...</h4>
-                    <table style="width:100%; text-align: left">
+                    <table class="table" style="text-align: left">
                         <tr template="" repeat="{{file in staggedFiles}}">
                             <td><b>{{file.name}}</b></td>
                             <td style="color:#888">
@@ -28758,13 +28782,11 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
     },
 
     back : function() {
-      if( confirm('Are you sure you want to exit the dataset editor?') ) {
-        var url = '/dataset';
-        if( document.querySelector('esis-dataset-loader').pkgid ) {
-          url += '/'+document.querySelector('esis-dataset-loader').pkgid;
-        }
-        window.location = url;
+      var url = esis.host+'/dataset';
+      if( document.querySelector('esis-dataset-loader').pkgid ) {
+        url += '/'+document.querySelector('esis-dataset-loader').pkgid;
       }
+      window.location = url;
     },
     
     menuSelect: function(e, detail) {
@@ -29104,6 +29126,7 @@ Copyright (c) 2013 Daniel Eden
                         } else {
                             alert('Success!');
                             this.$.dialog.close();
+                            window.location = esis.host+'/dataset/'+ this.ds.package_id;
                         }
                     }.bind(this)
                 );
