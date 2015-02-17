@@ -1,4 +1,4 @@
-<polymer-element name="esis-ui-dataresource" attributes="resource">
+<polymer-element name="esis-ui-dataresource" attributes="resource isSingleSheetMetadata">
     <template>
         <style>
             :host{
@@ -54,6 +54,13 @@
             esis-ui-delete-button /deep/ paper-icon-button {
                 padding: 0 8px !important;
             }
+            .metadata-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2196F3;
+                border-radius: 3px;
+            }
         </style>
 
         <paper-button style="float:right" on-tap="{{toggleEdit}}" raised?="{{edit}}">
@@ -61,7 +68,10 @@
             <core-icon icon="check" class="green" hidden?="{{!edit}}"></core-icon>
         </paper-button>
         <h4>
-            <span>{{resource.name}}</span>
+            <span>
+                {{resource.name}}
+                <span hidden?="{{!isSingleSheetMetadata}}" class="metadata-label">Metadata</span>
+            </span>
             <paper-icon-button
                 icon="more-vert" 
                 style="padding: 0 8px"
