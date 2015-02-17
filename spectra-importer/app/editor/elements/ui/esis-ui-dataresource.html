@@ -61,6 +61,13 @@
                 background-color: #2196F3;
                 border-radius: 3px;
             }
+            .package-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2f9b45;
+                border-radius: 3px;
+            }
         </style>
 
         <paper-button style="float:right" on-tap="{{toggleEdit}}" raised?="{{edit}}">
@@ -71,6 +78,7 @@
             <span>
                 {{resource.name}}
                 <span hidden?="{{!isSingleSheetMetadata}}" class="metadata-label">Metadata</span>
+                <span hidden?="{{resource.type != 'zip'}}" class="package-label">Package</span>
             </span>
             <paper-icon-button
                 icon="more-vert" 
@@ -85,8 +93,8 @@
         </h4>
 
         <template bind if="{{loading || saving}}">
-            <span class="green" hidden?="{{saving}}">Loading...</span>
-            <span class="green" hidden?="{{loading}}">Updating...</span>
+            <span class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" hidden?="{{saving}}">Loading...</span>
+            <span class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" hidden?="{{loading}}">Updating...</span>
             <paper-progress indeterminate></paper-progress>
         </template>
 
@@ -119,7 +127,7 @@
         </paper-dropdown>
 
         <div style="padding:5px; color: #888" hidden?="{{edit || resource.datasheets.length == 0}}">
-            <a class="green" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
+            <a class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
             <span hidden?="{{resource.datasheets.length < 2}}" style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
             <span hidden?="{{totalSpectra == 0}}" style="float:right">Spectra: <b>{{totalSpectra}}</b></span>
         </div>
@@ -149,7 +157,8 @@
                     datasheet="{{resource.datasheets[0]}}" 
                     resourceId="{{resource.id}}" 
                     edit
-                    on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                    on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -211,7 +220,8 @@
                     resourceId="{{resource.id}}" 
                     edit 
                     showName
-                    on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                    on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 

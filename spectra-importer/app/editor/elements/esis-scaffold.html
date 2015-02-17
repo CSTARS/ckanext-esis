@@ -84,13 +84,11 @@
     },
 
     back : function() {
-      if( confirm('Are you sure you want to exit the dataset editor?') ) {
-        var url = '/dataset';
-        if( document.querySelector('esis-dataset-loader').pkgid ) {
-          url += '/'+document.querySelector('esis-dataset-loader').pkgid;
-        }
-        window.location = url;
+      var url = esis.host+'/dataset';
+      if( document.querySelector('esis-dataset-loader').pkgid ) {
+        url += '/'+document.querySelector('esis-dataset-loader').pkgid;
       }
+      window.location = url;
     },
     
     menuSelect: function(e, detail) {

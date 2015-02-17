@@ -25,6 +25,7 @@
                 margin: 15px 0 0 0;
             }
             .processing-label {
+                width: 100%;
                 position: absolute;
                 top: 0;
             }
@@ -117,7 +118,7 @@
             <div style="position:relative; text-align:center">
                 <div class="processing-label">
                     <h4>Uploading & Processing Files...</h4>
-                    <table style="width:100%; text-align: left">
+                    <table class="table" style="text-align: left">
                         <tr template repeat="{{file in staggedFiles}}">
                             <td><b>{{file.name}}</b></td>
                             <td style="color:#888">
