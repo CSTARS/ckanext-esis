@@ -26399,19 +26399,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <template bind="" if="{{attrMapList.length &gt; 0}}">
             <div class="card" style="margin-top:50px">
-            <h4>Current Name Mappings</h4>
-            <table class="table">
-                <tr>
-                    <th>EcoSIS</th>
-                    <th>{{ds.data.title}}</th>
-                    <th>Remove</th></tr></table></div>
-                
-                <tr template="" repeat="{{item in attrMapList}}">
-                    <td>{{item.ecosis}}</td>
-                    <td>{{item.custom}}</td>
-                    <td><core-icon icon="delete" on-tap="{{remove}}" attribute="{{item.custom}}"></core-icon></td>
-                </tr>
-            
+                <h4>Current Name Mappings</h4>
+                <table class="table">
+                    <tr>
+                        <th>EcoSIS</th>
+                        <th>{{ds.data.title}}</th>
+                        <th>Remove</th>
+                    </tr>
+                    <tr template="" repeat="{{item in attrMapList}}">
+                        <td>{{item.ecosis}}</td>
+                        <td>{{item.custom}}</td>
+                        <td><core-icon icon="delete" on-tap="{{remove}}" attribute="{{item.custom}}"></core-icon></td>
+                    </tr>
+                </table>
+            </div>
         </template>
 
     </template>
