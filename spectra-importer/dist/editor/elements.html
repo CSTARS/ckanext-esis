@@ -23205,9 +23205,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 			Join On:
 			<select id="joinId" value="{{metadata.matchAttribute}}" on-change="{{_updateServer}}">
 				<option value=""></option>
-				<template repeat="{{attr in joinAttrs}}">
-					<option value="{{attr}}">{{attr}}</option>
-				</template>
+				<option template="" repeat="{{attr in joinAttrs}}" value="{{attr}}">{{attr}}</option>
 			</select>
 
 			<div horizontal="" layout="" style="margin: 30px 15px">
@@ -23625,11 +23623,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                     </div>
                     <div flex="" style="text-align:center">
                         <select value="{{datasheetIndex}}" style="margin-top: 15px" on-change="{{onSelect}}">
-                            <template repeat="{{file,i in resource.datasheets}}">
-                                <option value="{{i}}">
-                                    {{file.name}} {{file.sheetname}}
-                                </option>
-                            </template>
+                            <option template="" repeat="{{file, i in resource.datasheets}}" value="{{i}}">
+                                {{file.name}} {{file.sheetname}}
+                            </option>
                         </select>
                     </div>
                     <div>
@@ -24957,9 +24953,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <div style="text-align:right" hidden?="{{indexes.length &lt;= 1}}">
                 Spectra #
                 <select on-change="{{setIndex}}">
-                    <template repeat="{{i in indexes}}">
-                        <option value="{{i}}">{{i+1}}</option>
-                    </template>
+                    <option template="" repeat="{{i in indexes}}" value="{{i}}">{{i+1}}</option>
                 </select>
             </div>
 
@@ -25711,9 +25705,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             Order By:
             <select value="{{ds.datasetAttributes.sort_on}}" on-change="{{onChange}}">
                 <option value=""></option>
-                <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.sort_on}}">{{attr.name}}</option>
-                </template>
+                <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.sort_on}}">
+                    {{attr.name}}
+                </option>
             </select>
 
             <div hidden?="{{ds.datasetAttributes.sort_on == &apos;&apos;}}">
@@ -25751,9 +25745,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 Location:
                 <select value="{{ds.datasetAttributes.location}}" on-change="{{onChange}}">
                     <option value=""></option>
-                    <template repeat="{{attr in attributeArray}}">
-                        <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">{{attr.name}}</option>
-                    </template>
+                    <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">
+                        {{attr.name}}
+                    </option>
                 </select>
                 <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
             </template>
@@ -25763,18 +25757,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     Latitude:
                     <select value="{{ds.datasetAttributes.locationLat}}" on-change="{{onChange}}">
                         <option value=""></option>
-                        <template repeat="{{attr in attributeArray}}">
-                            <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLat}}">{{attr.name}}</option>
-                        </template>
+                        <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLat}}">
+                            {{attr.name}}
+                        </option>
                     </select>
                 </div>
                 <div>
                     Longitude:
                     <select value="{{ds.datasetAttributes.locationLng}}" on-change="{{onChange}}">
                         <option value=""></option>
-                        <template repeat="{{attr in attributeArray}}">
-                            <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLng}}">{{attr.name}}</option>
-                        </template>
+                        <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLng}}">
+                            {{attr.name}}
+                        </option>
                     </select>
                 </div>
 
@@ -26399,9 +26393,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				Loading...
 			</template>
 			<select id="license" hidden?="{{licenses.length == 0}}" value="{{ds.data.license_id}}">
-       			<template repeat="{{item in licenses}}">
-       				<option value="{{item.id}}">{{item.title}}</option>
-       			</template>
+       			<option template="" repeat="{{item in licenses}}" value="{{item.id}}">{{item.title}}</option>
     		</select>
 		</div>
 
@@ -26411,9 +26403,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				Loading...
 			</template>
 			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
-       			<template repeat="{{item in organizations}}">
-       				<option value="{{item.id}}">{{item.display_name}}</option>
-       			</template>
+       			<option repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
     		</select>
 		</div>
 
