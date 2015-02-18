@@ -19,9 +19,7 @@
 			Join On:
 			<select id="joinId" value="{{metadata.matchAttribute}}" on-change="{{_updateServer}}">
 				<option value=""></option>
-				<template repeat="{{attr in joinAttrs}}" >
-					<option value="{{attr}}">{{attr}}</option>
-				</template>
+				<option template repeat="{{attr in joinAttrs}}" value="{{attr}}">{{attr}}</option>
 			</select>
 
 			<div horizontal layout style="margin: 30px 15px">

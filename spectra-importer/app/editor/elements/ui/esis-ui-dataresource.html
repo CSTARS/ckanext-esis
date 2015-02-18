@@ -201,11 +201,9 @@
                     </div>
                     <div flex style="text-align:center">
                         <select value="{{datasheetIndex}}" style="margin-top: 15px" on-change="{{onSelect}}">
-                            <template repeat="{{file,i in resource.datasheets}}">
-                                <option value="{{i}}">
-                                    {{file.name}} {{file.sheetname}}
-                                </option>
-                            </template>
+                            <option template repeat="{{file, i in resource.datasheets}}" value="{{i}}">
+                                {{file.name}} {{file.sheetname}}
+                            </option>
                         </select>
                     </div>
                     <div>

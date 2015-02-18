@@ -26,9 +26,7 @@
             <div style="text-align:right" hidden?="{{indexes.length <= 1}}">
                 Spectra #
                 <select on-change="{{setIndex}}">
-                    <template repeat="{{i in indexes}}">
-                        <option value="{{i}}">{{i+1}}</option>
-                    </template>
+                    <option template repeat="{{i in indexes}}" value="{{i}}">{{i+1}}</option>
                 </select>
             </div>
 
