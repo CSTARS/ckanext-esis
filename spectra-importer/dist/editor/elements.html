@@ -26318,6 +26318,293 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
     </script>
 </polymer-element></div>
+<div hidden><polymer-element name="esis-attribute-mapping" assetpath="elements/ui/">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .card {
+                padding: 10px;
+                margin: 5px;
+                box-shadow: 0 0 5px #888;
+            }
+            .help {
+                padding: 10px;
+                color: #888;
+                font-size: 12px
+            }
+            .warn {
+                padding: 10px;
+                color: red;
+                font-size: 12px;
+            }
+        </style>
+
+      
+        <div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</div>
+
+        <div style="margin-top:25px" class="card">
+            <div horizontal="" layout="">
+                <div flex="">
+                    <a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+                </div>
+                <div flex="">
+                    Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
+
+                    <input type="file" style="display:none" id="addAttrMap" name="addAttrMap">
+                </div>
+            </div>
+            <div class="help" style="margin-top:30px">Use this to bulk upload and set the attribute name mapping.  This is map file can be reused across your datasets.  NOTE:  This will overwrite all current attribute mappings.</div>
+        </div>
+
+        <div class="card">
+            <h4 class="page-header">Set Attribute</h4>
+            <div layout="" horizontal="" center="">
+                <div>EcoSIS:</div>
+                <div>
+                    <select id="newEcosis">
+                        <option></option>
+                        <option template="" repeat="{{selectList}}" value="{{}}">{{}}</option>
+                    </select>
+                </div>
+            </div>
+            <div layout="" horizontal="" center="">
+                <div>{{ds.data.title}}:</div>
+                <div>
+                    <select id="newCustom">
+                        <option></option>
+                        <option template="" repeat="{{customList}}" value="{{}}">{{}}</option>
+                    </select>
+                </div>
+                <div>
+                    <paper-icon-button icon="add" on-tap="{{add}}">
+                        Add
+                    </paper-icon-button>
+                </div>
+            </div>
+
+            <div class="warn" hidden?="{{usdaCodeSet}}"> 
+                <core-icon icon="attachment"></core-icon> It looks like you haven&apos;t set a <a href="http://plants.usda.gov/java/" target="_blank">USDA Code</a> yet.  It&apos;s highly recommended!
+            </div>
+
+            <div class="help">Use this to add individual attribute mappings.</div>
+        </div>
+
+        <div hidden?="{{!saving}}">
+            <div class="green">Updating...</div>
+            <paper-progress indeterminate=""></paper-progress>
+        </div>
+
+
+        <template bind="" if="{{attrMapList.length &gt; 0}}">
+            <div class="card" style="margin-top:50px">
+            <h4>Current Name Mappings</h4>
+            <table class="table">
+                <tr>
+                    <th>EcoSIS</th>
+                    <th>{{ds.data.title}}</th>
+                    <th>Remove</th></tr></table></div>
+                
+                <tr template="" repeat="{{item in attrMapList}}">
+                    <td>{{item.ecosis}}</td>
+                    <td>{{item.custom}}</td>
+                    <td><core-icon icon="delete" on-tap="{{remove}}" attribute="{{item.custom}}"></core-icon></td>
+                </tr>
+            
+        </template>
+
+    </template>
+    <script>
+        Polymer('esis-attribute-mapping', {
+            datasheets : [],
+
+            map : {},
+            inverseMap : {},
+            attrMapList : [],
+
+            //  EcoSIS Attribute
+            selectList : [],
+            customList : [],
+
+            // has usda code
+            usdaCodeSet : false,
+
+            ds : null,
+
+            observe : {
+                'ds.inverseAttributeMap' : '_updateMap',
+                'ds.schema' : '_updateMap'
+            },
+
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+
+                // for webdriver
+                this.expose();
+
+                setTimeout(function(){
+                    this._updateSelectList();
+                }.bind(this), 1000);
+            },
+
+            _processMap : function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+                if( files.length == 0 ) return;
+
+                var reader = new FileReader();
+                var contents, parts;
+
+                reader.onload = function(e) {
+                    var newMap = {};
+                    contents = e.target.result.split('\n');
+
+                    for( var i = 0; i < contents.length; i++ ) {
+                        if( contents[i].indexOf('=') > -1 ) {
+                            parts = contents[i].split('=');
+                            newMap[parts[0]] = parts[1];
+                            //if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
+                        }
+                    }
+
+                    this.$.map.value = '';
+                    this._updateAttrMapList(newMap);
+                }.bind(this);
+
+                reader.readAsText(files[0]);
+            },
+
+            _updateMap : function() {
+
+                var c = 0, item = {};
+                var map = this.ds.attributeMap;
+                this.attrMapList = [];
+
+                for( var key in map ) {
+                    if( map[key] && map[key].length > 0 ) {                        
+                        this.attrMapList.push({
+                            ecosis : key,
+                            custom : map[key]
+                        });
+                    } else {
+                        delete map[key]
+                    }
+                }
+
+                this.attrMapList.sort(function(a, b){
+                    if( a.ecosis > b.ecosis ) return 1;
+                    if( a.ecosis < b.ecosis ) return -1;
+                    return 0;
+                });
+
+                this._updateSelectList();
+            },
+
+            _updateSelectList : function() {
+                this.selectList = [];
+                this.customList = [];
+                this.usdaCodeSet = false;
+
+                for( var key in esis.metadata ) {
+                    if( !this.ds.attributeMap[key]  ) {
+                        this.selectList.push(key);
+                    } else if( key == 'USDA Code' ) {
+                        this.usdaCodeSet = true;
+                    }
+                }
+
+                for( var i = 0; i < this.ds.schema.length; i++ ) {
+                    var s = this.ds.schema[i];
+                    if( s.type != "metadata" ) continue;
+                    if( this.ds.attributeMap[s.name] ) continue;
+
+                    this.customList.push(s.name);
+                }
+
+                this.customList.sort(function(a, b){
+                    if( a.toLowerCase() > b.toLowerCase() ) return 1;
+                    if( a.toLowerCase() < b.toLowerCase() ) return -1;
+                    return 0; 
+                });
+            },
+
+            remove : function(e) {
+                var custom = e.currentTarget.getAttribute('attribute');
+                var ecosis = this.ds.inverseAttributeMap[custom];
+
+                if( !confirm('Are you sure you want to remove the mapping: '+ecosis+' = '+custom+'?') ) return;
+
+                delete this.ds.attributeMap[ecosis];
+                delete this.ds.inverseAttributeMap[custom];
+
+                this.save(this.ds.attributeMap);
+            },
+
+            add : function() {
+                var ecosis = this.$.newEcosis.value;
+                var custom = this.$.newCustom.value;
+
+                if( ecosis.length == 0 || custom.length == 0 ) return alert('Please select both attributes to map first');
+
+                this.ds.attributeMap[ecosis] = custom;
+                this.ds.inverseAttributeMap[custom] = ecosis;
+
+                this.$.newEcosis.value = '';
+                this.$.newCustom.value = '';
+
+                this.save(this.ds.attributeMap);
+            },
+
+            _updateAttrMapList : function(newMap) {
+                this.attrMapList = [];
+
+                var c = 0, item = {};
+                var map = newMap || this.map;
+                
+                if( newMap ) {
+                    this.ds.attributeMap = newMap;
+                    this.ds.inverseAttributeMap = {};
+
+                    for( var key in newMap ) {
+                        if( newMap[key] != '' ) this.ds.inverseAttributeMap[newMap[key]] = key;
+                    }
+                }
+
+                this.save(newMap);
+            },
+
+            save : function(newMap) {
+                this.saving = true;
+
+                console.log(newMap);
+
+                document.querySelector('esis-ckan').setAttributeMap(
+                    this.ds.package_id,
+                    newMap,
+                    function(err, resp) {
+                        this.saving = false;
+                        this._updateMap();
+                        if( err ) return alert('Error saving attribute name mapping');
+                    }.bind(this)
+                )
+            },
+
+
+            expose : function() {
+                this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
+
+                // expose file input for tests
+                document.body.appendChild(this.$.addAttrMap);
+                this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
+            }
+
+
+        });
+    </script>
+</polymer-element></div>
 
 <div hidden><polymer-element name="esis-basic-fields" assetpath="elements/panels/">
 	<template>
@@ -26729,33 +27016,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		</div>
 
 		<div hidden?="{{currentTab != 2}}">
-	    	<div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</div>
-
-	    	<div horizontal="" layout="" style="margin-top:25px">
-	    		<div flex="">
-	    			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
-	    		</div>
-	    		<div flex="">
-	    			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
-
-	    			<input type="file" style="display:none" id="addAttrMap" name="addAttrMap">
-	    		</div>
-	    	</div>
-
-	    	<div hidden?="{{!saving}}">
-	            <div class="green">Updating...</div>
-	            <paper-progress indeterminate=""></paper-progress>
-	        </div>
-
-	    	<template bind="" if="{{attrMapList.length &gt; 0}}">
-	    		<h4 style="margin-top:50px">Current Name Mappings</h4>
-	    		<template repeat="{{item, i in attrMapList}}">
-	    			<div layout="" horizontal="">
-	    				<div flex=""><b>{{item.c1[0]}}:</b> <span style="color:#888">{{item.c1[1]}}</span></div>
-	    				<div flex=""><b>{{item.c2[0]}}:</b> <span style="color:#888">{{item.c2[1]}}</span></div>
-	    			</div>
-	    		</template>
-	    	</template>
+	    	<esis-attribute-mapping></esis-attribute-mapping>
 	    </div>
 
 	    <div hidden?="{{currentTab != 1}}">
@@ -26779,16 +27040,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 			observe : {
 				'ds.resources' : '_updateVisibility',
-				'ds.editMode' : '_updateVisibility',
-				'ds.inverseAttributeMap' : '_updateMap'
+				'ds.editMode' : '_updateVisibility'
 			},
 
 			ready : function() {
-
 				this.ds = document.querySelector('esis-datastore');
-
-				// for webdriver
-				this.expose();
 			},
 
 			// fired when element is attached.  For this element we should render the attribute type control
@@ -26803,111 +27059,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 			_updateVisibility : function() {
                 this.menuItem.style.display = (this.ds.editMode && this.ds.resources.length > 0) ? 'block' : 'none';
-            },
-
-			_processMap : function(e) {
-				e.stopPropagation();
-				e.preventDefault();
-
-				var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
-				if( files.length == 0 ) return;
-
-				var reader = new FileReader();
-				var contents, parts;
-
-				reader.onload = function(e) {
-					var newMap = {};
-					contents = e.target.result.split('\n');
-
-					for( var i = 0; i < contents.length; i++ ) {
-						if( contents[i].indexOf('=') > -1 ) {
-							parts = contents[i].split('=');
-							newMap[parts[0]] = parts[1];
-							//if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
-						}
-					}
-
-					this.$.map.value = '';
-					this._updateAttrMapList(newMap);
-				}.bind(this);
-
-				reader.readAsText(files[0]);
-			},
-
-			_updateMap : function() {
-				var c = 0, item = {};
-				var map = this.ds.attributeMap;
-				this.attrMapList = [];
-
-				for( var key in map ) {
-					if( map[key] && map[key].length > 0 ) {
-						if( c % 2 != 0 ) {
-							item['c2'] = [key, map[key]];
-							this.attrMapList.push(item);
-						} else {
-							item = { c1 : [key, map[key]]};
-						}
-						c++;
-					} else {
-						delete map[key]
-					}
-				}
-			},
-
-			_updateAttrMapList : function(newMap) {
-				this.attrMapList = [];
-
-				var c = 0, item = {};
-				var map = newMap || this.map;
-
-				for( var key in map ) {
-					if( map[key] && map[key].length > 0 ) {
-						if( c % 2 != 0 ) {
-							item['c2'] = [key, map[key]];
-							this.attrMapList.push(item);
-						} else {
-							item = { c1 : [key, map[key]]};
-						}
-						c++;
-					} else {
-						delete map[key]
-					}
-				}
-
-				if( newMap ) {
-					this.ds.attributeMap = newMap;
-					this.ds.inverseAttributeMap = {};
-
-					for( var key in newMap ) {
-						if( newMap[key] != '' ) this.ds.inverseAttributeMap[newMap[key]] = key;
-					}
-				}
-
-				this.save(newMap);
-
-				this.menuItem.setSecondaryHtml(c+' Attributes Mapped');
-			},
-
-			save : function(newMap) {
-				this.saving = true;
-				document.querySelector('esis-ckan').setAttributeMap(
-					this.ds.package_id,
-					newMap,
-					function(err, resp) {
-						this.saving = false;
-						if( err ) return alert('Error saving attribute name mapping');
-					}.bind(this)
-				)
-			},
-
-
-			expose : function() {
-		  		this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
-
-		  		// expose file input for tests
-				document.body.appendChild(this.$.addAttrMap);
-				this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
-		  	}
+            }
 
 		});
 	</script>
@@ -29023,9 +29175,9 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 				}
 
 				if( this.data.attributeMap ) {
-					this.ds.inverseAttributeMap = this.data.attributeMap;
+					this.ds.attributeMap = this.data.attributeMap;
 					for( var key in this.data.attributeMap ) {
-						this.ds.attributeMap[this.data.attributeMap[key]] = key;
+						this.ds.inverseAttributeMap[this.data.attributeMap[key]] = key;
 					}
 				}
 
