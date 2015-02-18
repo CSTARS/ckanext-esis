@@ -5,6 +5,20 @@ EcoSIS extension for CKAN adding resource controls for spectra
 
 
 ## CKAN 'IDE'
+#### start pycharm
+```
+. /usr/lib/ckan/default/bin/activate
+# run ckan as root
+sudo ~/pycharm-community-4.0.1/bin/pycharm.sh
+```
+
+#### run setup
+```
+script = /usr/lib/ckan/default/bin/paster
+script paramters = --plugin=ckan serve /etc/ckan/default/development.ini
+```
+
+
 
 ## Allow local cross-site auth (dev only)
 in ckan/lib/base.py
