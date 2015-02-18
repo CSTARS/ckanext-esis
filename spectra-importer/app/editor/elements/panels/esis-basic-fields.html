@@ -82,7 +82,7 @@
 				Loading...
 			</template>
 			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
-       			<option repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
+       			<option template repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
     		</select>
 		</div>
 
