@@ -66,6 +66,12 @@
                 border-radius: 3px;
                 margin-bottom: 10px;
             }
+            .formatHelp {
+                margin: 0 15px; 
+                border-left: 1px solid #2f9b45; 
+                padding: 15px; 
+                color: #888;
+            }
         </style>
 
 
@@ -145,6 +151,26 @@
             </div>
         </div>
 
+        <div style="margin-top: 40px">
+            <paper-button class="color: green" on-click="{{toggleTypeHelp}}">Supported File Types</paper-button>
+            <core-collapse opened="{{showTypeHelp}}">
+                <div class="formatHelp">
+                    <div>Currently the following file extensions will be parsed as datasheets.</div>
+                    <ul>
+                        <li>.xls</li>
+                        <li>.xlsx</li>
+                        <li>.csv</li>
+                        <li>.tsv (Tab Separated Value)</li>
+                        <li>.spectra (parsed as .tsv)</li>
+                        <li>.zip<span class="green">*</span></li>
+                    </ul>
+                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have datasheet extension will be parsed.</div>
+
+                    <div>Other file extensions are accepted but will not be parsed.</div>
+                </div>
+            </core-collapse>
+        </div>
+
         <!-- for v2
         <div>
             Link Git Repository:
@@ -162,6 +188,8 @@
 
             // v2
             // gitUrl : '',
+
+            showTypeHelp : false,
 
             showHelp : false,
 
@@ -279,6 +307,10 @@
 
             toggleHelp : function() {
                 this.showHelp = !this.showHelp;
+            },
+
+            toggleTypeHelp : function() {
+                this.showTypeHelp = !this.showTypeHelp;
             },
 
             expose : function() {
