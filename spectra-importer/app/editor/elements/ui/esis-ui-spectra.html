@@ -35,7 +35,12 @@
             <table class="table">
                 <tr template repeat="{{attr in attrs}}">
                     <td class="{{attr.isUSDACode ? 'green' : ''}}"><b>{{attr.name}}</b></td>
-                    <td style="color: #888">{{attr.value}}</td>
+                    <td style="color: #888">
+                        <span hidden?="{{attr.name == 'Accepted Symbol' || attr.name == 'USDA Code'}}">{{attr.value}}</span>
+                        <span hidden?="{{attr.name != 'Accepted Symbol' && attr.name != 'USDA Code'}}">
+                            <a href="http://plants.usda.gov/core/profile?symbol={{attr.value}}" target="_blank">{{attr.value}}</a>
+                        </span>
+                    </td>
                 </tr>
             </table>
 

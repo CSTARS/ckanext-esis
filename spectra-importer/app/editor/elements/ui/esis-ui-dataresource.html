@@ -51,6 +51,10 @@
             paper-progress {
                 width: 100%
             }
+            paper-progress[metadata]::shadow #activeProgress {
+                background-color: #2196F3;
+            }
+
             esis-ui-delete-button /deep/ paper-icon-button {
                 padding: 0 8px !important;
             }
@@ -95,7 +99,7 @@
         <template bind if="{{loading || saving}}">
             <span class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" hidden?="{{saving}}">Loading...</span>
             <span class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" hidden?="{{loading}}">Updating...</span>
-            <paper-progress indeterminate></paper-progress>
+            <paper-progress indeterminate metadata?="{{isSingleSheetMetadata}}"></paper-progress>
         </template>
 
         <template bind if="{{removing}}">

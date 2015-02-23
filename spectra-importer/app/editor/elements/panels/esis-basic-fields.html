@@ -84,6 +84,9 @@
 			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
        			<option template repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
     		</select>
+    		<div style="color: #888; font-size: 12px; margin-top: 10px">
+    			To add datasets to an <a href="/organization" target="_blank">organization</a> <a href="/dashboard/organizations" target="_blank">you</a> must be a member of the organization with a role of 'editor' or 'admin'.
+    		</div>
 		</div>
 
 		<div class="form-wrap" >
@@ -121,8 +124,9 @@
 		<template bind if="{{ds.editMode}}">
 			<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
 
-			<div style="margin-top: 30px;" >
+			<div style="margin: 30px 10px; text-align:right" >
 				<esis-ui-delete-button 
+					raised
 	                on-delete="{{_delete}}" label="Dataset">
 	            </esis-ui-delete-button>
 			</div>

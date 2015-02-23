@@ -23198,6 +23198,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 				margin-top: 8px;
 				padding-bottom: 3px;
 			}
+			paper-progress::shadow #activeProgress {
+                background-color: #2196F3;
+            }
 		</style>
 
 
@@ -23398,10 +23401,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 <div hidden>
 
 
-<polymer-element name="esis-ui-delete-button" attributes="label" assetpath="elements/ui/">
+<polymer-element name="esis-ui-delete-button" attributes="label raised" assetpath="elements/ui/">
 	<template>
-
-		<paper-icon-button icon="delete" on-click="{{_start}}" hidden?="{{state != &apos;init&apos;}}"></paper-icon-button>
+		<paper-button raised?="{{raised}}" on-click="{{_start}}" hidden?="{{state != &apos;init&apos;}}">
+			<core-icon icon="delete"></core-icon>
+		</paper-button>
 
 		<template bind="" if="{{state == &apos;confirm&apos;}}">
 			<paper-button on-click="{{reset}}" raised="">
@@ -23415,6 +23419,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 	<script>
 		Polymer('esis-ui-delete-button', {
 			state : 'init',
+			raised : false,
 
 			reset : function() {
 				this.state = 'init'
@@ -23483,6 +23488,10 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             paper-progress {
                 width: 100%
             }
+            paper-progress[metadata]::shadow #activeProgress {
+                background-color: #2196F3;
+            }
+
             esis-ui-delete-button /deep/ paper-icon-button {
                 padding: 0 8px !important;
             }
@@ -23521,7 +23530,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         <template bind="" if="{{loading || saving}}">
             <span class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" hidden?="{{saving}}">Loading...</span>
             <span class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" hidden?="{{loading}}">Updating...</span>
-            <paper-progress indeterminate=""></paper-progress>
+            <paper-progress indeterminate="" metadata?="{{isSingleSheetMetadata}}"></paper-progress>
         </template>
 
         <template bind="" if="{{removing}}">
@@ -23938,6 +23947,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <div>
                 <div>Joinable Metadata</div>
                 <div style="color:#888; font-size: 13px">This datasheet only contains metadata to be joined on given data.</div>
+                <div style="color:#888; font-size: 13px">NOTE:  Metadata must be in row format.</div>
                 
                 <template bind="" if="{{datasheet.metadata}}">
                     <esis-ui-metadata metadata="{{datasheet}}" resourceid="{{resourceId}}">
@@ -24962,7 +24972,12 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <table class="table">
                 <tr template="" repeat="{{attr in attrs}}">
                     <td class="{{attr.isUSDACode ? &apos;green&apos; : &apos;&apos;}}"><b>{{attr.name}}</b></td>
-                    <td style="color: #888">{{attr.value}}</td>
+                    <td style="color: #888">
+                        <span hidden?="{{attr.name == &apos;Accepted Symbol&apos; || attr.name == &apos;USDA Code&apos;}}">{{attr.value}}</span>
+                        <span hidden?="{{attr.name != &apos;Accepted Symbol&apos; &amp;&amp; attr.name != &apos;USDA Code&apos;}}">
+                            <a href="http://plants.usda.gov/core/profile?symbol={{attr.value}}" target="_blank">{{attr.value}}</a>
+                        </span>
+                    </td>
                 </tr>
             </table>
 
@@ -26107,6 +26122,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 border-radius: 3px;
                 margin-bottom: 10px;
             }
+            .formatHelp {
+                margin: 0 15px; 
+                border-left: 1px solid #2f9b45; 
+                padding: 15px; 
+                color: #888;
+            }
         </style>
 
 
@@ -26172,6 +26193,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
         </div>
 
+        <div style="margin-top: 40px">
+            <paper-button class="color: green" on-click="{{toggleTypeHelp}}">Supported File Types</paper-button>
+            <core-collapse opened="{{showTypeHelp}}">
+                <div class="formatHelp">
+                    <div>Currently the following file extensions will be parsed as datasheets.</div>
+                    <ul>
+                        <li>.xls</li>
+                        <li>.xlsx</li>
+                        <li>.csv</li>
+                        <li>.tsv (Tab Separated Value)</li>
+                        <li>.spectra (parsed as .tsv)</li>
+                        <li>.zip<span class="green">*</span></li>
+                    </ul>
+                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have datasheet extension will be parsed.</div>
+
+                    <div>Other file extensions are accepted but will not be parsed.</div>
+                </div>
+            </core-collapse>
+        </div>
+
         <!-- for v2
         <div>
             Link Git Repository:
@@ -26189,6 +26230,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             // v2
             // gitUrl : '',
+
+            showTypeHelp : false,
 
             showHelp : false,
 
@@ -26306,6 +26349,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             toggleHelp : function() {
                 this.showHelp = !this.showHelp;
+            },
+
+            toggleTypeHelp : function() {
+                this.showTypeHelp = !this.showTypeHelp;
             },
 
             expose : function() {
@@ -26693,6 +26740,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
        			<option template="" repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
     		</select>
+    		<div style="color: #888; font-size: 12px; margin-top: 10px">
+    			To add datasets to an <a href="/organization" target="_blank">organization</a> <a href="/dashboard/organizations" target="_blank">you</a> must be a member of the organization with a role of &apos;editor&apos; or &apos;admin&apos;.
+    		</div>
 		</div>
 
 		<div class="form-wrap">
@@ -26730,8 +26780,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		<template bind="" if="{{ds.editMode}}">
 			<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
 
-			<div style="margin-top: 30px;">
-				<esis-ui-delete-button on-delete="{{_delete}}" label="Dataset">
+			<div style="margin: 30px 10px; text-align:right">
+				<esis-ui-delete-button raised="" on-delete="{{_delete}}" label="Dataset">
 	            </esis-ui-delete-button>
 			</div>
 		</template>
