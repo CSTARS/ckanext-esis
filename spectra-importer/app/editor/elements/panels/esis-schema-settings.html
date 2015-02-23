@@ -18,33 +18,7 @@
 		</div>
 
 		<div hidden?="{{currentTab != 2}}">
-	    	<div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</div>
-
-	    	<div horizontal layout style="margin-top:25px">
-	    		<div flex>
-	    			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
-	    		</div>
-	    		<div flex>
-	    			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
-
-	    			<input type="file" style="display:none" id="addAttrMap" name="addAttrMap" />
-	    		</div>
-	    	</div>
-
-	    	<div hidden?="{{!saving}}">
-	            <div class="green">Updating...</div>
-	            <paper-progress indeterminate></paper-progress>
-	        </div>
-
-	    	<template bind if="{{attrMapList.length > 0}}">
-	    		<h4 style="margin-top:50px">Current Name Mappings</h4>
-	    		<template repeat="{{item, i in attrMapList}}">
-	    			<div layout horizontal>
-	    				<div flex><b>{{item.c1[0]}}:</b> <span style="color:#888">{{item.c1[1]}}</span></div>
-	    				<div flex><b>{{item.c2[0]}}:</b> <span style="color:#888">{{item.c2[1]}}</span></div>
-	    			</div>
-	    		</template>
-	    	</template>
+	    	<esis-attribute-mapping></esis-attribute-mapping>
 	    </div>
 
 	    <div hidden?="{{currentTab != 1}}">
@@ -68,16 +42,11 @@
 
 			observe : {
 				'ds.resources' : '_updateVisibility',
-				'ds.editMode' : '_updateVisibility',
-				'ds.inverseAttributeMap' : '_updateMap'
+				'ds.editMode' : '_updateVisibility'
 			},
 
 			ready : function() {
-
 				this.ds = document.querySelector('esis-datastore');
-
-				// for webdriver
-				this.expose();
 			},
 
 			// fired when element is attached.  For this element we should render the attribute type control
@@ -92,111 +61,7 @@
 
 			_updateVisibility : function() {
                 this.menuItem.style.display = (this.ds.editMode && this.ds.resources.length > 0) ? 'block' : 'none';
-            },
-
-			_processMap : function(e) {
-				e.stopPropagation();
-				e.preventDefault();
-
-				var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
-				if( files.length == 0 ) return;
-
-				var reader = new FileReader();
-				var contents, parts;
-
-				reader.onload = function(e) {
-					var newMap = {};
-					contents = e.target.result.split('\n');
-
-					for( var i = 0; i < contents.length; i++ ) {
-						if( contents[i].indexOf('=') > -1 ) {
-							parts = contents[i].split('=');
-							newMap[parts[0]] = parts[1];
-							//if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
-						}
-					}
-
-					this.$.map.value = '';
-					this._updateAttrMapList(newMap);
-				}.bind(this);
-
-				reader.readAsText(files[0]);
-			},
-
-			_updateMap : function() {
-				var c = 0, item = {};
-				var map = this.ds.attributeMap;
-				this.attrMapList = [];
-
-				for( var key in map ) {
-					if( map[key] && map[key].length > 0 ) {
-						if( c % 2 != 0 ) {
-							item['c2'] = [key, map[key]];
-							this.attrMapList.push(item);
-						} else {
-							item = { c1 : [key, map[key]]};
-						}
-						c++;
-					} else {
-						delete map[key]
-					}
-				}
-			},
-
-			_updateAttrMapList : function(newMap) {
-				this.attrMapList = [];
-
-				var c = 0, item = {};
-				var map = newMap || this.map;
-
-				for( var key in map ) {
-					if( map[key] && map[key].length > 0 ) {
-						if( c % 2 != 0 ) {
-							item['c2'] = [key, map[key]];
-							this.attrMapList.push(item);
-						} else {
-							item = { c1 : [key, map[key]]};
-						}
-						c++;
-					} else {
-						delete map[key]
-					}
-				}
-
-				if( newMap ) {
-					this.ds.attributeMap = newMap;
-					this.ds.inverseAttributeMap = {};
-
-					for( var key in newMap ) {
-						if( newMap[key] != '' ) this.ds.inverseAttributeMap[newMap[key]] = key;
-					}
-				}
-
-				this.save(newMap);
-
-				this.menuItem.setSecondaryHtml(c+' Attributes Mapped');
-			},
-
-			save : function(newMap) {
-				this.saving = true;
-				document.querySelector('esis-ckan').setAttributeMap(
-					this.ds.package_id,
-					newMap,
-					function(err, resp) {
-						this.saving = false;
-						if( err ) return alert('Error saving attribute name mapping');
-					}.bind(this)
-				)
-			},
-
-
-			expose : function() {
-		  		this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
-
-		  		// expose file input for tests
-				document.body.appendChild(this.$.addAttrMap);
-				this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
-		  	}
+            }
 
 		});
 	</script>

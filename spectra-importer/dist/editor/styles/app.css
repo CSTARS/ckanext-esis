@@ -76,3 +76,16 @@ html /deep/ .bs-label {
   -moz-border-radius: 3px;
   border-radius: 3px;
 }
+
+
+html /deep/ table.table {
+  width: 100%;
+  border-spacing: 0;
+  cell-spacing: 0;
+}
+html /deep/ table.table td {
+  padding: 4px;
+}
+html /deep/ table.table tr:nth-child(odd) td {
+  background-color: #f8f8f8;
+}

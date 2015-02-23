@@ -72,9 +72,7 @@
 				Loading...
 			</template>
 			<select id="license" hidden?="{{licenses.length == 0}}" value="{{ds.data.license_id}}">
-       			<template repeat="{{item in licenses}}">
-       				<option value="{{item.id}}">{{item.title}}</option>
-       			</template>
+       			<option template repeat="{{item in licenses}}" value="{{item.id}}">{{item.title}}</option>
     		</select>
 		</div>
 
@@ -84,9 +82,7 @@
 				Loading...
 			</template>
 			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
-       			<template repeat="{{item in organizations}}">
-       				<option value="{{item.id}}">{{item.display_name}}</option>
-       			</template>
+       			<option template repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
     		</select>
 		</div>
 
