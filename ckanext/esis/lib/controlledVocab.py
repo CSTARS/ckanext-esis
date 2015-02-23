@@ -24,7 +24,7 @@ class ControlledVocab:
             for attr, val in item.iteritems():
                 if len(val) == 0:
                     continue
-                    
+
                 spectra[attr] = val
             return 3
         return 2
