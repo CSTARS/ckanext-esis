@@ -99,6 +99,7 @@
                         } else {
                             alert('Success!');
                             this.$.dialog.close();
+                            window.location = esis.host+'/dataset/'+ this.ds.package_id;
                         }
                     }.bind(this)
                 );

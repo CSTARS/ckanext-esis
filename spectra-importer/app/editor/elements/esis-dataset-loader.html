@@ -23,7 +23,10 @@
 
 				Polymer.whenPolymerReady(function() {
 					this.$.dialog.toggle();
-					this.run(true);
+
+					this.async(function(){
+						this.run(true);
+					});
 				}.bind(this));
 			},
 
@@ -71,9 +74,9 @@
 				}
 
 				if( this.data.attributeMap ) {
-					this.ds.inverseAttributeMap = this.data.attributeMap;
+					this.ds.attributeMap = this.data.attributeMap;
 					for( var key in this.data.attributeMap ) {
-						this.ds.attributeMap[this.data.attributeMap[key]] = key;
+						this.ds.inverseAttributeMap[this.data.attributeMap[key]] = key;
 					}
 				}
 

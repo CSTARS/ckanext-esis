@@ -1,4 +1,4 @@
-<polymer-element name="esis-ui-dataresource" attributes="resource">
+<polymer-element name="esis-ui-dataresource" attributes="resource isSingleSheetMetadata">
     <template>
         <style>
             :host{
@@ -51,8 +51,26 @@
             paper-progress {
                 width: 100%
             }
+            paper-progress[metadata]::shadow #activeProgress {
+                background-color: #2196F3;
+            }
+
             esis-ui-delete-button /deep/ paper-icon-button {
                 padding: 0 8px !important;
+            }
+            .metadata-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2196F3;
+                border-radius: 3px;
+            }
+            .package-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2f9b45;
+                border-radius: 3px;
             }
         </style>
 
@@ -61,7 +79,11 @@
             <core-icon icon="check" class="green" hidden?="{{!edit}}"></core-icon>
         </paper-button>
         <h4>
-            <span>{{resource.name}}</span>
+            <span>
+                {{resource.name}}
+                <span hidden?="{{!isSingleSheetMetadata}}" class="metadata-label">Metadata</span>
+                <span hidden?="{{resource.type != 'zip'}}" class="package-label">Package</span>
+            </span>
             <paper-icon-button
                 icon="more-vert" 
                 style="padding: 0 8px"
@@ -75,9 +97,9 @@
         </h4>
 
         <template bind if="{{loading || saving}}">
-            <span class="green" hidden?="{{saving}}">Loading...</span>
-            <span class="green" hidden?="{{loading}}">Updating...</span>
-            <paper-progress indeterminate></paper-progress>
+            <span class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" hidden?="{{saving}}">Loading...</span>
+            <span class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" hidden?="{{loading}}">Updating...</span>
+            <paper-progress indeterminate metadata?="{{isSingleSheetMetadata}}"></paper-progress>
         </template>
 
         <template bind if="{{removing}}">
@@ -109,7 +131,7 @@
         </paper-dropdown>
 
         <div style="padding:5px; color: #888" hidden?="{{edit || resource.datasheets.length == 0}}">
-            <a class="green" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
+            <a class="{{isSingleSheetMetadata ? 'blue' : 'green'}}" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
             <span hidden?="{{resource.datasheets.length < 2}}" style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
             <span hidden?="{{totalSpectra == 0}}" style="float:right">Spectra: <b>{{totalSpectra}}</b></span>
         </div>
@@ -139,7 +161,8 @@
                     datasheet="{{resource.datasheets[0]}}" 
                     resourceId="{{resource.id}}" 
                     edit
-                    on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                    on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -182,11 +205,9 @@
                     </div>
                     <div flex style="text-align:center">
                         <select value="{{datasheetIndex}}" style="margin-top: 15px" on-change="{{onSelect}}">
-                            <template repeat="{{file,i in resource.datasheets}}">
-                                <option value="{{i}}">
-                                    {{file.name}} {{file.sheetname}}
-                                </option>
-                            </template>
+                            <option template repeat="{{file, i in resource.datasheets}}" value="{{i}}">
+                                {{file.name}} {{file.sheetname}}
+                            </option>
                         </select>
                     </div>
                     <div>
@@ -201,7 +222,8 @@
                     resourceId="{{resource.id}}" 
                     edit 
                     showName
-                    on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                    on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 

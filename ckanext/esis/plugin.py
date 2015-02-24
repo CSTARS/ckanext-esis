@@ -1,6 +1,6 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
-
+import pylons.config as config
 
 class EsisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
@@ -22,8 +22,14 @@ class EsisPlugin(plugins.SingletonPlugin,
     # set helpers for esis templates
     def get_helpers(self):
         # Example:
-        # return { 'to_json' : 'self.to_json' }
-        return {}
+        #return { 'to_json' : 'self.to_json' }
+        return {
+            'get_google_analytics_code' : self.get_google_analytics_code
+        }
+
+    def get_google_analytics_code(self):
+        return config.get('ckan.google_analytics_code', '')
+
 
     def is_fallback(self):
         # Return True to register this plugin as the default handler for

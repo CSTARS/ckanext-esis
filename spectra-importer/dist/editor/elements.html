@@ -23198,6 +23198,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 				margin-top: 8px;
 				padding-bottom: 3px;
 			}
+			paper-progress::shadow #activeProgress {
+                background-color: #2196F3;
+            }
 		</style>
 
 
@@ -23205,9 +23208,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 			Join On:
 			<select id="joinId" value="{{metadata.matchAttribute}}" on-change="{{_updateServer}}">
 				<option value=""></option>
-				<template repeat="{{attr in joinAttrs}}">
-					<option value="{{attr}}">{{attr}}</option>
-				</template>
+				<option template="" repeat="{{attr in joinAttrs}}" value="{{attr}}">{{attr}}</option>
 			</select>
 
 			<div horizontal="" layout="" style="margin: 30px 15px">
@@ -23239,7 +23240,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 					<div class="green">Joining...</div>
            			<paper-progress indeterminate="" style="width:100%"></paper-progress>
 				</div>
-				<div hidden?="{{loadingMatchCount}}" class="{{matchCount &gt; 0 ? &apos;green&apos; :&apos;&apos;}}">Matched to {{matchCount}} measurements</div>
+				<div hidden?="{{loadingMatchCount}}" class="{{matchCount &gt; 0 ? &apos;blue&apos; :&apos;&apos;}}">Matched to {{matchCount}} measurements</div>
 			</template>
 
 		</div> 
@@ -23400,10 +23401,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 <div hidden>
 
 
-<polymer-element name="esis-ui-delete-button" attributes="label" assetpath="elements/ui/">
+<polymer-element name="esis-ui-delete-button" attributes="label raised" assetpath="elements/ui/">
 	<template>
-
-		<paper-icon-button icon="delete" on-click="{{_start}}" hidden?="{{state != &apos;init&apos;}}"></paper-icon-button>
+		<paper-button raised?="{{raised}}" on-click="{{_start}}" hidden?="{{state != &apos;init&apos;}}">
+			<core-icon icon="delete"></core-icon>
+		</paper-button>
 
 		<template bind="" if="{{state == &apos;confirm&apos;}}">
 			<paper-button on-click="{{reset}}" raised="">
@@ -23417,6 +23419,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 	<script>
 		Polymer('esis-ui-delete-button', {
 			state : 'init',
+			raised : false,
 
 			reset : function() {
 				this.state = 'init'
@@ -23432,7 +23435,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 		});
 	</script>
 </polymer-element></div>
-<div hidden><polymer-element name="esis-ui-dataresource" attributes="resource" assetpath="elements/ui/">
+<div hidden><polymer-element name="esis-ui-dataresource" attributes="resource isSingleSheetMetadata" assetpath="elements/ui/">
     <template>
         <style>
             :host{
@@ -23485,8 +23488,26 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             paper-progress {
                 width: 100%
             }
+            paper-progress[metadata]::shadow #activeProgress {
+                background-color: #2196F3;
+            }
+
             esis-ui-delete-button /deep/ paper-icon-button {
                 padding: 0 8px !important;
+            }
+            .metadata-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2196F3;
+                border-radius: 3px;
+            }
+            .package-label {
+                font-size: 80%;
+                padding: 3px;
+                color: white;
+                background-color: #2f9b45;
+                border-radius: 3px;
             }
         </style>
 
@@ -23495,7 +23516,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <core-icon icon="check" class="green" hidden?="{{!edit}}"></core-icon>
         </paper-button>
         <h4>
-            <span>{{resource.name}}</span>
+            <span>
+                {{resource.name}}
+                <span hidden?="{{!isSingleSheetMetadata}}" class="metadata-label">Metadata</span>
+                <span hidden?="{{resource.type != &apos;zip&apos;}}" class="package-label">Package</span>
+            </span>
             <paper-icon-button icon="more-vert" style="padding: 0 8px" on-tap="{{toggleResourceMenu}}" hidden?="{{!edit || loading || (resource.datasheets.length &lt; 2 &amp;&amp; !resource.ignore)}}">
             </paper-icon-button>
             <esis-ui-delete-button hidden?="{{!edit}}" on-delete="{{remove}}">
@@ -23503,9 +23528,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </h4>
 
         <template bind="" if="{{loading || saving}}">
-            <span class="green" hidden?="{{saving}}">Loading...</span>
-            <span class="green" hidden?="{{loading}}">Updating...</span>
-            <paper-progress indeterminate=""></paper-progress>
+            <span class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" hidden?="{{saving}}">Loading...</span>
+            <span class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" hidden?="{{loading}}">Updating...</span>
+            <paper-progress indeterminate="" metadata?="{{isSingleSheetMetadata}}"></paper-progress>
         </template>
 
         <template bind="" if="{{removing}}">
@@ -23537,7 +23562,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </paper-dropdown>
 
         <div style="padding:5px; color: #888" hidden?="{{edit || resource.datasheets.length == 0}}">
-            <a class="green" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
+            <a class="{{isSingleSheetMetadata ? &apos;blue&apos; : &apos;green&apos;}}" style="cursor:pointer" on-click="{{toggleDetails}}">Details</a>
             <span hidden?="{{resource.datasheets.length &lt; 2}}" style="float:right;margin-left:10px">Datasheets: <b>{{resource.datasheets.length}}</b></span>
             <span hidden?="{{totalSpectra == 0}}" style="float:right">Spectra: <b>{{totalSpectra}}</b></span>
         </div>
@@ -23563,7 +23588,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
             <!-- EDITING -->
             <core-collapse opened="{{edit &amp;&amp; !loading}}">
-                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceid="{{resource.id}}" edit="" on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                <esis-ui-datasheet datasheet="{{resource.datasheets[0]}}" resourceid="{{resource.id}}" edit="" on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -23606,11 +23632,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                     </div>
                     <div flex="" style="text-align:center">
                         <select value="{{datasheetIndex}}" style="margin-top: 15px" on-change="{{onSelect}}">
-                            <template repeat="{{file,i in resource.datasheets}}">
-                                <option value="{{i}}">
-                                    {{file.name}} {{file.sheetname}}
-                                </option>
-                            </template>
+                            <option template="" repeat="{{file, i in resource.datasheets}}" value="{{i}}">
+                                {{file.name}} {{file.sheetname}}
+                            </option>
                         </select>
                     </div>
                     <div>
@@ -23620,7 +23644,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                     </div>
                 </div>
 
-                <esis-ui-datasheet datasheet="{{currentFile}}" resourceid="{{resource.id}}" edit="" showname="" on-update="{{onDatasheetUpdate}}"></esis-ui-datasheet>
+                <esis-ui-datasheet datasheet="{{currentFile}}" resourceid="{{resource.id}}" edit="" showname="" on-update="{{onDatasheetUpdate}}">
+                </esis-ui-datasheet>
             </core-collapse>
         </template>
 
@@ -23901,6 +23926,9 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
                 color: #888;
                 font-size: 12px;
             }
+            a[metadata] {
+                color: #2196F3;
+            }
 		</style>
 
 
@@ -23919,6 +23947,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <div>
                 <div>Joinable Metadata</div>
                 <div style="color:#888; font-size: 13px">This datasheet only contains metadata to be joined on given data.</div>
+                <div style="color:#888; font-size: 13px">NOTE:  Metadata must be in row format.</div>
                 
                 <template bind="" if="{{datasheet.metadata}}">
                     <esis-ui-metadata metadata="{{datasheet}}" resourceid="{{resourceId}}">
@@ -23954,7 +23983,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </div>
 
         <div hidden?="{{datasheet.ignore}}" class="options">
-            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;" metadata?="{{datasheet.metadata}}">
                 <core-icon icon="{{showCurrentParse ? &apos;visibility-off&apos; : &apos;visibility&apos;}}"></core-icon> Format Overview
             </a>
             <div style="padding: 5px 0 0 15px; color:#888; font-size: 13px">
@@ -23972,14 +24001,14 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             <paper-progress indeterminate="" style="width:100%"></paper-progress>
         </template>
 
-        <div hidden?="{{datasheet.ignore}}">
+        <div hidden?="{{datasheet.ignore}}" style="box-shadow: 0 0 5px #888; margin: 5px; padding: 5px">
             <div>
                 <paper-icon-button icon="hardware:{{showAttrs ? &apos;keyboard-arrow-down&apos; : &apos;keyboard-arrow-right&apos;}}" on-tap="{{_toggleAttrs}}" class="toggle-btn" disabled?="{{parsedAttributes.length == 0}}">
                 </paper-icon-button>
                 <div class="toggle-label">Attributes: {{parsedAttributes.length}}</div>
             </div>
             <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
-                <table>
+                <table class="table">
                     <tr>
                         <th>Name</th>
                         <th>Units</th>
@@ -24909,13 +24938,11 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 <div hidden><polymer-element name="esis-ui-spectra" attributes="show resourceId datasheet" assetpath="elements/ui/">
     <template>
         <style>
-            table {
-                width: 100%;
+            .help {
+                color: #888;
+                font-size: 12px;
             }
-            table td {
-                padding: 3px;
-            }
-        </style>
+        </style>    
 
         <template bind="" if="{{loading}}">
             <div class="green">Loading Spectra #{{index+1}}...</div>
@@ -24923,23 +24950,40 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </template>
 
         <div hidden?="{{loading}}">
+            <div hidden?="{{currentSpectra.usda_code_status != 1}}" style="padding: 20px 10px">
+                <h4 style="color: red">No &apos;USDA Code&apos; attribute set.</h4>
+                <div class="help">It is highly recommended that you set the <a href="http://plants.usda.gov/" target="_blank">USDA plant codes</a> for your dataset so EcoSIS can properly fill out the plant information</div>
+            </div>
+
+            <div hidden?="{{currentSpectra.usda_code_status != 2}}" style="padding: 20px 10px">
+                <h4 style="color: red">Invalid USDA Code.</h4>
+                <div class="help">EcoSIS does not recognize the <a href="http://plants.usda.gov/" target="_blank">USDA plant code</a> <b>{{data[&apos;USDA Code&apos;]}}</b>.  Please provide a correct code so EcoSIS can properly fill out the plant information.</div>
+            </div>
+
             <div style="text-align:right" hidden?="{{indexes.length &lt;= 1}}">
                 Spectra #
                 <select on-change="{{setIndex}}">
-                    <template repeat="{{i in indexes}}">
-                        <option value="{{i}}">{{i+1}}</option>
-                    </template>
+                    <option template="" repeat="{{i in indexes}}" value="{{i}}">{{i+1}}</option>
                 </select>
             </div>
 
             <esis-ui-chart data="{{data}}" options="{{chartOptions}}" height="500"></esis-ui-chart>
 
-            <table>
+            <table class="table">
                 <tr template="" repeat="{{attr in attrs}}">
-                    <td><b>{{attr.name}}</b></td>
-                    <td style="color: #888">{{attr.value}}</td>
+                    <td class="{{attr.isUSDACode ? &apos;green&apos; : &apos;&apos;}}"><b>{{attr.name}}</b></td>
+                    <td style="color: #888">
+                        <span hidden?="{{attr.name == &apos;Accepted Symbol&apos; || attr.name == &apos;USDA Code&apos;}}">{{attr.value}}</span>
+                        <span hidden?="{{attr.name != &apos;Accepted Symbol&apos; &amp;&amp; attr.name != &apos;USDA Code&apos;}}">
+                            <a href="http://plants.usda.gov/core/profile?symbol={{attr.value}}" target="_blank">{{attr.value}}</a>
+                        </span>
+                    </td>
                 </tr>
             </table>
+
+            <div hidden?="{{currentSpectra.usda_code_status != 3}}" style="padding: 20px 10px">
+                Attributes in <span class="green">green</span> were filled in from the given <a href="http://plants.usda.gov/" target="_blank">USDA plant code.</a>
+            </div>
         </div>
 
     </template>
@@ -24953,6 +24997,10 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             attrs : [],
             indexes : [],
             spectraCache : {},
+
+            currentSpectra : {},
+
+            plantAttrs : ['Common Name', 'Accepted Symbol', 'Genus', 'Synonym Symbol', 'Scientific Name', 'Category'],
 
             chartOptions : {
                 explorer : {}
@@ -25005,6 +25053,8 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             },
 
             _renderSpectra : function(spectra) {
+                this.currentSpectra = spectra;
+
                 var re1Wave = /^-?\d+\.?\d*/;
                 var re2Wave = /^-?\d*\.\d+/; 
 
@@ -25028,12 +25078,19 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
 
                 this.attrs = [];
                 for( var attrName in spectra ) {
-                    if( attrName == 'datapoints' ) continue;
+                    if( attrName == 'datapoints' || attrName == 'usda_code_status') continue;
                     this.attrs.push({
                         name: attrName, 
-                        value: spectra[attrName]
+                        value: spectra[attrName],
+                        isUSDACode : ( this.plantAttrs.indexOf(attrName) > -1 ) ? true : false
                     });
                 }
+
+                this.attrs.sort(function(a, b){
+                    if( a.name > b.name ) return 1;
+                    if( a.name < b.name ) return -1;
+                    return 0;
+                });
 
             },
 
@@ -25251,7 +25308,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </div>
 
         <div class="note">
-            Any <b>numberic</b><span style="color:red">*</span> attribute name will be considered wavelength <span class="data note-label">data</span>.  Any attribute name with a <b>__d</b> postfix will be considered <span class="data note-label">data</span>.  All other fields will be considered <span class="column note-label">metadata</span>.  You will have the opportunity to manually specify the difference later on as well.
+            Any <b>numeric</b><span style="color:red">*</span> attribute name will be considered wavelength <span class="data note-label">data</span>.  Any attribute name with a <b>__d</b> postfix will be considered <span class="data note-label">data</span>.  All other fields will be considered <span class="column note-label">metadata</span>.  You will have the opportunity to manually specify the difference later on as well.
         </div>
 
         <div class="note">
@@ -25489,7 +25546,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             Wavelengths: {{ds.wavelengths.length}}
         </h4>
         <div class="helper">
-            These attribute types have been implied because the attribute name is numberic.
+            These attribute types have been implied because the attribute name is numeric.
         </div>
         <core-collapse opened="{{showWavelengths}}">
             <div class="helper" id="wavelengths"></div>
@@ -25663,9 +25720,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             Order By:
             <select value="{{ds.datasetAttributes.sort_on}}" on-change="{{onChange}}">
                 <option value=""></option>
-                <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.sort_on}}">{{attr.name}}</option>
-                </template>
+                <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.sort_on}}">
+                    {{attr.name}}
+                </option>
             </select>
 
             <div hidden?="{{ds.datasetAttributes.sort_on == &apos;&apos;}}">
@@ -25674,7 +25731,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     <select value="{{ds.datasetAttributes.sort_type}}" on-change="{{onChange}}">
                         <option value="string">Default (String)</option>
                         <option value="datetime">Date</option>
-                        <option value="numberic">Numberic</option>
+                        <option value="numeric">Numeric</option>
                     </select>
                 </div>
                 <div class="help" hidden?="{{ds.datasetAttributes.sort_type != &apos;datetime&apos;}}" style="padding: 5px">
@@ -25691,14 +25748,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             Select the attribute below that provides a geolocation for this dataset.
         </div>
         <div class="input-wrapper">
-            Location:
-            <select value="{{ds.datasetAttributes.location}}" on-change="{{onChange}}">
-                <option value=""></option>
-                <template repeat="{{attr in attributeArray}}">
-                    <option value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">{{attr.name}}</option>
-                </template>
-            </select>
-            <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+            <div style="margin-bottom: 10px">
+                Format:
+                <select value="{{ds.datasetAttributes.locationType}}" on-change="{{onChange}}">
+                    <option value="geojson">GeoJson</option>
+                    <option value="latlng">Lat / Lng</option>
+                </select>
+            </div>
+
+            <template bind="" if="{{!ds.datasetAttributes.locationType || ds.datasetAttributes.locationType == &apos;geojson&apos;}}">
+                Location:
+                <select value="{{ds.datasetAttributes.location}}" on-change="{{onChange}}">
+                    <option value=""></option>
+                    <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.location}}">
+                        {{attr.name}}
+                    </option>
+                </select>
+                <div style="padding:10px" class="help">The selected location attribute should be in <a href="http://geojson.org/" target="_blank">GeoJSON</a> format using <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+            </template>
+
+            <template bind="" if="{{ds.datasetAttributes.locationType == &apos;latlng&apos;}}">
+                <div style="margin-bottom: 10px">
+                    Latitude:
+                    <select value="{{ds.datasetAttributes.locationLat}}" on-change="{{onChange}}">
+                        <option value=""></option>
+                        <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLat}}">
+                            {{attr.name}}
+                        </option>
+                    </select>
+                </div>
+                <div>
+                    Longitude:
+                    <select value="{{ds.datasetAttributes.locationLng}}" on-change="{{onChange}}">
+                        <option value=""></option>
+                        <option template="" repeat="{{attr in attributeArray}}" value="{{attr.name}}" selected?="{{attr.name == ds.datasetAttributes.locationLng}}">
+                            {{attr.name}}
+                        </option>
+                    </select>
+                </div>
+
+                <div style="padding:10px" class="help">The selected lat/lng attributes should be in <a href="http://spatialreference.org/ref/epsg/4326/" target="_blank">EPSG: 4326</a></div>
+            </template>
         </div>
 
         <div hidden?="{{!saving}}">
@@ -25775,16 +25865,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			table td {
 				padding: 5px;
 			}
-			paper-button {
+			/*paper-button {
 				margin-top: 100px;
 				background-color: rgb(210, 63, 49) !important;
 				color: white;
-			}
+			}*/
 
 			.card {
 				padding: 10px;
 				margin: 10px;
 				box-shadow: 0 0 5px #888;
+			}
+			.card[metadata] {
+				box-shadow: 0 0 5px #2196F3;
+			}
+			.card[zip] {
+				box-shadow: 0 0 5px #2f9b45;
 			}
 		</style>
 
@@ -25793,17 +25889,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			<span style="font-size:12px;color:#888">Resource Type and Parsed Spectra below will be incomplete till package is loaded.</span>
 		</div>
 
-		<template repeat="{{resource, i in ds.resources}}">
-			<div class="card">
-				<template bind="" if="{{resource.type == &apos;datafile&apos; || resource.type == &apos;zip&apos;}}">
-					<esis-ui-dataresource index="{{i}}" resource="{{resource}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
+		<template repeat="{{r, i in ds.resources}}">
+			<div class="card" metadata?="{{r.datasheets.length == 1 &amp;&amp; r.datasheets[0].metadata}}" zip?="{{r.type == &apos;zip&apos;}}">
+
+				<template bind="" if="{{r.type == &apos;datafile&apos; || r.type == &apos;zip&apos;}}">
+					<esis-ui-dataresource issinglesheetmetadata="{{r.datasheets.length == 1 &amp;&amp; r.datasheets[0].metadata}}" index="{{i}}" resource="{{r}}" on-remove="{{_deleteResource}}" on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
-				<template bind="" if="{{resource.type != &apos;datafile&apos; &amp;&amp; resource.type != &apos;zip&apos;}}">
-					<span>{{resource.name}}</span>
+				<template bind="" if="{{r.type != &apos;datafile&apos; &amp;&amp; r.type != &apos;zip&apos;}}">
+					<span>{{r.resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}" on-delete="{{_deleteGenericResource}}">
 		            </esis-ui-delete-button>
-		            <template bind="" if="{{resource.removing}}">
+		            <template bind="" if="{{r.removing}}">
 		            	<div>
 			            	<span style="color:red">Removing...</span>
 	            			<paper-progress indeterminate="" class="red"></paper-progress>
@@ -25811,6 +25908,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		            </template>
 				</template>
 			</div>	
+		</template>
+
+		<template bind="" if="{{ds.resources.length == 0}}">
+			<div style="padding: 10px">
+				Your dataset does not contain any resource files.  Click the &apos;Add&apos; tab to upload resources.
+			</div>
+		</template>
+		<template bind="" if="{{ds.resources.length &gt; 0}}">
+			<div style="padding: 50px 10px 10px 10px">
+				Click the <core-icon icon="create" class="blue"></core-icon> icon to edit or inspect your resources.
+			</div>
 		</template>
 
 	</template>
@@ -25825,7 +25933,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				'ds.deleted' : '_update',
 				'ds.existing.dataset' : '_update',
 				'ds.existing.resources' : '_update',
-				'ds.editMode' : '_updateVisibility'
+				'ds.editMode' : '_updateVisibility',
+				'ds.resources' : 'updateResourceList'
 			},
 
 			ready : function() {
@@ -25842,7 +25951,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 						this.loading = false;
 					}.bind(this));
 				}
-				
+			},
+
+			updateResourceList : function() {
+				this.ds.resources.sort(function(a, b){
+					a = a.datasheets.length == 1 && a.datasheets[0].metadata;
+					b = b.datasheets.length == 1 && b.datasheets[0].metadata;
+
+					if( a && !b) return 1;
+					if( !a && b) return -1;
+					return 0;
+				});
 			},
 
 			clearMetadata : function(e) {
@@ -25962,6 +26081,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 margin: 15px 0 0 0;
             }
             .processing-label {
+                width: 100%;
                 position: absolute;
                 top: 0;
             }
@@ -26002,6 +26122,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 border-radius: 3px;
                 margin-bottom: 10px;
             }
+            .formatHelp {
+                margin: 0 15px; 
+                border-left: 1px solid #2f9b45; 
+                padding: 15px; 
+                color: #888;
+            }
         </style>
 
 
@@ -26040,7 +26166,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div style="position:relative; text-align:center">
                 <div class="processing-label">
                     <h4>Uploading &amp; Processing Files...</h4>
-                    <table style="width:100%; text-align: left">
+                    <table class="table" style="text-align: left">
                         <tr template="" repeat="{{file in staggedFiles}}">
                             <td><b>{{file.name}}</b></td>
                             <td style="color:#888">
@@ -26067,6 +26193,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
         </div>
 
+        <div style="margin-top: 40px">
+            <paper-button class="color: green" on-click="{{toggleTypeHelp}}">Supported File Types</paper-button>
+            <core-collapse opened="{{showTypeHelp}}">
+                <div class="formatHelp">
+                    <div>Currently the following file extensions will be parsed as datasheets.</div>
+                    <ul>
+                        <li>.xls</li>
+                        <li>.xlsx</li>
+                        <li>.csv</li>
+                        <li>.tsv (Tab Separated Value)</li>
+                        <li>.spectra (parsed as .tsv)</li>
+                        <li>.zip<span class="green">*</span></li>
+                    </ul>
+                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have datasheet extension will be parsed.</div>
+
+                    <div>Other file extensions are accepted but will not be parsed.</div>
+                </div>
+            </core-collapse>
+        </div>
+
         <!-- for v2
         <div>
             Link Git Repository:
@@ -26084,6 +26230,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             // v2
             // gitUrl : '',
+
+            showTypeHelp : false,
 
             showHelp : false,
 
@@ -26203,6 +26351,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.showHelp = !this.showHelp;
             },
 
+            toggleTypeHelp : function() {
+                this.showTypeHelp = !this.showTypeHelp;
+            },
+
             expose : function() {
                 this.$.addFileTesting.parentNode.removeChild(this.$.addFileTesting);
 
@@ -26210,6 +26362,294 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 document.body.appendChild(this.$.addFileTesting);
                 this.$.addFileTesting.addEventListener('change', this._handleFileSelect.bind(this), false);
             }
+        });
+    </script>
+</polymer-element></div>
+<div hidden><polymer-element name="esis-attribute-mapping" assetpath="elements/ui/">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .card {
+                padding: 10px;
+                margin: 5px;
+                box-shadow: 0 0 5px #888;
+            }
+            .help {
+                padding: 10px;
+                color: #888;
+                font-size: 12px
+            }
+            .warn {
+                padding: 10px;
+                color: red;
+                font-size: 12px;
+            }
+        </style>
+
+      
+        <div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</div>
+
+        <div style="margin-top:25px" class="card">
+            <div horizontal="" layout="">
+                <div flex="">
+                    <a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+                </div>
+                <div flex="">
+                    Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
+
+                    <input type="file" style="display:none" id="addAttrMap" name="addAttrMap">
+                </div>
+            </div>
+            <div class="help" style="margin-top:30px">Use this to bulk upload and set the attribute name mapping.  This is map file can be reused across your datasets.  NOTE:  This will overwrite all current attribute mappings.</div>
+        </div>
+
+        <div class="card">
+            <h4 class="page-header">Set Attribute</h4>
+            <div layout="" horizontal="" center="">
+                <div>EcoSIS:</div>
+                <div>
+                    <select id="newEcosis">
+                        <option></option>
+                        <option template="" repeat="{{selectList}}" value="{{}}">{{}}</option>
+                    </select>
+                </div>
+            </div>
+            <div layout="" horizontal="" center="">
+                <div>{{ds.data.title}}:</div>
+                <div>
+                    <select id="newCustom">
+                        <option></option>
+                        <option template="" repeat="{{customList}}" value="{{}}">{{}}</option>
+                    </select>
+                </div>
+                <div>
+                    <paper-icon-button icon="add" on-tap="{{add}}">
+                        Add
+                    </paper-icon-button>
+                </div>
+            </div>
+
+            <div class="warn" hidden?="{{usdaCodeSet}}"> 
+                <core-icon icon="attachment"></core-icon> It looks like you haven&apos;t set a <a href="http://plants.usda.gov/java/" target="_blank">USDA Code</a> yet.  It&apos;s highly recommended!
+            </div>
+
+            <div class="help">Use this to add individual attribute mappings.</div>
+        </div>
+
+        <div hidden?="{{!saving}}">
+            <div class="green">Updating...</div>
+            <paper-progress indeterminate=""></paper-progress>
+        </div>
+
+
+        <template bind="" if="{{attrMapList.length &gt; 0}}">
+            <div class="card" style="margin-top:50px">
+                <h4>Current Name Mappings</h4>
+                <table class="table">
+                    <tr>
+                        <th>EcoSIS</th>
+                        <th>{{ds.data.title}}</th>
+                        <th>Remove</th>
+                    </tr>
+                    <tr template="" repeat="{{item in attrMapList}}">
+                        <td>{{item.ecosis}}</td>
+                        <td>{{item.custom}}</td>
+                        <td><core-icon icon="delete" on-tap="{{remove}}" attribute="{{item.custom}}"></core-icon></td>
+                    </tr>
+                </table>
+            </div>
+        </template>
+
+    </template>
+    <script>
+        Polymer('esis-attribute-mapping', {
+            datasheets : [],
+
+            map : {},
+            inverseMap : {},
+            attrMapList : [],
+
+            //  EcoSIS Attribute
+            selectList : [],
+            customList : [],
+
+            // has usda code
+            usdaCodeSet : false,
+
+            ds : null,
+
+            observe : {
+                'ds.inverseAttributeMap' : '_updateMap',
+                'ds.schema' : '_updateMap'
+            },
+
+            ready : function() {
+                this.ds = document.querySelector('esis-datastore');
+
+                // for webdriver
+                this.expose();
+
+                setTimeout(function(){
+                    this._updateSelectList();
+                }.bind(this), 1000);
+            },
+
+            _processMap : function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+                if( files.length == 0 ) return;
+
+                var reader = new FileReader();
+                var contents, parts;
+
+                reader.onload = function(e) {
+                    var newMap = {};
+                    contents = e.target.result.split('\n');
+
+                    for( var i = 0; i < contents.length; i++ ) {
+                        if( contents[i].indexOf('=') > -1 ) {
+                            parts = contents[i].split('=');
+                            newMap[parts[0]] = parts[1];
+                            //if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
+                        }
+                    }
+
+                    this.$.map.value = '';
+                    this._updateAttrMapList(newMap);
+                }.bind(this);
+
+                reader.readAsText(files[0]);
+            },
+
+            _updateMap : function() {
+
+                var c = 0, item = {};
+                var map = this.ds.attributeMap;
+                this.attrMapList = [];
+
+                for( var key in map ) {
+                    if( map[key] && map[key].length > 0 ) {                        
+                        this.attrMapList.push({
+                            ecosis : key,
+                            custom : map[key]
+                        });
+                    } else {
+                        delete map[key]
+                    }
+                }
+
+                this.attrMapList.sort(function(a, b){
+                    if( a.ecosis > b.ecosis ) return 1;
+                    if( a.ecosis < b.ecosis ) return -1;
+                    return 0;
+                });
+
+                this._updateSelectList();
+            },
+
+            _updateSelectList : function() {
+                this.selectList = [];
+                this.customList = [];
+                this.usdaCodeSet = false;
+
+                for( var key in esis.metadata ) {
+                    if( !this.ds.attributeMap[key]  ) {
+                        this.selectList.push(key);
+                    } else if( key == 'USDA Code' ) {
+                        this.usdaCodeSet = true;
+                    }
+                }
+
+                for( var i = 0; i < this.ds.schema.length; i++ ) {
+                    var s = this.ds.schema[i];
+                    if( s.type != "metadata" ) continue;
+                    if( this.ds.attributeMap[s.name] ) continue;
+
+                    this.customList.push(s.name);
+                }
+
+                this.customList.sort(function(a, b){
+                    if( a.toLowerCase() > b.toLowerCase() ) return 1;
+                    if( a.toLowerCase() < b.toLowerCase() ) return -1;
+                    return 0; 
+                });
+            },
+
+            remove : function(e) {
+                var custom = e.currentTarget.getAttribute('attribute');
+                var ecosis = this.ds.inverseAttributeMap[custom];
+
+                if( !confirm('Are you sure you want to remove the mapping: '+ecosis+' = '+custom+'?') ) return;
+
+                delete this.ds.attributeMap[ecosis];
+                delete this.ds.inverseAttributeMap[custom];
+
+                this.save(this.ds.attributeMap);
+            },
+
+            add : function() {
+                var ecosis = this.$.newEcosis.value;
+                var custom = this.$.newCustom.value;
+
+                if( ecosis.length == 0 || custom.length == 0 ) return alert('Please select both attributes to map first');
+
+                this.ds.attributeMap[ecosis] = custom;
+                this.ds.inverseAttributeMap[custom] = ecosis;
+
+                this.$.newEcosis.value = '';
+                this.$.newCustom.value = '';
+
+                this.save(this.ds.attributeMap);
+            },
+
+            _updateAttrMapList : function(newMap) {
+                this.attrMapList = [];
+
+                var c = 0, item = {};
+                var map = newMap || this.map;
+                
+                if( newMap ) {
+                    this.ds.attributeMap = newMap;
+                    this.ds.inverseAttributeMap = {};
+
+                    for( var key in newMap ) {
+                        if( newMap[key] != '' ) this.ds.inverseAttributeMap[newMap[key]] = key;
+                    }
+                }
+
+                this.save(newMap);
+            },
+
+            save : function(newMap) {
+                this.saving = true;
+
+                console.log(newMap);
+
+                document.querySelector('esis-ckan').setAttributeMap(
+                    this.ds.package_id,
+                    newMap,
+                    function(err, resp) {
+                        this.saving = false;
+                        this._updateMap();
+                        if( err ) return alert('Error saving attribute name mapping');
+                    }.bind(this)
+                )
+            },
+
+
+            expose : function() {
+                this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
+
+                // expose file input for tests
+                document.body.appendChild(this.$.addAttrMap);
+                this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
+            }
+
+
         });
     </script>
 </polymer-element></div>
@@ -26288,9 +26728,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				Loading...
 			</template>
 			<select id="license" hidden?="{{licenses.length == 0}}" value="{{ds.data.license_id}}">
-       			<template repeat="{{item in licenses}}">
-       				<option value="{{item.id}}">{{item.title}}</option>
-       			</template>
+       			<option template="" repeat="{{item in licenses}}" value="{{item.id}}">{{item.title}}</option>
     		</select>
 		</div>
 
@@ -26300,10 +26738,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				Loading...
 			</template>
 			<select id="organizations" hidden?="{{organizations.length == 0}}" value="{{ds.data.owner_org}}">
-       			<template repeat="{{item in organizations}}">
-       				<option value="{{item.id}}">{{item.display_name}}</option>
-       			</template>
+       			<option template="" repeat="{{item in organizations}}" value="{{item.id}}">{{item.display_name}}</option>
     		</select>
+    		<div style="color: #888; font-size: 12px; margin-top: 10px">
+    			To add datasets to an <a href="/organization" target="_blank">organization</a> <a href="/dashboard/organizations" target="_blank">you</a> must be a member of the organization with a role of &apos;editor&apos; or &apos;admin&apos;.
+    		</div>
 		</div>
 
 		<div class="form-wrap">
@@ -26341,8 +26780,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		<template bind="" if="{{ds.editMode}}">
 			<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
 
-			<div style="margin-top: 30px;">
-				<esis-ui-delete-button on-delete="{{_delete}}" label="Dataset">
+			<div style="margin: 30px 10px; text-align:right">
+				<esis-ui-delete-button raised="" on-delete="{{_delete}}" label="Dataset">
 	            </esis-ui-delete-button>
 			</div>
 		</template>
@@ -26628,33 +27067,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 		</div>
 
 		<div hidden?="{{currentTab != 2}}">
-	    	<div style="background-color: #eee; border-radius: 6px; margin:10px 0; padding: 10px">If your metadata attribute names do not match <a>this</a> list, you can download the attribute map file.  Fill out the file and then upload in the box to the right.  You can reuse this file, so you only have to fill it out once for your data.  Just make sure to set the attribute map for each dataset you add.</div>
-
-	    	<div horizontal="" layout="" style="margin-top:25px">
-	    		<div flex="">
-	    			<a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
-	    		</div>
-	    		<div flex="">
-	    			Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="{{_processMap}}">
-
-	    			<input type="file" style="display:none" id="addAttrMap" name="addAttrMap">
-	    		</div>
-	    	</div>
-
-	    	<div hidden?="{{!saving}}">
-	            <div class="green">Updating...</div>
-	            <paper-progress indeterminate=""></paper-progress>
-	        </div>
-
-	    	<template bind="" if="{{attrMapList.length &gt; 0}}">
-	    		<h4 style="margin-top:50px">Current Name Mappings</h4>
-	    		<template repeat="{{item, i in attrMapList}}">
-	    			<div layout="" horizontal="">
-	    				<div flex=""><b>{{item.c1[0]}}:</b> <span style="color:#888">{{item.c1[1]}}</span></div>
-	    				<div flex=""><b>{{item.c2[0]}}:</b> <span style="color:#888">{{item.c2[1]}}</span></div>
-	    			</div>
-	    		</template>
-	    	</template>
+	    	<esis-attribute-mapping></esis-attribute-mapping>
 	    </div>
 
 	    <div hidden?="{{currentTab != 1}}">
@@ -26678,16 +27091,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 			observe : {
 				'ds.resources' : '_updateVisibility',
-				'ds.editMode' : '_updateVisibility',
-				'ds.inverseAttributeMap' : '_updateMap'
+				'ds.editMode' : '_updateVisibility'
 			},
 
 			ready : function() {
-
 				this.ds = document.querySelector('esis-datastore');
-
-				// for webdriver
-				this.expose();
 			},
 
 			// fired when element is attached.  For this element we should render the attribute type control
@@ -26702,111 +27110,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 			_updateVisibility : function() {
                 this.menuItem.style.display = (this.ds.editMode && this.ds.resources.length > 0) ? 'block' : 'none';
-            },
-
-			_processMap : function(e) {
-				e.stopPropagation();
-				e.preventDefault();
-
-				var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
-				if( files.length == 0 ) return;
-
-				var reader = new FileReader();
-				var contents, parts;
-
-				reader.onload = function(e) {
-					var newMap = {};
-					contents = e.target.result.split('\n');
-
-					for( var i = 0; i < contents.length; i++ ) {
-						if( contents[i].indexOf('=') > -1 ) {
-							parts = contents[i].split('=');
-							newMap[parts[0]] = parts[1];
-							//if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
-						}
-					}
-
-					this.$.map.value = '';
-					this._updateAttrMapList(newMap);
-				}.bind(this);
-
-				reader.readAsText(files[0]);
-			},
-
-			_updateMap : function() {
-				var c = 0, item = {};
-				var map = this.ds.attributeMap;
-				this.attrMapList = [];
-
-				for( var key in map ) {
-					if( map[key] && map[key].length > 0 ) {
-						if( c % 2 != 0 ) {
-							item['c2'] = [key, map[key]];
-							this.attrMapList.push(item);
-						} else {
-							item = { c1 : [key, map[key]]};
-						}
-						c++;
-					} else {
-						delete map[key]
-					}
-				}
-			},
-
-			_updateAttrMapList : function(newMap) {
-				this.attrMapList = [];
-
-				var c = 0, item = {};
-				var map = newMap || this.map;
-
-				for( var key in map ) {
-					if( map[key] && map[key].length > 0 ) {
-						if( c % 2 != 0 ) {
-							item['c2'] = [key, map[key]];
-							this.attrMapList.push(item);
-						} else {
-							item = { c1 : [key, map[key]]};
-						}
-						c++;
-					} else {
-						delete map[key]
-					}
-				}
-
-				if( newMap ) {
-					this.ds.attributeMap = newMap;
-					this.ds.inverseAttributeMap = {};
-
-					for( var key in newMap ) {
-						if( newMap[key] != '' ) this.ds.inverseAttributeMap[newMap[key]] = key;
-					}
-				}
-
-				this.save(newMap);
-
-				this.menuItem.setSecondaryHtml(c+' Attributes Mapped');
-			},
-
-			save : function(newMap) {
-				this.saving = true;
-				document.querySelector('esis-ckan').setAttributeMap(
-					this.ds.package_id,
-					newMap,
-					function(err, resp) {
-						this.saving = false;
-						if( err ) return alert('Error saving attribute name mapping');
-					}.bind(this)
-				)
-			},
-
-
-			expose : function() {
-		  		this.$.addAttrMap.parentNode.removeChild(this.$.addAttrMap);
-
-		  		// expose file input for tests
-				document.body.appendChild(this.$.addAttrMap);
-				this.$.addAttrMap.addEventListener('change', this._processMap.bind(this), false);
-		  	}
+            }
 
 		});
 	</script>
@@ -28710,13 +29014,11 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
     },
 
     back : function() {
-      if( confirm('Are you sure you want to exit the dataset editor?') ) {
-        var url = '/dataset';
-        if( document.querySelector('esis-dataset-loader').pkgid ) {
-          url += '/'+document.querySelector('esis-dataset-loader').pkgid;
-        }
-        window.location = url;
+      var url = esis.host+'/dataset';
+      if( document.querySelector('esis-dataset-loader').pkgid ) {
+        url += '/'+document.querySelector('esis-dataset-loader').pkgid;
       }
+      window.location = url;
     },
     
     menuSelect: function(e, detail) {
@@ -28873,7 +29175,10 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 
 				Polymer.whenPolymerReady(function() {
 					this.$.dialog.toggle();
-					this.run(true);
+
+					this.async(function(){
+						this.run(true);
+					});
 				}.bind(this));
 			},
 
@@ -28921,9 +29226,9 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 				}
 
 				if( this.data.attributeMap ) {
-					this.ds.inverseAttributeMap = this.data.attributeMap;
+					this.ds.attributeMap = this.data.attributeMap;
 					for( var key in this.data.attributeMap ) {
-						this.ds.attributeMap[this.data.attributeMap[key]] = key;
+						this.ds.inverseAttributeMap[this.data.attributeMap[key]] = key;
 					}
 				}
 
@@ -29053,6 +29358,7 @@ Copyright (c) 2013 Daniel Eden
                         } else {
                             alert('Success!');
                             this.$.dialog.close();
+                            window.location = esis.host+'/dataset/'+ this.ds.package_id;
                         }
                     }.bind(this)
                 );

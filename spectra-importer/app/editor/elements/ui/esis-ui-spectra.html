@@ -1,13 +1,11 @@
 <polymer-element name="esis-ui-spectra" attributes="show resourceId datasheet">
     <template>
         <style>
-            table {
-                width: 100%;
+            .help {
+                color: #888;
+                font-size: 12px;
             }
-            table td {
-                padding: 3px;
-            }
-        </style>
+        </style>    
 
         <template bind if="{{loading}}">
             <div class="green">Loading Spectra #{{index+1}}...</div>
@@ -15,23 +13,40 @@
         </template>
 
         <div hidden?="{{loading}}">
+            <div hidden?="{{currentSpectra.usda_code_status != 1}}" style="padding: 20px 10px">
+                <h4 style="color: red">No 'USDA Code' attribute set.</h4>
+                <div class="help">It is highly recommended that you set the <a href="http://plants.usda.gov/" target="_blank">USDA plant codes</a> for your dataset so EcoSIS can properly fill out the plant information</div>
+            </div>
+
+            <div hidden?="{{currentSpectra.usda_code_status != 2}}" style="padding: 20px 10px">
+                <h4 style="color: red">Invalid USDA Code.</h4>
+                <div class="help">EcoSIS does not recognize the <a href="http://plants.usda.gov/" target="_blank">USDA plant code</a> <b>{{data['USDA Code']}}</b>.  Please provide a correct code so EcoSIS can properly fill out the plant information.</div>
+            </div>
+
             <div style="text-align:right" hidden?="{{indexes.length <= 1}}">
                 Spectra #
                 <select on-change="{{setIndex}}">
-                    <template repeat="{{i in indexes}}">
-                        <option value="{{i}}">{{i+1}}</option>
-                    </template>
+                    <option template repeat="{{i in indexes}}" value="{{i}}">{{i+1}}</option>
                 </select>
             </div>
 
             <esis-ui-chart data="{{data}}" options="{{chartOptions}}" height="500"></esis-ui-chart>
 
-            <table>
+            <table class="table">
                 <tr template repeat="{{attr in attrs}}">
-                    <td><b>{{attr.name}}</b></td>
-                    <td style="color: #888">{{attr.value}}</td>
+                    <td class="{{attr.isUSDACode ? 'green' : ''}}"><b>{{attr.name}}</b></td>
+                    <td style="color: #888">
+                        <span hidden?="{{attr.name == 'Accepted Symbol' || attr.name == 'USDA Code'}}">{{attr.value}}</span>
+                        <span hidden?="{{attr.name != 'Accepted Symbol' && attr.name != 'USDA Code'}}">
+                            <a href="http://plants.usda.gov/core/profile?symbol={{attr.value}}" target="_blank">{{attr.value}}</a>
+                        </span>
+                    </td>
                 </tr>
             </table>
+
+            <div hidden?="{{currentSpectra.usda_code_status != 3}}" style="padding: 20px 10px">
+                Attributes in <span class="green">green</span> were filled in from the given <a href="http://plants.usda.gov/" target="_blank">USDA plant code.</a>
+            </div>
         </div>
 
     </template>
@@ -45,6 +60,10 @@
             attrs : [],
             indexes : [],
             spectraCache : {},
+
+            currentSpectra : {},
+
+            plantAttrs : ['Common Name', 'Accepted Symbol', 'Genus', 'Synonym Symbol', 'Scientific Name', 'Category'],
 
             chartOptions : {
                 explorer : {}
@@ -97,6 +116,8 @@
             },
 
             _renderSpectra : function(spectra) {
+                this.currentSpectra = spectra;
+
                 var re1Wave = /^-?\d+\.?\d*/;
                 var re2Wave = /^-?\d*\.\d+/; 
 
@@ -120,12 +141,19 @@
 
                 this.attrs = [];
                 for( var attrName in spectra ) {
-                    if( attrName == 'datapoints' ) continue;
+                    if( attrName == 'datapoints' || attrName == 'usda_code_status') continue;
                     this.attrs.push({
                         name: attrName, 
-                        value: spectra[attrName]
+                        value: spectra[attrName],
+                        isUSDACode : ( this.plantAttrs.indexOf(attrName) > -1 ) ? true : false
                     });
                 }
+
+                this.attrs.sort(function(a, b){
+                    if( a.name > b.name ) return 1;
+                    if( a.name < b.name ) return -1;
+                    return 0;
+                });
 
             },
 

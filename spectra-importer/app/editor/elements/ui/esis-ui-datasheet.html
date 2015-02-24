@@ -34,6 +34,9 @@
                 color: #888;
                 font-size: 12px;
             }
+            a[metadata] {
+                color: #2196F3;
+            }
 		</style>
 
 
@@ -52,6 +55,7 @@
             <div>
                 <div>Joinable Metadata</div>
                 <div style="color:#888; font-size: 13px">This datasheet only contains metadata to be joined on given data.</div>
+                <div style="color:#888; font-size: 13px">NOTE:  Metadata must be in row format.</div>
                 
                 <template bind if="{{datasheet.metadata}}">
                     <esis-ui-metadata 
@@ -106,7 +110,7 @@
         </div>
 
         <div hidden?="{{datasheet.ignore}}" class="options">
-            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;">
+            <a on-tap="{{_toggleCurrentParse}}" style="padding: 5px 0 0 15px; display: inline-block;" metadata?="{{datasheet.metadata}}">
                 <core-icon icon="{{showCurrentParse ? 'visibility-off' : 'visibility'}}"></core-icon> Format Overview
             </a>
             <div style="padding: 5px 0 0 15px; color:#888; font-size: 13px">
@@ -124,7 +128,7 @@
             <paper-progress indeterminate style="width:100%"></paper-progress>
         </template>
 
-        <div hidden?="{{datasheet.ignore}}">
+        <div hidden?="{{datasheet.ignore}}" style="box-shadow: 0 0 5px #888; margin: 5px; padding: 5px">
             <div>
                 <paper-icon-button 
                     icon="hardware:{{showAttrs ? 'keyboard-arrow-down' : 'keyboard-arrow-right'}}" 
@@ -135,7 +139,7 @@
                 <div class="toggle-label">Attributes: {{parsedAttributes.length}}</div>
             </div>
             <core-collapse opened="{{showAttrs}}" style="margin-bottom: 30px">
-                <table>
+                <table class="table">
                     <tr>
                         <th>Name</th>
                         <th>Units</th>
