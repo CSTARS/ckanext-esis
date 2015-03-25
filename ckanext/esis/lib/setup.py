@@ -148,6 +148,7 @@ class WorkspaceSetup:
 
             datasheets = []
             z = zipfile.ZipFile(ckanLocation, "r")
+            default = {}
             for info in z.infolist():
                 if self._isDataFile(info.filename):
                     parts = info.filename.split("/")
@@ -170,6 +171,23 @@ class WorkspaceSetup:
                     }
                     datasheets.append(datasheet)
 
+                elif re.sub(r".*\/", "", info.filename) == '.ecosis':
+                    parts = info.filename.split("/")
+
+                    zipPath = ""
+                    for i in range(0, len(parts)-1):
+                        zipPath += parts[i]+"/"
+
+                    #extract individual file
+                    z.extract(info, "%s" % zipDir)
+
+                    loc = "%s/%s.ecosis" %  (zipDir, zipPath)
+
+                    file = open(loc, 'r')
+                    default = json.loads(file.read())
+                    file.close()
+
+
             z.close()
 
             info = {
@@ -180,7 +198,8 @@ class WorkspaceSetup:
                 "url_type" : ckanResource["url_type"],
                 "md5" : self._hashfile(ckanLocation),
                 "location" : "%s/%s/info.json" % (rootDir, ckanResource['id']),
-                "changes" : True
+                "changes" : True,
+                "defaultConfig" : default
             }
 
             # save parse info to disk
