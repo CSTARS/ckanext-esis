@@ -81,7 +81,7 @@
         </div>
 
         <div class="options">
-            <div style="color:#888; margin: 10px 0 0px 15px">Default Data Format</div>
+            <div style="color:#888; margin: 10px 0 0px 15px">Default Data Orientation</div>
 
             <div style="margin-left: 20px">
                 <paper-radio-group selected="{{options.type}}" role="radiogroup" style="margin-left: 10px">
@@ -152,10 +152,19 @@
         </div>
 
         <div style="margin-top: 40px">
+            <paper-button class="color: green" on-click="{{toggleDataTool}}">EcoSIS Data Tool</paper-button>
+            <core-collapse opened="{{showDataTool}}">
+                <div class="formatHelp">
+                    <div>Need help packaging your data?  What to markup your data with EcoSIS metadata and controlled vocabularies so it can be easy discovered?  Use the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool</a> to markup your metadata and create a package for your dataset to easily upload using this editor.</div>
+                </div>
+            </core-collapse>
+        </div>
+
+        <div style="margin-top: 40px">
             <paper-button class="color: green" on-click="{{toggleTypeHelp}}">Supported File Types</paper-button>
             <core-collapse opened="{{showTypeHelp}}">
                 <div class="formatHelp">
-                    <div>Currently the following file extensions will be parsed as datasheets.</div>
+                    <div>Currently the following tabular file types will be parsed.</div>
                     <ul>
                         <li>.xls</li>
                         <li>.xlsx</li>
@@ -164,7 +173,7 @@
                         <li>.spectra (parsed as .tsv)</li>
                         <li>.zip<span class="green">*</span></li>
                     </ul>
-                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have datasheet extension will be parsed.</div>
+                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have supported extension will be parsed.</div>
 
                     <div>Other file extensions are accepted but will not be parsed.</div>
                 </div>
@@ -190,6 +199,7 @@
             // gitUrl : '',
 
             showTypeHelp : false,
+            showDataTool : false,
 
             showHelp : false,
 
@@ -311,6 +321,10 @@
 
             toggleTypeHelp : function() {
                 this.showTypeHelp = !this.showTypeHelp;
+            },
+
+            toggleDataTool : function() {
+                this.showDataTool = !this.showDataTool;
             },
 
             expose : function() {

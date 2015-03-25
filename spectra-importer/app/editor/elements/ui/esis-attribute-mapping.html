@@ -43,10 +43,7 @@
             <div layout horizontal center>
                 <div>EcoSIS:</div>
                 <div>
-                    <select id="newEcosis">
-                        <option></option>
-                        <option template repeat="{{selectList}}" value="{{}}">{{}}</option>
-                    </select>
+                    <select id="newEcosis"></select>
                 </div>
             </div>
             <div layout horizontal center>
@@ -189,13 +186,21 @@
                 this.customList = [];
                 this.usdaCodeSet = false;
 
-                for( var key in esis.metadata ) {
-                    if( !this.ds.attributeMap[key]  ) {
-                        this.selectList.push(key);
-                    } else if( key == 'USDA Code' ) {
-                        this.usdaCodeSet = true;
+                
+
+                var html = '<optgroup><option></option></optgroup>';
+                for( var key in esis.schema ) {
+                    html += '<optgroup label="'+key+'">';
+                    for( var i = 0; i < esis.schema[key].length; i++ ) {
+                        if( !this.ds.attributeMap[esis.schema[key][i].name] ) {
+                            html += '<option value="'+esis.schema[key][i].name+'">'+esis.schema[key][i].name+'</option>'
+                        } else if ( esis.schema[key][i].name == 'USDA Code' ) {
+                            this.usdaCodeSet = true;
+                        }
                     }
+                    html += '</optgroup>';
                 }
+                this.$.newEcosis.innerHTML = html;
 
                 for( var i = 0; i < this.ds.schema.length; i++ ) {
                     var s = this.ds.schema[i];

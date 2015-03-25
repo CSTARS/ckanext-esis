@@ -1,6 +1,6 @@
 if( !window.esis ) window.esis = {};
 
-esis.host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.2.109:5000' : '';
+esis.host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.2:5000' : '';
 
 // load user info, if not logged in, redirect to login page
 esis.activeUser = {};
@@ -24,10 +24,17 @@ $.ajax({
 
 $.ajax({
     type : 'GET',
-    url : '/metadata.js',
+    url : '/schema.json',
     dataType : 'json',
     success :function(resp) {
-        esis.metadata = resp;
+        esis.schema = resp;
+
+        esis.schemaMap = {};
+        for( var key in esis.schema ) {
+            for( var i = 0; i < esis.schema[key].length; i++ ) {
+                esis.schemaMap[esis.schema[key][i].name] = esis.schema[key][i];
+            }
+        }
     },
     error : function(err, err2) {
         console.log(err);

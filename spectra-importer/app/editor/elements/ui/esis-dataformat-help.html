@@ -46,8 +46,12 @@
             }
         </style>
 
+        <div class="note">
+            EcoSIS accepts data in several tabular formats.  These tabular files can have measurements laid out by column or by row.  If you would like help filling out metadata or packaging your spectra, try the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool</a> to generate nice tabular packages with EcoSIS metadata.
+        </div>
+
         <div hidden?="{{type != 'column'}}">
-            <b>Column Format</b>
+            <b>Column Orientation</b>
             <table class="preview">
                 <tr>
                     <td class="file attr">File metadata 1</td>
@@ -115,7 +119,7 @@
         </div>
 
         <div hidden?="{{type != 'row'}}">
-            <b>Row Format</b>
+            <b>Row Orientation</b>
             <table class="preview">
                 <tr>
                     <td class="file attr">File metadata 1</td>
