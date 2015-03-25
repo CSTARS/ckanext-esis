@@ -25179,8 +25179,12 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
             }
         </style>
 
+        <div class="note">
+            EcoSIS accepts data in several tabular formats.  These tabular files can have measurements laid out by column or by row.  If you would like help filling out metadata or packaging your spectra, try the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool</a> to generate nice tabular packages with EcoSIS metadata.
+        </div>
+
         <div hidden?="{{type != &apos;column&apos;}}">
-            <b>Column Format</b>
+            <b>Column Orientation</b>
             <table class="preview">
                 <tr>
                     <td class="file attr">File metadata 1</td>
@@ -25248,7 +25252,7 @@ polyfill-next-selector { content: '#tabsContent > *:not(#selectionBar)'; }
         </div>
 
         <div hidden?="{{type != &apos;row&apos;}}">
-            <b>Row Format</b>
+            <b>Row Orientation</b>
             <table class="preview">
                 <tr>
                     <td class="file attr">File metadata 1</td>
@@ -26137,7 +26141,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
 
         <div class="options">
-            <div style="color:#888; margin: 10px 0 0px 15px">Default Data Format</div>
+            <div style="color:#888; margin: 10px 0 0px 15px">Default Data Orientation</div>
 
             <div style="margin-left: 20px">
                 <paper-radio-group selected="{{options.type}}" role="radiogroup" style="margin-left: 10px">
@@ -26194,10 +26198,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
 
         <div style="margin-top: 40px">
+            <paper-button class="color: green" on-click="{{toggleDataTool}}">EcoSIS Data Tool</paper-button>
+            <core-collapse opened="{{showDataTool}}">
+                <div class="formatHelp">
+                    <div>Need help packaging your data?  What to markup your data with EcoSIS metadata and controlled vocabularies so it can be easy discovered?  Use the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool</a> to markup your metadata and create a package for your dataset to easily upload using this editor.</div>
+                </div>
+            </core-collapse>
+        </div>
+
+        <div style="margin-top: 40px">
             <paper-button class="color: green" on-click="{{toggleTypeHelp}}">Supported File Types</paper-button>
             <core-collapse opened="{{showTypeHelp}}">
                 <div class="formatHelp">
-                    <div>Currently the following file extensions will be parsed as datasheets.</div>
+                    <div>Currently the following tabular file types will be parsed.</div>
                     <ul>
                         <li>.xls</li>
                         <li>.xlsx</li>
@@ -26206,7 +26219,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         <li>.spectra (parsed as .tsv)</li>
                         <li>.zip<span class="green">*</span></li>
                     </ul>
-                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have datasheet extension will be parsed.</div>
+                    <div style="margin-bottom: 15px"><span class="green">*</span>Zip files will be extracted on the server. Any files contained within the zip file that have supported extension will be parsed.</div>
 
                     <div>Other file extensions are accepted but will not be parsed.</div>
                 </div>
@@ -26232,6 +26245,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             // gitUrl : '',
 
             showTypeHelp : false,
+            showDataTool : false,
 
             showHelp : false,
 
@@ -26355,6 +26369,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.showTypeHelp = !this.showTypeHelp;
             },
 
+            toggleDataTool : function() {
+                this.showDataTool = !this.showDataTool;
+            },
+
             expose : function() {
                 this.$.addFileTesting.parentNode.removeChild(this.$.addFileTesting);
 
@@ -26410,10 +26428,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div layout="" horizontal="" center="">
                 <div>EcoSIS:</div>
                 <div>
-                    <select id="newEcosis">
-                        <option></option>
-                        <option template="" repeat="{{selectList}}" value="{{}}">{{}}</option>
-                    </select>
+                    <select id="newEcosis"></select>
                 </div>
             </div>
             <div layout="" horizontal="" center="">
@@ -26556,13 +26571,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.customList = [];
                 this.usdaCodeSet = false;
 
-                for( var key in esis.metadata ) {
-                    if( !this.ds.attributeMap[key]  ) {
-                        this.selectList.push(key);
-                    } else if( key == 'USDA Code' ) {
-                        this.usdaCodeSet = true;
+                
+
+                var html = '<optgroup><option></option></optgroup>';
+                for( var key in esis.schema ) {
+                    html += '<optgroup label="'+key+'">';
+                    for( var i = 0; i < esis.schema[key].length; i++ ) {
+                        if( !this.ds.attributeMap[esis.schema[key][i].name] ) {
+                            html += '<option value="'+esis.schema[key][i].name+'">'+esis.schema[key][i].name+'</option>'
+                        } else if ( esis.schema[key][i].name == 'USDA Code' ) {
+                            this.usdaCodeSet = true;
+                        }
                     }
+                    html += '</optgroup>';
                 }
+                this.$.newEcosis.innerHTML = html;
 
                 for( var i = 0; i < this.ds.schema.length; i++ ) {
                     var s = this.ds.schema[i];
@@ -29145,7 +29168,7 @@ polyfill-next-selector { content: '#drawerPanel:not([narrow]) .menuButton';}
 
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
-				this.metadataDefinitions = esis.metadata;
+				this.metadataDefinitions = esis.schemaMap;
 			}
 		});
 	</script>

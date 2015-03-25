@@ -1,0 +1,268 @@
+{
+  "Species": [
+    {
+      "name": "Common Name",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Latin Genus",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Latin Species",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "USDA Code",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Vegetation Association",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    }
+  ],
+  "Measurement": [
+    {
+      "name": "Measurement Quantity",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Absorptance",
+        "DN",
+        "Index",
+        "Other",
+        "Radiance",
+        "Reflectance",
+        "Transflectance",
+        "Transmittance"
+      ]
+    },
+    {
+      "name": "Index Name",
+      "level": 2,
+      "input": "alpha",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Measurement Units",
+      "level": 2,
+      "input": "alpha",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Target Type",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Canopy",
+        "Flower",
+        "Leaf",
+        "Other",
+        "Soil"
+      ]
+    },
+    {
+      "name": "Target Status",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Dried",
+        "Fresh",
+        "Green",
+        "Ground",
+        "Liquid",
+        "Live",
+        "Other",
+        "Panel",
+        "Standard"
+      ]
+    },
+    {
+      "name": "Measurement Venue",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Greenhouse",
+        "Other",
+        "Outdoor"
+      ]
+    },
+    {
+      "name": "Light Source",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Lamp",
+        "Other",
+        "Sun"
+      ]
+    },
+    {
+      "name": "Light Source Specifications",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Foreoptic Type",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Bare Fiber",
+        "Cosine Diffuser",
+        "Foreoptic",
+        "Gershon Tube",
+        "Integrating Sphere",
+        "Leaf Clip",
+        "None",
+        "Other"
+      ]
+    },
+    {
+      "name": "Foreoptic Field of View",
+      "level": 2,
+      "input": "text",
+      "units": "integer degrees",
+      "vocabulary": null
+    },
+    {
+      "name": "Foreoptic Specifications",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    }
+  ],
+  "Instrument": [
+    {
+      "name": "Instrument Manufacturer",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Instrument Model",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Instrument Serial Number",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    },
+    {
+      "name": "Spectral Range, Resolution, wavelength spacing, etc.",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    }
+  ],
+  "Theme": [
+    {
+      "name": "Objective",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Agriculture",
+        "Biochemistry",
+        "Ecology",
+        "Forest",
+        "Other",
+        "Phenology",
+        "Physiology"
+      ]
+    },
+    {
+      "name": "Ecosystem Type",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Aquatic",
+        "Coastal",
+        "Crops",
+        "Forest",
+        "Grassland",
+        "Other",
+        "Wetland"
+      ]
+    }
+  ],
+  "Location": [
+    {
+      "name": "Latitude",
+      "level": 1,
+      "input": "latlng",
+      "units": "decimal degree",
+      "vocabulary": null
+    },
+    {
+      "name": "Longitude",
+      "level": 1,
+      "input": "latlng",
+      "units": "decimal degree",
+      "vocabulary": null
+    },
+    {
+      "name": "Location Name",
+      "level": 1,
+      "input": "",
+      "units": "",
+      "vocabulary": null
+    }
+  ],
+  "Date": [
+    {
+      "name": "Measurement Date",
+      "level": 1,
+      "input": "date",
+      "units": "ISO Date ",
+      "vocabulary": null
+    },
+    {
+      "name": "Sample Collection Date",
+      "level": 1,
+      "input": "date",
+      "units": "ISO Date ",
+      "vocabulary": null
+    },
+    {
+      "name": "Phenological Status",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null
+    }
+  ]
+}

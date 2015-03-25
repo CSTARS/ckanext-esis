@@ -91,7 +91,7 @@ module.exports = function (grunt) {
                 {
                     expand: true,
                     dot: true,
-                    src: ['metadata.js','metadata_map'], 
+                    src: ['schema.json','metadata_map'], 
                     dest: '<%= yeoman.dist %>',
                     cwd: '<%= yeoman.app %>'
                 }]
