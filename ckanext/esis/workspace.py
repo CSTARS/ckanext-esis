@@ -178,16 +178,39 @@ class WorkspaceController(BaseController):
                 workspacePackage['resources'].append(workspaceResource)
 
             if 'datasheets' in resource:
+                defaultConfig = resource.get('defaultConfig')
+
                 for datasheet in resource['datasheets']:
+                    isMetadata = False
+                    sheetLayout = layout
+                    joinOn = ""
+
+                    # if a .ecosis file was provided, set the default parameters
+                    if defaultConfig != None:
+                        if defaultConfig.get(datasheet["name"]) != None:
+                            config = defaultConfig.get(datasheet["name"])
+                            if config["type"] == "metadata":
+                                isMetadata = True
+                                joinOn = config["join"]
+                            sheetLayout = config["orientation"]
+
                     workspaceDatasheet = self._getById(workspaceResource['datasheets'], datasheet['id'])
 
+                    info = {}
                     if workspaceDatasheet == None:
-                        workspaceResource['datasheets'].append({
-                            "id" : datasheet['id'],
-                            "layout" : layout
-                        })
-                    else:
-                        workspaceDatasheet["layout"] = layout
+                        info = {
+                            "id" : datasheet['id']
+                        }
+                        workspaceResource['datasheets'].append(info)
+
+                    info["layout"] = sheetLayout
+
+                    if isMetadata:
+                        info["metadata"] = True
+                        info["matchAttribute"] = joinOn
+                        info["matchType"] = "attribute"
+                    elif info.get("metadata") != None:
+                        del info["metadata"]
 
             # make sure we save
             resource['changes'] = True
@@ -542,7 +565,8 @@ class WorkspaceController(BaseController):
                 "name" : resource["name"],
                 "type" : resource["type"],
                 "id"   : resource["id"],
-                "datasheets" : datasheets
+                "datasheets" : datasheets,
+                "defaultConfig" : resource.get("defaultConfig")
             })
 
         # now add data resources that have been ignored
