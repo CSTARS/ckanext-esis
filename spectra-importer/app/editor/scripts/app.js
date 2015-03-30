@@ -1,6 +1,6 @@
 if( !window.esis ) window.esis = {};
 
-esis.host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.2:5000' : '';
+esis.host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.7:5000' : '';
 
 // load user info, if not logged in, redirect to login page
 esis.activeUser = {};
