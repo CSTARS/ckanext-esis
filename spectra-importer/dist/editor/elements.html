@@ -27228,7 +27228,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 		<div hidden?="{{ds.data.hidden}}">
 			<div>
-				Please verify all information looks correct.  Once everything looks correct, click &apos;Push&apos; below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+				Please verify all information looks correct.  Once everything looks correct, click &apos;Push&apos; below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.  Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
 			</div>
 
 			<div class="card">
@@ -27256,8 +27256,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 				</table>
 			</div>
 
+			<div class="card">
+				<h4>EcoSIS Metadata Information</h4>
+				<div id="ecosisInfo"></div>
+				<div style="font-size: 12px; color: #888; padding: 5px">
+					If you need help adding EcoSIS metadata attributes, please try out the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool.</a>
+				</div>
+			</div>
+
 			<paper-button style="float:right" on-tap="{{cancel}}">Cancel</paper-button>
-			<paper-button raised="" class="colored" on-tap="{{finalize}}">Push</paper-button>
+			<paper-button id="pushBtn" style="display: none" raised="" class="colored" on-tap="{{finalize}}">Push</paper-button>
 		</div>
 
 
@@ -27267,6 +27275,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 			ds : {},
 
 			counts : {},
+			canPush : false,
+			requireEcosisAttrs : 3,
+			warnEcosisAttrs : 10,
 
 			observe : {
 				'ds.resources' : 'updateCounts'
@@ -27299,6 +27310,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 						}
 					}
 				}
+
+				this.updatePushStatus();
+			},
+
+			updatePushStatus : function() {
+				var attrs = [];
+				var count = 0;
+
+				this.ds.schema.forEach(function(item){
+					if( this.ds.metadataDefinitions[item.name] ) count++;
+				}.bind(this));
+
+				if( count < this.requireEcosisAttrs ) {
+					this.$.pushBtn.style.display = 'none';
+					this.$.ecosisInfo.innerHTML = 
+						'<span style="color:red">' +
+							'You have '+count+' EcoSIS metadata attributes. ' +
+							this.requireEcosisAttrs + ' are required to push to search.' +
+						'</span>';
+					return;
+				}
+
+				this.$.pushBtn.style.display = 'inline-block';
+				if( count < this.warnEcosisAttrs ) {
+					this.$.ecosisInfo.innerHTML = 
+						'<span style="color: orange">' +
+							'You have '+count+' EcoSIS metadata attributes. ' +
+							this.warnEcosisAttrs + ' are recommended.' +
+						'</span>';
+					return;
+				}
+
+				this.$.ecosisInfo.innerHTML = 
+					'<span style="color: green">' +
+						'You have '+count+' EcoSIS metadata attributes. ' +
+					'</span>';
+
 			},
 
 			finalize : function(){
