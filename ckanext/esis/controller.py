@@ -16,6 +16,10 @@ from bson.code import Code
 from bson.son import SON
 import os, shutil
 
+from ckanext.esis.lib.setup import WorkspaceSetup
+from ckanext.esis.lib.process import ProcessWorkspace
+from ckanext.esis.lib.join import SheetJoin
+
 from ckan.controllers.package import PackageController
 import subprocess
 
@@ -37,6 +41,15 @@ workspaceCollection = db[workspaceCollectionName]
 schemaCollectionName = config._process_configs[1]['esis.mongo.schema_collection']
 schemaCollection = db[schemaCollectionName]
 
+usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
+
+joinlib = SheetJoin()
+setup = WorkspaceSetup()
+process = ProcessWorkspace()
+
+setup.setCollection(workspaceCollection)
+process.setCollection(workspaceCollection, usdaCollection)
+
 class SpectraController(PackageController):
     mapreduce = {}
     # used for git commands
@@ -44,6 +57,8 @@ class SpectraController(PackageController):
     workspaceDir = ""
 
     def __init__(self):
+        process.setHelpers(joinlib)
+
         self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
 
         self.workspaceDir = config._process_configs[1]['ecosis.workspace.root']
@@ -135,6 +150,33 @@ class SpectraController(PackageController):
             # remove from workspace if there
             if os.path.exists("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])):
                 shutil.rmtree("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id']))
+
+            # reprocess all metadata
+            (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(workspace['package_id'])
+            resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
+            # remove any cached match counts
+            for resource in resources:
+                if resource.get('datasheets') == None:
+                    continue
+
+                for sheet in resource.get('datasheets'):
+                    if sheet.get('metadata') != True:
+                        continue
+                    if sheet.get('matches') == None:
+                        continue
+
+                    matches = sheet.get('matches')
+
+                    for datasheet in r.get('datasheets'):
+                        if matches.get(datasheet.get('id')):
+                            del matches[datasheet.get('id')]
+
+                            # save the changes
+                            resource['changes'] = True
+                            resource['location'] = "%s/%s/info.json" % (rootDir, resource['id'])
+
+            process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
 
     # rebuild entire search index
