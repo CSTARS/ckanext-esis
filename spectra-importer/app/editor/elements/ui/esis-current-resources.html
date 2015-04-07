@@ -53,6 +53,7 @@
 						on-datasheet-updated="{{clearMetadata}}">
 					</esis-ui-dataresource>
 				</template>
+
 				<template bind if="{{r.type != 'datafile' && r.type != 'zip'}}">
 					<span>{{r.resource.name}}</span>
 					<esis-ui-delete-button index="{{i}}"
@@ -202,13 +203,21 @@
 
 		  	_deleteResource : function(e) {
 		  		var id = e.detail;
-		  		for( var i = 0; i < this.ds.resources.length; i++ ) {
+		  		for( var i = this.ds.resources.length - 1; i >= 0; i-- ) {
 		  			if( this.ds.resources[i].id == id ) {
 		  				this.ds.resources.splice(i, 1);
-		  				return;
+		  			} else {
+
+		  				// we want all sheets to reload as state has changed
+		  				for( var j = 0; j < this.ds.resources[i].datasheets.length; j++ ) {
+		  					this.ds.resources[i].datasheets[j].loaded = false;
+		  				}
 		  			}
 		  		}
-		  	},
+
+		  		var eles = this.shadowRoot.querySelectorAll('esis-ui-dataresource');
+		  		for( var i = 0; i < eles.length; i++ ) eles[i].edit = false;
+		  	}
 		});
 	</script>
 <polymer-element>

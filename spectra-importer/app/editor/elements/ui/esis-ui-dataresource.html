@@ -123,9 +123,9 @@
                     </div>
                 </div>
                 <div hidden?="{{resource.ignore}}" class="item">
-                    <div style="margin-left:20px">Change All Layouts</div>
-                    <paper-button raised on-tap="{{setAllToRow}}" style="margin:10px 0px 10px 50px">Set to Row Layout</paper-button>
-                    <paper-button raised on-tap="{{setAllToColumn}}" style="margin:10px 0px 10px 50px">Set to Column Layout</paper-button>
+                    <div style="margin-left:20px">Change All Orientations</div>
+                    <paper-button raised on-tap="{{setAllToRow}}" style="margin:10px 0px 10px 50px">Set Row Orientation</paper-button>
+                    <paper-button raised on-tap="{{setAllToColumn}}" style="margin:10px 0px 10px 50px">Set Column Orientation</paper-button>
                 </div>
             </div>
         </paper-dropdown>
@@ -150,7 +150,7 @@
                             </span>
                         </td>
                         <td><span hidden?="{{!file.spectra_count || file.ignore || file.metadata}}">Spectra: {{file.spectra_count}}</span></td>
-                        <td><span hidden?="{{file.ignore}}">Layout: {{file.layout}}</span></td>
+                        <td><span hidden?="{{file.ignore}}">Orientation: {{file.layout}}</span></td>
                     </tr>
                 </table>
             </core-collapse>
@@ -247,7 +247,8 @@
             currentFile : null,
             observe : {
                 edit : 'updateSelected',
-                'resource' : 'updateCount'
+                'resource' : 'updateCount',
+                'resource.type' : 'updateCount'
             },
 
             editMd5 : '',
@@ -260,6 +261,7 @@
             toggleEdit : function() {
                 this.edit = !this.edit;
                 if( this.edit ) this.details = false;
+                else this.updateCount();
             },
 
             toggleDetails : function() {

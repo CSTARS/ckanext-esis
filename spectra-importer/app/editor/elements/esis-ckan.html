@@ -414,13 +414,18 @@
 		    	formData.append('name', file.filename);
 		    	formData.append('upload', new Blob([file.contents], {type: file.mimetype}), file.filename);
 
+		    	var time = new Date().getTime();
+
 		        var xhr = $.ajaxSettings.xhr();
 		        // attach progress handler to the XMLHttpRequest Object
 		        try {
 		            if( progress ) {
 		                xhr.upload.addEventListener("progress", function(evt){
-		                    if (evt.lengthComputable) {  
-		                        progress(((evt.loaded / evt.total)*100).toFixed(0));
+		                    if (evt.lengthComputable) {
+		                    	var diff = new Date().getTime() - time;
+		                    	var speed = (evt.loaded / 1000000) / (diff / 1000);
+
+		                        progress(((evt.loaded / evt.total)*100).toFixed(0), speed.toFixed(2)+'Mbps');
 		                    }
 		                }, false); 
 		            }
@@ -449,6 +454,8 @@
 				        callback({error:true,message:'Request Error'});
 				    }
 				});
+
+				return xhr;
 			},
 
 			addUrlResource : function(resource, callback) {
