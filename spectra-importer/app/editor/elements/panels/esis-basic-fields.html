@@ -37,7 +37,7 @@
 					URL: {{baseUrl}}{{ds.data.name}}
 				</div>
 			</div>
-			<div hidden?="{{ds.editMode}}" > 
+			<div hidden?="{{ds.editMode}}" >
 				<paper-input-decorator floatingLabel label="Title" >
 					<input type="text" value="{{ds.data.title}}" />
 				</paper-input-decorator>
@@ -105,14 +105,27 @@
 		</div>
 
 		<div class="form-wrap">
-			<paper-input type="text" floatingLabel label="Author" value="{{ds.data.author}}"></paper-input>
-			<paper-input type="text" floatingLabel label="Author Email" value="{{ds.data.author_email}}"></paper-input>
+			<paper-input type="text" id="websiteInput" on-change="{{onWebsiteInputChange}}" floatingLabel label="Website" ></paper-input>
 		</div>
 
 		<div class="form-wrap">
+			Citation<br />
+			<paper-input type="text" floatingLabel label="Author" value="{{ds.data.author}}"></paper-input>
+			<paper-input type="text" floatingLabel label="Author Email" value="{{ds.data.author_email}}"></paper-input>
+
+			<br />
 			<paper-input type="text" value="{{ds.data.maintainer}}" floatingLabel label="Maintainer" ></paper-input>
 			<paper-input type="text" value="{{ds.data.maintainer_email}}" floatingLabel label="Maintainer Email" ></paper-input>
+
+			<br />
+			<paper-input type="text" id="citationInput" on-change="{{onCitationInputChange}}" floatingLabel label="Citation" ></paper-input>
+			<paper-input type="text" id="citationDOIInput" on-change="{{onCitationDOIInputChange}}" floatingLabel label="Citation DOI" ></paper-input>
+
+			<br/>
+			<paper-input type="text" id="fundingSourceInput" on-change="{{onFundingSourceInputChange}}" floatingLabel label="Funding Source" ></paper-input>
+			<paper-input type="text" id="fundingSourceNumberInput" on-change="{{onFundingSourceNumberInputChange}}" floatingLabel label="Funding Source Grant Number" ></paper-input>
 		</div>
+
 
 		<template bind if="{{!ds.editMode && !creating && ds.data.title.length > 2}}">
 			<paper-button class="btn-green" raised on-click="{{create}}">Create Dataset</paper-button>
@@ -125,7 +138,7 @@
 			<core-icon icon="arrow-forward" style="color:#888;vertical-align:bottom"></core-icon> Now <a on-tap="{{_addResources}}">add resources</a> to your dataset.
 
 			<div style="margin: 30px 10px; text-align:right" >
-				<esis-ui-delete-button 
+				<esis-ui-delete-button
 					raised
 	                on-delete="{{_delete}}" label="Dataset">
 	            </esis-ui-delete-button>
@@ -205,13 +218,15 @@
 					this.licenses = resp.result;
 				}.bind(this));
 
+				this.ds.addEventListener('load', this.setExtras.bind(this));
+
 				/*$.get(esis.host+'/api/3/action/organization_list?all_fields=true', function(resp){
 					this.organizations = resp.result;
 					this.organizations.splice(0,0, {
 						id : '',
 						display_name : 'No Organization'
 					});
-					
+
 					if( this.group ) this.ds.data.owner_org = this.group;
 
 				}.bind(this));*/
@@ -258,7 +273,7 @@
 				this._updateServer();
 			},
 
-			
+
 			updateTimer : -1,
 			_updateServer : function() {
 				if( !this.ds.loaded || !this.ds.editMode ) return;
@@ -304,7 +319,7 @@
 					this.ds.data.private = false;
 				} else {
 					var opt = this.$.organizations.querySelector('option:checked');
-					if( opt ) this.ds.owner_org_name = opt.innerHTML;	
+					if( opt ) this.ds.owner_org_name = opt.innerHTML;
 				}
 				this._updateServer();
 			},
@@ -370,7 +385,7 @@
 		  		if( confirm('Are you sure your want to remove this dataset?') ) {
 		  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
 		  				document.querySelector('esis-ckan').deletePackage(
-		  					this.ds.package_id, 
+		  					this.ds.package_id,
 		  					function(err, resp) {
 		  						alert('package deleted');
 		  						window.location = '/dataset';
@@ -388,6 +403,50 @@
                		if( pair[0] == variable ) return pair[1];
        			}
        			return null;
+			},
+
+			onWebsiteInputChange : function() {
+				this.ds.setDatasetExtra('Website', this.$.websiteInput.value);
+				this._updateServer();
+			},
+
+			onCitationInputChange : function() {
+				this.ds.setDatasetExtra('Citation', this.$.citationInput.value);
+				this._updateServer();
+			},
+
+			onCitationDOIInputChange : function() {
+				this.ds.setDatasetExtra('Citation DOI', this.$.citationDOIInput.value);
+				this._updateServer();
+			},
+
+			onFundingSourceInputChange : function() {
+				this.ds.setDatasetExtra('Funding Source', this.$.fundingSourceInput.value);
+				this._updateServer();
+			},
+
+			onFundingSourceNumberInputChange : function() {
+				this.ds.setDatasetExtra('Funding Source Grant Number', this.$.fundingSourceNumberInput.value);
+				this._updateServer();
+			},
+
+			setExtras : function() {
+				if( !this.ds.data.extras ) return;
+
+				var website = this.ds.getDatasetExtra('Website');
+				if( website ) this.$.websiteInput.value = website.value;
+
+				var citation = this.ds.getDatasetExtra('Citation');
+				if( citation ) this.$.citationInput.value = citation.value;
+
+				var citationDoi = this.ds.getDatasetExtra('Citation DOI');
+				if( citationDoi ) this.$.citationDOIInput.value = citationDoi.value;
+
+				var fundingSource = this.ds.getDatasetExtra('Funding Source');
+				if( fundingSource ) this.$.fundingSourceInput.value = fundingSource.value;
+
+				var fundingSourceNumber = this.ds.getDatasetExtra('Funding Source Grant Number');
+				if( fundingSourceNumber ) this.$.fundingSourceNumberInput.value = fundingSourceNumber.value;
 			}
 
 		});

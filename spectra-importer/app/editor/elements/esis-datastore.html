@@ -26,7 +26,8 @@
 				version : '',
 				owner_org : '',
 				tags : [],
-				private : false
+				private : false,
+				extras : []
 			},
 			owner_org_name : '',
 
@@ -53,13 +54,42 @@
 
 			metadataDefinitions : {},
 
-			// this flag prevents up from making updates when we are initially 
+			// this flag prevents up from making updates when we are initially
 			// setting the data
 			loaded : false,
 
 			ready : function() {
 				if( this.data.title == '' ) window.location.hash = '#basic-fields';
 				this.metadataDefinitions = esis.schemaMap;
+			},
+
+			fireLoaded : function() {
+				this.fire('load');
+			},
+
+			getDatasetExtra : function(key) {
+				if( !this.data.extras ) return null;
+
+				for( var i = 0; i < this.data.extras.length; i++ ) {
+					if( this.data.extras[i].key == key ) return this.data.extras[i];
+				}
+				return null;
+			},
+
+			setDatasetExtra : function(key, value) {
+				if( !this.data.extras ) this.data.extras = [];
+
+				for( var i = 0; i < this.data.extras.length; i++ ) {
+					if( this.data.extras[i].key == key ) {
+						this.data.extras[i].value = value;
+						return;
+					}
+				}
+
+				this.data.extras.push({
+					key : key,
+					value : value
+				});
 			}
 		});
 	</script>

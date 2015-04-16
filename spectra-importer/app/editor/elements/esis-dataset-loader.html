@@ -15,7 +15,7 @@
 
 			ready : function() {
 				this.pkgid = this._getVar('id');
-				
+
 				this.ds = document.querySelector('esis-datastore');
 				this.ckan = document.querySelector('esis-ckan');
 
@@ -86,6 +86,8 @@
 					return 0;
 				});
 				this.ds.resources = this.data.resources;
+
+				this.ds.fireLoaded();
 			},
 
 			_getVar : function(variable) {
