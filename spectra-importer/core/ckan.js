@@ -22,18 +22,18 @@ module.exports = function(config) {
   }
 
   /**
-	 * Add a resource to a package using the browsers FormData object in a browser
-	 * or user the superagent for NodeJS
+   * Add a resource to a package using the browsers FormData object in a browser
+   * or user the superagent for NodeJS
    *
-	 * pkgid: id of the package to add to
-	 * file: object representing the to resource to upload or if NodeJS string path to file
-	 * callback: callback handler
-	 * progress: callback for progress update (not supported in NodeJS)
-	 **/
-	this.addResource = function(pkgid, file, callback, progress) {
+   * pkgid: id of the package to add to
+   * file: object representing the to resource to upload or if NodeJS string path to file
+   * callback: callback handler
+   * progress: callback for progress update (not supported in NodeJS)
+   **/
+  this.addResource = function(pkgid, file, callback, progress) {
     if( isBrowser ) this._addResourceBrowser(pkgid, file, callback, progress);
     else this._addResourceNode(pkgid, file, callback);
-	}
+  }
 
   // TODO: this needs to be verified :/
   this._addResourceNode = function(pkgid, file, callback) {
@@ -97,6 +97,17 @@ module.exports = function(config) {
     });
 
     return xhr;
+  }
+
+  this.getLayoutOverview = function(pkgid, rid, sid, callback) {
+    var params = '?package_id=' + pkgid +
+      '&resource_id=' + rid +
+      '&datasheet_id=' + sid;
+
+    get(this.host+'/workspace/getLayoutOverview'+params, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body)
+    });
   }
 
 

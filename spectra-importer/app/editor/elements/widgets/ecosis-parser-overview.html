@@ -1,0 +1,299 @@
+<dom-module id="ecosis-parser-overview">
+  <style>
+    :host {
+        display: block;
+    }
+  </style>
+
+  <template>
+    <div class="layout horizontal">
+        <div flex id="canvasParent">
+            <div id="loadingPanel"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
+
+            <canvas style="border:1px solid #333" width="400" height="400"
+                on-mousewheel="onMouseWheel"
+                on-mousedown="onMouseDown"
+                on-mousemove="onMouseMove"
+                on-mouseup="onMouseUp"
+                on-mouseout="onMouseOut">
+            </canvas>
+        </div>
+        <div>
+            <div class="layout vertical">
+                <div>
+                  <a class="btn btn-default" on-click="zoomIn">
+                    <i class="fa fa-plus"></i>
+                  </a>
+                </div>
+                <div>
+                  <a class="btn btn-default" on-click="zoomOut">
+                    <i class="fa fa-minus"></i>
+                  </a>
+                </div>
+                <div>
+                  <a class="btn btn-default" on-click="zoomStart">
+                    <i class="fa fa-compress"></i>
+                  </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <span style="color: green">Global Metadata</span> |
+        <span style="color: red">Schema Attribute Names</span> |
+        <span style="color: blue">Spectra Data/Metadata</span>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-parser-overview',
+
+    ready : function() {
+      this.top = 0;
+      this.left = 0,;
+      this.data = null;
+
+      this.zoom = 5;
+
+      this.cell : {
+          width : 3,
+          height : 1
+      };
+
+      this.colors : {
+          blue : '#2196F3',
+          red : '#FF9800',
+          green : '#2f9b45',
+          grey : '#888888',
+          light_grey : '#cccccc'
+      };
+
+      this.type = 'row';
+      this.ranges = {
+          global : {
+              start : 0,
+              end : 1
+          },
+          local : {
+              start : 2,
+              end : 4,
+          }
+      };
+
+      this.dragging = false;
+      this.dragStart = [0, 0];
+      this.dragPos : [0, 0];
+
+      this.ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
+      $(window).on('resize', this.resize.bind(this));
+    },
+
+    attached : function() {
+        this.async(function(){
+            this.resize();
+        })
+    },
+
+    reset : function() {
+        this.clear();
+        this.data = null;
+        this.ranges = {
+            global : {
+                start : 0,
+                end : 0
+            },
+            local : {
+                start : 0,
+                end : 0,
+            }
+        },
+        this.top = 0;
+        this.left = 0;
+        this.zoom = 5;
+    },
+
+    load : function() {
+        if( !this.show ) return;
+
+        this.loading = true;
+        this.reset();
+
+        ecosis.ckan.getLayoutOverview(
+            ecosis.ds.package_id,
+            this.resourceId,
+            this.sheetId,
+            function(err, resp) {
+                this.loading = false;
+
+                if( err ) return alert('Error loading layout overview :(');
+                if( resp.error ) return alert('Error loading layout overview :(');
+
+                this.type = resp.layout;
+                if( resp.localRange ) {
+                    this.ranges.local.start = resp.localRange.start;
+                    this.ranges.local.end = resp.localRange.stop;
+                }
+                if( resp.globalRange ) {
+                    this.ranges.global.start = resp.globalRange.start;
+                    this.ranges.global.end = resp.globalRange.stop;
+                }
+                this.data = resp.data;
+
+                this.resize();
+            }.bind(this)
+        );
+    },
+
+    resize : function() {
+        this.width = $(this.$.canvasParent).width()-30;
+        if( this.width < 250 ) this.width = 250;
+
+        this.async(function(){
+            this.redraw();
+        });
+    },
+
+    onMouseDown : function(e) {
+        this.dragging = true;
+        this.dragStart = [e.x,e.y];
+        this.dragPos = [this.left,this.top];
+    },
+
+    onMouseUp : function(e) {
+        this.dragging = false;
+    },
+    onMouseOut : function(e) {
+        this.dragging = false;
+    },
+
+    onMouseMove : function(e) {
+        if( !this.dragging ) return;
+
+        this.left = this.dragPos[0] + (e.x - this.dragStart[0]);
+        this.top = this.dragPos[1] + (e.y - this.dragStart[1]);
+        this.redraw();
+    },
+
+    onMouseWheel : function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var delta = Math.max(-1, Math.min(1, e.wheelDelta));
+        this.adjustZoom(delta);
+    },
+
+    zoomStart : function() {
+        this.top = 0;
+        this.left = 0;
+        this.zoom = 5;
+    },
+
+    zoomIn : function() {
+        this.adjustZoom(1);
+    },
+
+    zoomOut : function() {
+        this.adjustZoom(-1);
+    },
+
+    adjustZoom : function(delta) {
+        this.zoom += delta;
+
+        if( this.zoom < 1 ) this.zoom = 1;
+        if( this.zoom > 12 ) this.zoom = 12;
+    },
+
+    redraw : function() {
+        if( !this.data || !this.show ) return;
+
+        this.clear();
+
+        var w = this.cell.width * this.zoom * 10;
+        var h = this.cell.height * this.zoom * 10;
+        var t = this.top, l = this.left, row, i, j, color, half, fh, text;
+
+        this.ctx.lineWidth = "2";
+
+        this.ctx.fillStyle = '#000000';
+
+        for( i = 0; i < this.data.length; i++ ) {
+            row = this.data[i];
+
+            for( j = 0; j < row.length; j++ ) {
+
+                color = this.getColor(i, j);
+
+                if( color == this.colors.blue ) {
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = this.colors.light_grey;
+
+                    if( this.type == 'row') {
+                        half = (h / 2) - 1;
+                        this.ctx.moveTo(l, t+half);
+                        this.ctx.lineTo(l+w-2, t+half);
+                    } else {
+                        half = (w / 2) - 1;
+                        this.ctx.moveTo(l+half, t);
+                        this.ctx.lineTo(l+half, t+h-2);
+                    }
+
+                    this.ctx.stroke();
+
+                    fh = Math.floor(h*.2);
+                    this.ctx.font = fh+"px Arial";
+                    this.ctx.fillStyle = this.colors.light_grey;
+
+                    if( this.type == 'row') {
+                        this.ctx.fillText(this.data[0][j], l+2, t+fh+3, w-2);
+                    } else {
+                        this.ctx.fillText(this.data[i][0], l+2, t+fh+3, w-2);
+                    }
+                }
+
+                this.ctx.strokeStyle = color;
+                this.ctx.fillStyle = color;
+
+                this.ctx.beginPath();
+                this.ctx.rect(l,t,w-2,h-2);
+                this.ctx.stroke();
+
+                this.ctx.font = Math.floor(h*.6)+"px Arial";
+                this.ctx.fillStyle = color;
+                this.ctx.fillText(row[j].substring(0, 10), l+2, t+h-7, w);
+
+                l += w;
+                if( l > this.width ) break;
+            }
+
+            l = this.left;
+            t += h;
+            if( t > this.height ) break;
+        }
+    },
+
+    getColor : function(i, j) {
+        if( i >= this.ranges.global.start && i < this.ranges.global.end && j < 2 ) {
+            return this.colors.green
+        } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' && j == 0 ) {
+            return this.colors.red;
+        } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' ) {
+            return this.colors.blue;
+        } else if( i == this.ranges.local.start && this.type == 'row' ) {
+            return this.colors.red;
+        } else if( i > this.ranges.local.start && i <= this.ranges.local.end && this.type == 'row' ) {
+            return this.colors.blue;
+        } else {
+            return this.colors.light_grey;
+        }
+    },
+
+    clear : function() {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillRect(0, 0, this.width, this.height);
+    }
+
+  });
+</script>

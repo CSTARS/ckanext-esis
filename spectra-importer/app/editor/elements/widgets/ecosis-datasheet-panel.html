@@ -1,0 +1,152 @@
+<dom-module id="ecosis-datasheet-panel">
+  <template>
+    <h6 id="titleLabel"></h6>
+
+    <span class="alert alert-danger" style="display:none" id="parseError">
+        Error parsing file
+    </span>
+
+    <!-- Is Metadata -->
+    <div id="metadataSelectPanel">
+      <div class="form-horizontal">
+        <div class="form-group">
+
+          <label for="inputIsMetadata" class="col-lg-2 control-label">Joinable Metadata</label>
+          <div class="col-lg-10">
+            <div class="checkbox">
+              <label>
+                <input id="inputIsMetadata" type="checkbox"> This datasheet only contains metadata to be joined on given data.
+              </label>
+            </div>
+            <span class="help-block">
+              NOTE:  Metadata must be in row format.
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <ecosis-metadata-join-panel id="joinMetadata" style="display:none"></ecosis-metadata-join-panel>
+    </div>
+
+    <!-- Ignore -->
+    <div class="form-horizontal">
+      <div class="form-group">
+
+        <label for="inputIgnore" class="col-lg-2 control-label">Ignore</label>
+        <div class="col-lg-10">
+          <div class="checkbox">
+            <label>
+              <input id="inputIgnore" type="checkbox"> This datasheet should not be parsed.
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Datasheet Orientation -->
+    <div class="form-horizontal">
+      <div class="form-group">
+
+        <label for="inputIgnore" class="col-lg-2 control-label">Orientation</label>
+        <div class="col-lg-10">
+          <div class="radio">
+            <label>
+              <input type="radio" id="columnInput" value="column" checked="" on-click="onOrientationChange">
+              Datasheet is laid out by column.
+            </label>
+          </div>
+          <div class="radio">
+            <label>
+              <input type="radio" id="rowInput" value="row" on-click="onOrientationChange">
+              Datasheet is laid out by row.
+            </label>
+          </div>
+
+          <a on-click="toggleHelp">Format Help.</a>
+          <ecosis-dataformat-help style="display:none"></ecosis-dataformat-help>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="well well-small">
+        <a class="btn btn-link" on-click="toggleCurrentParse">
+            <i class="fa fa"></i> Format Overview
+        </a>
+        <div style="padding: 5px 0 0 15px; color:#888; font-size: 13px">
+            Visually inspect how EcoSIS is parsing this sheet.
+        </div>
+
+        <ecosis-parser-overview id="parseOverview" style="display:none"></ecosis-parser-overview>
+    </div>
+
+    <div id="updatingPanel" class="alert alert-success" style="display:none">
+      <i class="fa fa-spinner fa-spin"></i> Updating...
+    </div>
+
+    <div id="spectraPanel" style="display:none">
+      <a class="btn btn-link">View Spectra</a>
+      <ecosis-spectra-panel></ecosis-spectra-panel>
+    </div>
+
+    <div id="ignoredLabel" class="alert alert-warning">
+        Ignored
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-datasheet-panel',
+
+    update : function(resource, datasheet) {
+      this.resource = resource;
+      this.datasheet = datasheet;
+
+      // set title
+      if( resource.datasheets.length == 1 ) {
+        var title = datasheet.name;
+        if( datasheet.sheet ) title += ' ('+datasheet.sheetname+')';
+        this.$.titleLabel.innerText = title;
+      } else { // title is shown by dropdown
+        this.$.titleLabel.innerText = '';
+      }
+
+      // show parse error
+      if( datasheet.error ) this.$.parseError.style.display = 'block';
+      else this.$.parseError.style.display = 'none';
+
+      // should we show the metadata selection
+      if( datasheet.ignore ) this.$.metadataSelectPanel.style.display = 'none';
+      else this.$.metadataSelectPanel.style.display = 'block';
+
+      if( datasheet.layout == 'column' ) {
+        this.$.columnInput.setAttribute('checked', '');
+        this.$.rowInput.removeAttribute('checked');
+      } else {
+        this.$.rowInput.setAttribute('checked', '');
+        this.$.columnInput.removeAttribute('checked');
+      }
+    },
+
+    onOrientationChange : function() {
+      if( $(this.$.columnInput).is(':checked') ) {
+        this.$.rowInput.removeAttribute('checked');
+      } else {
+        this.$.columnInput.removeAttribute('checked');
+      }
+      // todo: save
+    },
+
+    toggleCurrentParse : function() {
+      if( this.$.parseOverview.style.display == 'none' ) {
+        this.$.parseOverview.style.display = 'block';
+        this.$.parseOverview.update(this.datasheet);
+      } else {
+        this.$.parseOverview.style.display = 'none';
+      }
+    }
+  });
+</script>

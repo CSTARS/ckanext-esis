@@ -1,7 +1,13 @@
+<link rel="import" href="ecosis-datasheet-select-panel.html" >
+<link rel="import" href="ecosis-datasheet-panel.html" >
+
 <dom-module id="ecosis-resource-panel">
   <style>
     :host {
       display: block;
+    }
+    a.btn-link {
+      padding-top: 0;
     }
   </style>
 
@@ -9,11 +15,29 @@
     <div class="panel panel-default" id="root">
       <div class="panel-heading">
         <h3 class="panel-title" >
-          <span id="titleLabel"></span>
-          <a class="btn btn-link" style="color:white"><i class="fa fa-pencil"></i></a>
+
+          <div class="layout horizontal">
+            <div class="flex">
+              <span id="titleLabel"></span>
+              <a class="btn btn-link" style="color:white"><i class="fa fa-trash"></i></a>
+            </div>
+            <div>
+              <a class="btn btn-link" style="color:white" id="editLink" on-click="toggleEdit">
+                <i class="fa fa-pencil" id="editLinkIcon"></i>
+              </a>
+            </div>
+          </div>
+
         </h3>
       </div>
-      <div class="panel-body" id="body"></div>
+      <div class="panel-body" style="display:none" id="body">
+        <ecosis-datasheet-select-panel
+          style="display:none"
+          id="datasheetSelector"
+          on-select="onDatasheetSelected">
+        </ecosis-datasheet-select-panel>
+        <ecosis-datasheet-panel id="datasheetUI"></ecosis-datasheet-panel>
+      </div>
     </div>
   </template>
 </dom-module>
@@ -26,6 +50,10 @@
       resourceid : {
         type : String
       }
+    },
+
+    ready : function() {
+      this.edit = false;
     },
 
     attached : function() {
@@ -45,11 +73,28 @@
     update : function() {
       this.$.titleLabel.innerText = this.resource.name;
       this.setClass();
+
+      if( this.resource.datasheets.length <= 1 ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else {
+        this.$.datasheetSelector.style.display = 'block';
+        this.$.datasheetSelector.update(this.resource);
+      }
+
+      this.selectDatasheet(0);
     },
 
     setClass : function() {
       var className = this.getPanelClass(this.getResourceType());
       this.$.root.className = 'panel panel-'+className;
+    },
+
+    selectDatasheet : function(index) {
+      this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+    },
+
+    onDatasheetSelected : function(e) {
+      this.selectDatasheet(e.detail);
     },
 
     getPanelClass : function(type) {
@@ -70,6 +115,24 @@
         return 'data';
       }
       return 'ignored';
+    },
+
+    toggleEdit : function() {
+      this.edit = !this.edit;
+
+      if( this.edit ) {
+        this.$.body.style.display = 'block';
+
+        this.$.editLink.className = 'btn btn-default';
+        this.$.editLinkIcon.className = 'fa fa-check';
+        this.$.editLinkIcon.style.color = 'black';
+      } else {
+        this.$.body.style.display = 'none';
+
+        this.$.editLink.className = 'btn btn-link';
+        this.$.editLinkIcon.className = 'fa fa-pencil';
+        this.$.editLinkIcon.style.color = 'white';
+      }
     }
   });
 </script>
