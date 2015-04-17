@@ -1,42 +1,20 @@
-if( !window.esis ) window.esis = {};
+var ecosis = (function(){
+  var host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.4:5000' : '';
 
-esis.host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.2.109:5000' : '';
+  function getVar(variable) {
+    var query = window.location.search.substring(1);
+  	var vars = query.split("&");
+  	for (var i = 0; i < vars.length; i++) {
+     		var pair = vars[i].split("=");
+     		if( pair[0] == variable ) return pair[1];
+  	}
+  	return null;
+  }
 
-// load user info, if not logged in, redirect to login page
-esis.activeUser = {};
-$.ajax({
-    type : 'GET',
-    url : esis.host+'/ecosis/userInfo',
-    dataType : 'json',
-    xhrFields: {
-        withCredentials: true
-    },
-    success :function(resp) {
-        esis.activeUser = resp;
-        if( !esis.activeUser.loggedIn ) {
-            window.location = esis.host+'/user/login';
-        }
-    },
-    error : function(err, err2) {
-        alert('Error retrieving user info :(');
-    }
-});
+  var ecosis = new Ecosis({
+    host : host,
+    package_id : getVar('id')
+  });
 
-$.ajax({
-    type : 'GET',
-    url : '/schema.json',
-    dataType : 'json',
-    success :function(resp) {
-        esis.schema = resp;
-
-        esis.schemaMap = {};
-        for( var key in esis.schema ) {
-            for( var i = 0; i < esis.schema[key].length; i++ ) {
-                esis.schemaMap[esis.schema[key][i].name] = esis.schema[key][i];
-            }
-        }
-    },
-    error : function(err, err2) {
-        console.log(err);
-    }
-});
+  return ecosis;
+})();

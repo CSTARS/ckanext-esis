@@ -1,0 +1,75 @@
+<dom-module id="ecosis-resource-panel">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
+  <template>
+    <div class="panel panel-default" id="root">
+      <div class="panel-heading">
+        <h3 class="panel-title" >
+          <span id="titleLabel"></span>
+          <a class="btn btn-link" style="color:white"><i class="fa fa-pencil"></i></a>
+        </h3>
+      </div>
+      <div class="panel-body" id="body"></div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-resource-panel',
+
+    properties : {
+      resourceid : {
+        type : String
+      }
+    },
+
+    attached : function() {
+      this.resource = null;
+
+      for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+        var resource = ecosis.ds.resources[i];
+        if( this.resourceid == resource.id ) {
+          this.resource = resource;
+          break;
+        }
+      }
+
+      this.update();
+    },
+
+    update : function() {
+      this.$.titleLabel.innerText = this.resource.name;
+      this.setClass();
+    },
+
+    setClass : function() {
+      var className = this.getPanelClass(this.getResourceType());
+      this.$.root.className = 'panel panel-'+className;
+    },
+
+    getPanelClass : function(type) {
+      if( type == 'data' ) return 'success';
+      if( type == 'metadata' ) return 'primary';
+      if( type == 'zip' ) return 'info';
+      return 'default';
+    },
+
+    getResourceType : function() {
+      if( this.resource.datasheets.length == 1 && this.resource.datasheets[0].metadata ) {
+        return 'metadata';
+      }
+      if( this.resource.type == 'zip' ) {
+        return 'zip';
+      }
+      if( this.resource.type == 'datafile' ) {
+        return 'data';
+      }
+      return 'ignored';
+    }
+  });
+</script>

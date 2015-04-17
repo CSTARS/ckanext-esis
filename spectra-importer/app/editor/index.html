@@ -8,12 +8,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- build:js scripts/build.js -->
-      <script src="components/webcomponentsjs/webcomponents.js"></script>
-      <script src="components/jquery/dist/jquery.min.js"></script>
+      <script src="components/webcomponentsjs/webcomponents-lite.js"></script>
+      <script src="components/jquery/dist/jquery.js"></script>
+      <script src="components/bootswatch-dist/js/bootstrap.js"></script>
+
+      <script src="scripts/bundle.js"></script>
       <script src="scripts/app.js"></script>
     <!-- endbuild -->
 
-    <link rel="stylesheet" href="styles/app.css" shim-shadowdom />
+    <!-- build:css scripts/build.css -->
+      <link rel="stylesheet" href="styles/app.css" />
+      <link rel="stylesheet" href="components/bootswatch-dist/css/bootstrap.css" />
+      <link rel="stylesheet" href="components/font-awesome/css/font-awesome.css" />
+    <!-- endbuild -->
 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
@@ -24,23 +31,12 @@
     <link rel="import" href="elements.html" />
   </head>
 
-  <body unresolved>
+  <body>
 
-    <esis-scaffold label="EcoSIS Dataset Editor" fit touch-action="auto">
-
-      <paper-icon-button class="menuButton" icon="menu" ></paper-icon-button>
-      <esis-dataset-creator class="sourceButton bottom"></esis-dataset-creator>
-
-      <esis-item label="Basic Information" tag="basic-fields" ele="esis-basic-fields"></esis-item>
-      <esis-item label="Resources" tag="resources" ele="esis-resources"></esis-item>
-      <esis-item label="Schema" tag="schema-settings" ele="esis-schema-settings"></esis-item>
-
-    </esis-scaffold>
-
-    <esis-datastore></esis-datastore>
-    <esis-ckan></esis-ckan>
-    <esis-dataset-loader></esis-dataset-load>
-    
+    <ecosis-header></ecosis-header>
+    <!-- <ecosis-page-basic-info></ecosis-page-basic-info>
+    <ecosis-page-add-resource></ecosis-page-add-resource>-->
+    <ecosis-page-current-resources></ecosis-page-current-resources>
   </body>
 
 </html>

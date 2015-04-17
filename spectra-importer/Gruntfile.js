@@ -8,7 +8,6 @@ module.exports = function (grunt) {
     // Time how long tasks take. Can help when optimizing build times
     require('time-grunt')(grunt);
 
-    grunt.loadNpmTasks('grunt-manifest');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-vulcanize');
 
@@ -38,18 +37,6 @@ module.exports = function (grunt) {
             server: '.tmp'
         },
 
-        // Renames files for browser caching purposes
-        /*rev: {
-            dist: {
-                files: {
-                    src: [
-                        '<%= yeoman.dist %>/editor/scripts/build.js'
-                        //'<%= yeoman.dist %>/css/build.css'
-                    ]
-                }
-            }
-        },*/
-
         // Reads HTML for usemin blocks to enable smart builds that automatically
         // concat, minify and revision files. Creates configurations in memory so
         // additional tasks can operate on them
@@ -71,7 +58,7 @@ module.exports = function (grunt) {
             //css: ['<%= yeoman.dist %>/css/{,*/}*.css']
         },
 
-        
+
         // Copies remaining files to places other tasks can use
         copy: {
             dist: {
@@ -82,16 +69,13 @@ module.exports = function (grunt) {
                     dest: '<%= yeoman.dist %>/editor',
                     src: [
                         '*.{html,handlebars}',
-                        'components/**',
-                        'elements/**',
-                        'workers/**',
                         'styles/**'
                     ]
                 },
                 {
                     expand: true,
                     dot: true,
-                    src: ['schema.json','metadata_map'], 
+                    src: ['schema.json','metadata_map'],
                     dest: '<%= yeoman.dist %>',
                     cwd: '<%= yeoman.app %>'
                 }]
@@ -100,16 +84,6 @@ module.exports = function (grunt) {
 
 
         shell: {
-            // usemin compresses the css and js, makeing the components lib
-            // unnecessary except the polymer script
-            'clear-bower-components' : {
-                options: {
-                    stdout: true,
-                    stderr: true
-                },
-                command: 'rm -rf <%= yeoman.dist %>/editor/components && '+
-                         'rm -rf <%= yeoman.dist %>/editor/elements'
-            },
             server : {
                 options: {
                     stdout: true,
@@ -139,7 +113,7 @@ module.exports = function (grunt) {
                     inline : true
                 },
                 files : {
-                    '<%= yeoman.dist %>/editor/elements.html': ['<%= yeoman.dist %>/editor/elements.html']
+                    '<%= yeoman.app %>/editor/elements.html': ['<%= yeoman.dist %>/editor/elements.html']
                 }
             }
         },
@@ -155,8 +129,7 @@ module.exports = function (grunt) {
         'uglify:generated',
         //'rev',
         'usemin',
-        'vulcanize',
-        'shell:clear-bower-components'
+        'vulcanize'
     ]);
 
     grunt.registerTask('server', [
