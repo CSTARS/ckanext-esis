@@ -176,6 +176,20 @@ module.exports = function(config) {
     });
   }
 
+  this.getLicenseList = function(callback) {
+    get(this.host+'/api/3/action/license_list', function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body.result);
+    });
+  }
+
+  this.getPackage = function(pkgid, callback) {
+    get(this.host+'/api/3/action/package_show?id='+pkgid, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
+      callback(resp.body);
+    });
+  }
+
 }
 
 

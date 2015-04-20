@@ -1,3 +1,5 @@
+<link rel="import" href="widgets/ecosis-title-input.html" >
+
 <dom-module id="ecosis-page-basic-info">
   <style>
     :host {
@@ -8,45 +10,14 @@
   <template>
 
     <div style="font-size: 14px; color: #888">
-			<div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome <span id="usernameLabel"></span>.</div>
-			Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />
+      <div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome <span id="usernameLabel"></span>.</div>
+      Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />
       First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
-		</div>
+    </div>
 
-    <!-- Title -->
-		<div id="editModeTitle" style="display:none">
-			<div><b>Title:</b> <span id="titleLabel"><span></div>
-			<div style="font-size:12px;color:#888;font-style:italic">
-				URL: <span id="urlLabel"></span>
-			</div>
-		</div>
+    <ecosis-title-input id="titleInput"></ecosis-title-input>
 
     <div class="form-horizontal">
-
-  		<div id="newDatasetTitle">
-        <div class="form-group">
-          <label for="titleInput" class="col-lg-2 control-label">Title</label>
-          <div class="col-lg-10">
-            <input type="text" class="form-control" id="titleInput" placeholder="Unique dataset title" on-change="onTitleInputChange">
-          </div>
-        </div>
-
-        <div id="verifyingTitleLabel" class="alert alert-info" style="display:none">
-  				<i class="fa fa-spinner fa-spin"></i> Verifying name...
-  			</div>
-
-  			<div class="alert alert-danger" style="display:none">
-  				Invalid name.  A dataset with this name already exists.
-
-          <br />URL: {{baseUrl}}<span style="color: {{validName ? '#2f9b45' : 'red'}}">{{ds.data.name}}</span>
-  			</div>
-
-  			<div class="alert alert-success" style="display:none" >
-  				URL: <span id="urlLabel"></span>
-  			</div>
-  		</div>
-      <!-- End Title -->
-
 
       <!-- Description -->
       <div class="form-group">
@@ -63,16 +34,18 @@
         </div>
       </div>
       <!-- TODO
-  		<div class="form-wrap">
-  			<esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
-  		</div>
+      <div class="form-wrap">
+        <esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
+      </div>
       -->
 
       <div class="form-group">
         <label for="licenseInput" class="col-lg-2 control-label">License: </label>
         <div class="col-lg-10">
           <div style="display:none">Loading...</div>
-          <select class="form-control" id="licenseInput"></select>
+          <select class="form-control" id="licenseInput">
+            <option>Loading...</option>
+          </select>
         </div>
       </div>
 
@@ -80,12 +53,14 @@
         <label for="organizationInput" class="col-lg-2 control-label">Organization: </label>
         <div class="col-lg-10">
           <div style="display:none">Loading...</div>
-          <select class="form-control" id="organizationInput"></select>
+          <select class="form-control" id="organizationInput">
+            <option>Loading...</option>
+          </select>
 
           <div class="help-block">
-      			To add datasets to an <a href="/organization" target="_blank">organization</a>, <a href="/dashboard/organizations" target="_blank">you</a>
+            To add datasets to an <a href="/organization" target="_blank">organization</a>, <a href="/dashboard/organizations" target="_blank">you</a>
             must be a member of the organization with a role of 'editor' or 'admin'.
-      		</div>
+          </div>
         </div>
       </div>
 
@@ -94,12 +69,12 @@
         <div class="col-lg-10">
           <select class="form-control" id="visibilityInput" disabled>
             <option value="false">Public</option>
-    				<option value="true">Private</option>
+            <option value="true">Private</option>
           </select>
 
           <div class="help-block" id="visibilityWarnLabel">
             You must select an organization if you wish to set the dataset to private, otherwise the dataset must be public.
-      		</div>
+          </div>
         </div>
       </div>
 
@@ -215,7 +190,7 @@
     </div>
 
     <!-- Create Dataset -->
-		<a id="createDatasetBtn" class="btn btn-primary" style="display:none">Create Dataset</a>
+    <a id="createDatasetBtn" class="btn btn-primary" style="display:none">Create Dataset</a>
     <div id="createDatasetLabel" style="display:none" class="alert alert-info">
       <i class="fa fa-spinner fa-spin"></i> Creating Dataset...
     </div>
@@ -226,15 +201,15 @@
       <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
     </div>
 
-		<div class="bugs">
-		    Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
-		</div>
+    <div class="bugs">
+        Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+    </div>
 
-		<div class="gitInfo" style="display:none">
-			<div><b>Branch:</b> <span id="gitBranchLabel"></span></div>
-			<div><b>Version:</b> <span id="gitVersionLabel"></span></div>
-			<div><b>Commit:</b> <span id="gitCommitLabel"></span></div>
-		</div>
+    <div class="gitInfo" style="display:none">
+      <div><b>Branch:</b> <span id="gitBranchLabel"></span></div>
+      <div><b>Version:</b> <span id="gitVersionLabel"></span></div>
+      <div><b>Commit:</b> <span id="gitCommitLabel"></span></div>
+    </div>
 
   </template>
 </dom-module>
@@ -254,6 +229,8 @@
       } else {
         this.setMode('create');
       }
+
+      ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
     },
 
     setMode : function() {
@@ -264,10 +241,35 @@
       this.$.titleInput.value = ecosis.ds.data.title;
     },
 
+    setLicenseList : function(resp) {
+      if( resp.error ) return console.log('Error loading licenses :(');
+
+      var options = '<option></option>';
+      for( var i = 0; i < resp.length; i++ ) {
+        var item = resp[i];
+        options += '<option value="'+item.id+'">'+item.title+'</option>';
+      }
+      this.$.licenseInput.innerHTML = options;
+    },
+
     setUsername : function() {
-      if( !ecosis.user ) return alert("You are not logged in :(");
+      if( !ecosis.user ) {
+        alert("You are not logged in :(");
+        window.location = ecosis.ckan.host + '/user/login';
+      } else if( !ecosis.user.loggedIn ) {
+        alert("You are not logged in :(");
+        window.location = ecosis.ckan.host + '/user/login';
+      }
 
       this.$.usernameLabel.innerText = ecosis.user.username;
+
+      // set user orgs
+      var options = '<option></option>';
+      for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
+        var org = ecosis.user.organizations[i];
+        options += '<option value="'+org.id+'">'+org.display_name+'</option>';
+      }
+      this.$.organizationInput.innerHTML = options;
     }
   })
 </script>

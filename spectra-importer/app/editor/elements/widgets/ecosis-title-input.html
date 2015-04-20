@@ -1,0 +1,102 @@
+<dom-module id="ecosis-title-input">
+  <style>
+    :host {
+      display: block;
+    }
+    span.label {
+      font-size: 12px;
+    }
+  </style>
+
+  <template>
+    <div id="editMode" style="display:none" class="form-horizontal">
+      <div class="form-group">
+        <label class="col-lg-2 control-label">Title</label>
+        <div class="col-lg-10" style="padding-top:10px">
+          <div><span id="titleLabel"><span></div>
+          <div style="font-size:12px;color:#888;font-style:italic">
+            URL: <span id="urlLabel"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="inputMode" class="form-horizontal">
+      <div class="form-group">
+        <label for="titleInput" class="col-lg-2 control-label">Title</label>
+        <div class="col-lg-10">
+          <input type="text" class="form-control" id="titleInput" placeholder="Unique dataset title" on-keyup="onTitleInputChange">
+
+          <span id="verifyingTitleLabel" class="label label-info" style="display:none">
+            <i class="fa fa-spinner fa-spin"></i> Verifying name...
+          </span>
+
+          <span class="label label-danger" style="display:none" id="invalid">
+            Invalid name.  A dataset with the name '<span id="nameLabel"></span>' already exists.
+          </span>
+
+          <span class="label label-success" style="display:none" id="valid" >
+            URL: <span id="urlLabelInput"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-title-input',
+
+    ready : function() {
+      this.verifyNameTime = -1;
+
+      if( ecosis.ds.loaded ) this.onDataReady();
+      else ecosis.ds.on('load', this.onDataReady.bind(this));
+    },
+
+    onDataReady : function() {
+      if( ecosis.ds.editMode ) {
+        this.$.editMode.style.display = 'block';
+        this.$.inputMode.style.display = 'none';
+
+        this.$.titleLabel.innerText = ecosis.ds.data.title;
+        this.$.urlLabel.innerText = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+        return;
+      }
+
+      this.$.urlLabelInput.innerText = ecosis.ckan.host + '/dataset/';
+    },
+
+    onTitleInputChange : function() {
+      ecosis.ds.data.title = this.$.titleInput.value;
+      ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
+      this.$.nameLabel.innerText = ecosis.ds.data.name;
+      this.$.urlLabelInput.innerText = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+
+      this.$.verifyingTitleLabel.style.display = 'inline-block';
+      this.$.invalid.style.display = 'none';
+      this.$.valid.style.display = 'none';
+      this.validName = false;
+
+      if( this.verifyNameTimer != -1 ) clearTimeout(this.verifyNameTimer);
+
+      this.verifyNameTimer = setTimeout(function(){
+
+        ecosis.ckan.getPackage(ecosis.ds.data.name, function(resp){
+          this.$.verifyingTitleLabel.style.display = 'none';
+
+          if( resp.error ) {
+            this.validName = true;
+            this.$.valid.style.display = 'inline-block';
+          } else {
+            this.validName = false;
+            this.$.invalid.style.display = 'inline-block';
+          }
+        }.bind(this));
+
+      }.bind(this), 500);
+    }
+  });
+</script>
