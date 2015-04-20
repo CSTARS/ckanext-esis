@@ -3,14 +3,19 @@
     :host {
         display: block;
     }
+    canvas {
+      border-radius: 6px;
+      margin: 5px;
+      border: 1px solid #888;
+    }
   </style>
 
   <template>
     <div class="layout horizontal">
-        <div flex id="canvasParent">
+        <div class="flex" id="canvasParent">
             <div id="loadingPanel"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
 
-            <canvas style="border:1px solid #333" width="400" height="400"
+            <canvas id="canvas" width="400" height="400"
                 on-mousewheel="onMouseWheel"
                 on-mousedown="onMouseDown"
                 on-mousemove="onMouseMove"
@@ -40,9 +45,9 @@
     </div>
 
     <div>
-        <span style="color: green">Global Metadata</span> |
-        <span style="color: red">Schema Attribute Names</span> |
-        <span style="color: blue">Spectra Data/Metadata</span>
+        <span class="label label-success">Global Metadata</span> |
+        <span class="label label-warning">Schema Attribute Names</span> |
+        <span class="label label-primary">Spectra Data/Metadata</span>
     </div>
   </template>
 </dom-module>
@@ -51,19 +56,19 @@
   Polymer({
     is : 'ecosis-parser-overview',
 
-    ready : function() {
+    attached : function() {
       this.top = 0;
-      this.left = 0,;
+      this.left = 0;
       this.data = null;
 
       this.zoom = 5;
 
-      this.cell : {
+      this.cell = {
           width : 3,
           height : 1
       };
 
-      this.colors : {
+      this.colors = {
           blue : '#2196F3',
           red : '#FF9800',
           green : '#2f9b45',
@@ -82,19 +87,15 @@
               end : 4,
           }
       };
+      this.width = 400;
+      this.height = 400;
 
       this.dragging = false;
       this.dragStart = [0, 0];
-      this.dragPos : [0, 0];
+      this.dragPos = [0, 0];
 
-      this.ctx = this.shadowRoot.querySelector('canvas').getContext('2d');
+      this.ctx = this.$.canvas.getContext('2d');
       $(window).on('resize', this.resize.bind(this));
-    },
-
-    attached : function() {
-        this.async(function(){
-            this.resize();
-        })
     },
 
     reset : function() {
@@ -115,20 +116,23 @@
         this.zoom = 5;
     },
 
-    load : function() {
-        if( !this.show ) return;
+    update : function(resource, datasheet) {
+      this.resource = resource;
+      this.datasheet = datasheet;
+      this.load();
+    },
 
-        this.loading = true;
+    load : function() {
+        this.setLoading(true);
         this.reset();
 
         ecosis.ckan.getLayoutOverview(
             ecosis.ds.package_id,
-            this.resourceId,
-            this.sheetId,
-            function(err, resp) {
-                this.loading = false;
+            this.resource.id,
+            this.datasheet.id,
+            function(resp) {
+                this.setLoading(false);
 
-                if( err ) return alert('Error loading layout overview :(');
                 if( resp.error ) return alert('Error loading layout overview :(');
 
                 this.type = resp.layout;
@@ -150,6 +154,7 @@
     resize : function() {
         this.width = $(this.$.canvasParent).width()-30;
         if( this.width < 250 ) this.width = 250;
+        this.$.canvas.width = this.width;
 
         this.async(function(){
             this.redraw();
@@ -188,6 +193,7 @@
         this.top = 0;
         this.left = 0;
         this.zoom = 5;
+        this.redraw();
     },
 
     zoomIn : function() {
@@ -203,10 +209,12 @@
 
         if( this.zoom < 1 ) this.zoom = 1;
         if( this.zoom > 12 ) this.zoom = 12;
+        this.redraw();
     },
 
     redraw : function() {
-        if( !this.data || !this.show ) return;
+        if( !this.data ) return;
+
 
         this.clear();
 
@@ -293,6 +301,10 @@
         this.ctx.clearRect(0, 0, this.width, this.height);
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillRect(0, 0, this.width, this.height);
+    },
+
+    setLoading : function(loading) {
+      this.$.loadingPanel.style.display = loading ? 'block' : 'none';
     }
 
   });

@@ -110,10 +110,83 @@ module.exports = function(config) {
     });
   }
 
+  this.getDatasheet = function(pkgid, rid, sid, callback) {
+    var params = '?package_id=' + pkgid +
+    '&resource_id=' + rid +
+    '&datasheet_id=' + sid;
+
+    get(this.host+'/workspace/getDatasheet'+params, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+  this.updateJoin = function(pkgid, rid, metadata, callback) {
+    post(this.host+'/workspace/updateJoin',{
+      package_id : pkgid,
+      resource_id : rid,
+      metadata : JSON.stringify(metadata)
+    },function(err, resp){
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+  this.setParseInfo = function(pkgid, resource, datasheet_id,  callback) {
+    var data = {
+         package_id : pkgid,
+        resource : JSON.stringify(resource)
+    }
+
+    if( typeof datasheet_id == 'function' ) {
+      callback = datasheet_id;
+    } else {
+      data['datasheet_id'] = datasheet_id
+    }
+
+    post(this.host+'/workspace/setParseInfo', data, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+
+      // update info in the datastore if we have one
+      if( this.ds ) {
+        this.ds.wavelengths = resp.wavelengths || [];
+        this.ds.schema = [];
+        if( !resp.attributes ) return;
+
+        for( var attrName in resp.attributes ) {
+            var attr = resp.attributes[attrName];
+            attr.name = attrName;
+            this.ds.schema.push(attr);
+        }
+      }
+
+      callback(resp.body);
+    });
+  }
+
+  this.getSpectra = function(pkgid, rid, sid, index, callback) {
+    var params = '?package_id=' + pkgid +
+      '&resource_id=' + rid +
+      '&datasheet_id=' + sid +
+      '&index='+index;
+
+    get(this.host+'/workspace/getSpectra'+params, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
 
 }
 
 
+function post(url, data, callback) {
+  request
+   .post(url)
+   .withCredentials()
+   .type('form')
+   .send(data)
+   .end(callback)
+}
 
 function get(url, callback) {
   request

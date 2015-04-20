@@ -2,6 +2,7 @@ var EventEmitter = require("events").EventEmitter;
 
 module.exports = function(config) {
   this.ckan = config.ckan;
+  if( this.ckan ) this.ckan.ds = this;
 
   // is this an existing dataset
   this.editMode = config.package_id ? true : false;
@@ -56,6 +57,15 @@ module.exports = function(config) {
   this.inverseAttributeMap = {};
 
   this.metadataDefinitions = require('./schema.json');
+  this.metadataLookup = {};
+  for( var cat in this.metadataDefinitions ) {
+    var defs = this.metadataDefinitions[cat];
+    for( var i = 0; i < defs.length; i++ ) {
+      defs[i].category = cat;
+      defs[i].flat = defs[i].name.replace(/\s/g,'').toLowerCase();
+      this.metadataLookup[defs[i].name] = defs[i];
+    }
+  }
 
   // this flag prevents up from making updates when we are initially
   // setting the data
@@ -126,9 +136,9 @@ module.exports = function(config) {
 
   // after a resource is added, our entire state is different
   this.runAfterResourceAdd = function(workspaceData) {
-		this.data = workspaceData;
-		this._setData();
-	}
+    this.data = workspaceData;
+    this._setData();
+  }
 
   this.getDatasetExtra = function(key) {
     if( !this.data.extras ) return null;
@@ -153,5 +163,13 @@ module.exports = function(config) {
       key : key,
       value : value
     });
+  }
+
+  this.isEcosisMetadata = function(name) {
+    name = name.replace(/\s/g, '').toLowerCase();
+    for( var key in this.metadataLookup ) {
+      if( this.metadataLookup[key].flat == name ) return true;
+    }
+    return false;
   }
 }

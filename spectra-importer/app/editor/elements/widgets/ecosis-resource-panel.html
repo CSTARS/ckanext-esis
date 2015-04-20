@@ -89,12 +89,15 @@
       this.$.root.className = 'panel panel-'+className;
     },
 
-    selectDatasheet : function(index) {
+    selectDatasheet : function(index, edit) {
+      // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+      // if the edit flag is passed, actually load the detailed datasheet and render
+      if( edit ) this.$.datasheetUI.edit();
     },
 
     onDatasheetSelected : function(e) {
-      this.selectDatasheet(e.detail);
+      this.selectDatasheet(e.detail, true);
     },
 
     getPanelClass : function(type) {
@@ -126,6 +129,8 @@
         this.$.editLink.className = 'btn btn-default';
         this.$.editLinkIcon.className = 'fa fa-check';
         this.$.editLinkIcon.style.color = 'black';
+
+        this.$.datasheetUI.edit();
       } else {
         this.$.body.style.display = 'none';
 
