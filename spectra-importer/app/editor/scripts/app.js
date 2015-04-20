@@ -17,15 +17,42 @@ var ecosis = (function(){
     package_id : currentPkg
   });
 
+  var currentPage = '';
+  function updatePage() {
+    var hash = window.location.hash.replace(/#/,'');
+    if( hash == 'currentPage' ) return;
+
+    $('.page').hide();
+    if( hash == 'add-resources' ) {
+      $('#addResources.page').css('display','block');
+    } else if( hash == 'current-resources' ) {
+      $('#currentResources.page').css('display','block');
+    } else {
+      $('#basic.page').css('display','block');
+    }
+  }
+
   // show splash screen
   $(document).ready(function(){
-    if( !currentPkg ) return;
+    $('.page').hide();
+
+
+    if( !currentPkg ) {
+      updatePage();
+      return;
+    }
 
     $('#splash').modal();
     ecosis.ds.on('load', function(){
+      updatePage();
       $('#splash').modal('hide');
     });
   });
+
+
+
+
+  $(window).on('hashchange', updatePage);
 
 
   return ecosis;

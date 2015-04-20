@@ -51,7 +51,7 @@
         </div>
       </div>
 
-      <ecosis-dataformat-help id="formatHelp" style="display:none"></ecosis-dataformat-help>
+      <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeIn"></ecosis-dataformat-help>
 
     </div>
     <!-- end well -->
@@ -75,7 +75,7 @@
     <div style="margin-top: 40px">
       <a on-click="toggleInfoPanel" style="cursor:pointer">Supported file types and the Ecosis Metadata Editor</a>
     </div>
-    <div id="infoPanel" style="display:none">
+    <div id="infoPanel" style="display:none" class="animated fadeInUp">
         <h6 class="page-header">Supported File Types</h6>
         <div class="well well-sm">
             <div>Currently the following tabular file types will be parsed.</div>
@@ -255,7 +255,12 @@
     },
 
     toggleInfoPanel : function() {
-        $(this.$.infoPanel).toggle();
+      if( this.$.infoPanel.style.display == 'none') {
+        $(this.$.infoPanel).show();
+        $(window).scrollTop(254);
+      } else {
+        $(this.$.infoPanel).hide();
+      }
     },
 
     renderUploadStatusTable : function() {

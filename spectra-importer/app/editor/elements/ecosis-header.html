@@ -20,17 +20,17 @@
         <div class="collapse navbar-collapse" id="ecosis-header-collapse">
           <ul class="nav navbar-nav">
 
-            <li class="active"><a  href="#basic-info">Basic Information</a></li>
+            <li class="active"><a  id="basicInfo">Basic Information</a></li>
 
-            <li class="dropdown">
+            <li class="dropdown" id="resourcesDropdown">
               <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Resources <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
-                <li><a href="#add-resources"><i class="fa fa-plus"></i> Add Resources</a></li>
-                <li><a href="#current-resources"><i class="fa fa-plus"></i> Current Resources</a></li>
+                <li><a id="addResources"><i class="fa fa-plus"></i> Add Resources</a></li>
+                <li><a id="currentResources"><i class="fa fa-list"></i> Current Resources</a></li>
               </ul>
             </li>
 
-            <li><a href="#extras">Extras</a></li>
+            <li><a id="extras">Extras</a></li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
@@ -44,6 +44,40 @@
 
 <script>
   Polymer({
-    is : 'ecosis-header'
+    is : 'ecosis-header',
+
+    properties : {
+      hack : {
+        type : String,
+        value : ''
+      }
+    },
+
+    ready : function() {
+      // such BS polymer!
+      this.$.basicInfo.setAttribute('href', '#basic-info');
+      this.$.addResources.setAttribute('href', '#add-resources');
+      this.$.currentResources.setAttribute('href', '#current-resources');
+      this.$.extras.setAttribute('href', '#extras');
+
+      $(window).on('hashchange', this.updateActiveTab.bind(this));
+      this.updateActiveTab();
+    },
+
+    updateActiveTab : function() {
+      $('li').removeClass('active');
+
+      var loc = window.location.hash.replace(/#/,'');
+      var ele = $(this).find('a[href="#'+loc+'"]');
+
+      if( ele.length > 0 && (loc == 'add-resources' || loc == 'current-resources') ) {
+        $(this.$.resourcesDropdown).addClass('active');
+      } else if ( ele.length > 0 ) {
+        ele.parent().addClass('active');
+      } else {
+        $(this.$.basicInfo).parent().addClass('active');
+      }
+    }
+
   });
 </script>
