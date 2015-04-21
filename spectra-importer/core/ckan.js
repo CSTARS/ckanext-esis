@@ -237,6 +237,29 @@ module.exports = function(config) {
     });
   }
 
+  this.setAttributeMap = function(pkgid, map, callback) {
+    var data = {
+      package_id : pkgid,
+      map : JSON.stringify(map)
+    };
+
+    post(this.host+'/workspace/setAttributeMap', data, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+  this.setDatasetAttributes = function(pkgid, attrs, callback) {
+    var data = {
+      package_id : pkgid,
+      datasetAttributes : JSON.stringify(attrs)
+    };
+
+    post(this.host+'/workspace/setDatasetAttributes', data, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error'});
+      callback(resp.body);
+    });
+  }
 }
 
 

@@ -110,8 +110,8 @@ module.exports = function(config) {
     }
 
     this.schema = [];
-    for( var attrName in this.data.attributes ) {
-      var attr = this.data.attributes[attrName];
+    for( var attrName in this.result.attributes ) {
+      var attr = this.result.attributes[attrName];
       attr.name = attrName;
       this.schema.push(attr);
     }

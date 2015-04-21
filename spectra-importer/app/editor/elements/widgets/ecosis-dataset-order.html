@@ -1,0 +1,115 @@
+<dom-module id="ecosis-dataset-order">
+  <style>
+    :host {
+      display : block;
+    }
+  </style>
+
+  <template>
+    <div class="help-block">
+        Is this a time series dataset or a dataset that has any other form of ordering?
+        If so, select the attribute to order by as well as the type of sort that should
+        be performed.  You can also provide a textual description of what this ordering is.
+    </div>
+
+    <div class="form-horizontal">
+      <div class="form-group">
+        <label for="orderByInput" class="col-md-2 control-label">Order By</label>
+        <div class="col-md-10">
+          <select id="orderByInput" class="form-control" on-change="onChange"></select>
+        </div>
+      </div>
+
+      <div class="form-group" style="display:none" id="secondaryPanel">
+        <label for="orderTypeInput" class="col-md-2 control-label">Order Type</label>
+        <div class="col-md-10">
+
+          <select id="orderTypeInput" class="form-control" on-change="onChange">
+              <option value="string">Default (String)</option>
+              <option value="datetime">Date</option>
+              <option value="numeric">Numeric</option>
+          </select>
+
+          <div class="help-block" id="dateHelp" style="display:none">
+              Use <a href="http://www.w3.org/TR/NOTE-datetime" target="_blank">ISO-8601</a>
+              for which the format is: YYYY-MM-DDTHH:mm:ss.sssZ.
+              <a href="http://xkcd.com/1179/" target="_blank">Why?</a>
+          </div>
+
+
+          <input type="text" id="descriptionInput" class="form-control" on-change="onChange" placeholder="Description"/>
+
+        </div>
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-dataset-order',
+
+    ready : function() {
+      ecosis.ds.on('load', this.update.bind(this));
+    },
+
+    update : function() {
+      this.attributeArray = [];
+
+      for( var i = 0; i < ecosis.ds.schema.length; i++ ) {
+          var attr = ecosis.ds.schema[i];
+          if( attr.type == 'metadata' ) this.attributeArray.push(attr);
+      }
+
+      this.attributeArray.sort(function(a, b){
+          if( a.name > b.name ) return 1;
+          if( a.name < b.name ) return -1;
+          return 0;
+      });
+
+      var options = '<option></option>';
+      for( var i = 0; i < this.attributeArray.length; i++ ) {
+        options += '<option value="'+this.attributeArray[i].name+'">'+this.attributeArray[i].name+'</option>';
+      }
+      this.$.orderByInput.innerHTML = options;
+    },
+
+    onChange : function() {
+        ecosis.ds.datasetAttributes.sort_description = this.$.descriptionInput.value;
+        ecosis.ds.datasetAttributes.sort_type = this.$.orderTypeInput.value;
+        ecosis.ds.datasetAttributes.sort_on = this.$.orderByInput.value;
+
+        if( ecosis.ds.datasetAttributes.sort_on && ecosis.ds.datasetAttributes.sort_on != '' ) {
+          this.$.secondaryPanel.style.display = 'block';
+        } else {
+          this.$.secondaryPanel.style.display = 'none';
+        }
+
+        if( ecosis.ds.datasetAttributes.sort_type == 'datetime' ) {
+          this.$.dateHelp.style.display = 'block';
+        } else {
+          this.$.dateHelp.style.display = 'none';
+        }
+
+        if( this.timer != -1 ) clearTimeout(this.timer);
+
+        this.timer = setTimeout(function() {
+            this.timer = -1;
+            this.save();
+        }.bind(this), 2000);
+    },
+
+    save : function() {
+        this.saving = true;
+
+        ecosis.ckan.setDatasetAttributes(
+            ecosis.ds.package_id,
+            ecosis.ds.datasetAttributes,
+            function(resp) {
+                this.saving = false;
+                if( resp.error ) return alert('Error saving :(');
+            }.bind(this)
+        )
+    }
+  });
+</script>
