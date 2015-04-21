@@ -27,6 +27,8 @@ var ecosis = (function(){
       $('#addResources.page').css('display','block');
     } else if( hash == 'current-resources' ) {
       $('#currentResources.page').css('display','block');
+    } else if( hash == 'advanced' ) {
+      $('#advanced.page').css('display','block');
     } else {
       $('#basic.page').css('display','block');
     }
