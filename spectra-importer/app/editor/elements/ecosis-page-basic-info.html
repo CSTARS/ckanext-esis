@@ -30,7 +30,7 @@
       First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
     </div>
 
-    <ecosis-title-input id="titleInput"></ecosis-title-input>
+    <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
 
     <div class="form-horizontal">
 
@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <ecosis-keyword-input id="keywordInput"></ecosis-keyword-input>
+      <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
       <!-- TODO
       <div class="form-wrap">
         <esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
@@ -211,8 +211,19 @@
       <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
     </div>
 
-    <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
-    <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
+    <div class="layout horizontal" style="margin-top: 15px">
+      <div class="flex">
+        <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
+        <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
+
+        <div id="helpCreatePanel" class="help-block" style="display:none">
+          You must provide a valid dataset title to create.
+        </div>
+      </div>
+      <div>
+        <a class="btn btn-default" style="display:none" on-click="delete" id="deleteBtn"><i class="fa fa-trash"></i> Delete Dataset</a>
+      </div>
+    </div>
 
     <div class="well">
       <div class="bugs" style="margin-top:20px">
@@ -254,8 +265,10 @@
       this.mode = mode;
       if( mode == 'create' ) {
         this.$.createBtn.style.display = 'inline-block';
+        this.updateCreateBtnState();
       } else {
         this.$.goToBtn.style.display = 'inline-block';
+        this.$.deleteBtn.style.display = 'inline-block';
       }
     },
 
@@ -263,7 +276,7 @@
       var data = ecosis.ds.data;
 
       this.$.descriptionInput.value = data.notes || '';
-      this.$.keywordInput.setTokens(data.keywords || []);
+      this.$.keywordInput.setTokens(data.tags || []);
       this.$.licenseInput.value = data.license_id || '';
       this.$.organizationInput.value = data.owner_org || '';
       this.$.visibilityInput.value = data.private ? 'false' : 'true';
@@ -294,6 +307,16 @@
       }
     },
 
+    updateCreateBtnState : function() {
+      if( this.$.titleInput.validName ) {
+        this.$.createBtn.removeAttribute('disabled');
+        this.$.helpCreatePanel.style.display = 'none';
+      } else {
+        this.$.createBtn.setAttribute('disabled', '');
+        this.$.helpCreatePanel.style.display = 'block';
+      }
+    },
+
     setLicenseList : function(resp) {
       if( resp.error ) return console.log('Error loading licenses :(');
 
@@ -301,7 +324,7 @@
       var options = '<option></option>';
       for( var i = 0; i < resp.length; i++ ) {
         var item = resp[i];
-        options += '<option value="'+item.id+'">'+item.title+'</option>';
+        options += '<option value="'+item.id+'" '+(ecosis.ds.data.license_id == item.id ? 'selected' : '')+'>'+item.title+'</option>';
       }
       this.$.licenseInput.innerHTML = options;
     },
@@ -331,33 +354,34 @@
     },
 
     delete : function() {
-  		if( confirm('Are you sure your want to remove this dataset?') ) {
-  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
-  				document.querySelector('esis-ckan').deletePackage(
-  					this.ds.package_id,
-  					function(err, resp) {
-  						alert('package deleted');
-  						window.location = '/dataset';
-  					}
-  				);
-  			}
-  		}
-  	},
+      if( confirm('Are you sure your want to remove this dataset?') ) {
+        if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+          ecosis.ckan.deletePackage(ecosis.ds.package_id,
+            function(err, resp) {
+              alert('dataset deleted.');
+              window.location = '/dataset';
+            }
+          );
+        }
+      }
+    },
 
     create : function() {
+      this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
+      this.$.createDatasetBtn.setAttribute('disabled', '');
+
       ecosis.ckan.createPackage(ecosis.ds.data,
-					function(resp) {
+          function(resp) {
+            this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
+            this.$.createDatasetBtn.removeAttribute('disabled');
 
-						this.creating = false;
-
-            if( err ) return alert('Failed to create dataset :(');
-						if( !resp ) return alert('Failed to create dataset :(');
-						if( !resp.id ) return alert('Failed to create dataset :(');
+            if( resp.error ) return alert('Failed to create dataset :(');
+            if( !resp.id ) return alert('Failed to create dataset :(');
 
             // set the page
-            window.location = '/?id='+resp.name+'#add-resources';
-					}.bind(this)
-			);
+            window.location = '/editor/?id='+resp.name+'#add-resources';
+          }.bind(this)
+      );
     },
 
     save : function() {
@@ -392,7 +416,7 @@
               this.$.saveLabel.style.display = 'none';
 
               if( resp.error ) return alert('Failed to update dataset :(');
-              if( !resp.id ) return alert('Failed to update dataset :(');
+              if( !resp.result.id ) return alert('Failed to update dataset :(');
 
             }.bind(this)
           );
@@ -401,6 +425,10 @@
     },
 
     /* change handlers */
+    onTitleInputChange : function() {
+      this.updateCreateBtnState();
+    },
+
     onOrganizationInputChange : function() {
       ecosis.ds.data.owner_org = this.$.organizationInput.value;
       this.updateVisibilityControl();
@@ -409,6 +437,18 @@
 
     onDescriptionInputChange : function() {
       ecosis.ds.data.notes = this.$.descriptionInput.value;
+      this.save();
+    },
+
+    onKeywordsChange : function() {
+      var tokens = this.$.keywordInput.getTokens();
+      var keywords = [];
+
+      for( var i = 0; i < tokens.length; i++ ) {
+        keywords.push({name: tokens[i].label});
+      }
+
+      ecosis.ds.data.tags = keywords;
       this.save();
     },
 
@@ -439,27 +479,27 @@
     },
 
     onWebsiteInputChange : function() {
-      this.ds.setDatasetExtra('Website', this.$.websiteInput.value);
+      ecosis.ds.setDatasetExtra('Website', this.$.websiteInput.value);
       this.save();
     },
 
     onCitationInputChange : function() {
-      this.ds.setDatasetExtra('Citation', this.$.citationInput.value);
+      ecosis.ds.setDatasetExtra('Citation', this.$.citationInput.value);
       this.save();
     },
 
     onCitationDOIInputChange : function() {
-      this.ds.setDatasetExtra('Citation DOI', this.$.citationDOIInput.value);
+      ecosis.ds.setDatasetExtra('Citation DOI', this.$.citationDOIInput.value);
       this.save();
     },
 
     onFundingSourceInputChange : function() {
-      this.ds.setDatasetExtra('Funding Source', this.$.fundingSourceInput.value);
+      ecosis.ds.setDatasetExtra('Funding Source', this.$.fundingSourceInput.value);
       this.save();
     },
 
     onFundingSourceNumberInputChange : function() {
-      this.ds.setDatasetExtra('Funding Source Grant Number', this.$.fundingSourceNumberInput.value);
+      ecosis.ds.setDatasetExtra('Funding Source Grant Number', this.$.fundingSourceNumberInput.value);
       this.save();
     }
 

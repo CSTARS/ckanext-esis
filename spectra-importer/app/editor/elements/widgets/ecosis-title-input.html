@@ -6,13 +6,16 @@
     span.label {
       font-size: 12px;
     }
+    #titleLabel {
+      font-weight: bold;
+    }
   </style>
 
   <template>
     <div id="editMode" style="display:none" class="form-horizontal">
       <div class="form-group">
         <label class="col-md-2 control-label">Title</label>
-        <div class="col-md-9" style="padding-top:10px">
+        <div class="col-md-9" style="padding-top:7px">
           <div><span id="titleLabel"><span></div>
           <div style="font-size:12px;color:#888;font-style:italic">
             URL: <span id="urlLabel"></span>
@@ -25,7 +28,7 @@
       <div class="form-group">
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
-          <input type="text" class="form-control" id="titleInput" placeholder="Unique dataset title" on-keyup="onTitleInputChange">
+          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-keyup="onTitleInputChange">
 
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
@@ -94,6 +97,8 @@
             this.validName = false;
             this.$.invalid.style.display = 'inline-block';
           }
+
+          this.fire('update');
         }.bind(this));
 
       }.bind(this), 500);

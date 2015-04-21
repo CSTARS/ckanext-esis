@@ -197,6 +197,46 @@ module.exports = function(config) {
     });
   }
 
+  this.updatePackage = function(pkg, callback) {
+    if( pkg.private ) {
+      this.verifyPrivate(pkg.id,
+        function(resp) {
+          this._updatePackage(pkg, callback);
+        }.bind(this)
+      );
+      return;
+    }
+    this._updatePackage(pkg, callback);
+  }
+
+  this._updatePackage = function(pkg, callback) {
+    postRaw(this.host+'/api/3/action/package_update', pkg, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+  this.verifyPrivate = function(id, callback) {
+    get(this.host+'/ecosis/verifyPrivate?id='+id, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
+      callback(resp.body);
+    });
+  }
+
+  this.deletePackage = function(pkgid, callback) {
+    postRaw(this.host+'/api/3/action/package_delete', {id: pkgid}, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+  this.createPackage = function(pkg, callback) {
+    postRaw(this.host+'/api/3/action/package_create', pkg, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body.result);
+    });
+  }
+
 }
 
 
@@ -205,6 +245,14 @@ function post(url, data, callback) {
    .post(url)
    .withCredentials()
    .type('form')
+   .send(data)
+   .end(callback)
+}
+
+function postRaw(url, data, callback) {
+  request
+   .post(url)
+   .withCredentials()
    .send(data)
    .end(callback)
 }

@@ -16,7 +16,7 @@
     <div id="resourceRoot"></div>
 
     <div id="noResources" id="alert alert-warning" style="display:none">
-      Your dataset does not contain any resource files.  Click the 'Add' tab to upload resources.
+      Your dataset does not contain any resource files.  Click <a id="addLink">here</a> to upload resources.
     </div>
 
     <div id="legend">
@@ -40,6 +40,8 @@
     ready : function() {
       if( ecosis.ds.loaded ) this.render();
       else ecosis.ds.on('load', this.render.bind(this));
+
+      this.$.addLink.setAttribute('href', '#add-resources');
     },
 
     render : function() {
