@@ -190,6 +190,13 @@ module.exports = function(config) {
     });
   }
 
+  this.tagSearch = function(query, limit, callback) {
+    get(this.host+'/api/3/action/tag_search?limit='+(limit || 10)+'&query='+query, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
+      callback(resp.body);
+    });
+  }
+
 }
 
 

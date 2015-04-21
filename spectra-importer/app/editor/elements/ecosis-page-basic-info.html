@@ -1,4 +1,5 @@
 <link rel="import" href="widgets/ecosis-title-input.html" >
+<link rel="import" href="widgets/ecosis-keyword-input.html" >
 
 <dom-module id="ecosis-page-basic-info">
   <style>
@@ -6,12 +7,24 @@
       display: block;
       padding: 0 10%;
     }
+    .save-label {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 1000;
+        display: none;
+    }
   </style>
   <template>
+    <div class="save-label" id="saveLabel">
+      <span class="label label-primary"><i></i> Saving...</span>
+    </div>
 
     <h4 class="page-header">Basic Information</h4>
 
-    <div style="font-size: 14px; color: #888">
+    <div class="well" style="font-size: 14px; color: #888">
       <div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome <span id="usernameLabel"></span>.</div>
       Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />
       First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
@@ -23,18 +36,13 @@
 
       <!-- Description -->
       <div class="form-group">
-        <label for="textArea" class="col-lg-2 control-label">Description</label>
-        <div class="col-lg-9">
+        <label for="textArea" class="col-md-2 control-label">Description</label>
+        <div class="col-md-9">
           <textarea class="form-control" rows="3" id="descriptionInput" on-change="onDescriptionInputChange"></textarea>
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="titleInput" class="col-lg-2 control-label">Keywords</label>
-        <div class="col-lg-10">
-          <input type="text" class="form-control" id="keywordsInput" on-change="onKeywordsInputChange">
-        </div>
-      </div>
+      <ecosis-keyword-input id="keywordInput"></ecosis-keyword-input>
       <!-- TODO
       <div class="form-wrap">
         <esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
@@ -42,20 +50,20 @@
       -->
 
       <div class="form-group">
-        <label for="licenseInput" class="col-lg-2 control-label">License: </label>
-        <div class="col-lg-10">
+        <label for="licenseInput" class="col-md-2 control-label">License: </label>
+        <div class="col-md-9">
           <div style="display:none">Loading...</div>
-          <select class="form-control" id="licenseInput">
+          <select class="form-control" id="licenseInput" on-change="onLicenseInputChange">
             <option>Loading...</option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="organizationInput" class="col-lg-2 control-label">Organization: </label>
-        <div class="col-lg-10">
+        <label for="organizationInput" class="col-md-2 control-label">Organization: </label>
+        <div class="col-md-9">
           <div style="display:none">Loading...</div>
-          <select class="form-control" id="organizationInput">
+          <select class="form-control" id="organizationInput" on-change="onOrganizationInputChange">
             <option>Loading...</option>
           </select>
 
@@ -67,9 +75,9 @@
       </div>
 
       <div class="form-group">
-        <label for="visibilityInput" class="col-lg-2 control-label">Visibility: </label>
-        <div class="col-lg-10">
-          <select class="form-control" id="visibilityInput" disabled>
+        <label for="visibilityInput" class="col-md-2 control-label">Visibility: </label>
+        <div class="col-md-9">
+          <select class="form-control" id="visibilityInput" disabled  on-change="onVisibilityInputChange">
             <option value="false">Public</option>
             <option value="true">Private</option>
           </select>
@@ -82,16 +90,16 @@
 
       <!-- Version -->
       <div class="form-group">
-        <label for="versionInput" class="col-lg-2 control-label">Version</label>
-        <div class="col-lg-10">
+        <label for="versionInput" class="col-md-2 control-label">Version</label>
+        <div class="col-md-9">
           <input type="text" class="form-control" id="versionInput" on-change="onVersionInputChange">
         </div>
       </div>
 
       <!-- Website -->
       <div class="form-group">
-        <label for="websiteInput" class="col-lg-2 control-label">Website</label>
-        <div class="col-lg-10">
+        <label for="websiteInput" class="col-md-2 control-label">Website</label>
+        <div class="col-md-9">
           <input type="text" class="form-control" id="websiteInput" on-change="onWebsiteInputChange">
         </div>
       </div>
@@ -102,8 +110,8 @@
         <div class="col-md-6">
           <!-- Author -->
           <div class="form-group">
-            <label for="authorInput" class="col-lg-3 control-label">Author</label>
-            <div class="col-lg-9">
+            <label for="authorInput" class="col-md-4 control-label">Author</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="authorInput" on-change="onAuthorInputChange">
             </div>
           </div>
@@ -112,9 +120,9 @@
         <div class="col-md-6">
           <!-- Author Email -->
           <div class="form-group">
-            <label for="authorInputEmail" class="col-lg-3 control-label">Author Email</label>
-            <div class="col-lg-9">
-              <input type="text" class="form-control" id="authorInputEmail" on-change="onAuthorInputEmailChange">
+            <label for="authorEmailInput" class="col-md-4 control-label">Author Email</label>
+            <div class="col-md-8">
+              <input type="text" class="form-control" id="authorEmailInput" on-change="onAuthorEmailInputChange">
             </div>
           </div>
 
@@ -125,8 +133,8 @@
         <div class="col-md-6">
           <!-- Maintainer -->
           <div class="form-group">
-            <label for="maintainerInput" class="col-lg-3 control-label">Maintainer</label>
-            <div class="col-lg-9">
+            <label for="maintainerInput" class="col-md-4 control-label">Maintainer</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="maintainerInput" on-change="onMaintainerInputChange">
             </div>
           </div>
@@ -135,8 +143,8 @@
         <div class="col-md-6">
           <!-- Maintainer Email -->
           <div class="form-group">
-            <label for="maintainerEmailInput" class="col-lg-3 control-label">Maintainer Email</label>
-            <div class="col-lg-9">
+            <label for="maintainerEmailInput" class="col-md-4 control-label">Maintainer Email</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="maintainerEmailInput" on-change="onMaintainerEmailInputChange">
             </div>
           </div>
@@ -148,8 +156,8 @@
         <div class="col-md-6">
           <!-- Citation -->
           <div class="form-group">
-            <label for="citationInput" class="col-lg-3 control-label">Citation</label>
-            <div class="col-lg-9">
+            <label for="citationInput" class="col-md-4 control-label">Citation</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="citationInput" on-change="onCitationInputChange">
             </div>
           </div>
@@ -158,8 +166,8 @@
         <div class="col-md-6">
           <!-- Citation DOI -->
           <div class="form-group">
-            <label for="citationDOIInput" class="col-lg-3 control-label">Citation DOI</label>
-            <div class="col-lg-9">
+            <label for="citationDOIInput" class="col-md-4 control-label">Citation DOI</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="citationDOIInput" on-change="onCitationDOIInputChange">
             </div>
           </div>
@@ -171,8 +179,8 @@
         <div class="col-md-6">
           <!-- Funding Source -->
           <div class="form-group">
-            <label for="fundingSourceInput" class="col-lg-3 control-label">Funding Source</label>
-            <div class="col-lg-9">
+            <label for="fundingSourceInput" class="col-md-4 control-label">Funding Source</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="fundingSourceInput" on-change="onFundingSourceInputChange">
             </div>
           </div>
@@ -181,8 +189,8 @@
         <div class="col-md-6">
           <!-- Funding Source Grant Number -->
           <div class="form-group">
-            <label for="fundingSourceNumberInput" class="col-lg-3 control-label">Funding Source Grant Number</label>
-            <div class="col-lg-9">
+            <label for="fundingSourceNumberInput" class="col-md-4 control-label">Funding Source Grant Number</label>
+            <div class="col-md-8">
               <input type="text" class="form-control" id="fundingSourceNumberInput" on-change="onFundingSourceNumberInputChange">
             </div>
           </div>
@@ -203,14 +211,19 @@
       <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
     </div>
 
-    <div class="bugs">
-        Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
-    </div>
+    <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
+    <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
 
-    <div class="gitInfo" style="display:none">
-      <div><b>Branch:</b> <span id="gitBranchLabel"></span></div>
-      <div><b>Version:</b> <span id="gitVersionLabel"></span></div>
-      <div><b>Commit:</b> <span id="gitCommitLabel"></span></div>
+    <div class="well">
+      <div class="bugs" style="margin-top:20px">
+          Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+      </div>
+
+      <div class="gitInfo" style="display:none">
+        <div><b>Branch:</b> <span id="gitBranchLabel"></span></div>
+        <div><b>Version:</b> <span id="gitVersionLabel"></span></div>
+        <div><b>Commit:</b> <span id="gitCommitLabel"></span></div>
+      </div>
     </div>
 
   </template>
@@ -221,6 +234,8 @@
     is : 'ecosis-page-basic-info',
 
     ready : function() {
+      this.updateTimer = -1;
+
       if( ecosis.user ) this.setUsername();
       else ecosis.on('user-load', this.setUsername.bind(this));
 
@@ -235,17 +250,54 @@
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
     },
 
-    setMode : function() {
-      // TODO
+    setMode : function(mode) {
+      this.mode = mode;
+      if( mode == 'create' ) {
+        this.$.createBtn.style.display = 'inline-block';
+      } else {
+        this.$.goToBtn.style.display = 'inline-block';
+      }
     },
 
     onDataLoad : function() {
-      this.$.titleInput.value = ecosis.ds.data.title;
+      var data = ecosis.ds.data;
+
+      this.$.descriptionInput.value = data.notes || '';
+      this.$.keywordInput.setTokens(data.keywords || []);
+      this.$.licenseInput.value = data.license_id || '';
+      this.$.organizationInput.value = data.owner_org || '';
+      this.$.visibilityInput.value = data.private ? 'false' : 'true';
+      this.$.versionInput.value = data.version;
+      this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
+      this.$.authorInput.value = data.author;
+      this.$.authorEmailInput.value = data.author_email;
+      this.$.maintainerInput.value = data.maintainer;
+      this.$.maintainerEmailInput.value = data.maintainer_email;
+
+      this.$.citationInput.value = ecosis.ds.getDatasetExtra('Citation').value || '';
+      this.$.citationDOIInput.value = ecosis.ds.getDatasetExtra('Citation DOI').value || '';
+      this.$.fundingSourceInput.value = ecosis.ds.getDatasetExtra('Funding Source').value || '';
+      this.$.fundingSourceNumberInput.value = ecosis.ds.getDatasetExtra('Funding Source Grant Number').value || '';
+
+      this.updateVisibilityControl();
+    },
+
+    updateVisibilityControl : function() {
+      if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
+        this.$.visibilityInput.setAttribute('disabled', '');
+        this.$.visibilityInput.value = 'false';
+        ecosis.ds.data.private = false;
+        this.$.visibilityWarnLabel.style.display = 'block';
+      } else {
+        this.$.visibilityInput.removeAttribute('disabled');
+        this.$.visibilityWarnLabel.style.display = 'none';
+      }
     },
 
     setLicenseList : function(resp) {
       if( resp.error ) return console.log('Error loading licenses :(');
 
+      this.licenses = resp;
       var options = '<option></option>';
       for( var i = 0; i < resp.length; i++ ) {
         var item = resp[i];
@@ -272,6 +324,144 @@
         options += '<option value="'+org.id+'">'+org.display_name+'</option>';
       }
       this.$.organizationInput.innerHTML = options;
+    },
+
+    goToAdd : function() {
+      window.location = '#add-resources';
+    },
+
+    delete : function() {
+  		if( confirm('Are you sure your want to remove this dataset?') ) {
+  			if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+  				document.querySelector('esis-ckan').deletePackage(
+  					this.ds.package_id,
+  					function(err, resp) {
+  						alert('package deleted');
+  						window.location = '/dataset';
+  					}
+  				);
+  			}
+  		}
+  	},
+
+    create : function() {
+      ecosis.ckan.createPackage(ecosis.ds.data,
+					function(resp) {
+
+						this.creating = false;
+
+            if( err ) return alert('Failed to create dataset :(');
+						if( !resp ) return alert('Failed to create dataset :(');
+						if( !resp.id ) return alert('Failed to create dataset :(');
+
+            // set the page
+            window.location = '/?id='+resp.name+'#add-resources';
+					}.bind(this)
+			);
+    },
+
+    save : function() {
+      if( this.mode == 'create' ) return;
+
+      if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
+
+      this.updateTimer = setTimeout(function(){
+        this.updateTimer = -1;
+        this._save();
+      }.bind(this), 2000);
+    },
+
+    _save : function() {
+      this.$.saveLabel.style.display = 'block';
+
+      // make sure we have the correct package state
+      ecosis.ckan.getPackage(ecosis.ds.package_id,
+        function(resp) {
+          if( resp.error ) {
+            this.$.saveLabel.style.display = 'none';
+            return alert('Failed to fetch for dataset update :(');
+          }
+
+          var metadata = resp;
+          for( var key in ecosis.ds.data ) {
+            metadata[key] = ecosis.ds.data[key];
+          }
+
+          ecosis.ckan.updatePackage(metadata,
+            function(resp) {
+              this.$.saveLabel.style.display = 'none';
+
+              if( resp.error ) return alert('Failed to update dataset :(');
+              if( !resp.id ) return alert('Failed to update dataset :(');
+
+            }.bind(this)
+          );
+        }.bind(this)
+      );
+    },
+
+    /* change handlers */
+    onOrganizationInputChange : function() {
+      ecosis.ds.data.owner_org = this.$.organizationInput.value;
+      this.updateVisibilityControl();
+      this.save();
+    },
+
+    onDescriptionInputChange : function() {
+      ecosis.ds.data.notes = this.$.descriptionInput.value;
+      this.save();
+    },
+
+    onLicenseInputChange : function() {
+      ecosis.ds.data.license_id = this.$.licenseInput.value;
+
+      for( var i = 0; i < this.licenses.length; i++ ) {
+        if( this.licenses[i].id == ecosis.ds.data.license_id ) {
+          ecosis.ds.data.license_title = this.licenses[i].title;
+          break;
+        }
+      }
+
+      this.save();
+    },
+
+    onVisibilityInputChange : function() {
+      ecosis.ds.data.hidden = this.$.visibilityInput.value == 'true' ? true : false;
+
+      // push to search needs to know
+      this.fire('visibility-change');
+      this.save();
+    },
+
+    onVersionInputChange : function() {
+      ecosis.ds.data.version = this.$.versionInput.value;
+      this.save();
+    },
+
+    onWebsiteInputChange : function() {
+      this.ds.setDatasetExtra('Website', this.$.websiteInput.value);
+      this.save();
+    },
+
+    onCitationInputChange : function() {
+      this.ds.setDatasetExtra('Citation', this.$.citationInput.value);
+      this.save();
+    },
+
+    onCitationDOIInputChange : function() {
+      this.ds.setDatasetExtra('Citation DOI', this.$.citationDOIInput.value);
+      this.save();
+    },
+
+    onFundingSourceInputChange : function() {
+      this.ds.setDatasetExtra('Funding Source', this.$.fundingSourceInput.value);
+      this.save();
+    },
+
+    onFundingSourceNumberInputChange : function() {
+      this.ds.setDatasetExtra('Funding Source Grant Number', this.$.fundingSourceNumberInput.value);
+      this.save();
     }
+
   })
 </script>

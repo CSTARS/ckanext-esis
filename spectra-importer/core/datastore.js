@@ -75,7 +75,10 @@ module.exports = function(config) {
   // wire events
   var ee = new EventEmitter();
   this.on = function(e, fn) {
-       ee.on(e, fn);
+    // if things want to know we are loaded and we have already fired, just trigger.
+    if( e == 'load' && this.loaded ) return fn();
+
+    ee.on(e, fn);
   };
 
   this.load = function() {
@@ -146,7 +149,7 @@ module.exports = function(config) {
     for( var i = 0; i < this.data.extras.length; i++ ) {
       if( this.data.extras[i].key == key ) return this.data.extras[i];
     }
-    return null;
+    return {};
   }
 
   this.setDatasetExtra = function(key, value) {
