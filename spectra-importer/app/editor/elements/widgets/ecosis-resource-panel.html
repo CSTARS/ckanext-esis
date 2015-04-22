@@ -23,7 +23,7 @@
           <div class="layout horizontal">
             <div class="flex">
               <span id="titleLabel"></span>
-              <a class="btn btn-link" style="color:white" on-click="delete"><i class="fa fa-trash"></i></a>
+              <a class="btn btn-link" style="color:white" on-click="delete" id="trashBtn"><i class="fa fa-trash"></i></a>
               <span class="label label-danger" id="deletePanel" style="display:none">
                 <i class="fa fa-spinner fa-spin"></i> Deleting Resource...
               </span>
@@ -85,14 +85,20 @@
       this.$.titleLabel.innerText = this.resource.name;
       this.setClass();
 
-      if( this.resource.datasheets.length <= 1 ) {
+      if( !this.resource.datasheets ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else if( this.resource.datasheets.length <= 1 ) {
         this.$.datasheetSelector.style.display = 'none';
       } else {
         this.$.datasheetSelector.style.display = 'block';
         this.$.datasheetSelector.update(this.resource);
       }
 
-      this.selectDatasheet(0);
+      if( this.resource.datasheets ) {
+        this.selectDatasheet(0);
+      } else {
+        this.$.trashBtn.style.color = '#333';
+      }
     },
 
     onDatasheetTypeChange : function(e) {
@@ -130,7 +136,7 @@
     },
 
     getResourceType : function() {
-      if( this.resource.datasheets.length == 1 && this.resource.datasheets[0].metadata ) {
+      if( this.resource.datasheets && this.resource.datasheets.length == 1 && this.resource.datasheets[0].metadata ) {
         return 'metadata';
       }
       if( this.resource.type == 'zip' ) {
