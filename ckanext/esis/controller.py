@@ -19,6 +19,7 @@ import os, shutil
 from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
 from ckanext.esis.lib.join import SheetJoin
+import ckanext.esis.lib.auth as auth
 
 from ckan.controllers.package import PackageController
 import subprocess
@@ -95,6 +96,7 @@ class SpectraController(PackageController):
     def verifyPrivate(self):
         response.headers["Content-Type"] = "application/json"
         package_id = request.params.get('id')
+        auth.hasAccess(package_id)
 
         context = {'model': model, 'user': c.user}
 
@@ -106,7 +108,9 @@ class SpectraController(PackageController):
 
     def getSchema(self):
         response.headers["Content-Type"] = "application/json"
+
         package_id = request.params.get('id')
+        auth.hasAccess(package_id)
 
         context = {'model': model, 'user': c.user}
 
@@ -119,6 +123,9 @@ class SpectraController(PackageController):
         params = self._get_request_data(request)
 
         context = {'model': model, 'user': c.user}
+
+        # TODO
+        # auth.hasAccess(package_id)
 
         # remove resource from disk - normally this doesn't happen
         r = logic.get_action('resource_show')(context, params)
@@ -180,7 +187,6 @@ class SpectraController(PackageController):
 
 
     # rebuild entire search index
-    # TODO: this should be admin only!!
     def rebuildIndex(self):
         context = {'model': model, 'user': c.user}
 

@@ -25,11 +25,16 @@ class Push:
     joinlib = None
     mapreduce = {}
     localdir = ""
+    metadata = {}
 
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
         self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
+
+        # read schema file from importer core
+        with open('%s/../../../spectra-importer/core/schema.json' % self.localdir, 'r') as data_file:
+            self.metadata = json.load(data_file)
 
         # read in mapreduce strings
         f = open('%s/../mapreduce/map.js' % self.localdir, 'r')
@@ -216,6 +221,10 @@ class Push:
                                 metadataCache[metadatafile] = data
 
                             self.joinlib.joinOnSpectra(datasheet, m, sheet, data)
+
+        # fix and space and capitalization issues
+        #for key, value in m:
+
 
         # copy any mapped attributes
         if package.get("attributeMap") != None:
