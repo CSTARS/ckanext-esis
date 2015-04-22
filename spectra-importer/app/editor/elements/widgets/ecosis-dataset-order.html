@@ -6,39 +6,42 @@
   </style>
 
   <template>
-    <div class="help-block">
-        Is this a time series dataset or a dataset that has any other form of ordering?
-        If so, select the attribute to order by as well as the type of sort that should
-        be performed.  You can also provide a textual description of what this ordering is.
-    </div>
 
-    <div class="form-horizontal">
-      <div class="form-group">
-        <label for="orderByInput" class="col-md-2 control-label">Order By</label>
-        <div class="col-md-10">
-          <select id="orderByInput" class="form-control" on-change="onChange"></select>
-        </div>
+    <div class="well">
+      <div>
+          Is this a time series dataset or a dataset that has any other form of ordering?
+          If so, select the attribute to order by as well as the type of sort that should
+          be performed.  You can also provide a textual description of what this ordering is.
       </div>
 
-      <div class="form-group" style="display:none" id="secondaryPanel">
-        <label for="orderTypeInput" class="col-md-2 control-label">Order Type</label>
-        <div class="col-md-10">
-
-          <select id="orderTypeInput" class="form-control" on-change="onChange">
-              <option value="string">Default (String)</option>
-              <option value="datetime">Date</option>
-              <option value="numeric">Numeric</option>
-          </select>
-
-          <div class="help-block" id="dateHelp" style="display:none">
-              Use <a href="http://www.w3.org/TR/NOTE-datetime" target="_blank">ISO-8601</a>
-              for which the format is: YYYY-MM-DDTHH:mm:ss.sssZ.
-              <a href="http://xkcd.com/1179/" target="_blank">Why?</a>
+      <div class="form-horizontal">
+        <div class="form-group">
+          <label for="orderByInput" class="col-md-2 control-label">Order By</label>
+          <div class="col-md-10">
+            <select id="orderByInput" class="form-control" on-change="onChange"></select>
           </div>
+        </div>
+
+        <div class="form-group" style="display:none" id="secondaryPanel">
+          <label for="orderTypeInput" class="col-md-2 control-label">Order Type</label>
+          <div class="col-md-10">
+
+            <select id="orderTypeInput" class="form-control" on-change="onChange">
+                <option value="string">Default (String)</option>
+                <option value="datetime">Date</option>
+                <option value="numeric">Numeric</option>
+            </select>
+
+            <div class="help-block" id="dateHelp" style="display:none">
+                Use <a href="http://www.w3.org/TR/NOTE-datetime" target="_blank">ISO-8601</a>
+                for which the format is: YYYY-MM-DDTHH:mm:ss.sssZ.
+                <a href="http://xkcd.com/1179/" target="_blank">Why?</a>
+            </div>
 
 
-          <input type="text" id="descriptionInput" class="form-control" on-change="onChange" placeholder="Description"/>
+            <input type="text" id="descriptionInput" class="form-control" on-change="onChange" placeholder="Description"/>
 
+          </div>
         </div>
       </div>
     </div>
