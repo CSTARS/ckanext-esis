@@ -1,0 +1,166 @@
+<dom-module id="ecosis-page-push">
+  <style>
+    :host {
+      display: block;
+      padding: 0 10%;
+    }
+    #main {
+      margin-bottom: 50px;
+    }
+  </style>
+
+  <template>
+    <h4 class="page-header">Push to Search</h4>
+
+
+		<div class="alert alert-danger" style="display:none" id="privateAlertPanel">
+			You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+		</div>
+
+		<div id="main">
+			<div class="help-block">
+				Please verify all information looks correct.  Once everything looks correct, click 'Push'
+        below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+         Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
+			</div>
+
+			<div class="well">
+				<h4>Basic Information</h4>
+				<table class="table">
+					<tr><td>Title</td><td id="title"></td></tr>
+					<tr><td>Name</td><td id="name"></td></tr>
+					<tr><td>Description</td><td id="notes"></td></tr>
+					<tr><td>License</td><td id="license_title"></td></tr>
+					<tr><td>Organization</td><td id="owner_org_name"></td></tr>
+					<tr><td>Visibility</td><td>Public</td></tr>
+					<tr><td>Version</td><td id="version"></td></tr>
+					<tr><td>Author</td><td><b id="author"></b> <i id="author_email"></i></td></tr>
+					<tr><td>Maintainer</td><td><b id="maintainer"></b> <i id="maintainer_email"></i></td></tr>
+				</table>
+			</div>
+
+			<div class="well">
+				<h4>Resource Information</h4>
+				<table class="table">
+					<tr><td>Total Resources</td><td id="tResources"></td></tr>
+					<tr><td>Metadata Sheets</td><td id="tMeta"></td></tr>
+					<tr><td>Spectra Sheets</td><td id="tData"></td></tr>
+					<tr><td># Parsed Spectra</td><td id="tSpectra"></td></tr>
+				</table>
+			</div>
+
+			<div class="well">
+				<h4>EcoSIS Metadata Information</h4>
+				<div id="ecosisInfo"></div>
+				<div style="font-size: 12px; color: #888; padding: 5px">
+					If you need help adding EcoSIS metadata attributes, please try out the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool.</a>
+				</div>
+			</div>
+
+      <a class="btn btn-primary" id="pushBtn">Push</a>
+		</div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-page-push',
+
+    ready : function() {
+      this.requireEcosisAttrs = 3;
+      this.warnEcosisAttrs = 8;
+
+      ecosis.ds.on('load', this.update.bind(this));
+    },
+
+    onShow : function() {
+      this.update();
+    },
+
+    update : function() {
+      if( ecosis.ds.data.private ) {
+        this.$.privateAlertPanel.style.display = 'block';
+        this.$.main.style.display = 'none';
+      } else {
+        this.$.privateAlertPanel.style.display = 'none';
+        this.$.main.style.display = 'block';
+
+        this.updateLabels();
+        this.updateCounts();
+      }
+    },
+
+    updateLabels : function() {
+      for( var key in ecosis.ds.data ) {
+        if( this.$[key] ) this.$[key].innerText = ecosis.ds.data[key];
+      }
+    },
+
+    updateCounts : function() {
+			this.counts = {
+				metadataResources : 0,
+				measurementResources : 0,
+				measurements : 0
+			}
+
+			for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+				var resource = ecosis.ds.resources[i];
+				if( !resource.datasheets || resource.ignore ) continue;
+
+				for( var j = 0; j < resource.datasheets.length; j++ ) {
+					var datasheet = resource.datasheets[j];
+					if( datasheet.ignore ) continue;
+
+					if( datasheet.metadata ) {
+						this.counts.metadataResources++;
+					} else if ( datasheet.spectra_count ) {
+						this.counts.measurementResources++;
+						this.counts.measurements += datasheet.spectra_count;
+					}
+				}
+			}
+
+      this.$.tResources.innerText = ecosis.ds.resources.length;
+      this.$.tMeta.innerText = this.counts.metadataResources;
+      this.$.tData.innerText = this.counts.measurementResources;
+      this.$.tSpectra.innerText = this.counts.measurements;
+
+			this.updatePushStatus();
+		},
+
+		updatePushStatus : function() {
+			var attrs = [];
+			var count = 0;
+
+			ecosis.ds.schema.forEach(function(item){
+				if( ecosis.ds.metadataDefinitions[item.name] ) count++;
+			}.bind(this));
+
+			if( count < this.requireEcosisAttrs ) {
+				this.$.pushBtn.style.display = 'none';
+				this.$.ecosisInfo.innerHTML =
+					'<span class="label label-danger" style="font-size:14px">' +
+						'You have '+count+' EcoSIS metadata attributes. ' +
+						this.requireEcosisAttrs + ' are required to push to search.' +
+					'</span>';
+				return;
+			}
+
+			this.$.pushBtn.style.display = 'inline-block';
+			if( count < this.warnEcosisAttrs ) {
+				this.$.ecosisInfo.innerHTML =
+					'<span class="label label-warn" style="font-size:14px">' +
+						'You have '+count+' EcoSIS metadata attributes. ' +
+						this.warnEcosisAttrs + ' are recommended.' +
+					'</span>';
+				return;
+			}
+
+			this.$.ecosisInfo.innerHTML =
+				'<span class="label label-success" style="font-size:14px">' +
+					'You have '+count+' EcoSIS metadata attributes. ' +
+				'</span>';
+
+		}
+  })
+</script>

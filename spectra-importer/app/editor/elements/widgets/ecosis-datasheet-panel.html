@@ -12,7 +12,7 @@
   <template>
 
     <div id="main" style="display:none" class="animated fadeInUp">
-      <h6 id="titleLabel"></h6>
+      <h6 id="titleLabel" style="display:none"></h6>
 
       <span class="alert alert-danger" style="display:none" id="parseError">
           Error parsing file
@@ -27,7 +27,7 @@
             <div class="col-md-10">
               <div class="checkbox">
                 <label>
-                  <input id="inputIsMetadata" type="checkbox"> This datasheet only contains metadata to be joined on given data.
+                  <input id="inputIsMetadata" type="checkbox" on-change="onMetadataUpdate"> This datasheet only contains metadata to be joined on given data.
                 </label>
               </div>
               <span class="help-block">
@@ -187,7 +187,7 @@
             //TODO
             //this.$.spectraPanel.clearCache();
 
-            this.fire('update');
+            this.fire('update', this.resource.id);
 
             // this 'update' event actually sets the entire resource as not loaded
             // but we have set the correct datasheet attributes above, so go ahead
@@ -327,6 +327,21 @@
         this.$.main.style.display = 'block';
         this.$.loading.style.display = 'none';
       }
+    },
+
+    onMetadataUpdate : function() {
+      if( $(this.$.inputIsMetadata).is(':checked') ) {
+        this.datasheet.metadata = true;
+        this.$.joinMetadata.style.display = 'block';
+        this.fire('type-change', {type: 'metadata'});
+      } else {
+        this.datasheet.metadata = false;
+        this.$.joinMetadata.style.display = 'none';
+        this.fire('type-change', {type: 'data'});
+      }
+
+      this.save();
+      this.fire('update', this.resource.id);
     },
 
     setSaving : function(saving) {

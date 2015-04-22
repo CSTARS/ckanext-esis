@@ -2,7 +2,7 @@ var request = require('superagent');
 
 // depends if we are running from nodejs or browser
 var agent = request.agent ? request.agent() : request;
-var isBrowser = request.agent ? true : false;
+var isBrowser = request.agent ? false : true;
 
 module.exports = function(config) {
   this.host = config.host || '/';
@@ -42,6 +42,7 @@ module.exports = function(config) {
      .withCredentials()
      .field('package_id', pkgid)
      .field('mimetype', file.mimetype)
+     .field('name', file.filename)
      .attach('upload', file.mimetype)
      .end(callback);
   }
@@ -84,13 +85,7 @@ module.exports = function(config) {
       xhr : function() {
           return xhr;
       },
-      success: function(response, status) {
-        if( response.success || !response.error ) {
-        callback(null, response);
-        } else {
-            callback(response);
-        }
-      },
+      success: callback,
       error : function() {
           callback({error:true,message:'Request Error'});
       }
@@ -107,6 +102,19 @@ module.exports = function(config) {
     get(this.host+'/workspace/getLayoutOverview'+params, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body)
+    });
+  }
+
+  this.setDefaultLayout = function(pkgid, resourceList, layout, callback) {
+    var data = {
+      package_id : pkgid,
+      resources : JSON.stringify(resourceList),
+      layout : layout
+    };
+
+    post(this.host+'/workspace/setDefaultLayout', data, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error'});
+      callback(resp.body);
     });
   }
 
@@ -260,6 +268,14 @@ module.exports = function(config) {
       callback(resp.body);
     });
   }
+
+  this.removeResource = function(resourceId, callback) {
+    postRaw(this.host+'/api/3/action/resource_delete', JSON.stringify({id : resourceId }), function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp);
+    });
+  }
+
 }
 
 

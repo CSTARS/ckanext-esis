@@ -56,8 +56,8 @@
     </div>
     <!-- end well -->
 
-    <div id="processing"  class="alert alert-success" style="display: none">
-        <h4>Uploading & Processing Files...</h4>
+    <div id="processing" style="display: none">
+        <h4 class="alert alert-success">Uploading & Processing Files...</h4>
         <div id="uploadStatusTable"></div>
     </div>
 
@@ -70,6 +70,10 @@
         <div class="file-select-group" >
             <div id="dropZone"><b>OR</b> drag and drop files here</div>
         </div>
+    </div>
+
+    <div id="completePanel" class="well">
+      <a class="btn btn-link" id="completePanelLink">Open resources list</a>
     </div>
 
     <div style="margin-top: 40px">
@@ -116,13 +120,17 @@
       this.newResourceIds = [];
 
       this.$.formatHelp.setType('column');
+
+      this.$.completePanelLink.setAttribute('href', '#current-resources');
     },
 
     onRadioChange : function() {
       if( $(this.$.columnInput).is(':checked') ) {
         this.$.formatHelp.setType('column');
+        this.defaultType = 'column';
       } else {
         this.$.formatHelp.setType('row');
+        this.defaultType = 'row';
       }
     },
 
@@ -150,14 +158,12 @@
               aborted : false,
               xhr : null,
               progress : 0,
-              type : this.options.type
+              type : this.defaultType
           });
       }
 
-      var type = this.options.type;
-
       this.renderUploadStatusTable();
-      this.uploadFiles(type, 0);
+      this.uploadFiles(this.defaultType, 0);
     },
 
     setProcessing : function(processing) {
@@ -173,14 +179,16 @@
     onUploadComplete : function() {
         // set default layout and parse workspace
         ecosis.ckan.setDefaultLayout(
-            ecosis.ds.package_id, this.newResourceIds, this.options.type,
-            function(err, resp) {
-                if( err ) return console.log('Error setting default resource layout :(');
+            ecosis.ds.package_id, this.newResourceIds, this.defaultType,
+            function(resp) {
+                if( resp.error ) return console.log('Error setting default resource layout :(');
 
                 this.$.file.value = '';
                 ecosis.ds.runAfterResourceAdd(resp);
                 this.fire('resource-add');
                 this.setProcessing(false);
+
+                this.$.completePanel.style.display = 'block';
             }.bind(this)
         )
     },
@@ -212,8 +220,8 @@
                     mimetype : file.type,
                     filename : file.name
                 },
-                function(err, resp) {
-                    if( err ) console.log('Error adding resource: '+file.name);
+                function(resp) {
+                    if( resp.error ) console.log('Error adding resource: '+file.name);
 
                     // save this, when we are done, we will set default parse type
                     this.newResourceIds.push(resp.result.id);
@@ -246,7 +254,7 @@
         if( staggedFile.xhr ) {
             staggedFile.xhr.abort();
             index++;
-            this._uploadFiles(this.options.type, index);
+            this._uploadFiles(this.defaultType, index);
         }
     },
 

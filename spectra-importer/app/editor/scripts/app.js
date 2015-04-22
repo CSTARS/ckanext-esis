@@ -1,5 +1,6 @@
 var ecosis = (function(){
   var host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.8:5000' : '';
+  var pages = ['add-resources', 'current-resources', 'advanced', 'push', 'basic'];
 
   function getVar(variable) {
     var query = window.location.search.substring(1);
@@ -23,15 +24,14 @@ var ecosis = (function(){
     if( hash == 'currentPage' ) return;
 
     $('.page').hide();
-    if( hash == 'add-resources' ) {
-      $('#addResources.page').css('display','block');
-    } else if( hash == 'current-resources' ) {
-      $('#currentResources.page').css('display','block');
-    } else if( hash == 'advanced' ) {
-      $('#advanced.page').css('display','block');
-    } else {
-      $('#basic.page').css('display','block');
-    }
+
+    if( pages.indexOf(hash) > -1 ) show(hash);
+    else show('basic');
+  }
+
+  function show(hash) {
+    var ele = $('#'+hash+'.page').css('display','block')[0];
+    if( ele && ele.onShow ) ele.onShow();
   }
 
   // show splash screen

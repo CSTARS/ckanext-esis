@@ -9,6 +9,10 @@
     a.btn-link {
       padding-top: 0;
     }
+    span.label-danger {
+      box-shadow: 0 0 5px white;
+      border: 1px solid white;
+    }
   </style>
 
   <template>
@@ -19,7 +23,10 @@
           <div class="layout horizontal">
             <div class="flex">
               <span id="titleLabel"></span>
-              <a class="btn btn-link" style="color:white"><i class="fa fa-trash"></i></a>
+              <a class="btn btn-link" style="color:white" on-click="delete"><i class="fa fa-trash"></i></a>
+              <span class="label label-danger" id="deletePanel" style="display:none">
+                <i class="fa fa-spinner fa-spin"></i> Deleting Resource...
+              </span>
             </div>
             <div>
               <a class="btn btn-link" style="color:white" id="editLink" on-click="toggleEdit">
@@ -36,7 +43,11 @@
           id="datasheetSelector"
           on-select="onDatasheetSelected">
         </ecosis-datasheet-select-panel>
-        <ecosis-datasheet-panel id="datasheetUI"></ecosis-datasheet-panel>
+
+        <ecosis-datasheet-panel
+          id="datasheetUI"
+          on-type-change="onDatasheetTypeChange">
+        </ecosis-datasheet-panel>
       </div>
     </div>
   </template>
@@ -84,6 +95,15 @@
       this.selectDatasheet(0);
     },
 
+    onDatasheetTypeChange : function(e) {
+      if( e.detail.type == 'metadata' ) {
+        this.resource.datasheets[this.selectedIndex].metadata = true;
+      } else {
+        this.resource.datasheets[this.selectedIndex].metadata = false;
+      }
+      this.setClass();
+    },
+
     setClass : function() {
       var className = this.getPanelClass(this.getResourceType());
       this.$.root.className = 'panel panel-'+className;
@@ -94,6 +114,8 @@
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
       // if the edit flag is passed, actually load the detailed datasheet and render
       if( edit ) this.$.datasheetUI.edit();
+
+      this.selectedIndex = index;
     },
 
     onDatasheetSelected : function(e) {
@@ -131,6 +153,8 @@
         this.$.editLinkIcon.style.color = 'black';
 
         this.$.datasheetUI.edit();
+
+        this.fire('editing', this.resourceid);
       } else {
         this.$.body.style.display = 'none';
 
@@ -138,6 +162,34 @@
         this.$.editLinkIcon.className = 'fa fa-pencil';
         this.$.editLinkIcon.style.color = 'white';
       }
-    }
+    },
+
+    delete : function() {
+      if( !confirm("Are you sure you want to remove: "+this.resource.name+"?") ) return;
+
+      this.$.deletePanel.style.display = 'inline-block';
+
+      ecosis.ckan.removeResource(this.resource.id,
+        function(resp){
+          this.$.deletePanel.style.display = 'block';
+
+          if( resp.error ) return alert("Server error deleting resource");
+
+          for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+            if( ecosis.ds.resources[i] == this.resource ) {
+              ecosis.ds.resources.splice(i, 1);
+              ecosis.ds.fireUpdate();
+              break;
+            }
+          }
+
+          $(this).hide('slow', function(){
+            $(this).remove();
+          });
+
+          this.fire('update', this.resourceid);
+        }.bind(this)
+      );
+    },
   });
 </script>

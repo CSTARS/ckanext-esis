@@ -62,37 +62,28 @@
       }
 
       this.$.resourceRoot.innerHTML = html;
-      /*
-      <template repeat="{{r, i in ds.resources}}">
-        <div class="card"
-          metadata?="{{r.datasheets.length == 1 && r.datasheets[0].metadata}}"
-          zip?="{{r.type == 'zip'}}">
 
-          <template bind if="{{r.type == 'datafile' || r.type == 'zip'}}">
-            <esis-ui-dataresource
-              isSingleSheetMetadata="{{r.datasheets.length == 1 && r.datasheets[0].metadata}}"
-              index="{{i}}"
-              resource="{{r}}"
-              on-remove="{{_deleteResource}}"
-              on-datasheet-updated="{{clearMetadata}}">
-            </esis-ui-dataresource>
-          </template>
+      // listen for all update events
+      $(this.$.resourceRoot)
+        .find('ecosis-resource-panel')
+        .on('update', this.onResourceUpdate.bind(this));
+    },
 
-          <template bind if="{{r.type != 'datafile' && r.type != 'zip'}}">
-            <span>{{r.resource.name}}</span>
-            <esis-ui-delete-button index="{{i}}"
-                      on-delete="{{_deleteGenericResource}}">
-                  </esis-ui-delete-button>
-                  <template bind if="{{r.removing}}">
-                    <div>
-                      <span style="color:red">Removing...</span>
-                      <paper-progress indeterminate class="red"></paper-progress>
-                    </div>
-                  </template>
-          </template>
-        </div>
-      </template>
-      */
+    onResourceUpdate : function(e) {
+      var id = e.originalEvent.detail;
+
+      var panels = this.$.resourceRoot.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < panels.length; i++ ) {
+        if( panels[i].edit && panels[i].resourceid != id ) {
+          var panel = panels[i]
+          // hide resource
+          panel.toggleEdit();
+          // clear cached 'full' datasheet
+          panel.$.datasheetUI.datasheet = null;
+        }
+      }
     }
+
+
   });
 </script>

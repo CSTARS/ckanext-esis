@@ -135,6 +135,12 @@ module.exports = function(config) {
       return 0;
     });
     this.resources = this.result.resources;
+
+    this.fireUpdate();
+  }
+
+  this.fireUpdate = function() {
+    ee.emit('update');
   }
 
   // after a resource is added, our entire state is different
