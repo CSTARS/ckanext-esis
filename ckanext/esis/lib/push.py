@@ -3,8 +3,7 @@ import re, time, gc
 from pymongo import MongoClient
 from pylons import config
 import dateutil.parser, json, inspect
-from bson.code import Code
-from bson.son import SON
+from ckanext.esis.lib.mapReduce import mapreducePackage
 
 client = MongoClient(config._process_configs[1]['esis.mongo.url'])
 db = client[config._process_configs[1]['esis.mongo.db']]
@@ -23,7 +22,6 @@ class Push:
     process = None
     workspace = None
     joinlib = None
-    mapreduce = {}
     localdir = ""
     metadata = {}
 
@@ -34,20 +32,11 @@ class Push:
 
         # read schema file from importer core
         with open('%s/../../../spectra-importer/core/schema.json' % self.localdir, 'r') as data_file:
-            self.metadata = json.load(data_file)
-
-        # read in mapreduce strings
-        f = open('%s/../mapreduce/map.js' % self.localdir, 'r')
-        self.mapreduce['map'] = f.read()
-        f.close()
-
-        f = open('%s/../mapreduce/reduce.js' % self.localdir, 'r')
-        self.mapreduce['reduce'] = f.read()
-        f.close()
-
-        f = open('%s/../mapreduce/finalize.js' % self.localdir, 'r')
-        self.mapreduce['finalize'] = f.read()
-        f.close()
+            cats = json.load(data_file)
+            for cat, items in cats.iteritems():
+                for item in items:
+                    flat = self.flatten(item.get('name'))
+                    self.metadata[flat] = item
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
@@ -96,17 +85,7 @@ class Push:
             "attributes" : attrs
         })
 
-        # finally run map reduce
-        map = Code(self.mapreduce['map'])
-        reduce = Code(self.mapreduce['reduce'])
-        #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
-        spectraCollection.map_reduce(map, reduce, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": package_id})
-
-        # hack, set description
-        searchCollection.update(
-            {"value.ecosis.package_id": package_id},
-            {"$set": {"value.ecosis.description": ckanPackage["notes"]}}
-        )
+        mapreducePackage(ckanPackage, workspacePackage, searchCollection)
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
@@ -222,15 +201,28 @@ class Push:
 
                             self.joinlib.joinOnSpectra(datasheet, m, sheet, data)
 
-        # fix and space and capitalization issues
-        #for key, value in m:
-
-
         # copy any mapped attributes
         if package.get("attributeMap") != None:
             for key, value in package["attributeMap"].iteritems():
                 if value in m:
                     m[key] = m[value]
+
+        # fix and space and capitalization issues
+        replace = []
+        for key, value in m.iteritems():
+            flat = self.flatten(key)
+            if flat == key:
+                continue
+
+            if self.metadata.get(flat) != None:
+                replace.append({
+                    "new" : self.metadata.get(flat).get('name'),
+                    "old" : key,
+                    "value" : value
+                })
+        for item in replace:
+            del m[item.get('old')]
+            m[item.get('new')] = item.get("value")
 
         # TODO: Look up USDA Plant Codes
         self.setUSDACode(m)
@@ -256,13 +248,21 @@ class Push:
                 else:
                     m['ecosis']['sort'] = m[sort]
 
-            location = attrInfo.get('location')
-            if location != None and sort in location:
+
+            if m.get('geojson') != None:
+                m['ecosis']['geojson'] = json.loads(m['geojson'])
+                del m['geojson']
+            elif m.get('Latitude') != None and m.get('Longitude') != None:
                 try:
-                    m['ecosis']['location'] = json.loads(m[location])
-                    del m[location]
+                    m['ecosis']['geojson'] = {
+                        "type" : "Point",
+                        "coordinates": [
+                            float(m.get('Longitude')),
+                            float(m.get('Latitude'))
+                        ]
+                    }
                 except:
-                    t = 1
+                    pass
 
         spectraCollection.insert(m)
         #return m
@@ -270,24 +270,15 @@ class Push:
 
     def _addEcosisNamespace(self, m, ckanPackage, resource, dsid):
         ecosis = {
-            'push_time' : time.time(),
             'package_id': ckanPackage['id'],
-            'package_name': ckanPackage['name'],
             'package_title': ckanPackage['title'],
             'resource_id' : resource['id'],
             'filename': resource['name'],
             'datasheet_id': dsid,
-            'groups': [],
-            'keywords' : []
         }
 
         if ckanPackage.get('organization') != None:
             ecosis['organization'] = ckanPackage['organization']['title']
-
-        if ckanPackage.get('tags') != None:
-            for tag in ckanPackage['tags']:
-                if tag.get('state') == 'active':
-                    ecosis['keywords'].append(tag.get('display_name'))
 
         m['ecosis'] = ecosis
 
@@ -312,4 +303,7 @@ class Push:
             #        'message' : 'Unknown Code'
             #    }
         return resp
+
+    def flatten(self, name):
+        return re.sub(r'\s', '', name).lower()
 
