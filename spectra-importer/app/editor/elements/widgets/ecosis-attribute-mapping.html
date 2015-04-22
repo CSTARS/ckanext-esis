@@ -80,6 +80,9 @@
             </tr>
           </table>
 
+          <a on-click="toggleMetadata" style="cursor:pointer">EcoSIS Metadata Information</a>
+  			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
+
         </div>
       </div>
 
@@ -104,6 +107,11 @@
         this.updateSelectList();
         this.updateMap();
       }.bind(this));
+    },
+
+    onShow : function() {
+      this.updateSelectList();
+      this.updateMap();
     },
 
     processMap : function(e) {
@@ -291,6 +299,10 @@
         }.bind(this)
       )
     },
+
+    toggleMetadata : function() {
+      this.$.metadataDocs.toggle();
+    }
 
   })
 </script>

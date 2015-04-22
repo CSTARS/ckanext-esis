@@ -44,6 +44,10 @@
       this.$.addLink.setAttribute('href', '#add-resources');
     },
 
+    onShow : function() {
+      this.render();
+    },
+
     render : function() {
       if( ecosis.ds.resources.length == 0 ) {
         this.$.noResources.style.display = 'block';

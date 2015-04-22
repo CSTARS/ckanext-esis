@@ -1,0 +1,52 @@
+<script>
+  Polymer({
+    is : 'ecosis-metadata-docs',
+
+    ready : function() {
+      this.style.display = 'none';
+      this.className = 'animated zoomIn';
+
+      this.render();
+    },
+
+    toggle : function() {
+      if( this.style.display == 'block' ) {
+        this.style.display = 'none';
+      } else {
+        this.style.display = 'block';
+      }
+    },
+
+    render : function() {
+      var html = '';
+      for( var cat in ecosis.ds.metadataDefinitions ) {
+        var items = ecosis.ds.metadataDefinitions[cat];
+        html += '<h4>'+cat+'</h4>';
+
+        html += this.renderTable(items);
+      }
+
+      html += '<div class="help-block">If you need help adding EcoSIS metadata attributes, '+
+              'please try out the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" '+
+              'target="_blank">EcoSIS Data Tool.</a></div>';
+
+      this.innerHTML = html;
+    },
+
+    renderTable : function(items) {
+      var table = '<div class="well"><table class="table">';
+
+      for( var i = 0; i < items.length; i++ ) {
+        var item = items[i];
+        table +=
+          '<tr>'+
+            '<td><b>'+item.name+'</b>'+(item.description ? '<br />'+item.description : '')+'</td>'+
+            '<td style="text-transform: capitalize">'+item.input+'</td>'+
+            '<td class="vocab" style="font-style: italic; color: #888">'+(item.vocabulary ? item.vocabulary.join(', ') : '')+'</td>'+
+          '</tr>';
+      }
+
+      return table + '</table></div>';
+    }
+  })
+</script>

@@ -145,7 +145,7 @@ module.exports = function(config) {
 
   // after a resource is added, our entire state is different
   this.runAfterResourceAdd = function(workspaceData) {
-    this.data = workspaceData;
+    this.result = workspaceData;
     this._setData();
   }
 

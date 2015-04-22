@@ -214,6 +214,9 @@
     <div class="layout horizontal" style="margin-top: 15px">
       <div class="flex">
         <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
+        <a class="btn btn-primary" style="display:none" on-click="goToList" id="goToListBtn"><i class="fa fa-list"></i> Current Resources</a>
+
+
         <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
 
         <div id="helpCreatePanel" class="help-block" style="display:none">
@@ -268,6 +271,7 @@
         this.updateCreateBtnState();
       } else {
         this.$.goToBtn.style.display = 'inline-block';
+        this.$.goToListBtn.style.display = 'inline-block';
         this.$.deleteBtn.style.display = 'inline-block';
       }
     },
@@ -353,6 +357,10 @@
       window.location = '#add-resources';
     },
 
+    goToList : function() {
+      window.location = '#current-resources';
+    },
+
     delete : function() {
       if( confirm('Are you sure your want to remove this dataset?') ) {
         if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
@@ -399,6 +407,7 @@
       this.$.saveLabel.style.display = 'block';
 
       // make sure we have the correct package state
+      // all resources need to be included when you make a updatePackage call
       ecosis.ckan.getPackage(ecosis.ds.package_id,
         function(resp) {
           if( resp.error ) {
@@ -406,7 +415,7 @@
             return alert('Failed to fetch for dataset update :(');
           }
 
-          var metadata = resp;
+          var metadata = resp.result;
           for( var key in ecosis.ds.data ) {
             metadata[key] = ecosis.ds.data[key];
           }
@@ -475,6 +484,26 @@
 
     onVersionInputChange : function() {
       ecosis.ds.data.version = this.$.versionInput.value;
+      this.save();
+    },
+
+    onAuthorInputChange : function() {
+      ecosis.ds.data.author = this.$.authorInput.value;
+      this.save();
+    },
+
+    onAuthorEmailInputChange : function() {
+      ecosis.ds.data.author_email = this.$.authorEmailInput.value;
+      this.save();
+    },
+
+    onMaintainerInputChange : function() {
+      ecosis.ds.data.maintainer = this.$.maintainerInput.value;
+      this.save();
+    },
+
+    onMaintainerEmailInputChange : function() {
+      ecosis.ds.data.maintainer_email = this.$.maintainerEmailInput.value;
       this.save();
     },
 

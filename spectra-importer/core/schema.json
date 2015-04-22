@@ -1,42 +1,82 @@
 {
-  "Species": [
-    {
-      "name": "Common Name",
-      "level": 1,
-      "input": "text",
-      "units": "",
-      "vocabulary": null
-    },
-    {
-      "name": "Latin Genus",
-      "level": 1,
-      "input": "text",
-      "units": "",
-      "vocabulary": null
-    },
-    {
-      "name": "Latin Species",
-      "level": 1,
-      "input": "text",
-      "units": "",
-      "vocabulary": null
-    },
-    {
-      "name": "USDA Code",
-      "level": 1,
-      "input": "text",
-      "units": "",
-      "vocabulary": null
-    },
-    {
-      "name": "Vegetation Association",
-      "level": 1,
-      "input": "text",
-      "units": "",
-      "vocabulary": null
-    }
-  ],
   "Measurement": [
+    {
+      "name": "Acquisition Method",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Contact",
+        "Other",
+        "Pixel",
+        "Proximal"
+      ],
+      "description": "",
+      "allowOther": true
+    },
+    {
+      "name": "Sample Platform",
+      "level": 2,
+      "input": "alpha",
+      "units": "",
+      "vocabulary": [
+        "Airplane",
+        "Boom",
+        "E.g.",
+        "Etc.",
+        "Satellite",
+        "Tower",
+        "UAV"
+      ],
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Measurement Venue",
+      "level": 2,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Greenhouse",
+        "Laboratory",
+        "Other",
+        "Outdoor"
+      ],
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Measurement Venue Other",
+      "level": 2,
+      "input": "alpha",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Target Type",
+      "level": 1,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "Animal",
+        "Bark",
+        "Branch",
+        "Canopy",
+        "Flower",
+        "Leaf",
+        "Mineral",
+        "NPV",
+        "Other",
+        "Reference",
+        "Rock",
+        "Soil",
+        "Water"
+      ],
+      "description": "",
+      "allowOther": true
+    },
     {
       "name": "Measurement Quantity",
       "level": 1,
@@ -51,34 +91,41 @@
         "Reflectance",
         "Transflectance",
         "Transmittance"
-      ]
+      ],
+      "description": "",
+      "allowOther": true
     },
     {
       "name": "Index Name",
       "level": 2,
       "input": "alpha",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Measurement Units",
       "level": 2,
       "input": "alpha",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
-      "name": "Target Type",
-      "level": 1,
+      "name": "Wavelength Units",
+      "level": 2,
       "input": "controlled",
       "units": "",
       "vocabulary": [
-        "Canopy",
-        "Flower",
-        "Leaf",
+        "Microns",
+        "Nm",
         "Other",
-        "Soil"
-      ]
+        "Unitless"
+      ],
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Target Status",
@@ -95,18 +142,9 @@
         "Other",
         "Panel",
         "Standard"
-      ]
-    },
-    {
-      "name": "Measurement Venue",
-      "level": 1,
-      "input": "controlled",
-      "units": "",
-      "vocabulary": [
-        "Greenhouse",
-        "Other",
-        "Outdoor"
-      ]
+      ],
+      "description": "",
+      "allowOther": true
     },
     {
       "name": "Light Source",
@@ -115,16 +153,21 @@
       "units": "",
       "vocabulary": [
         "Lamp",
+        "Laser",
         "Other",
         "Sun"
-      ]
+      ],
+      "description": "",
+      "allowOther": true
     },
     {
       "name": "Light Source Specifications",
       "level": 2,
       "input": "text",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Foreoptic Type",
@@ -140,21 +183,74 @@
         "Leaf Clip",
         "None",
         "Other"
-      ]
+      ],
+      "description": "",
+      "allowOther": true
     },
     {
       "name": "Foreoptic Field of View",
       "level": 2,
       "input": "text",
       "units": "integer degrees",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Foreoptic Specifications",
       "level": 2,
       "input": "text",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    }
+  ],
+  "Processing Information": [
+    {
+      "name": "Processing Averaged",
+      "level": 2,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "No",
+        "Yes"
+      ],
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Processing Interpolated",
+      "level": 2,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "No",
+        "Yes"
+      ],
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Processing Resampled",
+      "level": 2,
+      "input": "controlled",
+      "units": "",
+      "vocabulary": [
+        "No",
+        "Yes"
+      ],
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Processing Information Details",
+      "level": 2,
+      "input": "alpha",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     }
   ],
   "Instrument": [
@@ -163,33 +259,32 @@
       "level": 1,
       "input": "text",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Instrument Model",
       "level": 1,
       "input": "text",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Instrument Serial Number",
-      "level": 1,
+      "level": 2,
       "input": "text",
       "units": "",
-      "vocabulary": null
-    },
-    {
-      "name": "Spectral Range, Resolution, wavelength spacing, etc.",
-      "level": 1,
-      "input": "text",
-      "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     }
   ],
   "Theme": [
     {
-      "name": "Objective",
+      "name": "Theme",
       "level": 1,
       "input": "controlled",
       "units": "",
@@ -198,25 +293,71 @@
         "Biochemistry",
         "Ecology",
         "Forest",
+        "Global Change",
+        "Land Cover",
         "Other",
         "Phenology",
+        "Physiology",
+        "Urban",
+        "Water Quality"
+      ],
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Theme Other",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "User Theme Tags",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": [
+        "But Not Controlled",
+        "May Include Terms In Cells Below"
+      ],
+      "description": "ALREADY POPULATED ON UPLOAD",
+      "allowOther": false
+    },
+    {
+      "name": "Objective",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": [
+        "Agriculture",
+        "Biochemistry",
+        "E.g.",
+        "Ecology",
+        "Forest",
+        "Phenology",
         "Physiology"
-      ]
+      ],
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Ecosystem Type",
-      "level": 1,
-      "input": "controlled",
+      "level": 2,
+      "input": "text",
       "units": "",
       "vocabulary": [
         "Aquatic",
         "Coastal",
         "Crops",
+        "E.g.",
         "Forest",
         "Grassland",
-        "Other",
         "Wetland"
-      ]
+      ],
+      "description": "",
+      "allowOther": false
     }
   ],
   "Location": [
@@ -225,44 +366,159 @@
       "level": 1,
       "input": "latlng",
       "units": "decimal degree",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Longitude",
       "level": 1,
       "input": "latlng",
       "units": "decimal degree",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Location Name",
-      "level": 1,
-      "input": "",
+      "level": 2,
+      "input": "alpha",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     }
   ],
   "Date": [
-    {
-      "name": "Measurement Date",
-      "level": 1,
-      "input": "date",
-      "units": "ISO Date ",
-      "vocabulary": null
-    },
     {
       "name": "Sample Collection Date",
       "level": 1,
       "input": "date",
       "units": "ISO Date ",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Measurement Date",
+      "level": 2,
+      "input": "date",
+      "units": "ISO Date ",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     },
     {
       "name": "Phenological Status",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    }
+  ],
+  "Species": [
+    {
+      "name": "Common Name",
       "level": 1,
       "input": "text",
       "units": "",
-      "vocabulary": null
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Latin Genus",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Latin Species",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "USDA Symbol",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Vegetation Type",
+      "level": 1,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    }
+  ],
+  "Citation": [
+    {
+      "name": "Citation DOI",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Website",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Contact Name",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Author",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Funding Source",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
+    },
+    {
+      "name": "Funding Source Grant Number",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     }
   ]
 }

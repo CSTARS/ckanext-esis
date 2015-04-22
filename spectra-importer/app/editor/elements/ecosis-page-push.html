@@ -52,12 +52,14 @@
 			<div class="well">
 				<h4>EcoSIS Metadata Information</h4>
 				<div id="ecosisInfo"></div>
-				<div style="font-size: 12px; color: #888; padding: 5px">
-					If you need help adding EcoSIS metadata attributes, please try out the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Data Tool.</a>
-				</div>
-			</div>
 
-      <a class="btn btn-primary" id="pushBtn">Push</a>
+
+        <a on-click="toggleMetadata" style="cursor:pointer">EcoSIS Metadata Information</a>
+			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
+      </div>
+
+      <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      <div class="help-block" id="pushMessage" style="display:none">Pushing dataset to search (please wait, this may take a moment)...</div>
 		</div>
   </template>
 </dom-module>
@@ -133,7 +135,13 @@
 			var count = 0;
 
 			ecosis.ds.schema.forEach(function(item){
-				if( ecosis.ds.metadataDefinitions[item.name] ) count++;
+				if( ecosis.ds.isEcosisMetadata(item.name) ) {
+          count++;
+        } else if( ecosis.ds.inverseAttributeMap[item.name] &&
+                  ecosis.ds.isEcosisMetadata(ecosis.ds.inverseAttributeMap[item.name]) ) {
+
+          count++;
+        }
 			}.bind(this));
 
 			if( count < this.requireEcosisAttrs ) {
@@ -149,7 +157,7 @@
 			this.$.pushBtn.style.display = 'inline-block';
 			if( count < this.warnEcosisAttrs ) {
 				this.$.ecosisInfo.innerHTML =
-					'<span class="label label-warn" style="font-size:14px">' +
+					'<span class="label label-warning" style="font-size:14px">' +
 						'You have '+count+' EcoSIS metadata attributes. ' +
 						this.warnEcosisAttrs + ' are recommended.' +
 					'</span>';
@@ -161,6 +169,31 @@
 					'You have '+count+' EcoSIS metadata attributes. ' +
 				'</span>';
 
-		}
+		},
+
+    push : function() {
+      this.$.pushBtn.setAttribute('disabled', '');
+      this.$.pushBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Pushing...';
+      this.$.pushMessage.style.display = 'block';
+
+      ecosis.ckan.pushToSearch(ecosis.ds.package_id,
+          function(resp){
+            this.$.pushBtn.removeAttribute('disabled');
+            this.$.pushBtn.innerHTML = 'Push';
+            this.$.pushMessage.style.display = 'none';
+
+            if( resp.error ) {
+                alert('Error pushing dataset to search :(');
+            } else {
+                alert('Success!');
+                window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
+            }
+          }.bind(this)
+      );
+    },
+
+    toggleMetadata : function() {
+      this.$.metadataDocs.toggle();
+    }
   })
 </script>

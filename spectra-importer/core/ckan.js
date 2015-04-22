@@ -276,6 +276,13 @@ module.exports = function(config) {
     });
   }
 
+  this.pushToSearch = function(pkgid, callback) {
+    get(this.host+'/workspace/push?package_id='+pkgid, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
+      callback(resp.body);
+    });
+  }
+
 }
 
 

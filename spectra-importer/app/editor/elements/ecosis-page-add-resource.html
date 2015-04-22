@@ -2,7 +2,7 @@
   <style>
     :host {
       display: block;
-      padding: 0 10%;
+      padding: 0 10% 50px 10%;
     }
     #dropZone {
         border: 2px dashed #bbb;
@@ -72,8 +72,8 @@
         </div>
     </div>
 
-    <div id="completePanel" class="well">
-      <a class="btn btn-link" id="completePanelLink">Open resources list</a>
+    <div id="completePanel" class="well" style="display:none">
+      <a id="completePanelLink">Open resources list</a>
     </div>
 
     <div style="margin-top: 40px">
@@ -158,7 +158,8 @@
               aborted : false,
               xhr : null,
               progress : 0,
-              type : this.defaultType
+              type : this.defaultType,
+              speed : '0Mbps'
           });
       }
 

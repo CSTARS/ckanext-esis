@@ -49,7 +49,7 @@
           <div class="col-md-10">
             <div class="checkbox">
               <label>
-                <input id="inputIgnore" type="checkbox"> This datasheet should not be parsed.
+                <input id="inputIgnore" type="checkbox" on-change="onIgnoreUpdate"> This datasheet should not be parsed.
               </label>
             </div>
           </div>
@@ -105,7 +105,7 @@
         <div class="form-group">
 
           <div class="col-md-2" style="text-align:right">
-            <a class="btn btn-link" on-click="toggleSpectra">View Spectra</a>
+            <a class="btn btn-link" on-click="toggleSpectra">View Spectra <span id="spectraCountLabel"></span></a>
           </div>
           <div class="col-md-10">
             <div class="help-block">
@@ -221,6 +221,13 @@
         this.$.titleLabel.innerText = '';
       }
 
+      // set count
+      if( this.datasheet.spectra_count ) {
+        this.$.spectraCountLabel.innerHTML = '('+this.datasheet.spectra_count+')';
+      } else {
+        this.$.spectraCountLabel.innerHTML = '';
+      }
+
       // show parse error
       if( this.datasheet.error ) this.$.parseError.style.display = 'block';
       else this.$.parseError.style.display = 'none';
@@ -261,7 +268,7 @@
     updateIgnoreUi : function() {
       var panels = ['spectraPanel', 'parseOverviewPanel', 'orientationPanel', 'metadataSelectPanel'];
 
-      if( this.datasheet.ignored ) {
+      if( this.datasheet.ignore ) {
         panels.forEach(function(id){
           this.$[id].style.display = 'none';
         }.bind(this));
@@ -332,13 +339,25 @@
     onMetadataUpdate : function() {
       if( $(this.$.inputIsMetadata).is(':checked') ) {
         this.datasheet.metadata = true;
-        this.$.joinMetadata.style.display = 'block';
         this.fire('type-change', {type: 'metadata'});
       } else {
         this.datasheet.metadata = false;
-        this.$.joinMetadata.style.display = 'none';
         this.fire('type-change', {type: 'data'});
       }
+
+      this.updateMetadataUi();
+
+      this.save();
+      this.fire('update', this.resource.id);
+    },
+
+    onIgnoreUpdate : function() {
+      if( $(this.$.inputIgnore).is(':checked') ) {
+        this.datasheet.ignore = true;
+      } else {
+        this.datasheet.ignore = false;
+      }
+      this.updateIgnoreUi();
 
       this.save();
       this.fire('update', this.resource.id);

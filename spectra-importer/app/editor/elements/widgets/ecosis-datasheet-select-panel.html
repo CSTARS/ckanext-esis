@@ -30,7 +30,7 @@
 
     update : function(resource) {
       this.resource = resource;
-      this.select = 0;
+      this.selected = 0;
 
       var options = '';
       for( var i = 0; i < resource.datasheets.length; i++ ) {
@@ -51,6 +51,7 @@
         this.selected = 0;
         return;
       }
+      this.$.select.value = this.selected+'';
       this.fire('select', this.selected);
     },
 
@@ -60,6 +61,7 @@
         this.selected = this.resource.datasheets.length-1;
         return;
       }
+      this.$.select.value = this.selected+'';
       this.fire('select', this.selected);
     }
   });

@@ -56,6 +56,10 @@
       ecosis.ds.on('load', this.update.bind(this));
     },
 
+    onShow : function() {
+      this.update();
+    },
+
     update : function() {
       this.attributeArray = [];
 
