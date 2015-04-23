@@ -1,6 +1,3 @@
-<link rel="import" href="widgets/ecosis-title-input.html" >
-<link rel="import" href="widgets/ecosis-keyword-input.html" >
-
 <dom-module id="ecosis-page-basic-info">
   <style>
     :host {
@@ -437,7 +434,7 @@
 
       if( this.$[id].style.display == 'none' ) {
         e.currentTarget.querySelector('i').className = 'fa fa-arrow-down';
-        this.$[id].className = 'animated fadeInUp';
+        this.$[id].className = 'animated fadeIn';
         this.$[id].style.display = 'block';
         if( this.$[id].onShow ) this.$[id].onShow();
       } else {

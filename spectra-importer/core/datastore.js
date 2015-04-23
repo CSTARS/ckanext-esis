@@ -74,6 +74,7 @@ module.exports = function(config) {
 
   // wire events
   var ee = new EventEmitter();
+  ee.setMaxListeners(100);
   this.on = function(e, fn) {
     // if things want to know we are loaded and we have already fired, just trigger.
     if( e == 'load' && this.loaded ) return fn();
