@@ -145,7 +145,7 @@ def processGeoJson(geojson, pkg):
         "geometries": geojson
     }
 
-    pkgGeoJson = getPackageExtra("geojson", "pkg")
+    pkgGeoJson = getPackageExtra("geojson", pkg)
     if pkgGeoJson != None:
         pkgGeoJson = json.loads(pkgGeoJson)
 
@@ -172,7 +172,9 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
         return
 
     # if type is controlled, split to multiple values
-    if input == "controlled":
+    if name == 'Keywords':
+        pass
+    elif input == "controlled":
         val = val.split(",")
         val = map(lambda it: it.strip(), val)
     else:
