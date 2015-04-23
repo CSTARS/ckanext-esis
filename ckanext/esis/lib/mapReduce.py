@@ -53,7 +53,6 @@ def mapreducePackage(ckanPkg, spectraCollection, searchCollection):
 def updateEcosisNs(pkg, collection, spectra_count):
     ecosis = {
         "pushed" : time.time(),
-        "organization_name" : "",
         "organization_id" : "",
         "organization_image_url" : "",
         "description" : pkg.get('notes'),
@@ -61,15 +60,27 @@ def updateEcosisNs(pkg, collection, spectra_count):
         "package_id" : pkg.get("id"),
         "package_name" : pkg.get("id"),
         "package_title" : pkg.get("title"),
-        "created" : pkg.get("created"),
-        "modified" : pkg.get("modified"),
+        "created" : pkg.get("metadata_created"),
+        "modified" : pkg.get("metadata_modified"),
         "version" : pkg.get("version"),
-        "license" : pkg.get("license"),
+        "license" : pkg.get("license_title"),
         "spectra_count" : spectra_count,
-        "sort_on" : getPackageExtra("sort_on", pkg),
+        "resources" : [],
         "geojson" : None,
+        "sort_on" : getPackageExtra("sort_on", pkg),
         "sort_description" : getPackageExtra("sort_description", pkg),
     }
+
+    for item in pkg['resources']:
+        if item.get("state") != "active":
+            continue
+
+        ecosis["resources"].append({
+            "type" : item.get('url_type'),
+            "mimetype" : item.get("mimetype"),
+            "name" : item.get("name"),
+            "url" : item.get("url")
+        })
 
     keywords = []
     for item in pkg['tags']:
@@ -82,6 +93,8 @@ def updateEcosisNs(pkg, collection, spectra_count):
         if pkg['organization'] != None:
             ecosis["organization"] = pkg['organization']['title']
             ecosis["organization_id"] = pkg['organization']['id']
+
+        if pkg['organization']['image_url'] != "":
             ecosis["organization_image_url"] = '/uploads/group/%s' % pkg['organization']['image_url']
 
     # make sure the map reduce did not create a null collection, if so, remove
