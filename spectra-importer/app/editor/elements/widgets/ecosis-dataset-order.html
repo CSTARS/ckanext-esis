@@ -3,9 +3,21 @@
     :host {
       display : block;
     }
+    .save-label {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 1000;
+        display: none;
+    }
   </style>
 
   <template>
+    <div class="save-label" id="saveLabel">
+      <span class="label label-primary"><i></i> Saving...</span>
+    </div>
 
     <div class="well">
       <div>
@@ -78,45 +90,87 @@
       for( var i = 0; i < this.attributeArray.length; i++ ) {
         options += '<option value="'+this.attributeArray[i].name+'">'+this.attributeArray[i].name+'</option>';
       }
+
       this.$.orderByInput.innerHTML = options;
+
+      var sort_description = ecosis.ds.getDatasetExtra('sort_description').value || '';
+      var sort_type = ecosis.ds.getDatasetExtra('sort_type').value || '';
+      var sort_on = ecosis.ds.getDatasetExtra('sort_on').value || '';
+
+      this.$.orderByInput.value = sort_on;
+      this.$.orderTypeInput.value = sort_type;
+      this.$.descriptionInput.value = sort_description;
+
+      if( sort_on && sort_on != '' ) {
+        this.$.secondaryPanel.style.display = 'block';
+      } else {
+        this.$.secondaryPanel.style.display = 'none';
+      }
+
+      if( sort_type == 'datetime' ) {
+        this.$.dateHelp.style.display = 'block';
+      } else {
+        this.$.dateHelp.style.display = 'none';
+      }
     },
 
     onChange : function() {
-        ecosis.ds.datasetAttributes.sort_description = this.$.descriptionInput.value;
-        ecosis.ds.datasetAttributes.sort_type = this.$.orderTypeInput.value;
-        ecosis.ds.datasetAttributes.sort_on = this.$.orderByInput.value;
+      var sort_on = this.$.orderByInput.value;
+      var sort_type = this.$.orderTypeInput.value;
 
-        if( ecosis.ds.datasetAttributes.sort_on && ecosis.ds.datasetAttributes.sort_on != '' ) {
-          this.$.secondaryPanel.style.display = 'block';
-        } else {
-          this.$.secondaryPanel.style.display = 'none';
-        }
+      ecosis.ds.setDatasetExtra('sort_description', this.$.descriptionInput.value);
+      ecosis.ds.setDatasetExtra('sort_type', sort_type);
+      ecosis.ds.setDatasetExtra('sort_on', sort_on);
 
-        if( ecosis.ds.datasetAttributes.sort_type == 'datetime' ) {
-          this.$.dateHelp.style.display = 'block';
-        } else {
-          this.$.dateHelp.style.display = 'none';
-        }
 
-        if( this.timer != -1 ) clearTimeout(this.timer);
+      if( sort_on && sort_on != '' ) {
+        this.$.secondaryPanel.style.display = 'block';
+      } else {
+        this.$.secondaryPanel.style.display = 'none';
+      }
 
-        this.timer = setTimeout(function() {
-            this.timer = -1;
-            this.save();
-        }.bind(this), 2000);
+      if( sort_type == 'datetime' ) {
+        this.$.dateHelp.style.display = 'block';
+      } else {
+        this.$.dateHelp.style.display = 'none';
+      }
+
+      if( this.timer != -1 ) clearTimeout(this.timer);
+
+      this.timer = setTimeout(function() {
+          this.timer = -1;
+          this.save();
+      }.bind(this), 2000);
     },
 
     save : function() {
-        this.saving = true;
+        this.$.saveLabel.style.display = 'block';
 
-        ecosis.ckan.setDatasetAttributes(
-            ecosis.ds.package_id,
-            ecosis.ds.datasetAttributes,
-            function(resp) {
-                this.saving = false;
-                if( resp.error ) return alert('Error saving :(');
-            }.bind(this)
-        )
+        // make sure we have the correct package state
+        // all resources need to be included when you make a updatePackage call
+        ecosis.ckan.getPackage(ecosis.ds.package_id,
+          function(resp) {
+            if( resp.error ) {
+              this.$.saveLabel.style.display = 'none';
+              return alert('Failed to fetch for dataset update :(');
+            }
+
+            var metadata = resp.result;
+            for( var key in ecosis.ds.data ) {
+              metadata[key] = ecosis.ds.data[key];
+            }
+
+            ecosis.ckan.updatePackage(metadata,
+              function(resp) {
+                this.$.saveLabel.style.display = 'none';
+
+                if( resp.error ) return alert('Failed to update dataset :(');
+                if( !resp.result.id ) return alert('Failed to update dataset :(');
+
+              }.bind(this)
+            );
+          }.bind(this)
+        );
     }
   });
 </script>

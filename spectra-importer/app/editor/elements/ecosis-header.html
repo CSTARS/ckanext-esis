@@ -22,7 +22,7 @@
 
             <li class="active"><a  id="basicInfo"><i class="fa fa-info-circle"></i> Basic Information</a></li>
 
-            <li class="dropdown" id="resourcesDropdown">
+            <li class="dropdown" id="resourcesDropdown" style="display:none">
               <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
                 <i class="fa fa-files-o"></i> Resources <span class="caret"></span>
               </a>
@@ -32,8 +32,8 @@
               </ul>
             </li>
 
-            <li><a id="advanced"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+            <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
@@ -66,6 +66,14 @@
 
       $(window).on('hashchange', this.updateActiveTab.bind(this));
       this.updateActiveTab();
+    },
+
+    attached : function() {
+      if( ecosis.ds.editMode ) {
+        this.$.resourcesDropdown.style.display = 'block';
+        this.$.advanced.style.display = 'block';
+        this.$.push.style.display = 'block';
+      }
     },
 
     updateActiveTab : function() {

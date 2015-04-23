@@ -53,7 +53,11 @@
 
     search : function(){
         if( this.searchTimer != -1 ) clearTimeout(this.searchTimer);
-        if( this.$.keywordInput.value == '' ) return;
+        if( this.$.keywordInput.value == '' ) {
+          this.setSearching(false);
+          this.$.resultRoot.innerHTML = '';
+          return;
+        }
 
         this.setSearching(true);
 
@@ -110,7 +114,7 @@
     renderResults : function() {
       var btns = '';
       for( var i = 0; i < this.results.length; i++ ) {
-        btns += '<a class="btn btn-primary" index="'+i+'" style-scope="ecosis-keyword-input" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
+        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
       }
       this.$.resultRoot.innerHTML = btns;
 
@@ -120,7 +124,7 @@
     renderTokens : function() {
       var btns = '';
       for( var i = 0; i < this.tokens.length; i++ ) {
-        btns += '<a class="btn btn-default" index="'+i+'" style-scope="ecosis-keyword-input"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
+        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
       }
       this.$.currentKeywordsRoot.innerHTML = btns;
 
