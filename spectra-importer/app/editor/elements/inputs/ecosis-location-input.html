@@ -1,0 +1,106 @@
+<dom-module id="ecosis-location-input">
+  <style>
+    :host {
+      display : block;
+    }
+  </style>
+  <template>
+    <div class="well">
+      <div id="map" style="height: 400px"></div>
+      <div class="help-block">Draw bounding box for dataset</div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-location-input',
+
+    attached : function() {
+      this.drawing = false;
+
+      this.map = L.map(this.$.map, {
+          center: [0, 0],
+          zoom: 2
+      });
+
+      L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(this.map);
+
+      this.map.on('click', this.onClick.bind(this));
+      this.map.on('mousemove', this.onMouseMove.bind(this));
+
+      ecosis.ds.on('load', this.onLoad.bind(this));
+    },
+
+    onLoad : function() {
+      var geojson = ecosis.ds.getDatasetExtra('geojson').value;
+      if( !geojson ) return;
+
+      geojson = JSON.parse(geojson);
+      this.polygon = L.polygon(geojson.geometry);
+
+      this.polygon.addTo(this.map);
+    },
+
+    onShow : function() {
+      this.drawing = false;
+
+      setTimeout(function(){
+        this.map.invalidateSize();
+      }.bind(this), 50);
+    },
+
+    onClick : function(e) {
+      if( this.drawing ) {
+        this.drawing = false;
+        this.setPolygon(e.latlng);
+        return;
+      }
+
+      this.drawing = true;
+      this.p1 = e.latlng;
+    },
+
+    onMouseMove : function(e) {
+      if( !this.drawing ) return;
+
+      if( this.polygon ) {
+        this.map.removeLayer(this.polygon);
+      }
+      var p2 = e.latlng;
+
+      this.polygon = L.polygon([
+          [this.p1.lat, this.p1.lng],
+          [this.p1.lat, p2.lng],
+          [p2.lat, p2.lng],
+          [p2.lat, this.p1.lng],
+          [this.p1.lat, this.p1.lng]
+      ]);
+
+      this.polygon.addTo(this.map);
+    },
+
+    setPolygon : function(p2) {
+      var geojson = {
+        "type" : "Polygon",
+        "geometry" : [
+            [this.p1.lat, this.p1.lng],
+            [this.p1.lat, p2.lng],
+            [p2.lat, p2.lng],
+            [p2.lat, this.p1.lng],
+            [this.p1.lat, this.p1.lng]
+        ]
+      }
+      geojson = JSON.stringify(geojson);
+
+      ecosis.ds.setDatasetExtra('geojson', geojson);
+      this.fire('update', {
+        attribute : 'geojson',
+        value : geojson
+      });
+    }
+
+  })
+</script>

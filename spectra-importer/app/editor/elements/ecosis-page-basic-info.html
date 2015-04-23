@@ -130,107 +130,16 @@
       </h4>
       <ecosis-instrument-input on-update="save" id="instrumentInput" style="display:none"></ecosis-instrument-input>
 
-
-
-
+      <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="locationInput"><i class="fa fa-arrow-right"></i></a> Location
+      </h4>
+      <ecosis-location-input on-update="save" id="locationInput" style="display:none"></ecosis-location-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
       </h4>
+      <ecosis-citation-input on-update="save" id="citationInput" style="display:none"></ecosis-citation-input>
 
-      <div id="citationInput" style="display: none">
-        <div class="row">
-          <div class="col-md-6">
-            <!-- Author -->
-            <div class="form-group">
-              <label for="authorInput" class="col-md-4 control-label">Author</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="authorInput" on-change="onAuthorInputChange">
-              </div>
-            </div>
-
-          </div>
-          <div class="col-md-6">
-            <!-- Author Email -->
-            <div class="form-group">
-              <label for="authorEmailInput" class="col-md-4 control-label">Author Email</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="authorEmailInput" on-change="onAuthorEmailInputChange">
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6">
-            <!-- Maintainer -->
-            <div class="form-group">
-              <label for="maintainerInput" class="col-md-4 control-label">Maintainer</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="maintainerInput" on-change="onMaintainerInputChange">
-              </div>
-            </div>
-
-          </div>
-          <div class="col-md-6">
-            <!-- Maintainer Email -->
-            <div class="form-group">
-              <label for="maintainerEmailInput" class="col-md-4 control-label">Maintainer Email</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="maintainerEmailInput" on-change="onMaintainerEmailInputChange">
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6">
-            <!-- Citation -->
-            <div class="form-group">
-              <label for="citationInput" class="col-md-4 control-label">Citation</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="citationInput" on-change="onCitationInputChange">
-              </div>
-            </div>
-
-          </div>
-          <div class="col-md-6">
-            <!-- Citation DOI -->
-            <div class="form-group">
-              <label for="citationDOIInput" class="col-md-4 control-label">Citation DOI</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="citationDOIInput" on-change="onCitationDOIInputChange">
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6">
-            <!-- Funding Source -->
-            <div class="form-group">
-              <label for="fundingSourceInput" class="col-md-4 control-label">Funding Source</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="fundingSourceInput" on-change="onFundingSourceInputChange">
-              </div>
-            </div>
-
-          </div>
-          <div class="col-md-6">
-            <!-- Funding Source Grant Number -->
-            <div class="form-group">
-              <label for="fundingSourceNumberInput" class="col-md-4 control-label">Funding Source Grant Number</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" id="fundingSourceNumberInput" on-change="onFundingSourceNumberInputChange">
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Create Dataset -->
@@ -325,15 +234,6 @@
       this.$.visibilityInput.value = data.private ? 'false' : 'true';
       this.$.versionInput.value = data.version;
       this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
-      this.$.authorInput.value = data.author;
-      this.$.authorEmailInput.value = data.author_email;
-      this.$.maintainerInput.value = data.maintainer;
-      this.$.maintainerEmailInput.value = data.maintainer_email;
-
-      this.$.citationInput.value = ecosis.ds.getDatasetExtra('Citation').value || '';
-      this.$.citationDOIInput.value = ecosis.ds.getDatasetExtra('Citation DOI').value || '';
-      this.$.fundingSourceInput.value = ecosis.ds.getDatasetExtra('Funding Source').value || '';
-      this.$.fundingSourceNumberInput.value = ecosis.ds.getDatasetExtra('Funding Source Grant Number').value || '';
 
       this.updateVisibilityControl();
     },
@@ -526,50 +426,11 @@
       this.save();
     },
 
-    onAuthorInputChange : function() {
-      ecosis.ds.data.author = this.$.authorInput.value;
-      this.save();
-    },
-
-    onAuthorEmailInputChange : function() {
-      ecosis.ds.data.author_email = this.$.authorEmailInput.value;
-      this.save();
-    },
-
-    onMaintainerInputChange : function() {
-      ecosis.ds.data.maintainer = this.$.maintainerInput.value;
-      this.save();
-    },
-
-    onMaintainerEmailInputChange : function() {
-      ecosis.ds.data.maintainer_email = this.$.maintainerEmailInput.value;
-      this.save();
-    },
-
     onWebsiteInputChange : function() {
       ecosis.ds.setDatasetExtra('Website', this.$.websiteInput.value);
       this.save();
     },
 
-    onCitationInputChange : function() {
-      ecosis.ds.setDatasetExtra('Citation', this.$.citationInput.value);
-      this.save();
-    },
-
-    onCitationDOIInputChange : function() {
-      ecosis.ds.setDatasetExtra('Citation DOI', this.$.citationDOIInput.value);
-      this.save();
-    },
-
-    onFundingSourceInputChange : function() {
-      ecosis.ds.setDatasetExtra('Funding Source', this.$.fundingSourceInput.value);
-      this.save();
-    },
-
-    onFundingSourceNumberInputChange : function() {
-      ecosis.ds.setDatasetExtra('Funding Source Grant Number', this.$.fundingSourceNumberInput.value);
-      this.save();
-    },
 
     toggleCat : function(e) {
       var id = e.currentTarget.getAttribute('cat');
@@ -578,6 +439,7 @@
         e.currentTarget.querySelector('i').className = 'fa fa-arrow-down';
         this.$[id].className = 'animated fadeInUp';
         this.$[id].style.display = 'block';
+        if( this.$[id].onShow ) this.$[id].onShow();
       } else {
         e.currentTarget.querySelector('i').className = 'fa fa-arrow-right';
         this.$[id].style.display = 'none';

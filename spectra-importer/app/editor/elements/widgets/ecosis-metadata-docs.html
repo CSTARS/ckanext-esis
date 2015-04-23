@@ -40,7 +40,8 @@
         var item = items[i];
         table +=
           '<tr>'+
-            '<td><b>'+item.name+'</b>'+(item.description ? '<br />'+item.description : '')+'</td>'+
+            '<td>'+(item.level == 1 ? '<i class="fa fa-star" style="color:#2196f3"></i> ' : '')+' <b>'+item.name+'</b>' + 
+            (item.description ? '<div class="help-block">'+item.description+'</div>' : '')+'</td>'+
             '<td style="text-transform: capitalize">'+item.input+'</td>'+
             '<td class="vocab" style="font-style: italic; color: #888">'+(item.vocabulary ? item.vocabulary.join(', ') : '')+'</td>'+
           '</tr>';
