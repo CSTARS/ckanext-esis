@@ -1,0 +1,64 @@
+
+
+<dom-module id="ecosis-schema-input">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
+  <template></template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-schema-input',
+
+    properties : {
+      metadata : {
+        type : String
+      }
+    },
+
+    attached : function() {
+      this.style.display = "block";
+
+      this.schema = ecosis.ds.metadataLookup[this.metadata];
+
+      if( this.schema.input == 'controlled' ) {
+        this.innerHTML = '<ecosis-controlled-input metadata="'+this.metadata+'"></ecosis-controlled-input>';
+      } else {
+        var html =
+          '<div class="form-group">'+
+            '<label for="'+this.schema.flat+'Input" class="col-md-3 control-label">'+this.schema.name+': </label>'+
+            '<div class="col-md-7">'+
+              '<input type="'+this.schema.input+'" class="form-control" />';
+
+        if( this.schema.description ) {
+          html += '<div class="help-block">'+this.schema.description+'</div>';
+        }
+
+        html += '</div></div>';
+
+        this.innerHTML = html;
+
+        this.querySelector('input').addEventListener('change', this.trigger.bind(this));
+      }
+    },
+
+    setValue : function(value, otherValue) {
+      if( this.schema.input == 'controlled' ) {
+        this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
+      } else {
+        this.querySelector('input').value = value;
+      }
+    },
+
+    trigger : function(e) {
+      this.fire('update', {
+        attribute: this.schema.name,
+        value : e.currentTarget.value
+      });
+    }
+  })
+</script>

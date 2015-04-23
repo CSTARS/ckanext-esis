@@ -2,7 +2,6 @@ Measurement
 Acquisition Method=
 Sample Platform=
 Measurement Venue=
-Measurement Venue Other=
 Target Type=
 Measurement Quantity=
 Index Name=
@@ -28,8 +27,7 @@ Instrument Serial Number=
 
 Theme
 Theme=
-Theme Other=
-User Theme Tags=
+Keywords=
 Objective=
 Ecosystem Type=
 
@@ -51,10 +49,13 @@ USDA Symbol=
 Vegetation Type=
 
 Citation
+Citation=
 Citation DOI=
 Website=
-Contact Name=
 Author=
+Author Email=
+Maintainer=
+Maintainer Email=
 Funding Source=
 Funding Source Grant Number=
 
