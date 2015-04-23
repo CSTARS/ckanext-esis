@@ -11,11 +11,11 @@ module.exports = function(config) {
   this.package_id = config.package_id;
 
   // information about exsiting resources
-  this.existing = {
+  /*this.existing = {
     resources : [],
     metadata  : [],
     data      : []
-  };
+  };*/
 
   this.data = {
     title : '',
