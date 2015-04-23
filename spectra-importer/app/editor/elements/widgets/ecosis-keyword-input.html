@@ -17,7 +17,7 @@
 
     <div class="form-horizontal">
       <div class="form-group">
-        <label for="keywordInput" class="col-md-2 control-label">Keywords</label>
+        <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Keywords</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="keywordInput" on-keyup="onInputChange" placeholder="Search Keywords">
 
@@ -75,7 +75,7 @@
             value : this.$.keywordInput.value
         }
         this.addToken(t, true);
-        
+
         this.$.keywordInput.value = '';
         this.$.resultRoot.innerHTML = '';
     },
