@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from pylons import config
 import dateutil.parser, json, inspect
 from ckanext.esis.lib.mapReduce import mapreducePackage
+from ckanext.esis.lib.controlledVocab import ControlledVocab
 
 client = MongoClient(config._process_configs[1]['esis.mongo.url'])
 db = client[config._process_configs[1]['esis.mongo.db']]
@@ -14,6 +15,9 @@ searchCollection = db[searchCollectionName]
 schemaCollection = db[config._process_configs[1]['esis.mongo.schema_collection']]
 usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 searchCollection = db[config._process_configs[1]['esis.mongo.search_collection']]
+
+vocab = ControlledVocab();
+vocab.setCollection(usdaCollection)
 
 class Push:
 
@@ -85,7 +89,7 @@ class Push:
             "attributes" : attrs
         })
 
-        mapreducePackage(ckanPackage, workspacePackage, searchCollection)
+        mapreducePackage(ckanPackage, spectraCollection,  searchCollection)
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
@@ -225,44 +229,43 @@ class Push:
             m[item.get('new')] = item.get("value")
 
         # TODO: Look up USDA Plant Codes
-        self.setUSDACode(m)
+        vocab.set(m)
 
         # finally, set ckan dataset info, as well as specific info on, sort, geolocation
         self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
 
-        if package.get('datasetAttributes'):
-            attrInfo = package.get('datasetAttributes')
-            sort = attrInfo.get('sort_on')
-            type = attrInfo.get('sort_type')
-            if sort != None and sort in m:
-                if type == 'datetime':
+        sort_on = self.getPackageExtra("sort_on", ckanPackage)
+        sort_type = self.getPackageExtra("sort_type", ckanPackage)
+        if sort_on != None:
+            if sort_on in m:
+                if sort_type == 'datetime':
                     try:
-                        m['ecosis']['sort'] = dateutil.parser.parse(m[sort])
+                        m['ecosis']['sort'] = dateutil.parser.parse(m[sort_on])
                     except:
                         pass
-                elif type == 'numeric':
+                elif sort_type == 'numeric':
                     try:
-                        m['ecosis']['sort'] = float(m[sort])
+                        m['ecosis']['sort'] = float(m[sort_on])
                     except:
                         pass
                 else:
-                    m['ecosis']['sort'] = m[sort]
+                    m['ecosis']['sort'] = m[sort_on]
 
-
-            if m.get('geojson') != None:
-                m['ecosis']['geojson'] = json.loads(m['geojson'])
-                del m['geojson']
-            elif m.get('Latitude') != None and m.get('Longitude') != None:
-                try:
-                    m['ecosis']['geojson'] = {
-                        "type" : "Point",
-                        "coordinates": [
-                            float(m.get('Longitude')),
-                            float(m.get('Latitude'))
-                        ]
-                    }
-                except:
-                    pass
+        # set lat / lng info
+        if m.get('geojson') != None:
+            m['ecosis']['geojson'] = json.loads(m['geojson'])
+            del m['geojson']
+        elif m.get('Latitude') != None and m.get('Longitude') != None:
+            try:
+                m['ecosis']['geojson'] = {
+                    "type" : "Point",
+                    "coordinates": [
+                        float(m.get('Longitude')),
+                        float(m.get('Latitude'))
+                    ]
+                }
+            except:
+                pass
 
         spectraCollection.insert(m)
         #return m
@@ -282,28 +285,16 @@ class Push:
 
         m['ecosis'] = ecosis
 
-    def setUSDACode(self, m):
-        if m.get('USDA Code') == None:
-            return
-
-        item = usdaCollection.find_one({'Accepted Symbol': m.get('USDA Code').upper()},{'_id':0})
-        if item != None:
-            for key, value in item.iteritems():
-                m[key] = value
-
-    def getUSDACommonName(self, codes):
-        resp = {}
-        #for code in codes:
-            #item = usdaCollection.find_one({'Accepted Symbol': code.upper()},{'_id':0})
-            #if item != None:
-            #    resp[code] = item
-            #else:
-            #    resp[code] = {
-            #        'error' : True,
-            #        'message' : 'Unknown Code'
-            #    }
-        return resp
-
     def flatten(self, name):
         return re.sub(r'\s', '', name).lower()
 
+
+    def getPackageExtra(attr, pkg):
+        extra = pkg.get('extras')
+        if extra == None:
+            return None
+
+        for item in extra:
+            if item.get('key') == attr:
+                return item.get('value')
+        return None

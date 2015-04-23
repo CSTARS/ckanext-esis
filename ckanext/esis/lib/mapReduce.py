@@ -1,4 +1,4 @@
-import os, time
+import os, time, json
 from bson.code import Code
 from bson.son import SON
 from pylons import config
@@ -8,12 +8,23 @@ path = os.path.dirname(os.path.abspath(__file__))
 
 # read in mapreduce strings
 f = open('%s/../mapreduce/map.js' %  path, 'r')
-map = Code(f.read())
+mapJs = Code(f.read())
 f.close()
 
 f = open('%s/../mapreduce/reduce.js' % path, 'r')
-reduce = Code(f.read())
+reduceJs = Code(f.read())
 f.close()
+
+f = open('%s/../../../spectra-importer/core/schema.json' % path, 'r')
+schema = json.loads(f.read())
+f.close()
+schemaMap = {
+    'Keywords' : 'tags',
+    'Author' : 'author',
+    'Author Email' : 'author_email',
+    'Maintainer' : 'maintainer',
+    'Maintainer Email' : 'maintainer_email'
+}
 
 extras = ['Citation', 'Funding Source', 'Citation DOI', 'Funding Source Grant Number', 'Website']
 
@@ -23,27 +34,28 @@ extras = ['Citation', 'Funding Source', 'Citation DOI', 'Funding Source Grant Nu
 
 # pkg should be a ckan pkg
 # collection should be the search collection
-def mapreducePackage(ckanPkg, workspacePackage, collection):
+def mapreducePackage(ckanPkg, spectraCollection, searchCollection):
     # if the package is private, remove a return
     if ckanPkg['private'] == True:
-        collection.remove({'_id': ckanPkg['id']})
+        spectraCollection.remove({'_id': ckanPkg['id']})
+        searchCollection.remove({'_id': ckanPkg['id']})
         return
 
     # TODO: remove this later on
     #finalize = Code(self.mapreduce['finalize'])
     #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
 
-    collection.map_reduce(map, reduce, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+    spectraCollection.map_reduce(mapJs, reduceJs, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": ckanPkg['id']})
+    spectra_count = spectraCollection.find({"ecosis.package_id": ckanPkg['id']}).count()
 
-    updateEcosisNs(ckanPkg, workspacePackage, collection)
+    updateEcosisNs(ckanPkg, searchCollection, spectra_count)
 
-def updateEcosisNs(self, pkg, wrkspacePkg, collection):
+def updateEcosisNs(pkg, collection, spectra_count):
     ecosis = {
         "pushed" : time.time(),
         "organization_name" : "",
         "organization_id" : "",
         "organization_image_url" : "",
-        "keywords" : [],
         "description" : pkg.get('notes'),
         "groups" : [],
         "package_id" : pkg.get("id"),
@@ -53,28 +65,14 @@ def updateEcosisNs(self, pkg, wrkspacePkg, collection):
         "modified" : pkg.get("modified"),
         "version" : pkg.get("version"),
         "license" : pkg.get("license"),
-        "sort_on" : "",
-        "maintainer" : pkg.get("maintainer"),
-        "maintainer_email" : pkg.get("maintainer_email"),
-        "author" : pkg.get("author"),
-        "author_email" : pkg.get("author_email")
+        "spectra_count" : spectra_count,
+        "sort_on" : getPackageExtra("sort_on", pkg),
+        "sort_description" : getPackageExtra("sort_description", pkg),
     }
 
-    found = []
-    for item in pkg['extras']:
-        if item.get('key') in extras:
-            found.append(item.get('key'))
-            ecosis[item.get('key')] = item.get('value')
-    for item in extras:
-        if not item in found:
-            ecosis[item] = None
-
-    dsAttrs = wrkspacePkg.get('datasetAttributes')
-    if dsAttrs != None:
-        ecosis["sort_on"] = dsAttrs.get('sort_on')
-
+    keywords = []
     for item in pkg['tags']:
-        ecosis["keywords"].append(item['display_name'])
+        keywords.append(item['display_name'])
 
     for item in pkg['groups']:
         ecosis["groups"].append(item['display_name'])
@@ -93,9 +91,79 @@ def updateEcosisNs(self, pkg, wrkspacePkg, collection):
     if item != None:
         collection.remove({'_id': pkg['id']})
     else:
-        setValues = {'$set' : { 'value.ecosis': ecosis } }
+        item = collection.find_one({'_id': pkg['id']})
+
+        setValues = {'$set' : { 'value.ecosis': ecosis }}
+
+        mrValue = item.get('value')
+
+        # process ecosis schema
+        # bubble attributes from mapreduce
+        names = []
+        for category, items in schema.iteritems():
+            for item in items:
+                name = item.get('name')
+                input = item.get('input')
+
+                processAttribute(name, input, pkg, mrValue, setValues, keywords)
+                names.append(name)
+
+                if item.get('allowOther') == True:
+                    processAttribute(name+" Other", "text", pkg, mrValue, setValues, keywords)
+                    names.append(name+" Other")
+
+        # now, lets remove any non-ecosis metadata that has more than 100 entries
+        for key, values in mrValue.iteritems():
+            if key in names or values == None:
+                continue
+
+            if len(values) > 100:
+                if setValues.get('$unset') == None:
+                    setValues['$unset'] = {}
+
+                setValues['$unset'][key] = "";
 
         collection.update(
             {'_id': pkg['id']},
             setValues
         )
+
+def processAttribute(name, input, pkg, mrValue, setValues, keywords):
+    val = None
+    if name == 'Keywords':
+        val = keywords
+    elif schemaMap.get(name) != None:
+        val = pkg.get(schemaMap.get(name))
+    else:
+        val = getPackageExtra(name, pkg)
+
+    if val == None or val == '':
+        return
+
+    # if type is controlled, split to multiple values
+    if input == "controlled":
+        val = val.split(",")
+        val = map(lambda it: it.strip(), val)
+    else:
+        val = [val]
+
+    # now we have an dataset level value, see if we have spectra level
+    # join if we do
+    if mrValue.get(name) != None:
+        spValues = mrValue.get(name)
+        for v in val:
+            if not v in spValues:
+                spValues.append(v)
+        val = spValues
+
+    setValues['$set']['value.'+name] = val
+
+def getPackageExtra(attr, pkg):
+    extra = pkg.get('extras')
+    if extra == None:
+        return None
+
+    for item in extra:
+        if item.get('key') == attr:
+            return item.get('value')
+    return None

@@ -200,8 +200,9 @@ class SpectraController(PackageController):
         searchCollection.remove({})
 
         for pkgId in list:
-            (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(pkgId)
-            mapreducePackage(ckanPackage, workspacePackage, searchCollection)
+            context = {'model': model, 'user': c.user}
+            ckanPackage = logic.get_action('package_show')(context,{id: pkgId})
+            mapreducePackage(ckanPackage, spectraCollection, searchCollection)
 
         return json.dumps({'success': True, 'rebuildCount': len(list)})
 
