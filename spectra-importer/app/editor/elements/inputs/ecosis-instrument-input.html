@@ -1,10 +1,10 @@
 
 <script>
   Polymer({
-    is : 'ecosis-theme-input',
+    is : 'ecosis-instrument-input',
 
     ready : function() {
-      this.schema = ecosis.ds.metadataDefinitions.Theme;
+      this.schema = ecosis.ds.metadataDefinitions.Instrument;
     },
 
     attached : function() {
@@ -13,7 +13,7 @@
       var col2 = '';
 
       for( var i = 0; i < this.schema.length; i++ ) {
-        if( this.schema[i].name == 'Keywords' ) continue;
+
         var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
         if( i % 2 == 0 ) col1 += input;
@@ -33,8 +33,6 @@
 
     setValues : function() {
       for( var i = 0; i < this.schema.length; i++ ) {
-        if( this.schema[i].name == 'Keywords' ) continue;
-
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
         var value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
 

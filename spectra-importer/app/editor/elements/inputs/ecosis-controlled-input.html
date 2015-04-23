@@ -37,7 +37,7 @@
       this.selected = [];
       this.schema = ecosis.ds.metadataLookup[this.metadata];
 
-      this.$.label.innerText = this.schema.name;
+      this.$.label.innerHTML = (this.schema.level == 1 ? '<i class="fa fa-star" style="color:#2196f3"></i> ' : '')+this.schema.name;
 
       this.render();
 

@@ -30,7 +30,8 @@
       } else {
         var html =
           '<div class="form-group">'+
-            '<label for="'+this.schema.flat+'Input" class="col-md-3 control-label">'+this.schema.name+': </label>'+
+            '<label for="'+this.schema.flat+'Input" class="col-md-3 control-label">'  +
+              (this.schema.level == 1 ? '<i class="fa fa-star" style="color:#2196f3"></i> ' : '') + this.schema.name+': </label>'+
             '<div class="col-md-7">'+
               '<input type="'+this.schema.input+'" class="form-control" />';
 
