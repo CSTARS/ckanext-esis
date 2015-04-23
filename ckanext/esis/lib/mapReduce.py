@@ -67,6 +67,7 @@ def updateEcosisNs(pkg, collection, spectra_count):
         "license" : pkg.get("license"),
         "spectra_count" : spectra_count,
         "sort_on" : getPackageExtra("sort_on", pkg),
+        "geojson" : None,
         "sort_description" : getPackageExtra("sort_description", pkg),
     }
 
@@ -105,6 +106,9 @@ def updateEcosisNs(pkg, collection, spectra_count):
                 name = item.get('name')
                 input = item.get('input')
 
+                if name == 'Latitude' or name == 'Longitude':
+                    continue
+
                 processAttribute(name, input, pkg, mrValue, setValues, keywords)
                 names.append(name)
 
@@ -123,10 +127,37 @@ def updateEcosisNs(pkg, collection, spectra_count):
 
                 setValues['$unset'][key] = "";
 
+        # finally, let's handle geojson
+        geojson = []
+        if setValues['$set'].get('value.geojson') != None:
+            geojson = setValues['$set'].get('value.geojson');
+            del setValues['$set']['value.geojson']
+        setValues['$set']['value.ecosis']['geojson'] = processGeoJson(geojson, pkg);
+
         collection.update(
             {'_id': pkg['id']},
             setValues
         )
+
+def processGeoJson(geojson, pkg):
+    result = {
+        "type": "GeometryCollection",
+        "geometries": geojson
+    }
+
+    pkgGeoJson = getPackageExtra("geojson", "pkg")
+    if pkgGeoJson != None:
+        pkgGeoJson = json.loads(pkgGeoJson)
+
+        if pkgGeoJson.get("type") == "GeometryCollection":
+            for geo in pkgGeoJson.get("geometries"):
+                result['geometries'].append(geo)
+        else:
+            result['geometries'].append(pkgGeoJson)
+
+    return result
+
+
 
 def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     val = None

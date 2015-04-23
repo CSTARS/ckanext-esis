@@ -20,24 +20,32 @@ function(key, spectra){
             }
         }
 
+        function setValue(measurement, key) {
+            if( Array.isArray(measurement[key]) ) {
+                var arr = measurement[key];
+                for( j = 0; j < arr.length; j++ ) {
+                    addOrAppendUnique(searchObj, key, arr[j]);
+                }
+            } else {
+                // is this new or are we pushing to an array?
+                addOrAppendUnique(searchObj, key, measurement[key]);
+            }
+        }
+
+
         var i, measurement, key, arr;
         for( i = 0; i < spectra.length; i++ ) {
             measurement = spectra[i];
-            //searchObj.ecosis.spectra_count += measurement.ecosis.spectra_count;
+
+            if( measurement.ecosis.geojson ) {
+                setValue(measurement.ecosis, 'geojson');
+            }
 
             for( key in measurement ) {
                 if( ignoreList.indexOf(key) != -1 ) continue;
 
                 // it's a re-reduce
-                if( Array.isArray(measurement[key]) ) {
-                    arr = measurement[key];
-                    for( j = 0; j < arr.length; j++ ) {
-                        addOrAppendUnique(searchObj, key, arr[j]);
-                    }
-                } else {
-                    // is this new or are we pushing to an array?
-                    addOrAppendUnique(searchObj, key, measurement[key]);
-                }
+                setValue(measurement, key);
             }
         }
 

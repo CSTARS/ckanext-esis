@@ -289,7 +289,7 @@ class Push:
         return re.sub(r'\s', '', name).lower()
 
 
-    def getPackageExtra(attr, pkg):
+    def getPackageExtra(self, attr, pkg):
         extra = pkg.get('extras')
         if extra == None:
             return None
