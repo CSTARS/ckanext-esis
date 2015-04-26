@@ -33,12 +33,18 @@ function(key, spectra){
         }
 
 
-        var i, measurement, key, arr;
+        var i, j, measurement, key, arr;
         for( i = 0; i < spectra.length; i++ ) {
             measurement = spectra[i];
 
             if( measurement.ecosis.geojson ) {
                 setValue(measurement.ecosis, 'geojson');
+            }
+
+            if( measurement.ecosis.datapoints ) {
+                for( j = measurement.ecosis.datapoints.length-1; j >= 0; j-- ) {
+                    setValue(measurement.ecosis.datapoints[i].key, 'data_values');
+                }
             }
 
             for( key in measurement ) {
