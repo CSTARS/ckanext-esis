@@ -10,6 +10,11 @@ module.exports = function (grunt) {
 
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-vulcanize');
+    grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-cssmin');
 
 
     // Define the configuration for all the tasks
@@ -42,20 +47,20 @@ module.exports = function (grunt) {
         // additional tasks can operate on them
         useminPrepare: {
             options: {
-                root : '<%= yeoman.app %>/editor',
-                dest: '<%= yeoman.dist %>/editor',
+                root : '<%= yeoman.app %>/import',
+                dest: '<%= yeoman.dist %>/import',
                 verbose : true
             },
-            html: '<%= yeoman.app %>/editor/index.html'
+            html: '<%= yeoman.app %>/import/index.html'
         },
 
         // Performs rewrites based on rev and the useminPrepare configuration
         usemin: {
             options: {
-                assetsDirs: ['<%= yeoman.dist %>/editor']
+                assetsDirs: ['<%= yeoman.dist %>/import']
             },
-            html: ['<%= yeoman.dist %>/editor/{,*/}*.html']
-            //css: ['<%= yeoman.dist %>/css/{,*/}*.css']
+            html: ['<%= yeoman.dist %>/import/{,*/}*.html'],
+            css: ['<%= yeoman.dist %>/import/{,*/}*.css']
         },
 
 
@@ -65,19 +70,25 @@ module.exports = function (grunt) {
                 files: [{
                     expand: true,
                     dot: true,
-                    cwd: '<%= yeoman.app %>/editor',
-                    dest: '<%= yeoman.dist %>/editor',
+                    cwd: '<%= yeoman.app %>/import',
+                    dest: '<%= yeoman.dist %>/import',
                     src: [
-                        '*.{html,handlebars}',
-                        'styles/**'
+                        '*.{html,handlebars}'
                     ]
                 },
                 {
                     expand: true,
                     dot: true,
-                    src: ['schema.json','metadata_map'],
+                    src: ['metadata_map'],
                     dest: '<%= yeoman.dist %>',
                     cwd: '<%= yeoman.app %>'
+                },
+                {
+                    expand: true,
+                    dot: true,
+                    src: '*.*',
+                    dest: '<%= yeoman.dist %>/import/fonts',
+                    cwd: '<%= yeoman.app %>/import/components/font-awesome/fonts'
                 }]
             }
         },
@@ -113,7 +124,7 @@ module.exports = function (grunt) {
                     inline : true
                 },
                 files : {
-                    '<%= yeoman.app %>/editor/elements.html': ['<%= yeoman.dist %>/editor/elements.html']
+                    '<%= yeoman.dist %>/import/elements.html': ['<%= yeoman.app %>/import/elements.html']
                 }
             }
         },
@@ -125,7 +136,7 @@ module.exports = function (grunt) {
         'copy:dist',
         'useminPrepare',
         'concat:generated',
-        //'cssmin:generated',
+        'cssmin:generated',
         'uglify:generated',
         //'rev',
         'usemin',

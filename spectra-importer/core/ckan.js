@@ -43,6 +43,7 @@ module.exports = function(config) {
      .field('package_id', pkgid)
      .field('mimetype', file.mimetype)
      .field('name', file.filename)
+     .field('url','upload')
      .attach('upload', file.mimetype)
      .end(callback);
   }
@@ -54,6 +55,7 @@ module.exports = function(config) {
     formData.append('package_id', pkgid);
     formData.append('mimetype', file.mimetype);
     formData.append('name', file.filename);
+    formData.append('url', 'upload');
     formData.append('upload', new Blob([file.contents], {type: file.mimetype}), file.filename);
 
     var time = new Date().getTime();

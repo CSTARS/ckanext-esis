@@ -4,4 +4,4 @@
 # --standalone: creates exposed namespace
 browserify --debug \
     core/app --standalone Ecosis \
-    -o app/editor/scripts/bundle.js
+    -o app/import/scripts/bundle.js

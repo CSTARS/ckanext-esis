@@ -1,5 +1,5 @@
 var ecosis = (function(){
-  var host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.8:5000' : '';
+  var host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.1.9:5000' : '';
   var pages = ['add-resources', 'current-resources', 'advanced', 'push', 'basic'];
 
   function getVar(variable) {

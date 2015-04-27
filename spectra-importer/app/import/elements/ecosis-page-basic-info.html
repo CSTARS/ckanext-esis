@@ -1,0 +1,449 @@
+<dom-module id="ecosis-page-basic-info">
+  <style>
+    :host {
+      display: block;
+      padding: 0 5%;
+    }
+    .save-label {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 1000;
+        display: none;
+    }
+    a {
+      cursor: pointer;
+    }
+  </style>
+  <template>
+    <div class="save-label" id="saveLabel">
+      <span class="label label-primary"><i></i> Saving...</span>
+    </div>
+
+    <h4 class="page-header">Basic Information</h4>
+
+    <div class="well" style="font-size: 14px; color: #888">
+      <div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome <span id="usernameLabel"></span>.</div>
+      Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />
+      First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
+    </div>
+
+    <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
+
+    <div class="form-horizontal">
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="textArea" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Description</label>
+        <div class="col-md-9">
+          <textarea class="form-control" rows="3" id="descriptionInput" on-change="onDescriptionInputChange"></textarea>
+        </div>
+      </div>
+
+      <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
+      <!-- TODO
+      <div class="form-wrap">
+        <esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
+      </div>
+      -->
+
+      <div class="form-group">
+        <label for="licenseInput" class="col-md-2 control-label">License: </label>
+        <div class="col-md-9">
+          <div style="display:none">Loading...</div>
+          <select class="form-control" id="licenseInput" on-change="onLicenseInputChange">
+            <option>Loading...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="organizationInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Organization: </label>
+        <div class="col-md-9">
+          <div style="display:none">Loading...</div>
+          <select class="form-control" id="organizationInput" on-change="onOrganizationInputChange">
+            <option>Loading...</option>
+          </select>
+
+          <div class="help-block">
+            To add datasets to an <a href="/organization" target="_blank">organization</a>, <a href="/dashboard/organizations" target="_blank">you</a>
+            must be a member of the organization with a role of 'editor' or 'admin'.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="visibilityInput" class="col-md-2 control-label">Visibility: </label>
+        <div class="col-md-9">
+          <select class="form-control" id="visibilityInput" disabled  on-change="onVisibilityInputChange">
+            <option value="false">Public</option>
+            <option value="true">Private</option>
+          </select>
+
+          <div class="help-block" id="visibilityWarnLabel">
+            You must select an organization if you wish to set the dataset to private, otherwise the dataset must be public.
+          </div>
+        </div>
+      </div>
+
+      <!-- Version -->
+      <div class="form-group">
+        <label for="versionInput" class="col-md-2 control-label">Version</label>
+        <div class="col-md-9">
+          <input type="text" class="form-control" id="versionInput" on-change="onVersionInputChange">
+        </div>
+      </div>
+
+      <!-- Website -->
+      <div class="form-group">
+        <label for="websiteInput" class="col-md-2 control-label">Website</label>
+        <div class="col-md-9">
+          <input type="text" class="form-control" id="websiteInput" on-change="onWebsiteInputChange">
+        </div>
+      </div>
+
+
+
+
+      <h4 class="page-header">
+          <a class="btn-toggle" on-click="toggleCat" cat="themeInput"><i class="fa fa-arrow-right"></i></a> Theme
+      </h4>
+      <ecosis-theme-input on-update="save" id="themeInput" style="display:none"></ecosis-theme-input>
+
+      <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="measureInput"><i class="fa fa-arrow-right"></i></a> Measurement
+      </h4>
+      <ecosis-measurement-input on-update="save" id="measureInput" style="display:none"></ecosis-measurement-input>
+
+      <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="processingInput"><i class="fa fa-arrow-right"></i></a> Processing Information
+      </h4>
+      <ecosis-processing-input on-update="save" id="processingInput" style="display:none"></ecosis-processing-input>
+
+      <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="instrumentInput"><i class="fa fa-arrow-right"></i></a> Instrument
+      </h4>
+      <ecosis-instrument-input on-update="save" id="instrumentInput" style="display:none"></ecosis-instrument-input>
+
+      <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="locationInput"><i class="fa fa-arrow-right"></i></a> Location
+      </h4>
+      <ecosis-location-input on-update="save" id="locationInput" style="display:none"></ecosis-location-input>
+
+      <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
+      </h4>
+      <ecosis-citation-input on-update="save" id="citationInput" style="display:none"></ecosis-citation-input>
+
+    </div>
+
+    <!-- Create Dataset -->
+    <a id="createDatasetBtn" class="btn btn-primary" style="display:none">Create Dataset</a>
+    <div id="createDatasetLabel" style="display:none" class="alert alert-info">
+      <i class="fa fa-spinner fa-spin"></i> Creating Dataset...
+    </div>
+
+    <div id="editModeFooter" style="display:none">
+      Now <a href="#add-resources">add resources</a> to your dataset. <br />
+
+      <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
+    </div>
+
+    <div class="layout horizontal" style="margin-top: 15px">
+      <div class="flex">
+        <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
+        <a class="btn btn-primary" style="display:none" on-click="goToList" id="goToListBtn"><i class="fa fa-list"></i> Current Resources</a>
+
+
+        <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
+
+        <div id="helpCreatePanel" class="help-block" style="display:none">
+          You must provide a valid dataset title to create.
+        </div>
+      </div>
+      <div>
+        <a class="btn btn-default" style="display:none" on-click="delete" id="deleteBtn"><i class="fa fa-trash"></i> Delete Dataset</a>
+      </div>
+    </div>
+
+
+
+    <div class="well">
+      <div>
+        <i class="fa fa-star" style="color:#2196f3"></i> Recommented Input.  If you can't fill out everything, please try
+        and at least fill out any starred field.
+      </div>
+
+      <div class="bugs" style="margin-top:20px">
+          Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+      </div>
+
+      <div class="gitInfo" style="display:none">
+        <div><b>Branch:</b> <span id="gitBranchLabel"></span></div>
+        <div><b>Version:</b> <span id="gitVersionLabel"></span></div>
+        <div><b>Commit:</b> <span id="gitCommitLabel"></span></div>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-page-basic-info',
+
+    ready : function() {
+      this.updateTimer = -1;
+
+      if( ecosis.user ) this.setUsername();
+      else ecosis.on('user-load', this.setUsername.bind(this));
+
+      if( ecosis.ds.editMode ) {
+        this.setMode('edit');
+        if( ecosis.ds.loaded ) this.onDataLoad();
+        else ecosis.ds.on('load', this.onDataLoad.bind(this));
+      } else {
+        this.setMode('create');
+      }
+
+      ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
+    },
+
+    setMode : function(mode) {
+      this.mode = mode;
+      if( mode == 'create' ) {
+        this.$.createBtn.style.display = 'inline-block';
+        this.updateCreateBtnState();
+      } else {
+        this.$.goToBtn.style.display = 'inline-block';
+        this.$.goToListBtn.style.display = 'inline-block';
+        this.$.deleteBtn.style.display = 'inline-block';
+      }
+    },
+
+    onDataLoad : function() {
+      var data = ecosis.ds.data;
+
+      this.$.descriptionInput.value = data.notes || '';
+      this.$.keywordInput.setTokens(data.tags || []);
+      this.$.licenseInput.value = data.license_id || '';
+      this.$.organizationInput.value = data.owner_org || '';
+      this.$.visibilityInput.value = data.private ? 'false' : 'true';
+      this.$.versionInput.value = data.version;
+      this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
+
+      this.updateVisibilityControl();
+    },
+
+    updateVisibilityControl : function() {
+      if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
+        this.$.visibilityInput.setAttribute('disabled', '');
+        this.$.visibilityInput.value = 'false';
+        ecosis.ds.data.private = false;
+        this.$.visibilityWarnLabel.style.display = 'block';
+      } else {
+        this.$.visibilityInput.removeAttribute('disabled');
+        this.$.visibilityWarnLabel.style.display = 'none';
+      }
+    },
+
+    updateCreateBtnState : function() {
+      if( this.$.titleInput.validName ) {
+        this.$.createBtn.removeAttribute('disabled');
+        this.$.helpCreatePanel.style.display = 'none';
+      } else {
+        this.$.createBtn.setAttribute('disabled', '');
+        this.$.helpCreatePanel.style.display = 'block';
+      }
+    },
+
+    setLicenseList : function(resp) {
+      if( resp.error ) return console.log('Error loading licenses :(');
+
+      this.licenses = resp;
+      var options = '<option></option>';
+      for( var i = 0; i < resp.length; i++ ) {
+        var item = resp[i];
+        options += '<option value="'+item.id+'" '+(ecosis.ds.data.license_id == item.id ? 'selected' : '')+'>'+item.title+'</option>';
+      }
+      this.$.licenseInput.innerHTML = options;
+    },
+
+    setUsername : function() {
+      if( !ecosis.user ) {
+        alert("You are not logged in :(");
+        window.location = ecosis.ckan.host + '/user/login';
+      } else if( !ecosis.user.loggedIn ) {
+        alert("You are not logged in :(");
+        window.location = ecosis.ckan.host + '/user/login';
+      }
+
+      this.$.usernameLabel.innerText = ecosis.user.username;
+
+      // set user orgs
+      var options = '<option></option>';
+      for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
+        var org = ecosis.user.organizations[i];
+        options += '<option value="'+org.id+'">'+org.display_name+'</option>';
+      }
+      this.$.organizationInput.innerHTML = options;
+    },
+
+    goToAdd : function() {
+      window.location = '#add-resources';
+    },
+
+    goToList : function() {
+      window.location = '#current-resources';
+    },
+
+    delete : function() {
+      if( confirm('Are you sure your want to remove this dataset?') ) {
+        if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
+          ecosis.ckan.deletePackage(ecosis.ds.package_id,
+            function(err, resp) {
+              alert('dataset deleted.');
+              window.location = '/dataset';
+            }
+          );
+        }
+      }
+    },
+
+    create : function() {
+      this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
+      this.$.createDatasetBtn.setAttribute('disabled', '');
+
+      ecosis.ckan.createPackage(ecosis.ds.data,
+          function(resp) {
+            this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
+            this.$.createDatasetBtn.removeAttribute('disabled');
+
+            if( resp.error ) return alert('Failed to create dataset :(');
+            if( !resp.id ) return alert('Failed to create dataset :(');
+
+            // set the page
+            window.location = '/import/?id='+resp.name+'#add-resources';
+          }.bind(this)
+      );
+    },
+
+    save : function() {
+      if( this.mode == 'create' ) return;
+
+      if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
+
+      this.updateTimer = setTimeout(function(){
+        this.updateTimer = -1;
+        this._save();
+      }.bind(this), 2000);
+    },
+
+    _save : function() {
+      this.$.saveLabel.style.display = 'block';
+
+      // make sure we have the correct package state
+      // all resources need to be included when you make a updatePackage call
+      ecosis.ckan.getPackage(ecosis.ds.package_id,
+        function(resp) {
+          if( resp.error ) {
+            this.$.saveLabel.style.display = 'none';
+            return alert('Failed to fetch for dataset update :(');
+          }
+
+          var metadata = resp.result;
+          for( var key in ecosis.ds.data ) {
+            metadata[key] = ecosis.ds.data[key];
+          }
+
+          ecosis.ckan.updatePackage(metadata,
+            function(resp) {
+              this.$.saveLabel.style.display = 'none';
+
+              if( resp.error ) return alert('Failed to update dataset :(');
+              if( !resp.result.id ) return alert('Failed to update dataset :(');
+
+            }.bind(this)
+          );
+        }.bind(this)
+      );
+    },
+
+    /* change handlers */
+    onTitleInputChange : function() {
+      this.updateCreateBtnState();
+    },
+
+    onOrganizationInputChange : function() {
+      ecosis.ds.data.owner_org = this.$.organizationInput.value;
+      this.updateVisibilityControl();
+      this.save();
+    },
+
+    onDescriptionInputChange : function() {
+      ecosis.ds.data.notes = this.$.descriptionInput.value;
+      this.save();
+    },
+
+    onKeywordsChange : function() {
+      var tokens = this.$.keywordInput.getTokens();
+      var keywords = [];
+
+      for( var i = 0; i < tokens.length; i++ ) {
+        keywords.push({name: tokens[i].label});
+      }
+
+      ecosis.ds.data.tags = keywords;
+      this.save();
+    },
+
+    onLicenseInputChange : function() {
+      ecosis.ds.data.license_id = this.$.licenseInput.value;
+
+      for( var i = 0; i < this.licenses.length; i++ ) {
+        if( this.licenses[i].id == ecosis.ds.data.license_id ) {
+          ecosis.ds.data.license_title = this.licenses[i].title;
+          break;
+        }
+      }
+
+      this.save();
+    },
+
+    onVisibilityInputChange : function() {
+      ecosis.ds.data.hidden = this.$.visibilityInput.value == 'true' ? true : false;
+
+      // push to search needs to know
+      this.fire('visibility-change');
+      this.save();
+    },
+
+    onVersionInputChange : function() {
+      ecosis.ds.data.version = this.$.versionInput.value;
+      this.save();
+    },
+
+    onWebsiteInputChange : function() {
+      ecosis.ds.setDatasetExtra('Website', this.$.websiteInput.value);
+      this.save();
+    },
+
+
+    toggleCat : function(e) {
+      var id = e.currentTarget.getAttribute('cat');
+
+      if( this.$[id].style.display == 'none' ) {
+        e.currentTarget.querySelector('i').className = 'fa fa-arrow-down';
+        this.$[id].className = 'animated fadeIn';
+        this.$[id].style.display = 'block';
+        if( this.$[id].onShow ) this.$[id].onShow();
+      } else {
+        e.currentTarget.querySelector('i').className = 'fa fa-arrow-right';
+        this.$[id].style.display = 'none';
+      }
+    }
+
+  })
+</script>
