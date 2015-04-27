@@ -16,15 +16,19 @@ class ControlledVocab:
         return self._setUSDACodes(spectra)
 
     def _setUSDACodes(self, spectra):
-        if not 'USDA Code' in spectra:
+        if not 'USDA Symbol' in spectra:
             return 1
 
-        item = self.usdaCollection.find_one({'Accepted Symbol': spectra['USDA Code'].upper()},{'_id':0})
+        item = self.usdaCollection.find_one({'Accepted Symbol': spectra['USDA Symbol'].upper()},{'_id':0})
         if item != None:
-            for attr, val in item.iteritems():
-                if len(val) == 0:
-                    continue
+            if item.get('Common Name') != None and item.get('Common Name') != "":
+                spectra['Common Name'] = item['Common Name']
 
-                spectra[attr] = val
+            if item.get('Scientific Name') != None and item.get('Scientific Name') != "":
+                parts = item.get('Scientific Name').split(' ')
+                spectra['Latin Genus'] = parts.pop(0)
+                spectra['Latin Species'] = " ".join(parts)
+
             return 3
+
         return 2

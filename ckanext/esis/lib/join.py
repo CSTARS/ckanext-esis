@@ -58,8 +58,13 @@ class SheetJoin:
                 for j in range(1, len(data)):
                     matchValues.append(data[j][i])
                 break
+
         sheet['matchValues'] = matchValues
         sheet['matchAttribute'] = sheetConfig['matchAttribute']
+
+        # reset counts
+        sheet['matches'] = {}
+
         # make sure we save this
 
 
@@ -98,7 +103,7 @@ class SheetJoin:
             if config['looseMatch']:
                 return self._looseMatch(sheetInfo['id'], sheetInfo['sheetname'], metaSheet['datasheet'])
             else:
-                if sheetInfo['sheetname'] in metaSheet['datasheet']['matchValues']:
+                if sheetInfo.get('sheetname') in metaSheet['datasheet']['matchValues']:
                     if metaSheet['datasheet']['matches'].get(sheetInfo['id']) != 1:
                         self._markForSave(metaSheet['datasheet'])
                         metaSheet['datasheet']['matches'][sheetInfo['id']] = 1

@@ -1,0 +1,144 @@
+<dom-module id="ecosis-controlled-input">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
+  <template>
+    <div class="horizontal-form">
+      <div class="form-group">
+        <label id="label" for="input" class="col-md-3 control-label"></label>
+        <div class="col-md-7">
+          <select class="form-control" id="input" on-change="onChange"></select>
+
+          <div id="selected"></div>
+
+          <div class="help-block" id="help" style="display:none"></div>
+
+          <div id="otherRoot" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-controlled-input',
+
+    properties : {
+      metadata : {
+        type : String
+      }
+    },
+
+    ready : function() {
+      this.selected = [];
+      this.schema = ecosis.ds.metadataLookup[this.metadata];
+
+      this.$.label.innerHTML = (this.schema.level == 1 ? '<i class="fa fa-star" style="color:#2196f3"></i> ' : '')+this.schema.name;
+
+      this.render();
+
+      if( this.schema.description ) {
+        this.$.help.style.display = 'block';
+        this.$.help.innerText = this.schema.description;
+      }
+
+      if( this.schema.allowOther ) {
+        var html = '<input type="text" class="form-control" id="other" placeholder="Please provide other value" />';
+        this.$.otherRoot.innerHTML = html;
+
+        this.$.other = this.$.otherRoot.querySelector('input');
+        this.$.other.addEventListener('change', this.onOtherChange.bind(this));
+      }
+    },
+
+    render : function() {
+      var options = '<option></option>';
+      for( var i = 0; i < this.schema.vocabulary.length; i++ ) {
+        var vocab = this.schema.vocabulary[i];
+        if( this.selected.indexOf(vocab) > -1 ) continue;
+        options += '<option value="'+this.schema.vocabulary[i]+'">'+this.schema.vocabulary[i]+'</option>'
+      }
+      this.$.input.innerHTML = options;
+
+      var btns = '';
+      for( var i = 0; i < this.selected.length; i++ ) {
+        btns += '<a class="btn btn-primary btn-xs" style="margin:2px" value="'+this.selected[i]+
+                '"><i class="fa fa-times"></i> '+this.selected[i]+'</a>';
+      }
+      this.$.selected.innerHTML = btns;
+
+      $(this.$.selected).find('a').on('click', this.onRemove.bind(this));
+
+      if( this.selected.indexOf('Other') == -1 ) {
+        this.$.otherRoot.style.display = 'none';
+      } else {
+        this.$.otherRoot.style.display = 'block';
+      }
+    },
+
+    onRemove : function(e) {
+      var value = e.currentTarget.getAttribute('value');
+      var index = this.selected.indexOf(value);
+      if( index > -1 ) this.selected.splice(index, 1);
+
+      this.fire('update', {
+        attribute : this.schema.name,
+        value : this.selected.join(',')
+      });
+
+      if( value == 'Other' ) {
+        this.$.otherRoot.style.display = 'none';
+        this.$.other.value = '';
+        this.onOtherChange();
+      }
+
+      this.render();
+    },
+
+    onChange : function() {
+      if( this.$.input.value == '' ) return;
+
+      this.selected.push(this.$.input.value);
+
+      this.fire('update', {
+        attribute : this.schema.name,
+        value : this.selected.join(',')
+      });
+
+      this.render();
+    },
+
+    onOtherChange : function() {
+      this.fire('update', {
+        attribute : this.schema.name+' Other',
+        value : this.$.other.value
+      });
+    },
+
+    setValue: function(value, otherValue) {
+      if( !value ) value = '';
+
+      this.selected = value.split(',');
+      for( var i = 0; i < this.selected.length; i++ ) {
+        this.selected[i] = this.selected[i].trim();
+      }
+      for( var i = this.selected.length-1; i >= 0; i-- ) {
+        if( this.selected[i] == '' ) {
+          this.selected.splice(i, 1);
+        }
+      }
+
+      if( this.schema.allowOther && otherValue ) {
+        var ele = this.querySelector("#other");
+        ele.style.display = (value.length > 0) ? 'block' : 'none';
+        ele.value = otherValue;
+      }
+
+      this.render();
+    }
+  })
+</script>

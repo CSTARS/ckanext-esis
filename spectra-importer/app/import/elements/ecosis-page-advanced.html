@@ -1,0 +1,31 @@
+<link rel="import" href="widgets/ecosis-attribute-mapping.html">
+<link rel="import" href="widgets/ecosis-dataset-order.html">
+
+<dom-module id="ecosis-page-advanced">
+  <style>
+    :host {
+      display: block;
+      padding: 0 10%;
+    }
+  </style>
+
+  <template>
+
+    <h4 class="page-header">Map Dataset Attribute Names</h4>
+    <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
+
+    <h4 class="page-header">Dataset Ordering</h4>
+    <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-page-advanced',
+
+    onShow : function() {
+      this.$.mapping.onShow();
+      this.$.order.onShow();
+    }
+  })
+</script>

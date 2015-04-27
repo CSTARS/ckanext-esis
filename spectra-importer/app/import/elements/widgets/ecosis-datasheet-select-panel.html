@@ -1,0 +1,68 @@
+<dom-module id="ecosis-datasheet-select-panel">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
+  <template>
+    <div class="layout horizontal">
+      <div>
+        <a class="btn btn-default" on-click="back">
+          <i class="fa fa-arrow-left"></i>
+        </a>
+      </div>
+      <div class="flex" style="text-align:center; padding: 0 25px">
+          <select id="select" class="form-control" on-change="onSelect"></select>
+      </div>
+      <div>
+        <a class="btn btn-default" on-click="forward">
+          <i class="fa fa-arrow-right"></i>
+        </a>
+      </div>
+  </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-datasheet-select-panel',
+
+    update : function(resource) {
+      this.resource = resource;
+      this.selected = 0;
+
+      var options = '';
+      for( var i = 0; i < resource.datasheets.length; i++ ) {
+        var ds = resource.datasheets[i];
+        options += '<option value="'+i+'">'+ds.name+(ds.sheetname ? ' '+ds.sheetname : '')+'</option>';
+      }
+      this.$.select.innerHTML = options;
+    },
+
+    onSelect : function() {
+      this.selected = parseInt(this.$.select.value);
+      this.fire('select', this.selected);
+    },
+
+    back : function() {
+      this.selected--;
+      if( this.selected < 0 ) {
+        this.selected = 0;
+        return;
+      }
+      this.$.select.value = this.selected+'';
+      this.fire('select', this.selected);
+    },
+
+    forward : function() {
+      this.selected++;
+      if( this.selected >= this.resource.datasheets.length ) {
+        this.selected = this.resource.datasheets.length-1;
+        return;
+      }
+      this.$.select.value = this.selected+'';
+      this.fire('select', this.selected);
+    }
+  });
+</script>

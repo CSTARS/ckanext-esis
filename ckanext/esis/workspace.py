@@ -14,6 +14,7 @@ from ckanext.esis.lib.join import SheetJoin
 from ckanext.esis.lib.push import Push
 from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
+import ckanext.esis.lib.auth as auth
 
 
 # helpers from ./lib
@@ -63,8 +64,11 @@ class WorkspaceController(BaseController):
     def processWorkspace(self):
         response.headers["Content-Type"] = "application/json"
 
+        package_id = request.params.get('package_id');
+        auth.hasAccess(package_id)
+
         # initialize the workspace and get the package config as well as the ckan package
-        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(package_id)
 
         # TODO: need more sanity checking like this for all requests...
         if ckanPackage.get('state') == 'deleted':
@@ -85,6 +89,8 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         resource = json.loads(request.params.get('resource'))
 
 
@@ -154,6 +160,8 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         layout = request.params.get('layout')
         resourceList = json.loads(request.params.get('resources')) # list or resource id's
 
@@ -232,6 +240,8 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         resource_id = request.params.get('resource_id')
         metadata = json.loads(request.params.get('metadata'))
 
@@ -357,10 +367,13 @@ class WorkspaceController(BaseController):
     def processResource(self):
         response.headers["Content-Type"] = "application/json"
 
+        package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         rid = request.params.get('resource_id')
 
         # initialize the workspace and get the package config as well as the ckan package
-        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(package_id)
 
         # see if the resource is ignored before we go any further
         workspaceResource = self._getById(workspacePackage['resources'], rid)
@@ -388,6 +401,8 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         attr = json.loads(request.params.get('attribute'))
 
         # initialize the workspace and get the package config as well as the ckan package
@@ -411,6 +426,8 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         info = json.loads(request.params.get('datasetAttributes'))
 
         # initialize the workspace and get the package config as well as the ckan package
@@ -426,6 +443,8 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
+
         map = json.loads(request.params.get('map'))
 
         # initialize the workspace and get the package config as well as the ckan package
@@ -464,6 +483,7 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        auth.hasAccess(package_id)
 
         push = Push()
         push.setHelpers(self, setup, process, joinlib)

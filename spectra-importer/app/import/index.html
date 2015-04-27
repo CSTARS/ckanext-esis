@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <title>EcoSIS Editor</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- build:js scripts/build.js -->
+      <script src="components/webcomponentsjs/webcomponents-lite.js"></script>
+      <script src="components/jquery/dist/jquery.js"></script>
+      <script src="components/bootswatch-dist/js/bootstrap.js"></script>
+      <script src="components/leaflet/dist/leaflet.js"></script>
+
+      <script src="scripts/bundle.js"></script>
+      <script src="scripts/app.js"></script>
+    <!-- endbuild -->
+
+    <!-- build:css styles/build.css -->
+      <link rel="stylesheet" href="styles/app.css" />
+      <link rel="stylesheet" href="components/bootswatch-dist/css/bootstrap.css" />
+      <link rel="stylesheet" href="components/font-awesome/css/font-awesome.css" />
+      <link rel="stylesheet" href="components/animate-css/animate.css" />
+      <link rel="stylesheet" href="components/leaflet/dist/leaflet.css" />
+    <!-- endbuild -->
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+      google.load('visualization', '1.0', {'packages':['corechart']});
+    </script>
+
+    <link rel="import" href="elements.html" />
+  </head>
+
+  <body>
+
+    <ecosis-header></ecosis-header>
+    <ecosis-page-basic-info id="basic" class="page animated fadeIn"></ecosis-page-basic-info>
+    <ecosis-page-add-resource id="add-resources" class="page animated fadeIn"></ecosis-page-add-resource>
+    <ecosis-page-current-resources id="current-resources" class="page animated fadeIn"></ecosis-page-current-resources>
+    <ecosis-page-advanced id="advanced" class="page animated fadeIn"></ecosis-page-advanced>
+    <ecosis-page-push id="push" class="page animated fadeIn"></ecosis-page-push>
+
+
+
+    <!-- Splash Screen -->
+    <div class="modal fade" id="splash" tabindex="-1" role="dialog" aria-labelledby="splashLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="splashLabel"><i class="fa fa-spinner fa-spin"></i> Loading...</h4>
+          </div>
+          <div class="modal-body">
+            Preparing workspace.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

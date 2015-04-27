@@ -4,6 +4,6 @@
 *.pyc
 *.tmp*
 sessions.json
-spectra-importer/app/editor/components
-spectra-importer/dist/editor/components
+spectra-importer/app/import/components
+spectra-importer/dist/import/components
 spectra-importer/node_modules

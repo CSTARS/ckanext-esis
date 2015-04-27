@@ -1,0 +1,230 @@
+<dom-module id="ecosis-dataformat-help">
+  <style>
+      table.preview {
+          width: 100%;
+          border-spacing: 0px;
+          border-collapse: separate;
+          border-top: 1px solid #ddd;
+          border-left: 1px solid #ddd;
+          background-color: white;
+      }
+      table.preview td {
+          padding: 10px;
+          border-right: 1px solid #ddd;
+          border-bottom: 1px solid #ddd;
+      }
+      table.preview td.attr {
+          font-weight: bold;
+      }
+      .file {
+          background-color: #dff0d8;
+      }
+      .column {
+          background-color: #fcf8e3;
+      }
+      .data {
+          background-color: #d9edf7;
+      }
+      .note {
+          padding: 10px 0;
+          color: #777;
+          font-size: 13px;
+      }
+      .note-label {
+          padding: 3px;
+          border-radius: 3px;
+          font-weight: bold;
+      }
+      table.preview td.highlight {
+          border-left: 1px solid red;
+          border-right: 1px solid red;
+      }
+      table.preview td.highlight-row {
+          border-top: 1px solid red;
+          border-bottom: 1px solid red;
+      }
+      :host {
+        display: block;
+      }
+  </style>
+  <template>
+
+    <div class="note">
+        EcoSIS accepts data in several tabular formats.  These tabular files can have measurements laid out by column or by row.
+        If you would like help filling out metadata or packaging your spectra, try the
+        <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Metadata Editor</a> to generate nice
+        tabular packages with EcoSIS metadata.
+    </div>
+
+    <div id="column">
+        <b>Column Orientation</b>
+        <table class="preview">
+            <tr>
+                <td class="file attr">File metadata 1</td>
+                <td class="file">My Attribute value</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="file attr">File metadata 2</td>
+                <td class="file">My other value</td>
+                <td></td>
+                <td></td>
+            </td>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </td>
+            <tr>
+                <td class="column attr">column Attribute</td>
+                <td class="column">column 1 value</td>
+                <td class="column highlight" style="border-top:1px solid red">column 2 value</td>
+                <td class="column">column 3 value</td>
+            </tr>
+            <tr>
+                <td class="column attr">USDA Code</td>
+                <td class="column">ORYZA</td>
+                <td class="column highlight">ORYZA</td>
+                <td class="column">ACRU</td>
+            </tr>
+            <tr>
+                <td class="column attr">id</td>
+                <td class="column">id1</td>
+                <td class="column highlight">id2</td>
+                <td class="column">id3</td>
+            </tr>
+            <tr>
+                <td class="data attr">400<span style="color:red">*</span></td>
+                <td class="data">.34</td>
+                <td class="data highlight">.345</td>
+                <td class="data">.454</td>
+            </tr>
+            <tr>
+                <td class="data attr">410<span style="color:red">*</span></td>
+                <td class="data">.400</td>
+                <td class="data highlight">.430</td>
+                <td class="data">.568</td>
+            </tr>
+            <tr>
+                <td class="data attr">LAI__d (m2/m2)</td>
+                <td class="data">1.812</td>
+                <td class="data highlight">.441</td>
+                <td class="data">1.501</td>
+            </tr>
+            <tr>
+                <td class="data attr">NDVI__d</td>
+                <td class="data">.53</td>
+                <td class="data highlight" style="border-bottom:1px solid red">.5</td>
+                <td class="data">.48</td>
+            </tr>
+
+
+        </table>
+    </div>
+
+    <div id="row">
+        <b>Row Orientation</b>
+        <table class="preview">
+            <tr>
+                <td class="file attr">File metadata 1</td>
+                <td class="file">My Attribute value</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="file attr">File metadata 2</td>
+                <td class="file">My other value</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </td>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </td>
+            <tr>
+                <td class="column attr">datetime</td>
+                <td class="column attr">id</td>
+                <td class="column attr">Metadata Attribute</td>
+                <td class="column attr">USDA Code</td>
+                <td class="data attr">LAI__d (m2/m2)</td>
+                <td class="data attr">NDVI__d</td>
+                <td class="data attr">400<span style="color:red">*</span></td>
+            </tr>
+            <tr>
+                <td class="column attr highlight-row" style="border-left: 1px solid red">2008-07-24</td>
+                <td class="column highlight-row">id1</td>
+                <td class="column highlight-row">metadata value 1</td>
+                <td class="column highlight-row">ORYZA</td>
+                <td class="data highlight-row">1.190</td>
+                <td class="data highlight-row">.53</td>
+                <td class="data highlight-row" style="border-right: 1px solid red">.487</td>
+            </tr>
+            <tr>
+                <td class="column attr">2008-07-25</td>
+                <td class="column">id2</td>
+                <td class="column">metadata value 2</td>
+                <td class="column">ACRU</td>
+                <td class="data">0.606</td>
+                <td class="data">.50</td>
+                <td class="data">.400</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="note">
+        Any <b>numeric</b><span style="color:red">*</span> attribute name will be considered wavelength
+        <span class="data note-label">data</span>.  Any attribute name with a <b>__d</b> postfix will be
+        considered <span class="data note-label">data</span>.  All other fields will be considered
+        <span class="column note-label">metadata</span>.  You will have the opportunity to manually
+        specify the difference later on as well.
+    </div>
+
+    <div class="note">
+        <span class="file note-label">Global File Metadata</span> is applied to everything in the file
+        and is completely <b>optional</b>.  You can also upload a seperate metadata file which can be
+        joined to your data later on in the import process.
+    </div>
+
+    <div class="note">
+        Units can be specified by placing them in parentheses <b>(m2/m2)</b> after the attribute name.
+    </div>
+
+    <div style="margin-top:15px">
+        Still lost?  <a href="http://tutorial.ecocolumn.org/walkthrough/#/7" target="_blank">Click
+          here</a> to checkout the tutorial on data formats.
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-dataformat-help',
+
+    setType : function(type) {
+      if( type == 'column' ) {
+        this.$.column.style.display = 'block';
+        this.$.row.style.display = 'none';
+      } else if( type == 'row' ) {
+        this.$.column.style.display = 'none';
+        this.$.row.style.display = 'block';
+      } else {
+        this.$.column.style.display = 'block';
+        this.$.row.style.display = 'block';
+      }
+    }
+  });
+</script>

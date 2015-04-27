@@ -1,30 +1,33 @@
-Species
-Common Name=
-Latin Genus=
-Latin Species=
-USDA Code=
-Vegetation Association=
-
 Measurement
+Acquisition Method=
+Sample Platform=
+Measurement Venue=
+Target Type=
 Measurement Quantity=
 Index Name=
 Measurement Units=
-Target Type=
+Wavelength Units=
 Target Status=
-Measurement Venue=
 Light Source=
 Light Source Specifications=
 Foreoptic Type=
 Foreoptic Field of View=
 Foreoptic Specifications=
 
+Processing Information
+Processing Averaged=
+Processing Interpolated=
+Processing Resampled=
+Processing Information Details=
+
 Instrument
 Instrument Manufacturer=
 Instrument Model=
 Instrument Serial Number=
-Spectral Range, Resolution, wavelength spacing, etc.=
 
 Theme
+Theme=
+Keywords=
 Objective=
 Ecosystem Type=
 
@@ -34,6 +37,25 @@ Longitude=
 Location Name=
 
 Date
-Measurement Date=
 Sample Collection Date=
+Measurement Date=
 Phenological Status=
+
+Species
+Common Name=
+Latin Genus=
+Latin Species=
+USDA Symbol=
+Vegetation Type=
+
+Citation
+Citation=
+Citation DOI=
+Website=
+Author=
+Author Email=
+Maintainer=
+Maintainer Email=
+Funding Source=
+Funding Source Grant Number=
+

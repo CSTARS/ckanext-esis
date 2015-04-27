@@ -16,9 +16,10 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#*",
-    "core-elements": "Polymer/core-elements#*",
-    "paper-elements": "Polymer/paper-elements#*",    
-    "jquery": "*"
+    "bootswatch-dist": "paper",
+    "polymer": "Polymer/polymer#^0.8.0-rc.7",
+    "animate-css": "~3.2.6",
+    "font-awesome": "~4.3.0",
+    "leaflet": "~0.7.3"
   }
 }

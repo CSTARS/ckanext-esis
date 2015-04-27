@@ -1,0 +1,318 @@
+<dom-module id="ecosis-page-add-resource">
+  <style>
+    :host {
+      display: block;
+      padding: 0 10% 50px 10%;
+    }
+    #dropZone {
+        border: 2px dashed #bbb;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        padding: 25px;
+        font-size: 20pt;
+        color: #bbb;
+        background-color: white;
+        margin: 15px 0 0 0;
+    }
+  </style>
+
+  <template>
+    <h4 class="page-header">Add Resources</h4>
+
+    <h5 style="margin-bottom: 0">Select files to be uploaded</h5>
+    <div style="font-size:12px;color:#888; margin-bottom: 30px">
+        <span>Add new files below by using the file selector or drag files over the drop zone.</span>
+    </div>
+
+    <div class="well well-sm">
+
+      <div class="form-horizontal">
+        <div class="form-group">
+          <label class="col-md-3 control-label">
+              Default Orientation<br />
+              <a on-click="toggleHelp" style="cursor: pointer">What is this?</a>
+          </label>
+
+          <div class="col-md-7">
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="columnInput" value="column" checked="" on-click="onRadioChange">
+                My data is laid out by column
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="rowInput" value="row" on-click="onRadioChange">
+                My data is laid out by row
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeIn"></ecosis-dataformat-help>
+
+    </div>
+    <!-- end well -->
+
+    <div id="processing" style="display: none">
+        <h4 class="alert alert-success">Uploading & Processing Files...</h4>
+        <div id="uploadStatusTable"></div>
+    </div>
+
+    <div class="fileinput" id="fileInputPanel">
+        <div>
+            <input type="file" style="margin:30px 0 0 15px" id="file" name="file" multiple="" on-change="handleFileSelect" />
+            <!--<input type="file" style="display:none" id="addFileTesting" name="addFileTesting" multiple="" /> -->
+        </div>
+
+        <div class="file-select-group" >
+            <div id="dropZone"><b>OR</b> drag and drop files here</div>
+        </div>
+    </div>
+
+    <div id="completePanel" style="display:none; margin-top:20px">
+      <a id="completePanelLink" class="btn btn-default"><i class="fa fa-list"></i> Open resource list</a>
+    </div>
+
+    <div style="margin-top: 40px">
+      <a on-click="toggleInfoPanel" style="cursor:pointer">Supported file types and the Ecosis Metadata Editor</a>
+    </div>
+    <div id="infoPanel" style="display:none" class="animated fadeInUp">
+        <h6 class="page-header">Supported File Types</h6>
+        <div class="well well-sm">
+            <div>Currently the following tabular file types will be parsed.</div>
+            <ul>
+                <li>.xls</li>
+                <li>.xlsx</li>
+                <li>.csv</li>
+                <li>.tsv (Tab Separated Value)</li>
+                <li>.spectra (parsed as .tsv)</li>
+                <li>.zip<span class="green">*</span></li>
+            </ul>
+            <div><span class="green">*</span>Zip files will be extracted on the server.
+              Any files contained within the zip file that have supported extension will be parsed.</div>
+            <div>Other file extensions are accepted but will not be parsed.</div>
+        </div>
+
+        <h6 class="page-header">Ecosis Metadata Editor</h6>
+        <div class="well well-sm">
+            <div>Need help packaging your data?  What to markup your data with EcoSIS metadata and controlled
+              vocabularies so it can be easy discovered?  Use the <a href="https://github.com/CSTARS/ecosis-data-tool/releases"
+              target="_blank">Ecosis Metadata Editor</a> to markup your metadata and create a package for your dataset to easily
+              upload using this editor.</div>
+        </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-page-add-resource',
+
+    ready : function() {
+      this.$.dropZone.addEventListener('dragover', this.handleDragOver.bind(this), false);
+      this.$.dropZone.addEventListener('drop', this.handleFileSelect.bind(this), false);
+
+      this.staggedFiles = [];
+      this.newResourceIds = [];
+
+      this.$.formatHelp.setType('column');
+
+      this.$.completePanelLink.setAttribute('href', '#current-resources');
+    },
+
+    onRadioChange : function() {
+      if( $(this.$.columnInput).is(':checked') ) {
+        this.$.formatHelp.setType('column');
+        this.defaultType = 'column';
+      } else {
+        this.$.formatHelp.setType('row');
+        this.defaultType = 'row';
+      }
+    },
+
+    handleDragOver : function (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+      evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+    },
+
+    handleFileSelect : function(evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+
+      this.setProcessing(true);
+
+      var files = evt.dataTransfer ? evt.dataTransfer.files : evt.target.files; // FileList object.
+
+      this.staggedFiles = [];
+      this.newResourceIds = [];
+
+      for( var i = 0; i < files.length; i++ ) {
+          this.staggedFiles.push({
+              file : files[i],
+              name : files[i].name,
+              aborted : false,
+              xhr : null,
+              progress : 0,
+              type : this.defaultType,
+              speed : '0Mbps'
+          });
+      }
+
+      this.renderUploadStatusTable();
+      this.uploadFiles(this.defaultType, 0);
+    },
+
+    setProcessing : function(processing) {
+      if( processing ) {
+        this.$.fileInputPanel.style.display = 'none';
+        this.$.processing.style.display = 'block';
+      } else {
+        this.$.fileInputPanel.style.display = 'block';
+        this.$.processing.style.display = 'none';
+      }
+    },
+
+    onUploadComplete : function() {
+        // set default layout and parse workspace
+        ecosis.ckan.setDefaultLayout(
+            ecosis.ds.package_id, this.newResourceIds, this.defaultType,
+            function(resp) {
+                if( resp.error ) return console.log('Error setting default resource layout :(');
+
+                this.$.file.value = '';
+                ecosis.ds.runAfterResourceAdd(resp);
+                this.fire('resource-add');
+                this.setProcessing(false);
+
+                this.$.completePanel.style.display = 'block';
+            }.bind(this)
+        )
+    },
+
+    uploadFiles : function(type, index) {
+        if( this.staggedFiles.length == index ) {
+            // now tell server to parse resources with given type
+            this.onUploadComplete();
+            return;
+        }
+
+        var staggedFile = this.staggedFiles[index];
+
+        if( staggedFile.aborted ) {
+            index++;
+            this._uploadFiles(type, index);
+            return;
+        }
+
+
+        var file = this.staggedFiles[index].file;
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+            staggedFile.xhr = ecosis.ckan.addResource(
+                ecosis.ds.package_id,
+                {
+                    contents : e.target.result,
+                    mimetype : file.type,
+                    filename : file.name
+                },
+                function(resp) {
+                    if( resp.error ) console.log('Error adding resource: '+file.name);
+
+                    // save this, when we are done, we will set default parse type
+                    this.newResourceIds.push(resp.result.id);
+
+                    index++
+                    this.uploadFiles(type, index);
+                }.bind(this),
+                function(progress, speed) {
+                    this.staggedFiles[index].speed = speed;
+                    this.staggedFiles[index].progress = progress;
+                    this.updateStatusText(index);
+                }.bind(this)
+            );
+        }.bind(this);
+        reader.readAsArrayBuffer(file);
+    },
+
+    abort : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        e.currentTarget.style.display = 'none';
+
+        var staggedFile = this.staggedFiles[index];
+
+        if( staggedFile.progress == 100 ) return;
+
+        staggedFile.aborted = true;
+
+        this.updateStatusText(index);
+
+        if( staggedFile.xhr ) {
+            staggedFile.xhr.abort();
+            index++;
+            this._uploadFiles(this.defaultType, index);
+        }
+    },
+
+    toggleHelp : function() {
+        $(this.$.formatHelp).toggle();
+    },
+
+    toggleInfoPanel : function() {
+      if( this.$.infoPanel.style.display == 'none') {
+        $(this.$.infoPanel).show();
+        $(window).scrollTop(254);
+      } else {
+        $(this.$.infoPanel).hide();
+      }
+    },
+
+    renderUploadStatusTable : function() {
+      var table = '<table class="table" style="text-align: left">';
+
+      for( var i = 0; i < this.staggedFiles.length; i++ ) {
+        var file = this.staggedFiles[i];
+
+        table +=
+          '<tr>'+
+            '<td><b>'+file.name+'</b></td>'+
+            '<td style="color:#888" index="'+i+'">'+this.getFileStatusText(file)+'</td>'+
+            '<td>'+
+              '<a class="btn btn-default" index="'+i+'">Abort</a>'+
+            '</td>'
+          '</tr>'
+      }
+      table += '</table>';
+
+      this.$.uploadStatusTable.innerHTML = table;
+
+      $(this.$.uploadStatusTable)
+        .find('a')
+        .on('click', this.abort.bind(this));
+    },
+
+    getFileStatusText : function(file) {
+      if( file.progress != 100 && !file.aborted ) {
+        return 'Uploading: '+file.progress+'% @ '+file.speed;
+      } else if ( file.progress == 100 && !file.aborted ) {
+        return 'Upload Complete. Processing...';
+      } else if( file.aborted ) {
+        return '<span class="label label-danger">Aborted</span>';
+      }
+
+      return '';
+    },
+
+    updateStatusText : function(index) {
+      var td = this.$.uploadStatusTable.querySelector('td[index="'+index+'"]');
+      if( td ) td.innerHTML = this.getFileStatusText(this.staggedFiles[index]);
+    }
+
+
+  });
+</script>

@@ -3,8 +3,8 @@ import re, time, gc
 from pymongo import MongoClient
 from pylons import config
 import dateutil.parser, json, inspect
-from bson.code import Code
-from bson.son import SON
+from ckanext.esis.lib.mapReduce import mapreducePackage
+from ckanext.esis.lib.controlledVocab import ControlledVocab
 
 client = MongoClient(config._process_configs[1]['esis.mongo.url'])
 db = client[config._process_configs[1]['esis.mongo.db']]
@@ -16,6 +16,9 @@ schemaCollection = db[config._process_configs[1]['esis.mongo.schema_collection']
 usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 searchCollection = db[config._process_configs[1]['esis.mongo.search_collection']]
 
+vocab = ControlledVocab();
+vocab.setCollection(usdaCollection)
+
 class Push:
 
     workspaceDir = ""
@@ -23,26 +26,21 @@ class Push:
     process = None
     workspace = None
     joinlib = None
-    mapreduce = {}
     localdir = ""
+    metadata = {}
 
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
         self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
 
-        # read in mapreduce strings
-        f = open('%s/../mapreduce/map.js' % self.localdir, 'r')
-        self.mapreduce['map'] = f.read()
-        f.close()
-
-        f = open('%s/../mapreduce/reduce.js' % self.localdir, 'r')
-        self.mapreduce['reduce'] = f.read()
-        f.close()
-
-        f = open('%s/../mapreduce/finalize.js' % self.localdir, 'r')
-        self.mapreduce['finalize'] = f.read()
-        f.close()
+        # read schema file from importer core
+        with open('%s/../../../spectra-importer/core/schema.json' % self.localdir, 'r') as data_file:
+            cats = json.load(data_file)
+            for cat, items in cats.iteritems():
+                for item in items:
+                    flat = self.flatten(item.get('name'))
+                    self.metadata[flat] = item
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
@@ -91,17 +89,7 @@ class Push:
             "attributes" : attrs
         })
 
-        # finally run map reduce
-        map = Code(self.mapreduce['map'])
-        reduce = Code(self.mapreduce['reduce'])
-        #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
-        spectraCollection.map_reduce(map, reduce, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": package_id})
-
-        # hack, set description
-        searchCollection.update(
-            {"value.ecosis.package_id": package_id},
-            {"$set": {"value.ecosis.description": ckanPackage["notes"]}}
-        )
+        mapreducePackage(ckanPackage, spectraCollection,  searchCollection)
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
@@ -223,37 +211,61 @@ class Push:
                 if value in m:
                     m[key] = m[value]
 
+        # fix and space and capitalization issues
+        replace = []
+        for key, value in m.iteritems():
+            flat = self.flatten(key)
+            if flat == key:
+                continue
+
+            if self.metadata.get(flat) != None:
+                replace.append({
+                    "new" : self.metadata.get(flat).get('name'),
+                    "old" : key,
+                    "value" : value
+                })
+        for item in replace:
+            del m[item.get('old')]
+            m[item.get('new')] = item.get("value")
+
         # TODO: Look up USDA Plant Codes
-        self.setUSDACode(m)
+        vocab.set(m)
 
         # finally, set ckan dataset info, as well as specific info on, sort, geolocation
         self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
 
-        if package.get('datasetAttributes'):
-            attrInfo = package.get('datasetAttributes')
-            sort = attrInfo.get('sort_on')
-            type = attrInfo.get('sort_type')
-            if sort != None and sort in m:
-                if type == 'datetime':
+        sort_on = self.getPackageExtra("sort_on", ckanPackage)
+        sort_type = self.getPackageExtra("sort_type", ckanPackage)
+        if sort_on != None:
+            if sort_on in m:
+                if sort_type == 'datetime':
                     try:
-                        m['ecosis']['sort'] = dateutil.parser.parse(m[sort])
+                        m['ecosis']['sort'] = dateutil.parser.parse(m[sort_on])
                     except:
                         pass
-                elif type == 'numeric':
+                elif sort_type == 'numeric':
                     try:
-                        m['ecosis']['sort'] = float(m[sort])
+                        m['ecosis']['sort'] = float(m[sort_on])
                     except:
                         pass
                 else:
-                    m['ecosis']['sort'] = m[sort]
+                    m['ecosis']['sort'] = m[sort_on]
 
-            location = attrInfo.get('location')
-            if location != None and sort in location:
-                try:
-                    m['ecosis']['location'] = json.loads(m[location])
-                    del m[location]
-                except:
-                    t = 1
+        # set lat / lng info
+        if m.get('geojson') != None:
+            m['ecosis']['geojson'] = json.loads(m['geojson'])
+            del m['geojson']
+        elif m.get('Latitude') != None and m.get('Longitude') != None:
+            try:
+                m['ecosis']['geojson'] = {
+                    "type" : "Point",
+                    "coordinates": [
+                        float(m.get('Longitude')),
+                        float(m.get('Latitude'))
+                    ]
+                }
+            except:
+                pass
 
         spectraCollection.insert(m)
         #return m
@@ -261,46 +273,28 @@ class Push:
 
     def _addEcosisNamespace(self, m, ckanPackage, resource, dsid):
         ecosis = {
-            'push_time' : time.time(),
             'package_id': ckanPackage['id'],
-            'package_name': ckanPackage['name'],
             'package_title': ckanPackage['title'],
             'resource_id' : resource['id'],
             'filename': resource['name'],
             'datasheet_id': dsid,
-            'groups': [],
-            'keywords' : []
         }
 
         if ckanPackage.get('organization') != None:
             ecosis['organization'] = ckanPackage['organization']['title']
 
-        if ckanPackage.get('tags') != None:
-            for tag in ckanPackage['tags']:
-                if tag.get('state') == 'active':
-                    ecosis['keywords'].append(tag.get('display_name'))
-
         m['ecosis'] = ecosis
 
-    def setUSDACode(self, m):
-        if m.get('USDA Code') == None:
-            return
+    def flatten(self, name):
+        return re.sub(r'\s', '', name).lower()
 
-        item = usdaCollection.find_one({'Accepted Symbol': m.get('USDA Code').upper()},{'_id':0})
-        if item != None:
-            for key, value in item.iteritems():
-                m[key] = value
 
-    def getUSDACommonName(self, codes):
-        resp = {}
-        #for code in codes:
-            #item = usdaCollection.find_one({'Accepted Symbol': code.upper()},{'_id':0})
-            #if item != None:
-            #    resp[code] = item
-            #else:
-            #    resp[code] = {
-            #        'error' : True,
-            #        'message' : 'Unknown Code'
-            #    }
-        return resp
+    def getPackageExtra(self, attr, pkg):
+        extra = pkg.get('extras')
+        if extra == None:
+            return None
 
+        for item in extra:
+            if item.get('key') == attr:
+                return item.get('value')
+        return None
