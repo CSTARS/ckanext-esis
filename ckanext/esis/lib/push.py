@@ -12,7 +12,6 @@ spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection
 searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
 searchCollection = db[searchCollectionName]
 
-schemaCollection = db[config._process_configs[1]['esis.mongo.schema_collection']]
 usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 searchCollection = db[config._process_configs[1]['esis.mongo.search_collection']]
 
@@ -26,21 +25,9 @@ class Push:
     process = None
     workspace = None
     joinlib = None
-    localdir = ""
-    metadata = {}
 
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
-
-        self.localdir = re.sub(r'/\w*.pyc?', '', inspect.getfile(self.__class__))
-
-        # read schema file from importer core
-        with open('%s/../../../spectra-importer/core/schema.json' % self.localdir, 'r') as data_file:
-            cats = json.load(data_file)
-            for cat, items in cats.iteritems():
-                for item in items:
-                    flat = self.flatten(item.get('name'))
-                    self.metadata[flat] = item
 
     def setCollection(self, collection):
         self.workspaceCollection = collection
@@ -56,7 +43,7 @@ class Push:
         # first clean out data
         searchCollection.remove({'value.ecosis.package_id':package_id})
         spectraCollection.remove({'ecosis.package_id': package_id})
-        schemaCollection.remove({'package_id': package_id})
+        #schemaCollection.remove({'package_id': package_id})
 
         # next add resources one at a time and join spectra
         (workspacePackage, ckanPackage, rootDir, fresh) = self.setup.init(package_id)
@@ -75,21 +62,22 @@ class Push:
             self._insertResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
 
         # push schema
-        attrs = {}
-        if package.get("attributes") != None:
-            attrList = package.get("attributes")
-            for attr in attrList:
-                attrs[attr] = {
-                    "type" : attrList[attr].get("type"),
-                    "units" : attrList[attr].get("units")
-                }
+        #attrs = {}
+        #if package.get("attributes") != None:
+        #    attrList = package.get("attributes")
+        #    for attr in attrList:
+        #        attrs[attr] = {
+        #            "type" : attrList[attr].get("type"),
+        #            "type" : attrList[attr].get("type"),
+        #            "units" : attrList[attr].get("units")
+        #        }
 
-        schemaCollection.insert({
-            "package_id" : package_id,
-            "attributes" : attrs
-        })
+        #schemaCollection.insert({
+        #    "package_id" : package_id,
+        #    "attributes" : attrs
+        #})
 
-        mapreducePackage(ckanPackage, spectraCollection,  searchCollection)
+        mapreducePackage(ckanPackage, package.get("attributes"), spectraCollection,  searchCollection)
 
         return {'success': True, 'runTime': (time.time()-runTime)}
 
@@ -144,9 +132,12 @@ class Push:
                 for j in range(1, len(data[start])):
                     sp = {}
                     for i in range(start, datasheet['localRange']['stop']):
-                        if data[i][j]:
-                            sp[data[i][0]] = data[i][j]
-                    self._formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir);
+                        try:
+                            if data[i][j]:
+                                sp[data[i][0]] = data[i][j]
+                        except:
+                            pass
+                    self._formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir)
 
                     # push in 50 at a time to avoid memory leak
                     #arr.append(m)
@@ -160,28 +151,19 @@ class Push:
 
 
     def _formatAndInsertSpectra(self, m, datasheet, data, package, ckanPackage, metadataCache, rootDir):
-        m['datapoints'] = []
+        # m['datapoints'] = []
+        m['datapoints'] = {}
 
         # move wavelengths to datapoints array
         if package.get("wavelengths") != None:
             for attr in package["wavelengths"]:
                 if attr in m:
-                    m['datapoints'].append({
-                        "key" : attr,
-                        "value" : m[attr]
-                    })
-                    del m[attr]
-
-        # move data attributes to datapoints array
-        if package.get("attributes") != None:
-            for attr in package["attributes"]:
-                if attr in m and package["attributes"][attr]["type"] == "data":
-                    m['datapoints'].append({
-                        "key" : attr,
-                        "value" : m[attr],
-                        "units" : package["attributes"][attr]
-                    })
-                    del m[attr]
+                    self.setDatapoint(m, attr)
+                    #m['datapoints'].append({
+                    #    "key" : attr,
+                    #    "value" : m[attr]
+                    #})
+                    #del m[attr]
 
         # add global attributes if they exist
         if datasheet.get("globalRange") != None and len(data[0]) > 1:
@@ -211,25 +193,40 @@ class Push:
                 if value in m:
                     m[key] = m[value]
 
-        # fix and space and capitalization issues
-        replace = []
-        for key, value in m.iteritems():
-            flat = self.flatten(key)
-            if flat == key:
-                continue
+        # move data attributes to datapoints array
+        # Example: NDVI
+        if package.get("attributes") != None:
+            for attr in package["attributes"]:
+                if attr in m and package["attributes"][attr]["type"] == "data":
+                    self.setDatapoint(m, attr)
+                    #m['datapoints'].append({
+                    #    "key" : attr,
+                    #    "value" : m[attr],
+                    #    "units" : package["attributes"][attr]
+                    #})
+                    #del m[attr]
 
-            if self.metadata.get(flat) != None:
-                replace.append({
-                    "new" : self.metadata.get(flat).get('name'),
-                    "old" : key,
-                    "value" : value
-                })
-        for item in replace:
-            del m[item.get('old')]
-            m[item.get('new')] = item.get("value")
+        # fix and space and capitalization issues
+        #replace = []
+        #for key, value in m.iteritems():
+        #    flat = self.flatten(key)
+        #    if flat == key:
+        #        continue
+
+        #    if self.metadata.get(flat) != None:
+        #        replace.append({
+        #            "new" : self.metadata.get(flat).get('name'),
+        #            "old" : key,
+        #            "value" : value
+        #        })
+        #for item in replace:
+        #    del m[item.get('old')]
+        #    m[item.get('new')] = item.get("value")
 
         # TODO: Look up USDA Plant Codes
-        vocab.set(m)
+        vocab.setUSDACodes(m)
+
+        vocab.enforceControlled(m)
 
         # finally, set ckan dataset info, as well as specific info on, sort, geolocation
         self._addEcosisNamespace(m, ckanPackage, resource, datasheet['id'])
@@ -285,9 +282,13 @@ class Push:
 
         m['ecosis'] = ecosis
 
-    def flatten(self, name):
-        return re.sub(r'\s', '', name).lower()
+    def cleanKey(self, key):
+        return re.sub(r'\.', '_', key)
 
+    def setDatapoint(self, measurement, attr):
+        clean = self.cleanKey(attr)
+        measurement['datapoints'][clean] = measurement[attr]
+        del measurement[attr]
 
     def getPackageExtra(self, attr, pkg):
         extra = pkg.get('extras')

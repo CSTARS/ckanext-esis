@@ -1,31 +1,21 @@
 function(key, item) {
-    function bucketTest(attr, item) {
-        var repeatCount = item._repeats[attr];
-        var arr = item[attr];
-
-        // if there are less than 10 items, we are good
-        if( arr.length <= 10 ) {
-            item._repeats[attr] = {
-                count : repeatCount
-            }
-            return true;
-        }
-
-        // if we have at least 20% of the items in a bucket, we are fine
-        if( Math.floor( item.ecosis.spectra_count * .20 ) <= repeatCount ) return true;
-
-        return false;
+    var data = [];
+    for( var key in item.data_keys__ ) {
+        data.push(key);
     }
+    item.data_keys__ = data;
+
 
     for( var key in item ) {
-        if( Array.isArray(item[key]) ) {
-            if( !bucketTest(key, item) ) {
-                delete item[key];
-            }
-        }
-    }
+        var tmp = [];
+        if( key == 'data_keys__' ) continue;
 
-    delete item._repeats;
+        // if at any point we want to level counts, this hash actually has them
+        for( var k2 in item[key] ) {
+            tmp.push(k2)
+        }
+        item[key] = tmp;
+    }
 
     return item;
 }

@@ -35,7 +35,7 @@ class SheetJoin:
 
         rowIndex = rowIndex + 1 + metadata['localRange']['start']
         for attr in metadata['attributes']:
-            if attr.get('type') == 'metadata':
+            if attr.get('type') == 'metadata' or attr.get('type') == 'data':
                 col = int(attr['pos'].split('-')[1])
                 if dataarray[rowIndex][col]:
                     val = dataarray[rowIndex][col]

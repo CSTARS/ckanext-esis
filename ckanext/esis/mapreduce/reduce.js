@@ -1,37 +1,48 @@
 function(key, spectra){
-        var searchObj = {};
+        var searchObj = {
+            'data_keys__' : {}
+        };
         
-        var ignoreList = ['_id','datapoints', 'ecosis', 'geojson'];
+        var ignoreList = ['_id','datapoints', 'ecosis'];
 
-        // create unique lists of our attributes
-        function addOrAppendUnique(obj, key, value) {
-            if( value === null ) return;
-            if( value === '' ) return;
-
-            // don't include values that have over 100 characters.  Assume not good filter
-            if( typeof value == 'string' && value.length > 100 ) return;
-
-            if( obj[key] !== undefined ) {
-                if( obj[key].indexOf(value) == -1 ) {
-                    obj[key].push(value);
-                }
-            } else {
-                obj[key] = [value];
-            }
+        //function cleanValue(value) {
+        //    return value.replace(/\./g, '_::_');
+        //}
+        function cleanKey(key) {
+            return key.replace(/\./g, '_');
         }
 
         function setValue(measurement, key) {
-            if( Array.isArray(measurement[key]) ) {
-                var arr = measurement[key];
-                for( j = 0; j < arr.length; j++ ) {
-                    addOrAppendUnique(searchObj, key, arr[j]);
+            var value = measurement[key];
+
+            if( typeof value === 'object' ) {
+                var values = value;
+
+                if( !searchObj[key] ) searchObj[key] = {};
+
+                for( var vkey in values ) {
+                   if( searchObj[key][vkey] ) searchObj[key][vkey] += values[key];
+                   else searchObj[key][vkey] = 1;
                 }
+
             } else {
                 // is this new or are we pushing to an array?
-                addOrAppendUnique(searchObj, key, measurement[key]);
+                if( value === null ) return;
+                if( value === '' ) return;
+
+                // don't include values that have over 100 characters.  Assume not good filter
+                if( typeof value == 'string' && value.length > 100 ) return;
+
+                key = cleanKey(key);
+                //value = cleanValue(value);
+
+
+                if( !searchObj[key] ) searchObj[key] = {};
+
+                if( searchObj[key][value] ) searchObj[key][value] += 1;
+                else searchObj[key][value] = 1;
             }
         }
-
 
         var i, j, measurement, key, arr;
         for( i = 0; i < spectra.length; i++ ) {
@@ -41,9 +52,18 @@ function(key, spectra){
                 setValue(measurement.ecosis, 'geojson');
             }
 
-            if( measurement.ecosis.datapoints ) {
-                for( j = measurement.ecosis.datapoints.length-1; j >= 0; j-- ) {
-                    setValue(measurement.ecosis.datapoints[i].key, 'data_values');
+            if( measurement.data_keys__ ) {
+                for( var key in measurement.data_keys__ ) {
+                    searchObj['data_keys__'][key] = 1;
+                }
+            } /*else if ( measurement.datapoints ) {
+                for( j = measurement.datapoints.length-1; j >= 0; j-- ) {
+                    searchObj['data_keys__'][measurement.datapoints[j].key] = 1;
+                }
+            }*/
+            else if ( measurement.datapoints ) {
+                for( key in measurement.datapoints ) {
+                    searchObj['data_keys__'][key] = 1;
                 }
             }
 

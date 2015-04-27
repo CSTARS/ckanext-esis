@@ -7,7 +7,7 @@ import urllib2
 
 
 import ckan.lib.uploader as uploader
-from ckan.lib.base import c, model, BaseController
+from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.helpers as h
 from ckan.common import request, response
@@ -20,6 +20,7 @@ from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
 from ckanext.esis.lib.join import SheetJoin
 import ckanext.esis.lib.auth as auth
+import ckanext.esis.lib.units as units
 from ckanext.esis.lib.mapReduce import mapreducePackage
 
 from ckan.controllers.package import PackageController
@@ -39,9 +40,6 @@ searchCollection = db[searchCollectionName]
 
 workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
-
-schemaCollectionName = config._process_configs[1]['esis.mongo.schema_collection']
-schemaCollection = db[schemaCollectionName]
 
 usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 
@@ -82,7 +80,6 @@ class SpectraController(PackageController):
 
         searchCollection.remove({'_id':params['id']})
         spectraCollection.remove({'ecosis.package_id':params['id']})
-        schemaCollection.remove({'package_id':params['id']})
 
         workspace = workspaceCollection.find_one({'package_id': params['id']})
         if workspace != None:
@@ -103,19 +100,8 @@ class SpectraController(PackageController):
 
         searchCollection.remove({'_id': package_id})
         spectraCollection.remove({'ecosis.package_id': package_id})
-        schemaCollection.remove({'package_id': package_id})
 
         return json.dumps({'success': True})
-
-    def getSchema(self):
-        response.headers["Content-Type"] = "application/json"
-
-        package_id = request.params.get('id')
-        auth.hasAccess(package_id)
-
-        context = {'model': model, 'user': c.user}
-
-        return json.dumps(schemaCollection.find_one({'package_id': package_id},{'_id':0}))
 
     # first we need to look up if this resource is a metadata resource
     # if it is, this complicates things, otherwise just pull from
@@ -186,6 +172,9 @@ class SpectraController(PackageController):
 
             process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
+            # save the units for the package
+            units.updatePackageUnits(ckanPackage, units.getAllAttributes(resources))
+
 
     # rebuild entire search index
     def rebuildIndex(self):
@@ -202,6 +191,8 @@ class SpectraController(PackageController):
         for pkgId in list:
             context = {'model': model, 'user': c.user}
             ckanPackage = logic.get_action('package_show')(context,{id: pkgId})
+            #(workspacePackage, ckanPackage, rootDir, fresh) = setup.init(pkgId)
+
             mapreducePackage(ckanPackage, spectraCollection, searchCollection)
 
         return json.dumps({'success': True, 'rebuildCount': len(list)})
@@ -280,7 +271,6 @@ class SpectraController(PackageController):
         workspaceCollection.remove({})
         spectraCollection.remove({})
         searchCollection.remove({})
-        schemaCollection.remove({})
 
         return json.dumps({
             'removed': packages,
