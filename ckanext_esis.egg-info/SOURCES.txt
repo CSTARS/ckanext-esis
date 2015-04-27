@@ -1,8 +1,14 @@
 ckanext/__init__.py
 ckanext/esis/__init__.py
-ckanext/esis/parsers.py
+ckanext/esis/controller.py
 ckanext/esis/plugin.py
-ckanext/esis/spectral.py
+ckanext/esis/workspace.py
+ckanext/esis/lib/__init__.py
+ckanext/esis/lib/controlledVocab.py
+ckanext/esis/lib/join.py
+ckanext/esis/lib/process.py
+ckanext/esis/lib/push.py
+ckanext/esis/lib/setup.py
 ckanext_esis.egg-info/PKG-INFO
 ckanext_esis.egg-info/SOURCES.txt
 ckanext_esis.egg-info/dependency_links.txt
