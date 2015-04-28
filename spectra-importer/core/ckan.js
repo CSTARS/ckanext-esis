@@ -234,7 +234,7 @@ module.exports = function(config) {
   }
 
   this.deletePackage = function(pkgid, callback) {
-    postRaw(this.host+'/api/3/action/package_delete', {id: pkgid}, function(err, resp) {
+    postRaw(this.host+'/api/3/action/package_delete', JSON.stringify({id: pkgid}), function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body);
     });

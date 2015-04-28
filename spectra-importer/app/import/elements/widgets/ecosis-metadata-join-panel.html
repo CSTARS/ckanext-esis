@@ -27,8 +27,9 @@
                 <div class="checkbox">
                   <label>
                     <input id="looseMatch" type="checkbox" on-click="onLooseMatch">
-                    <b>Exact match</b>. If checked, the attribute value must match the filename exactly.  Otherwise,
-                    the filename just needs to contain the attribute value to match.
+                    <b>Loose match</b>. If checked, the filename just needs to contain
+                    the attribute value to match.  Otherwise the attribute value must
+                    match the filename exactly.
                   </label>
                 </div>
               </div>
@@ -123,7 +124,7 @@
     },
 
     onLooseMatch : function() {
-      this.datasheet.looseMatch = !this.$.looseMatch.checked;
+      this.datasheet.looseMatch = this.$.looseMatch.checked;
 
       this.updateMatchTypeUi();
       this.updateServer();
