@@ -90,7 +90,7 @@ class ProcessWorkspace:
                     spectra[key] = spectra[value]
 
         # set controlled vocab
-        spectra['usda_code_status'] = vocab.set(spectra)
+        spectra['usda_code_status'] = vocab.setUSDACodes(spectra)
 
         return spectra
 
@@ -468,15 +468,18 @@ class ProcessWorkspace:
         if re.match(r".*\(.*\)\s*$", name):
             units = re.sub(r".*\(","", name)
             units = re.sub(r"\)\s*","", units)
+            name = re.sub(r"\(.*", "", name).strip()
 
         type = "metadata"
         if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
             type = "wavelength"
             name = re.sub(r"\.0+$", "", name)
-        elif re.match(r".*__d($|\s)", name) or isData:
-            name = re.sub(r".*__d($|\s)", "", name)
+        elif re.match(r".*__d$", name) or isData:
+            name = re.sub(r"__d$", "", name)
             type = "data"
             declared = True
+
+        name = vocab.getEcoSISName(name)
 
         attr = {
             "type" : type,

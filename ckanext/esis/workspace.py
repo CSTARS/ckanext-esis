@@ -15,7 +15,7 @@ from ckanext.esis.lib.push import Push
 from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
 import ckanext.esis.lib.auth as auth
-
+import ckanext.esis.lib.units as units
 
 # helpers from ./lib
 joinlib = SheetJoin()
@@ -143,6 +143,10 @@ class WorkspaceController(BaseController):
         # TODO: can we optomize this since only one datasheet was update?
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
+        # save the units for the package
+        # DO NOT MAKE THIS CALL AFTER _createOverviewResponse!!!  will remove all resources :(
+        units.updatePackageUnits(ckanPackage, units.getAllAttributes(resources))
+
         resp = self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh)
 
         if resource.get('id') != None and datasheet_id != None:
@@ -152,6 +156,8 @@ class WorkspaceController(BaseController):
                 ds = self._getById(r['datasheets'], datasheet_id)
                 r['datasheets'].remove(ds)
                 r['datasheets'].append(newds)
+
+
 
         return json.dumps(resp)
 
@@ -229,6 +235,9 @@ class WorkspaceController(BaseController):
 
         # now re-process data
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
+
+        # save the units for the package
+        units.updatePackageUnits(ckanPackage, units.getAllAttributes(resources))
 
         return json.dumps(self._createOverviewResponse(resources, workspacePackage, ckanPackage, fresh))
 
@@ -394,7 +403,11 @@ class WorkspaceController(BaseController):
         # make sure all files on disk are up to date in the package
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
 
-        return json.dumps(self._getMergedResources(rid, resources, workspacePackage))
+        resp = self._getMergedResources(rid, resources, workspacePackage)
+
+        units.updatePackageUnits(ckanPackage, resp.get('attributes'))
+
+        return json.dumps(resp)
 
 
     def setAttributeInfo(self):
@@ -529,11 +542,9 @@ class WorkspaceController(BaseController):
             return json.dumps({'error': True})
         return json.dumps({'success':True, 'count': len(rows)-2})
 
-
     #
     # HELPERS
     #
-
     def _createOverviewResponse(self, resources, workspacePackage, ckanPackage, fresh):
         attrs = {}
         arr = []
@@ -547,15 +558,18 @@ class WorkspaceController(BaseController):
                     for attr in datasheet['attributes']:
                         if not attr['name'] in attrs and attr['type'] != 'wavelength':
                             respAttr = {
+                                "original" : attr.get('original'),
                                 "type" : attr["type"],
                                 "scope" : attr["scope"],
                                 "units" : attr.get("units")
                             }
-                            if 'attributes' in workspacePackage:
+
+                            # TODO: if we want to let user mods of attributes back in at this level
+                            #if 'attributes' in workspacePackage:
                                 # override with any user modifications
-                                if attr['name'] in workspacePackage['attributes']:
-                                    for key, value in workspacePackage['attributes'][attr['name']].iteritems():
-                                        respAttr[key] = value
+                            #    if attr['name'] in workspacePackage['attributes']:
+                            #        for key, value in workspacePackage['attributes'][attr['name']].iteritems():
+                            #            respAttr[key] = value
                             attrs[attr['name']] = respAttr
 
                         if attr['type'] == 'wavelength' and not attr['name'] in wavelengths:

@@ -1,4 +1,4 @@
-import os, time, json
+import os, time, json, re
 from bson.code import Code
 from bson.son import SON
 from pylons import config
@@ -15,6 +15,10 @@ f = open('%s/../mapreduce/reduce.js' % path, 'r')
 reduceJs = Code(f.read())
 f.close()
 
+f = open('%s/../mapreduce/finalize.js' % path, 'r')
+finalizeJs = Code(f.read())
+f.close()
+
 f = open('%s/../../../spectra-importer/core/schema.json' % path, 'r')
 schema = json.loads(f.read())
 f.close()
@@ -26,15 +30,9 @@ schemaMap = {
     'Maintainer Email' : 'maintainer_email'
 }
 
-extras = ['Citation', 'Funding Source', 'Citation DOI', 'Funding Source Grant Number', 'Website']
-
-#f = open('%s/../mapreduce/finalize.js' % path, 'r')
-#self.mapreduce['finalize'] = f.read()
-#f.close()
-
 # pkg should be a ckan pkg
 # collection should be the search collection
-def mapreducePackage(ckanPkg, spectraCollection, searchCollection):
+def mapreducePackage(ckanPkg, attributes, spectraCollection, searchCollection):
     # if the package is private, remove a return
     if ckanPkg['private'] == True:
         spectraCollection.remove({'_id': ckanPkg['id']})
@@ -43,9 +41,9 @@ def mapreducePackage(ckanPkg, spectraCollection, searchCollection):
 
     # TODO: remove this later on
     #finalize = Code(self.mapreduce['finalize'])
-    #spectraCollection.map_reduce(map, reduce, finalize=finalize, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+    #spectraCollection.map_reduce(map, reduce, finalize=finalizeJs, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
 
-    spectraCollection.map_reduce(mapJs, reduceJs, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": ckanPkg['id']})
+    spectraCollection.map_reduce(mapJs, reduceJs, finalize=finalizeJs, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": ckanPkg['id']})
     spectra_count = spectraCollection.find({"ecosis.package_id": ckanPkg['id']}).count()
 
     updateEcosisNs(ckanPkg, searchCollection, spectra_count)
@@ -53,24 +51,38 @@ def mapreducePackage(ckanPkg, spectraCollection, searchCollection):
 def updateEcosisNs(pkg, collection, spectra_count):
     ecosis = {
         "pushed" : time.time(),
+        "organization" : "",
         "organization_id" : "",
         "organization_image_url" : "",
         "description" : pkg.get('notes'),
         "groups" : [],
         "package_id" : pkg.get("id"),
-        "package_name" : pkg.get("id"),
+        "package_name" : pkg.get("name"),
         "package_title" : pkg.get("title"),
         "created" : pkg.get("metadata_created"),
         "modified" : pkg.get("metadata_modified"),
         "version" : pkg.get("version"),
         "license" : pkg.get("license_title"),
         "spectra_count" : spectra_count,
+        "spectra_schema" : {
+            "data" : [],
+            "metadata" : [],
+            "units" : {}
+        },
         "resources" : [],
         "geojson" : None,
         "sort_on" : getPackageExtra("sort_on", pkg),
         "sort_description" : getPackageExtra("sort_description", pkg),
     }
 
+    # append the units
+    units = getPackageExtra('package_units', pkg)
+    if units != None:
+        units = json.loads(units)
+        for name, unit in units.iteritems():
+            ecosis["spectra_schema"]["units"][re.sub(r'\.', '_', name)] = unit
+
+    # append the list of resources
     for item in pkg['resources']:
         if item.get("state") != "active":
             continue
@@ -82,20 +94,23 @@ def updateEcosisNs(pkg, collection, spectra_count):
             "url" : item.get("url")
         })
 
+    # append the list of keywords
     keywords = []
     for item in pkg['tags']:
         keywords.append(item['display_name'])
 
+    # append the data groups
     for item in pkg['groups']:
         ecosis["groups"].append(item['display_name'])
 
+    # append the organizations
     if 'organization' in pkg:
         if pkg['organization'] != None:
             ecosis["organization"] = pkg['organization']['title']
             ecosis["organization_id"] = pkg['organization']['id']
 
-        if pkg['organization']['image_url'] != "":
-            ecosis["organization_image_url"] = '/uploads/group/%s' % pkg['organization']['image_url']
+            if pkg['organization']['image_url'] != "":
+                ecosis["organization_image_url"] = '/uploads/group/%s' % pkg['organization']['image_url']
 
     # make sure the map reduce did not create a null collection, if so, remove
     # This means there is no spectra
@@ -107,7 +122,7 @@ def updateEcosisNs(pkg, collection, spectra_count):
     else:
         item = collection.find_one({'_id': pkg['id']})
 
-        setValues = {'$set' : { 'value.ecosis': ecosis }}
+        setValues = {'$set' : { 'value.ecosis': ecosis }, '$unset' : {}}
 
         mrValue = item.get('value')
 
@@ -129,16 +144,26 @@ def updateEcosisNs(pkg, collection, spectra_count):
                     processAttribute(name+" Other", "text", pkg, mrValue, setValues, keywords)
                     names.append(name+" Other")
 
+        # set the known data attributes
+        for key in mrValue['data_keys__']:
+            ecosis['spectra_schema']['data'].append(re.sub(r'\.', '_', key))
+        setValues['$unset']['value.data_keys__'] = ''
+
         # now, lets remove any non-ecosis metadata that has more than 100 entries
+        # also we will set the spectra 'schema' lets us know what wavelengths are dataset
+        # as well as what fields are spectra level metadata
         for key, values in mrValue.iteritems():
+            if key == 'data_keys__':
+                continue
+
+            ecosis['spectra_schema']['metadata'].append(key)
+
             if key in names or values == None:
                 continue
 
             if len(values) > 100:
-                if setValues.get('$unset') == None:
-                    setValues['$unset'] = {}
-
-                setValues['$unset'][key] = "";
+                vkey = 'value.%s' % key
+                setValues['$unset'][vkey] = "";
 
         # finally, let's handle geojson
         geojson = []
