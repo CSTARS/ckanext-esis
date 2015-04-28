@@ -48,7 +48,7 @@ function(key, spectra){
         for( i = 0; i < spectra.length; i++ ) {
             measurement = spectra[i];
 
-            if( measurement.ecosis.geojson ) {
+            if( measurement.ecosis && measurement.ecosis.geojson ) {
                 setValue(measurement.ecosis, 'geojson');
             }
 
