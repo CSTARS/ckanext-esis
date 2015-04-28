@@ -274,10 +274,10 @@
     setUsername : function() {
       if( !ecosis.user ) {
         alert("You are not logged in :(");
-        window.location = ecosis.ckan.host + '/user/login';
+        window.location.href = ecosis.ckan.host + 'user/login';
       } else if( !ecosis.user.loggedIn ) {
         alert("You are not logged in :(");
-        window.location = ecosis.ckan.host + '/user/login';
+        window.location.href = ecosis.ckan.host + 'user/login';
       }
 
       this.$.usernameLabel.innerText = ecosis.user.username;
