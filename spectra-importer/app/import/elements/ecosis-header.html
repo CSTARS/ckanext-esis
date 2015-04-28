@@ -38,6 +38,7 @@
 
           <ul class="nav navbar-nav navbar-right">
             <li><a href="http://tutorial.ecospectra.org" target="_blank">Help!</a></li>
+            <li><a id="exit">Exit</a></li>
           </ul>
         </div>
       </div>
@@ -66,6 +67,11 @@
 
       $(window).on('hashchange', this.updateActiveTab.bind(this));
       this.updateActiveTab();
+
+      ecosis.ds.on('load', function(){
+        if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+        else this.$.exit.setAttribute('href', '/dataset/');
+      }.bind(this));
     },
 
     attached : function() {

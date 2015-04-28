@@ -7243,12 +7243,15 @@ Note, all features of `x-style` are available when defining styles as part of Po
       var col1 = '';
       var col2 = '';
 
+      var c = 0;
       for( var i = 0; i < this.schema.length; i++ ) {
         if( this.schema[i].name == 'Keywords' ) continue;
+        
         var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
-        if( i % 2 == 0 ) col1 += input;
+        if( c % 2 == 0 ) col1 += input;
         else col2 += input;
+        c++;
       }
 
       this.innerHTML =
@@ -8282,6 +8285,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
           <ul class="nav navbar-nav navbar-right">
             <li><a href="http://tutorial.ecospectra.org" target="_blank">Help!</a></li>
+            <li><a id="exit">Exit</a></li>
           </ul>
         </div>
       </div>
@@ -8310,6 +8314,11 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
       $(window).on('hashchange', this.updateActiveTab.bind(this));
       this.updateActiveTab();
+
+      ecosis.ds.on('load', function(){
+        if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+        else this.$.exit.setAttribute('href', '/dataset/');
+      }.bind(this));
     },
 
     attached : function() {
@@ -9626,6 +9635,8 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
             if( resp.error ) return alert("Error updating datasheet :(");
 
+            ecosis.ds.runAfterResourceAdd(resp);
+
             for( var i = 0; i < resp.resources.length; i++ ) {
                 if( resp.resources[i].id != this.resource.id ) continue;
                 var r = resp.resources[i];
@@ -9665,7 +9676,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
             } else {
               this.$.spectraCountLabel.innerHTML = '';
             }
-            
+
           }.bind(this)
       );
     },
@@ -10179,14 +10190,10 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
     <!-- Create Dataset -->
     <a id="createDatasetBtn" class="btn btn-primary" style="display:none">Create Dataset</a>
-    <div id="createDatasetLabel" style="display:none" class="alert alert-info">
-      <i class="fa fa-spinner fa-spin"></i> Creating Dataset...
-    </div>
+
 
     <div id="editModeFooter" style="display:none">
       Now <a href="#add-resources">add resources</a> to your dataset. <br>
-
-      <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
     </div>
 
     <div class="layout horizontal" style="margin-top: 15px">
@@ -11470,7 +11477,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       </div>
 
       <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
-      <div class="help-block" id="pushMessage" style="display:none">Pushing dataset to search (please wait, this may take a moment)...</div>
+      <div class="help-block" id="pushMessage" style="display:none">Processing spectra and pushing to search (please wait, this may take a couple minutes)...</div>
 		</div>
   </template>
 </dom-module>

@@ -167,6 +167,8 @@
 
             if( resp.error ) return alert("Error updating datasheet :(");
 
+            ecosis.ds.runAfterResourceAdd(resp);
+
             for( var i = 0; i < resp.resources.length; i++ ) {
                 if( resp.resources[i].id != this.resource.id ) continue;
                 var r = resp.resources[i];
@@ -206,7 +208,7 @@
             } else {
               this.$.spectraCountLabel.innerHTML = '';
             }
-            
+
           }.bind(this)
       );
     },
