@@ -5,9 +5,6 @@ function(key, spectra){
         
         var ignoreList = ['_id','datapoints', 'ecosis'];
 
-        //function cleanValue(value) {
-        //    return value.replace(/\./g, '_::_');
-        //}
         function cleanKey(key) {
             return key.replace(/\./g, '_');
         }
@@ -34,8 +31,6 @@ function(key, spectra){
                 if( typeof value == 'string' && value.length > 100 ) return;
 
                 key = cleanKey(key);
-                //value = cleanValue(value);
-
 
                 if( !searchObj[key] ) searchObj[key] = {};
 
@@ -48,20 +43,16 @@ function(key, spectra){
         for( i = 0; i < spectra.length; i++ ) {
             measurement = spectra[i];
 
-            if( measurement.ecosis.geojson ) {
-                setValue(measurement.ecosis, 'geojson');
-            }
+            // TODO: figure out bubbling of geojson
+            //if( measurement.ecosis && measurement.ecosis.geojson ) {
+            //    setValue(measurement.ecosis, 'geojson');
+            //}
 
             if( measurement.data_keys__ ) {
                 for( var key in measurement.data_keys__ ) {
                     searchObj['data_keys__'][key] = 1;
                 }
-            } /*else if ( measurement.datapoints ) {
-                for( j = measurement.datapoints.length-1; j >= 0; j-- ) {
-                    searchObj['data_keys__'][measurement.datapoints[j].key] = 1;
-                }
-            }*/
-            else if ( measurement.datapoints ) {
+            }else if ( measurement.datapoints ) {
                 for( key in measurement.datapoints ) {
                     searchObj['data_keys__'][key] = 1;
                 }

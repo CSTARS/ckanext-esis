@@ -180,18 +180,22 @@ def updateEcosisNs(pkg, collection, spectra_count):
 def processGeoJson(geojson, pkg):
     result = {
         "type": "GeometryCollection",
-        "geometries": geojson
+        "geometries": []
     }
 
-    pkgGeoJson = getPackageExtra("geojson", pkg)
-    if pkgGeoJson != None:
-        pkgGeoJson = json.loads(pkgGeoJson)
+    for js in geojson:
+        js = json.loads(js)
 
-        if pkgGeoJson.get("type") == "GeometryCollection":
-            for geo in pkgGeoJson.get("geometries"):
+        if js.get("type") == "GeometryCollection":
+            for geo in js.get("geometries"):
                 result['geometries'].append(geo)
+        elif js.get("type") == "Feature":
+            result['geometries'].append(js.get('geometry'))
+        elif js.get("type") == "FeatureCollection":
+            for f in js.get("features"):
+                result['geometries'].append(f.get("geometry"))
         else:
-            result['geometries'].append(pkgGeoJson)
+            result['geometries'].append(js)
 
     return result
 
