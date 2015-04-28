@@ -307,13 +307,13 @@ class SpectraController(PackageController):
         response.status_int = 307
 
         if group == None:
-            response.headers["Location"] = "/importer/"
+            response.headers["Location"] = "/import/"
         else:
-            response.headers["Location"] = "/importer/?group=%s" % group.encode('ascii','ignore')
+            response.headers["Location"] = "/import/?group=%s" % group.encode('ascii','ignore')
 
         return "Redirecting"
 
     def editPackageRedirect(self, id):
         response.status_int = 307
-        response.headers["Location"] = "/importer/?id=%s" % id.encode('ascii','ignore')
+        response.headers["Location"] = "/import/?id=%s" % id.encode('ascii','ignore')
         return "Redirecting"
