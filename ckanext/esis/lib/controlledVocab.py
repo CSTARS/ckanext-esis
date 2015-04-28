@@ -50,6 +50,7 @@ class ControlledVocab:
 
         return 2
 
+    # see if a flat version of this exists
     def getEcoSISName(self, key):
         flat = flatten(key)
         if flat == key:

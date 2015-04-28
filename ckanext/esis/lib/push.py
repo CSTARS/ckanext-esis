@@ -26,6 +26,8 @@ class Push:
     workspace = None
     joinlib = None
 
+    count = 0
+
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
@@ -43,7 +45,6 @@ class Push:
         # first clean out data
         searchCollection.remove({'value.ecosis.package_id':package_id})
         spectraCollection.remove({'ecosis.package_id': package_id})
-        #schemaCollection.remove({'package_id': package_id})
 
         # next add resources one at a time and join spectra
         (workspacePackage, ckanPackage, rootDir, fresh) = self.setup.init(package_id)
@@ -56,26 +57,12 @@ class Push:
 
         package = self.workspace._mergeWorkspace(resources, workspacePackage, ckanPackage, fresh)
 
+        self.count = 0
+
         for resource in package['resources']:
             resource = self.workspace._getMergedResources(resource['id'], resources, workspacePackage, removeValues=False)
-            #spectra = self._getResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
             self._insertResourceSpectra(resource, self.workspaceDir, package, ckanPackage)
 
-        # push schema
-        #attrs = {}
-        #if package.get("attributes") != None:
-        #    attrList = package.get("attributes")
-        #    for attr in attrList:
-        #        attrs[attr] = {
-        #            "type" : attrList[attr].get("type"),
-        #            "type" : attrList[attr].get("type"),
-        #            "units" : attrList[attr].get("units")
-        #        }
-
-        #schemaCollection.insert({
-        #    "package_id" : package_id,
-        #    "attributes" : attrs
-        #})
 
         mapreducePackage(ckanPackage, package.get("attributes"), spectraCollection,  searchCollection)
 
@@ -88,8 +75,8 @@ class Push:
         if resource.get('ignore') == True:
             return []
 
-        runTime = time.time()
-        spectra = []
+        #runTime = time.time()
+        #spectra = []
         # cache for metadata datasheets file name to 2-dim array of data
         # so we don't need to keep opening and closing the files
         metadataCache = {}
@@ -105,12 +92,10 @@ class Push:
             file = "%s%s%s" % (rootDir, datasheet['location'], datasheet['name'])
             data = self.process.getFile(file, datasheet)
 
-            spectraList = []
+            #spectraList = []
 
             (layout, scope) = self.process.getLayout(datasheet)
 
-            # stupid hack for memory leaks
-            #arr = []
 
             if layout == 'row':
                 start = datasheet['localRange']['start']
@@ -120,12 +105,6 @@ class Push:
                         if data[start+j][i]:
                             sp[data[start][i]] = data[start+j][i]
                     self._formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir);
-
-                    # push in 50 at a time to avoid memory leak
-                    #arr.append(m)
-                    #if len(arr) > 100:
-                    #    spectraCollection.insert(arr)
-                    #    arr = []
 
             else:
                 start = datasheet['localRange']['start']
@@ -139,19 +118,12 @@ class Push:
                             pass
                     self._formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir)
 
-                    # push in 50 at a time to avoid memory leak
-                    #arr.append(m)
-                    #if len(arr) > 50:
-                    #    spectraCollection.insert(arr)
-                    #    arr = []
 
-            # if len(arr) > 0:
-            #    spectraCollection.insert(arr)
-            #del arr
 
 
     def _formatAndInsertSpectra(self, m, datasheet, data, package, ckanPackage, metadataCache, rootDir):
-        # m['datapoints'] = []
+        #runTime = time.time()
+
         m['datapoints'] = {}
 
         # move wavelengths to datapoints array
@@ -159,11 +131,6 @@ class Push:
             for attr in package["wavelengths"]:
                 if attr in m:
                     self.setDatapoint(m, attr)
-                    #m['datapoints'].append({
-                    #    "key" : attr,
-                    #    "value" : m[attr]
-                    #})
-                    #del m[attr]
 
         # add global attributes if they exist
         if datasheet.get("globalRange") != None and len(data[0]) > 1:
@@ -206,22 +173,23 @@ class Push:
                     #})
                     #del m[attr]
 
-        # fix and space and capitalization issues
-        #replace = []
-        #for key, value in m.iteritems():
-        #    flat = self.flatten(key)
-        #    if flat == key:
-        #        continue
 
-        #    if self.metadata.get(flat) != None:
-        #        replace.append({
-        #            "new" : self.metadata.get(flat).get('name'),
-        #            "old" : key,
-        #            "value" : value
-        #        })
-        #for item in replace:
-        #    del m[item.get('old')]
-        #    m[item.get('new')] = item.get("value")
+        # fix and space and capitalization issues
+
+        replace = []
+        for key in m:
+            ecosis = vocab.getEcoSISName(key)
+            if ecosis == key:
+                continue
+
+            replace.append({
+                "new" : ecosis,
+                "old" : key,
+                "value" : m[key]
+            })
+        for item in replace:
+            del m[item.get('old')]
+            m[item.get('new')] = item.get("value")
 
         # TODO: Look up USDA Plant Codes
         vocab.setUSDACodes(m)
@@ -250,7 +218,27 @@ class Push:
 
         # set lat / lng info
         if m.get('geojson') != None:
-            m['ecosis']['geojson'] = json.loads(m['geojson'])
+            js = json.loads(m['geojson'])
+
+            # extract geometry from feature
+            if js.get("type") == "Feature":
+                m['ecosis']['geojson'] = js.get('geometry')
+
+            # extract geometries from feature collection in geo collection
+            elif js.get("type") == "FeatureCollection":
+                result ={
+                    "type": "GeometryCollection",
+                    "geometries": []
+                }
+
+                for f in js.get("features"):
+                    result['geometries'].append(f.get("geometry"))
+                m['ecosis']['geojson'] = result
+
+            # else we should be good to just add the geometry
+            else:
+                 m['ecosis']['geojson'] = js
+
             del m['geojson']
         elif m.get('Latitude') != None and m.get('Longitude') != None:
             try:
@@ -265,7 +253,10 @@ class Push:
                 pass
 
         spectraCollection.insert(m)
-        #return m
+
+
+        #print "#%s: %s" % (self.count, (time.time()-runTime))
+        #self.count += 1
 
 
     def _addEcosisNamespace(self, m, ckanPackage, resource, dsid):
