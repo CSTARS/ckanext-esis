@@ -9658,6 +9658,14 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
             this.updateMetadataUi();
             this.updateIgnoreUi();
+
+            // update spectra count
+            if( this.datasheet.spectra_count ) {
+              this.$.spectraCountLabel.innerHTML = '('+this.datasheet.spectra_count+')';
+            } else {
+              this.$.spectraCountLabel.innerHTML = '';
+            }
+            
           }.bind(this)
       );
     },
@@ -10692,6 +10700,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       this.staggedFiles = [];
       this.newResourceIds = [];
 
+      this.defaultType = 'column';
       this.$.formatHelp.setType('column');
 
       this.$.completePanelLink.setAttribute('href', '#current-resources');

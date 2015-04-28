@@ -1,7 +1,7 @@
 var fs = require('fs');
 
 var schema = fs.readFileSync(__dirname+'/../../../../ecosis-data-tool/app/schema.json');
-fs.writeFileSync(__dirname+'/../../app/schema.json', schema, 'utf-8');
+fs.writeFileSync(__dirname+'/../../core/schema.json', schema, 'utf-8');
 
 schema = JSON.parse(schema);
 var map = '';
