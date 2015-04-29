@@ -237,7 +237,7 @@
       if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
         this.$.visibilityInput.setAttribute('disabled', '');
         this.$.visibilityInput.value = 'false';
-        ecosis.ds.data.private = 'false';
+        ecosis.ds.data.private = false;
         this.$.visibilityWarnLabel.style.display = 'block';
       } else {
         this.$.visibilityInput.removeAttribute('disabled');
