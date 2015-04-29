@@ -141,14 +141,10 @@
 
     <!-- Create Dataset -->
     <a id="createDatasetBtn" class="btn btn-primary" style="display:none">Create Dataset</a>
-    <div id="createDatasetLabel" style="display:none" class="alert alert-info">
-      <i class="fa fa-spinner fa-spin"></i> Creating Dataset...
-    </div>
+
 
     <div id="editModeFooter" style="display:none">
       Now <a href="#add-resources">add resources</a> to your dataset. <br />
-
-      <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
     </div>
 
     <div class="layout horizontal" style="margin-top: 15px">
@@ -230,7 +226,7 @@
       this.$.keywordInput.setTokens(data.tags || []);
       this.$.licenseInput.value = data.license_id || '';
       this.$.organizationInput.value = data.owner_org || '';
-      this.$.visibilityInput.value = data.private ? 'false' : 'true';
+      this.$.visibilityInput.value = data.private ? 'true' : 'false';
       this.$.versionInput.value = data.version;
       this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
 
@@ -241,11 +237,12 @@
       if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
         this.$.visibilityInput.setAttribute('disabled', '');
         this.$.visibilityInput.value = 'false';
-        ecosis.ds.data.private = false;
+        ecosis.ds.data.private = 'false';
         this.$.visibilityWarnLabel.style.display = 'block';
       } else {
         this.$.visibilityInput.removeAttribute('disabled');
         this.$.visibilityWarnLabel.style.display = 'none';
+        this.$.visibilityInput.value = ecosis.ds.data.private ? 'true' : 'false';
       }
     },
 
@@ -413,7 +410,7 @@
     },
 
     onVisibilityInputChange : function() {
-      ecosis.ds.data.hidden = this.$.visibilityInput.value == 'true' ? true : false;
+      ecosis.ds.data.private = this.$.visibilityInput.value == 'true' ? true : false;
 
       // push to search needs to know
       this.fire('visibility-change');

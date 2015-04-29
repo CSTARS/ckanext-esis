@@ -34,7 +34,11 @@
                 NOTE:  Metadata must be in row format.
               </span>
 
-              <ecosis-metadata-join-panel id="joinMetadata" style="display:none"></ecosis-metadata-join-panel>
+              <ecosis-metadata-join-panel
+                  id="joinMetadata"
+                  style="display:none"
+                  on-metadata-update='onMetadataPanelUpdate'>
+              </ecosis-metadata-join-panel>
             </div>
 
           </div>
@@ -61,7 +65,7 @@
       <div class="form-horizontal" id="orientationPanel">
         <div class="form-group">
 
-          <label for="inputIgnore" class="col-md-2 control-label">Orientation</label>
+          <label class="col-md-2 control-label">Orientation</label>
           <div class="col-md-10">
             <div class="radio">
               <label>
@@ -141,6 +145,7 @@
       this.resource = resource;
       this.datasheetId = datasheet.id;
       this.datasheet = null;
+      this.$.spectraUi.style.display = 'none';
       this.setLoading(true);
     },
 
@@ -166,6 +171,8 @@
             this.setSaving(false);
 
             if( resp.error ) return alert("Error updating datasheet :(");
+
+            ecosis.ds.runAfterResourceAdd(resp);
 
             for( var i = 0; i < resp.resources.length; i++ ) {
                 if( resp.resources[i].id != this.resource.id ) continue;
@@ -206,17 +213,17 @@
             } else {
               this.$.spectraCountLabel.innerHTML = '';
             }
-            
+
           }.bind(this)
       );
     },
 
-    edit : function() {
+    edit : function(callback) {
       if( !this.datasheet ) {
-        this.loadFullDatasheet();
+        this.loadFullDatasheet(callback);
         return;
       } else if( this.datasheet.id != this.datasheetId ) {
-        this.loadFullDatasheet();
+        this.loadFullDatasheet(callback);
         return;
       }
 
@@ -256,6 +263,8 @@
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
+
+      if( callback ) callback();
     },
 
     updateMetadataUi : function() {
@@ -323,7 +332,7 @@
       $(this.$.formatHelp).toggle();
     },
 
-    loadFullDatasheet : function(id) {
+    loadFullDatasheet : function(callback) {
       this.setLoading(true);
 
       ecosis.ckan.getDatasheet(ecosis.ds.package_id, this.resource.id, this.datasheetId, function(resp){
@@ -331,6 +340,8 @@
 
         this.datasheet = resp;
         this.edit();
+
+        if( callback ) callback();
       }.bind(this));
     },
 
@@ -341,6 +352,16 @@
       } else {
         this.$.main.style.display = 'block';
         this.$.loading.style.display = 'none';
+      }
+    },
+
+    onMetadataPanelUpdate : function(e) {
+      if( e.detail.updating ) {
+        this.$.inputIsMetadata.setAttribute('disabled', '');
+        this.$.inputIgnore.setAttribute('disabled', '');
+      } else {
+        this.$.inputIsMetadata.removeAttribute('disabled');
+        this.$.inputIgnore.removeAttribute('disabled');
       }
     },
 

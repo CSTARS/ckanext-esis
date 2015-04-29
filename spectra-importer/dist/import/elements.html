@@ -7243,12 +7243,15 @@ Note, all features of `x-style` are available when defining styles as part of Po
       var col1 = '';
       var col2 = '';
 
+      var c = 0;
       for( var i = 0; i < this.schema.length; i++ ) {
         if( this.schema[i].name == 'Keywords' ) continue;
+        
         var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
-        if( i % 2 == 0 ) col1 += input;
+        if( c % 2 == 0 ) col1 += input;
         else col2 += input;
+        c++;
       }
 
       this.innerHTML =
@@ -8281,7 +8284,8 @@ Note, all features of `x-style` are available when defining styles as part of Po
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="http://tutorial.ecospectra.org" target="_blank">Help!</a></li>
+            <li><a href="http://tutorial.ecospectra.org" target="_blank"><i class="fa fa-question-circle"></i> Help</a></li>
+            <li><a id="exit"><i class="fa fa-sign-in"></i> Exit</a></li>
           </ul>
         </div>
       </div>
@@ -8310,6 +8314,11 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
       $(window).on('hashchange', this.updateActiveTab.bind(this));
       this.updateActiveTab();
+
+      ecosis.ds.on('load', function(){
+        if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+        else this.$.exit.setAttribute('href', '/dataset/');
+      }.bind(this));
     },
 
     attached : function() {
@@ -8974,8 +8983,9 @@ Note, all features of `x-style` are available when defining styles as part of Po
                 <div class="checkbox">
                   <label>
                     <input id="looseMatch" type="checkbox" on-click="onLooseMatch">
-                    <b>Exact match</b>. If checked, the attribute value must match the filename exactly.  Otherwise,
-                    the filename just needs to contain the attribute value to match.
+                    <b>Loose match</b>. If checked, the filename just needs to contain
+                    the attribute value to match.  Otherwise the attribute value must
+                    match the filename exactly.
                   </label>
                 </div>
               </div>
@@ -9070,7 +9080,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
     },
 
     onLooseMatch : function() {
-      this.datasheet.looseMatch = !this.$.looseMatch.checked;
+      this.datasheet.looseMatch = this.$.looseMatch.checked;
 
       this.updateMatchTypeUi();
       this.updateServer();
@@ -9626,6 +9636,8 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
             if( resp.error ) return alert("Error updating datasheet :(");
 
+            ecosis.ds.runAfterResourceAdd(resp);
+
             for( var i = 0; i < resp.resources.length; i++ ) {
                 if( resp.resources[i].id != this.resource.id ) continue;
                 var r = resp.resources[i];
@@ -9665,7 +9677,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
             } else {
               this.$.spectraCountLabel.innerHTML = '';
             }
-            
+
           }.bind(this)
       );
     },
@@ -10179,14 +10191,10 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
     <!-- Create Dataset -->
     <a id="createDatasetBtn" class="btn btn-primary" style="display:none">Create Dataset</a>
-    <div id="createDatasetLabel" style="display:none" class="alert alert-info">
-      <i class="fa fa-spinner fa-spin"></i> Creating Dataset...
-    </div>
+
 
     <div id="editModeFooter" style="display:none">
       Now <a href="#add-resources">add resources</a> to your dataset. <br>
-
-      <a id="createDatasetBtn" class="btn btn-danger"><i class="fa fa-trash"></i> Delete Dataset</a>
     </div>
 
     <div class="layout horizontal" style="margin-top: 15px">
@@ -10268,7 +10276,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       this.$.keywordInput.setTokens(data.tags || []);
       this.$.licenseInput.value = data.license_id || '';
       this.$.organizationInput.value = data.owner_org || '';
-      this.$.visibilityInput.value = data.private ? 'false' : 'true';
+      this.$.visibilityInput.value = data.private ? 'true' : 'false';
       this.$.versionInput.value = data.version;
       this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
 
@@ -10279,11 +10287,12 @@ Note, all features of `x-style` are available when defining styles as part of Po
       if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
         this.$.visibilityInput.setAttribute('disabled', '');
         this.$.visibilityInput.value = 'false';
-        ecosis.ds.data.private = false;
+        ecosis.ds.data.private = 'false';
         this.$.visibilityWarnLabel.style.display = 'block';
       } else {
         this.$.visibilityInput.removeAttribute('disabled');
         this.$.visibilityWarnLabel.style.display = 'none';
+        this.$.visibilityInput.value = ecosis.ds.data.private ? 'true' : 'false';
       }
     },
 
@@ -10451,7 +10460,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
     },
 
     onVisibilityInputChange : function() {
-      ecosis.ds.data.hidden = this.$.visibilityInput.value == 'true' ? true : false;
+      ecosis.ds.data.private = this.$.visibilityInput.value == 'true' ? true : false;
 
       // push to search needs to know
       this.fire('visibility-change');
@@ -10490,7 +10499,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
   <style>
     :host {
       display : block;
-      padding: 0 10%;
+      padding: 0 5%;
     }
     #legend {
       padding: 20px 0;
@@ -10584,7 +10593,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
   <style>
     :host {
       display: block;
-      padding: 0 10% 50px 10%;
+      padding: 0 5% 50px 5%;
     }
     #dropZone {
         border: 2px dashed #bbb;
@@ -11388,7 +11397,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
   <style>
     :host {
       display: block;
-      padding: 0 10%;
+      padding: 0 5%;
     }
   </style>
 
@@ -11417,7 +11426,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
   <style>
     :host {
       display: block;
-      padding: 0 10%;
+      padding: 0 5%;
     }
     #main {
       margin-bottom: 50px;
@@ -11470,7 +11479,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       </div>
 
       <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
-      <div class="help-block" id="pushMessage" style="display:none">Pushing dataset to search (please wait, this may take a moment)...</div>
+      <div class="help-block" id="pushMessage" style="display:none">Processing spectra and pushing to search (please wait, this may take a couple minutes)...</div>
 		</div>
   </template>
 </dom-module>

@@ -27,8 +27,9 @@
                 <div class="checkbox">
                   <label>
                     <input id="looseMatch" type="checkbox" on-click="onLooseMatch">
-                    <b>Exact match</b>. If checked, the attribute value must match the filename exactly.  Otherwise,
-                    the filename just needs to contain the attribute value to match.
+                    <b>Loose match</b>. If checked, the filename just needs to contain
+                    the attribute value to match.  Otherwise the attribute value must
+                    match the filename exactly.
                   </label>
                 </div>
               </div>
@@ -123,7 +124,7 @@
     },
 
     onLooseMatch : function() {
-      this.datasheet.looseMatch = !this.$.looseMatch.checked;
+      this.datasheet.looseMatch = this.$.looseMatch.checked;
 
       this.updateMatchTypeUi();
       this.updateServer();
@@ -173,11 +174,23 @@
 
     setUpdating : function(updating) {
       if( updating ) {
+        this.$.filenameMatch.setAttribute('disabled', '');
+        this.$.looseMatch.setAttribute('disabled', '');
+        this.$.joinId.setAttribute('disabled', '');
+
         this.$.matchCountPanel.style.display = 'none';
         this.$.updatingPanel.style.display = 'block';
+
+        this.fire('metadata-update', {updating: true});
       } else {
+        this.$.filenameMatch.removeAttribute('disabled');
+        this.$.looseMatch.removeAttribute('disabled');
+        this.$.joinId.removeAttribute('disabled');
+
         this.$.matchCountPanel.style.display = 'inline-block';
         this.$.updatingPanel.style.display = 'none';
+
+        this.fire('metadata-update', {updating: false});
       }
     },
 
