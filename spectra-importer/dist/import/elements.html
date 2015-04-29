@@ -10304,7 +10304,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
       $.get(ecosis.ckan.host+'/spectra/gitInfo', function(resp){
         this.git = resp;
-        if( this.git.branch != 'master' ) this.gitInfo.$.style.display = 'block';
+        if( this.git.branch != 'master' ) this.$.gitInfo.style.display = 'block';
       }.bind(this));
     },
 
