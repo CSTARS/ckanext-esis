@@ -118,8 +118,14 @@
     selectDatasheet : function(index, edit) {
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+
       // if the edit flag is passed, actually load the detailed datasheet and render
-      if( edit ) this.$.datasheetUI.edit();
+      if( edit ) {
+        this.$.datasheetSelector.setDisabled(true);
+        this.$.datasheetUI.edit(function(){
+          this.$.datasheetSelector.setDisabled(false);
+        }.bind(this));
+      }
 
       this.selectedIndex = index;
     },

@@ -8,7 +8,7 @@
   <template>
     <div class="layout horizontal">
       <div>
-        <a class="btn btn-default" on-click="back">
+        <a class="btn btn-default" on-click="back" id="back">
           <i class="fa fa-arrow-left"></i>
         </a>
       </div>
@@ -16,7 +16,7 @@
           <select id="select" class="form-control" on-change="onSelect"></select>
       </div>
       <div>
-        <a class="btn btn-default" on-click="forward">
+        <a class="btn btn-default" on-click="forward" id="forward">
           <i class="fa fa-arrow-right"></i>
         </a>
       </div>
@@ -63,6 +63,18 @@
       }
       this.$.select.value = this.selected+'';
       this.fire('select', this.selected);
+    },
+
+    setDisabled : function(disable) {
+      if( disable ) {
+        this.$.forward.setAttribute('disabled', '');
+        this.$.back.setAttribute('disabled', '');
+        this.$.select.setAttribute('disabled', '');
+      } else {
+        this.$.forward.removeAttribute('disabled');
+        this.$.back.removeAttribute('disabled');
+        this.$.select.removeAttribute('disabled');
+      }
     }
   });
 </script>
