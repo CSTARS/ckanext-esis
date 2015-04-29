@@ -29,6 +29,9 @@ db = client[config._process_configs[1]['esis.mongo.db']]
 workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
 
+infoCollectionName = config._process_configs[1]['esis.mongo.info_collection']
+infoCollection = db[infoCollectionName]
+
 # TODO: need to add usda parsing to getSpectra
 usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 
@@ -36,7 +39,7 @@ usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
 setup = WorkspaceSetup()
 process = ProcessWorkspace()
 
-setup.setCollection(workspaceCollection)
+setup.setCollection(workspaceCollection, infoCollection)
 process.setCollection(workspaceCollection, usdaCollection)
 
 class WorkspaceController(BaseController):

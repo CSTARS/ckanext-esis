@@ -47,7 +47,7 @@ joinlib = SheetJoin()
 setup = WorkspaceSetup()
 process = ProcessWorkspace()
 
-setup.setCollection(workspaceCollection)
+setup.setCollection(workspaceCollection, None)
 process.setCollection(workspaceCollection, usdaCollection)
 
 class SpectraController(PackageController):

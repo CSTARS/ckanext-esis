@@ -4,6 +4,7 @@ import xlrd, csv, re, json, time, pickle, hashlib
 
 from pylons import config
 from controlledVocab import ControlledVocab
+from infoFile import saveInfoFile
 
 vocab = ControlledVocab()
 
@@ -129,8 +130,8 @@ class ProcessWorkspace:
 
             if hasChanges:
                 location = "%s/%s/info.json" % (rootDir,  resourceInfo['id'])
-                self._saveJson(location, resourceInfo)
-
+                #self._saveJson(location, resourceInfo)
+                saveInfoFile(location, resourceInfo, ckanPackage['id'])
 
         print "** Process.resources()  %s time: %ss" % (ckanPackage['name'], (time.time() - runTime))
 
@@ -590,20 +591,13 @@ class ProcessWorkspace:
 
         return sheets
 
-    def _saveJson(self, file, data):
-        # was running into issues with json dump, looks like it might have been IDE
-        #runTime = time.time()
-        #with open(file, 'wb') as f:
-        #    pickle.dump(data, f)
-        #    f.close()
-        #print "  --resource file %s write time:\n      %ss" % (file, (time.time() - runTime))
-
+    #def _saveJson(self, file, data):
         # this actually looks to be faster
-        runTime = time.time()
-        f = open(file, 'w')
-        json.dump(data, f)
-        f.close()
-        print "  --resource file %s write time:\n      %ss" % (file, (time.time() - runTime))
+        #runTime = time.time()
+        #f = open(file, 'w')
+        #json.dump(data, f)
+        #f.close()
+        #print "  --resource file %s write time:\n      %ss" % (file, (time.time() - runTime))
 
     def _getById(self, arr, id):
         if arr == None:
