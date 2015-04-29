@@ -8588,7 +8588,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
   <template>
     <div class="layout horizontal">
       <div>
-        <a class="btn btn-default" on-click="back">
+        <a class="btn btn-default" on-click="back" id="back">
           <i class="fa fa-arrow-left"></i>
         </a>
       </div>
@@ -8596,7 +8596,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
           <select id="select" class="form-control" on-change="onSelect"></select>
       </div>
       <div>
-        <a class="btn btn-default" on-click="forward">
+        <a class="btn btn-default" on-click="forward" id="forward">
           <i class="fa fa-arrow-right"></i>
         </a>
       </div>
@@ -8643,6 +8643,18 @@ Note, all features of `x-style` are available when defining styles as part of Po
       }
       this.$.select.value = this.selected+'';
       this.fire('select', this.selected);
+    },
+
+    setDisabled : function(disable) {
+      if( disable ) {
+        this.$.forward.setAttribute('disabled', '');
+        this.$.back.setAttribute('disabled', '');
+        this.$.select.setAttribute('disabled', '');
+      } else {
+        this.$.forward.removeAttribute('disabled');
+        this.$.back.removeAttribute('disabled');
+        this.$.select.removeAttribute('disabled');
+      }
     }
   });
 </script>
@@ -9130,11 +9142,23 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
     setUpdating : function(updating) {
       if( updating ) {
+        this.$.filenameMatch.setAttribute('disabled', '');
+        this.$.looseMatch.setAttribute('disabled', '');
+        this.$.joinId.setAttribute('disabled', '');
+
         this.$.matchCountPanel.style.display = 'none';
         this.$.updatingPanel.style.display = 'block';
+
+        this.fire('metadata-update', {updating: true});
       } else {
+        this.$.filenameMatch.removeAttribute('disabled');
+        this.$.looseMatch.removeAttribute('disabled');
+        this.$.joinId.removeAttribute('disabled');
+
         this.$.matchCountPanel.style.display = 'inline-block';
         this.$.updatingPanel.style.display = 'none';
+
+        this.fire('metadata-update', {updating: false});
       }
     },
 
@@ -9503,7 +9527,8 @@ Note, all features of `x-style` are available when defining styles as part of Po
                 NOTE:  Metadata must be in row format.
               </span>
 
-              <ecosis-metadata-join-panel id="joinMetadata" style="display:none"></ecosis-metadata-join-panel>
+              <ecosis-metadata-join-panel id="joinMetadata" style="display:none" on-metadata-update="onMetadataPanelUpdate">
+              </ecosis-metadata-join-panel>
             </div>
 
           </div>
@@ -9530,7 +9555,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       <div class="form-horizontal" id="orientationPanel">
         <div class="form-group">
 
-          <label for="inputIgnore" class="col-md-2 control-label">Orientation</label>
+          <label class="col-md-2 control-label">Orientation</label>
           <div class="col-md-10">
             <div class="radio">
               <label>
@@ -9610,6 +9635,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       this.resource = resource;
       this.datasheetId = datasheet.id;
       this.datasheet = null;
+      this.$.spectraUi.style.display = 'none';
       this.setLoading(true);
     },
 
@@ -9682,12 +9708,12 @@ Note, all features of `x-style` are available when defining styles as part of Po
       );
     },
 
-    edit : function() {
+    edit : function(callback) {
       if( !this.datasheet ) {
-        this.loadFullDatasheet();
+        this.loadFullDatasheet(callback);
         return;
       } else if( this.datasheet.id != this.datasheetId ) {
-        this.loadFullDatasheet();
+        this.loadFullDatasheet(callback);
         return;
       }
 
@@ -9727,6 +9753,8 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
+
+      if( callback ) callback();
     },
 
     updateMetadataUi : function() {
@@ -9794,7 +9822,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
       $(this.$.formatHelp).toggle();
     },
 
-    loadFullDatasheet : function(id) {
+    loadFullDatasheet : function(callback) {
       this.setLoading(true);
 
       ecosis.ckan.getDatasheet(ecosis.ds.package_id, this.resource.id, this.datasheetId, function(resp){
@@ -9802,6 +9830,8 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
         this.datasheet = resp;
         this.edit();
+
+        if( callback ) callback();
       }.bind(this));
     },
 
@@ -9812,6 +9842,16 @@ Note, all features of `x-style` are available when defining styles as part of Po
       } else {
         this.$.main.style.display = 'block';
         this.$.loading.style.display = 'none';
+      }
+    },
+
+    onMetadataPanelUpdate : function(e) {
+      if( e.detail.updating ) {
+        this.$.inputIsMetadata.setAttribute('disabled', '');
+        this.$.inputIgnore.setAttribute('disabled', '');
+      } else {
+        this.$.inputIsMetadata.removeAttribute('disabled');
+        this.$.inputIgnore.removeAttribute('disabled');
       }
     },
 
@@ -9965,8 +10005,14 @@ Note, all features of `x-style` are available when defining styles as part of Po
     selectDatasheet : function(index, edit) {
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+
       // if the edit flag is passed, actually load the detailed datasheet and render
-      if( edit ) this.$.datasheetUI.edit();
+      if( edit ) {
+        this.$.datasheetSelector.setDisabled(true);
+        this.$.datasheetUI.edit(function(){
+          this.$.datasheetSelector.setDisabled(false);
+        }.bind(this));
+      }
 
       this.selectedIndex = index;
     },
