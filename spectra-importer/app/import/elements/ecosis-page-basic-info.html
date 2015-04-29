@@ -205,6 +205,11 @@
       }
 
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
+
+      $.get(ecosis.ckan.host+'/spectra/gitInfo', function(resp){
+        this.git = resp;
+        if( this.git.branch != 'master' ) this.gitInfo.$.style.display = 'block';
+      }.bind(this));
     },
 
     setMode : function(mode) {
