@@ -5,6 +5,7 @@ function(key, spectra){
         
         var ignoreList = ['_id','datapoints', 'ecosis'];
 
+        // this is only for non-datapoints.  datapoint keys were already cleaned in push
         function cleanKey(key) {
             return key.replace(/\./g, '_');
         }
