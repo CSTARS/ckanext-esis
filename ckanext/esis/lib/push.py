@@ -273,12 +273,12 @@ class Push:
 
         m['ecosis'] = ecosis
 
-    def cleanKey(self, key):
-        return re.sub(r'\.', '_', key)
+    def cleanDatapointKey(self, key):
+        return re.sub(r'\.', ',', key).strip()
 
     def setDatapoint(self, measurement, attr):
-        clean = self.cleanKey(attr)
-        measurement['datapoints'][clean] = measurement[attr]
+        clean = self.cleanDatapointKey(attr)
+        measurement['datapoints'][clean] = measurement[attr].strip()
         del measurement[attr]
 
     def getPackageExtra(self, attr, pkg):

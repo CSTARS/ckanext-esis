@@ -148,7 +148,7 @@ def updateEcosisNs(pkg, collection, spectra_count):
 
         # set the known data attributes
         for key in mrValue['data_keys__']:
-            ecosis['spectra_schema']['data'].append(re.sub(r'\.', '_', key))
+            ecosis['spectra_schema']['data'].append(re.sub(r',', '.', key))
         setValues['$unset']['value.data_keys__'] = ''
 
         # now, lets remove any non-ecosis metadata that has more than 100 entries
@@ -158,7 +158,7 @@ def updateEcosisNs(pkg, collection, spectra_count):
             if key == 'data_keys__':
                 continue
 
-            ecosis['spectra_schema']['metadata'].append(key)
+            ecosis['spectra_schema']['metadata'].append(re.sub(r',', '.', key))
 
             if key in names or values == None:
                 continue
