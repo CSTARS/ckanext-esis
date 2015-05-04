@@ -38,10 +38,16 @@
       var geojson = ecosis.ds.getDatasetExtra('geojson').value;
       if( !geojson ) return;
 
-      geojson = JSON.parse(geojson);
-      this.polygon = L.polygon(geojson.coordinates);
+      var geojsonFeature = {
+          "type": "Feature",
+          "properties": {},
+          "geometry": JSON.parse(geojson)
+      };
 
-      this.polygon.addTo(this.map);
+      try {
+        this.polygon = L.geoJson(geojsonFeature);
+        this.polygon.addTo(this.map);
+      } catch(e) {}
     },
 
     onShow : function() {
@@ -71,27 +77,38 @@
       }
       var p2 = e.latlng;
 
-      this.polygon = L.polygon([
-          [this.p1.lat, this.p1.lng],
-          [this.p1.lat, p2.lng],
-          [p2.lat, p2.lng],
-          [p2.lat, this.p1.lng],
-          [this.p1.lat, this.p1.lng]
-      ]);
+      var coordinates = [[
+          [this.p1.lng, this.p1.lat],
+          [this.p1.lng, p2.lat],
+          [p2.lng, p2.lat],
+          [p2.lng, this.p1.lat],
+          [this.p1.lng, this.p1.lat]
+      ]];
 
+      var geojsonFeature = {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "type" : "Polygon",
+            "coordinates" : coordinates
+          }
+      };
+
+      this.polygon = L.geoJson(geojsonFeature);
+      this.polygon.on('click', this.onClick.bind(this));
       this.polygon.addTo(this.map);
     },
 
     setPolygon : function(p2) {
       var geojson = {
         "type" : "Polygon",
-        "coordinates" : [
-            [this.p1.lat, this.p1.lng],
-            [this.p1.lat, p2.lng],
-            [p2.lat, p2.lng],
-            [p2.lat, this.p1.lng],
-            [this.p1.lat, this.p1.lng]
-        ]
+        "coordinates" : [[
+            [this.p1.lng, this.p1.lat],
+            [this.p1.lng, p2.lat],
+            [p2.lng, p2.lat],
+            [p2.lng, this.p1.lat],
+            [this.p1.lng, this.p1.lat]
+        ]]
       }
       geojson = JSON.stringify(geojson);
 
