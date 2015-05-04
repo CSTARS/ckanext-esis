@@ -39,7 +39,7 @@
       if( !geojson ) return;
 
       geojson = JSON.parse(geojson);
-      this.polygon = L.polygon(geojson.geometry);
+      this.polygon = L.polygon(geojson.coordinates);
 
       this.polygon.addTo(this.map);
     },
@@ -85,7 +85,7 @@
     setPolygon : function(p2) {
       var geojson = {
         "type" : "Polygon",
-        "geometry" : [
+        "coordinates" : [
             [this.p1.lat, this.p1.lng],
             [this.p1.lat, p2.lng],
             [p2.lat, p2.lng],
