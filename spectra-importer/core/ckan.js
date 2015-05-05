@@ -278,8 +278,9 @@ module.exports = function(config) {
     });
   }
 
-  this.pushToSearch = function(pkgid, callback) {
-    get(this.host+'/workspace/push?package_id='+pkgid, function(err, resp) {
+  this.pushToSearch = function(pkgid, includeEmail, callback) {
+    includeEmail = includeEmail ? 'true' : 'false';
+    get(this.host+'/workspace/push?package_id='+pkgid+'&email='+includeEmail, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
       callback(resp.body);
     });

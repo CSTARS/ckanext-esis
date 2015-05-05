@@ -11551,8 +11551,23 @@ Note, all features of `x-style` are available when defining styles as part of Po
 			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
       </div>
 
-      <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
-      <div class="help-block" id="pushMessage" style="display:none">Processing spectra and pushing to search (please wait, this may take a couple minutes)...</div>
+      <div>
+        <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      </div>
+
+      <div style="padding: 15px 0">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" id="responseEmailInput" checked=""> Email me when the dataset is available in search.
+            <div class="help-block">Datasets can take several minutes to show up in search.  We can send you and email when
+              the dataset is ready.
+            </div>
+          </label>
+        </div>
+      </div>
+
+
+      <div class="help-block" id="pushMessage" style="display:none">Queuing push to search...</div>
 		</div>
   </template>
 </dom-module>
@@ -11698,10 +11713,12 @@ Note, all features of `x-style` are available when defining styles as part of Po
 
     push : function() {
       this.$.pushBtn.setAttribute('disabled', '');
-      this.$.pushBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Pushing...';
+      this.$.pushBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Queuing...';
       this.$.pushMessage.style.display = 'block';
 
-      ecosis.ckan.pushToSearch(ecosis.ds.package_id,
+      var includeEmail = $(this.$.responseEmailInput).is(':checked');
+
+      ecosis.ckan.pushToSearch(ecosis.ds.package_id, includeEmail,
           function(resp){
             this.$.pushBtn.removeAttribute('disabled');
             this.$.pushBtn.innerHTML = 'Push';
@@ -11710,7 +11727,14 @@ Note, all features of `x-style` are available when defining styles as part of Po
             if( resp.error ) {
                 alert('Error pushing dataset to search :(');
             } else {
-                alert('Success!');
+                var msg = 'Success.  Your dataset is processing.';
+                if( resp.emailingResult && resp.email ) {
+                  msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
+                } else {
+                  msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
+                }
+
+                alert(msg);
                 window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
             }
           }.bind(this)
