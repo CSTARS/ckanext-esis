@@ -13,7 +13,7 @@ from ckan.common import request, response
 from ckanext.esis.lib.join import SheetJoin
 from ckanext.esis.lib.push import Push
 from ckanext.esis.lib.setup import WorkspaceSetup
-from ckanext.esis.lib.process import ProcessWorkspace
+from ckanext.esis.lib.process import ProcessWorkspace, getFile
 import ckanext.esis.lib.auth as auth
 import ckanext.esis.lib.units as units
 from ckanext.esis.lib.utils import getById, getMergedResources
@@ -104,7 +104,7 @@ class WorkspaceController(BaseController):
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
 
         # update the package workspace information
-        workspaceResource = self._getById(workspacePackage['resources'], resource['id'])
+        workspaceResource = getById(workspacePackage['resources'], resource['id'])
 
         if workspaceResource == None:
             workspaceResource = {"id": resource['id'], "datasheets" : []}
@@ -117,7 +117,7 @@ class WorkspaceController(BaseController):
 
         if 'datasheets' in resource:
             for datasheet in resource['datasheets']:
-                workspaceDatasheet = self._getById(workspaceResource['datasheets'], datasheet['id'])
+                workspaceDatasheet = getById(workspaceResource['datasheets'], datasheet['id'])
 
                 if workspaceDatasheet == None:
                     workspaceResource['datasheets'].append(datasheet)
@@ -132,7 +132,7 @@ class WorkspaceController(BaseController):
         # actually process the files on disk based on given configuration
 
         # this will make sure the info.json file is updated
-        r = self._getById(resources,  resource['id'])
+        r = getById(resources,  resource['id'])
         if r == None: # this resource is being ignored
             if workspaceResource.get('ignore') == True:
                 r = {
@@ -155,9 +155,9 @@ class WorkspaceController(BaseController):
 
         if resource.get('id') != None and datasheet_id != None:
             newds = self._mergeDatasheet(resources, workspacePackage, resource.get('id'), datasheet_id)
-            r = self._getById(resp['resources'], resource.get('id'))
+            r = getById(resp['resources'], resource.get('id'))
             if r != None:
-                ds = self._getById(r['datasheets'], datasheet_id)
+                ds = getById(r['datasheets'], datasheet_id)
                 r['datasheets'].remove(ds)
                 r['datasheets'].append(newds)
 
@@ -183,8 +183,8 @@ class WorkspaceController(BaseController):
 
         # update the package workspace information with the default layout
         for id in resourceList:
-            workspaceResource = self._getById(workspacePackage['resources'], id)
-            resource = self._getById(resources, id)
+            workspaceResource = getById(workspacePackage['resources'], id)
+            resource = getById(resources, id)
 
             # this is most likely a non-data resource included in the upload,  the client doesn't
             # know this, just ignore
@@ -212,7 +212,7 @@ class WorkspaceController(BaseController):
                                 joinOn = config["join"]
                             sheetLayout = config["orientation"]
 
-                    workspaceDatasheet = self._getById(workspaceResource['datasheets'], datasheet['id'])
+                    workspaceDatasheet = getById(workspaceResource['datasheets'], datasheet['id'])
 
                     info = {}
                     if workspaceDatasheet == None:
@@ -264,7 +264,7 @@ class WorkspaceController(BaseController):
             workspacePackage['resources'] = []
 
         # update the package workspace information
-        workspaceResource = self._getById(workspacePackage['resources'], resource_id)
+        workspaceResource = getById(workspacePackage['resources'], resource_id)
         if workspaceResource == None:
             workspaceResource = {
                 "id" : resource_id,
@@ -272,7 +272,7 @@ class WorkspaceController(BaseController):
             }
             workspacePackage['resources'].append(workspaceResource)
         else:
-            dsConfig = self._getById(workspaceResource['datasheets'], metadata['id'])
+            dsConfig = getById(workspaceResource['datasheets'], metadata['id'])
             if dsConfig != None:
                 workspaceResource['datasheets'].remove(dsConfig)
             workspaceResource['datasheets'].append(metadata)
@@ -284,7 +284,7 @@ class WorkspaceController(BaseController):
         # actually process the files on disk based on given configuration
 
         # this will make sure the info.json file is updated
-        r = self._getById(resources, resource_id)
+        r = getById(resources, resource_id)
         r['changes'] = True
         r['location'] = "%s/%s/info.json" % (rootDir, resource_id)
 
@@ -294,7 +294,7 @@ class WorkspaceController(BaseController):
         # save back to mongo
         workspaceCollection.update({'package_id': package_id}, workspacePackage)
 
-        ds = self._getById(r['datasheets'], metadata['id'])
+        ds = getById(r['datasheets'], metadata['id'])
         del ds['matchValues']
         del ds['location']
 
@@ -329,16 +329,16 @@ class WorkspaceController(BaseController):
         # make sure all files on disk are up to date in the package
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
 
-        r = self._getById(resources, rid)
+        r = getById(resources, rid)
         if r == None:
             return json.dumps({'error':True, 'message':'resource does not exist'})
 
-        s = self._getById(r['datasheets'], sid)
+        s = getById(r['datasheets'], sid)
         if s == None:
             return json.dumps({'error':True, 'message':'datasheet does not exist'})
 
         file = "%s%s%s" % (self.workspaceDir, s['location'], s['name'])
-        s['data'] = process.getFile(file, s)
+        s['data'] = getFile(self.workspaceDir, file, s)
 
         # limit to 250 x 250
         if len(s['data']) > 250:
@@ -356,17 +356,17 @@ class WorkspaceController(BaseController):
 
 
     def _mergeDatasheet(self, resources, workspacePackage, rid, sid):
-        r = self._getById(resources, rid)
+        r = getById(resources, rid)
         if r == None:
             r = {'datasheets': []}
-        rWs = self._getById(workspacePackage['resources'], rid)
+        rWs = getById(workspacePackage['resources'], rid)
         if rWs == None:
             rWs = {'datasheets': []}
 
-        s = self._getById(r['datasheets'], sid)
+        s = getById(r['datasheets'], sid)
         if s == None:
             s = {}
-        sWs = self._getById(rWs['datasheets'], sid)
+        sWs = getById(rWs['datasheets'], sid)
         if sWs == None:
             sWs = {}
 
@@ -389,9 +389,9 @@ class WorkspaceController(BaseController):
         (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(package_id)
 
         # see if the resource is ignored before we go any further
-        workspaceResource = self._getById(workspacePackage['resources'], rid)
+        workspaceResource = getById(workspacePackage['resources'], rid)
         if workspaceResource != None and workspaceResource.get('ignore') == True:
-            ckanResource = self._getById(ckanPackage['resources'], rid)
+            ckanResource = getById(ckanPackage['resources'], rid)
             if ckanResource == None:
                 return json.dumps({"error":True,"message":"resource not found"})
 
@@ -600,7 +600,7 @@ class WorkspaceController(BaseController):
         if 'resources' in workspacePackage:
             for workspaceResource in workspacePackage['resources']:
                 if workspaceResource.get('ignore') == True:
-                    r = self._getById(ckanPackage['resources'], workspaceResource['id'])
+                    r = getById(ckanPackage['resources'], workspaceResource['id'])
                     arr.append({
                         "name" : r["name"],
                         "type" : "datafile",
@@ -670,7 +670,7 @@ class WorkspaceController(BaseController):
         if 'resources' in workspacePackage:
             for workspaceResource in workspacePackage['resources']:
                 if workspaceResource.get('ignore') == True:
-                    r = self._getById(ckanPackage['resources'], workspaceResource['id'])
+                    r = getById(ckanPackage['resources'], workspaceResource['id'])
                     arr.append({
                         "name" : r["name"],
                         "type" : "datafile",
