@@ -3,45 +3,6 @@ import re, time
 
 class SheetJoin:
 
-    # given a spectra object, add join attributes
-    def joinOnSpectra(self, datasheet, spectra, metadata, dataarray):
-        rowIndex = -1
-
-        # if .index() fails, python throws an exception
-        # I hate python...
-        try:
-            if not 'matchType' in metadata and 'matchValues' in metadata and 'matchAttribute' in metadata:
-                rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
-
-            elif metadata.get('matchType') == 'attribute':
-                rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
-
-            elif metadata.get('matchType') == 'filename':
-                if metadata.get('looseMatch') == True:
-                    for index, val in enumerate(metadata['matchValues']):
-                        reg = r".*%s.*" % val
-                        if re.match(reg, datasheet['name']):
-                            rowIndex = index
-                else:
-                    rowIndex = metadata['matchValues'].index(datasheet['name'])
-
-            elif metadata('matchType') == 'sheetname' and 'sheetname' in datasheet:
-                rowIndex = metadata['matchValues'].index(datasheet['sheetname'])
-        except:
-            pass
-
-        if rowIndex == -1:
-            return
-
-        rowIndex = rowIndex + 1 + metadata['localRange']['start']
-        for attr in metadata['attributes']:
-            if attr.get('type') == 'metadata' or attr.get('type') == 'data':
-                col = int(attr['pos'].split('-')[1])
-                if dataarray[rowIndex][col]:
-                    val = dataarray[rowIndex][col]
-                    spectra[attr['name']] = dataarray[rowIndex][col]
-
-
     # given a data array [[]] and the sheet configuration, set the matchValues for
     # for a given datasheet object
     def processMetadataSheet(self, data, sheetConfig, sheet):
@@ -182,3 +143,41 @@ class SheetJoin:
                     datasheet['matches'][id] = 1
                 return
         self._removeIdFromMeta(datasheet, id)
+
+# given a spectra object, add join attributes
+def joinOnSpectra(datasheet, spectra, metadata, dataarray):
+    rowIndex = -1
+
+    # if .index() fails, python throws an exception
+    # I hate python...
+    try:
+        if not 'matchType' in metadata and 'matchValues' in metadata and 'matchAttribute' in metadata:
+            rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
+
+        elif metadata.get('matchType') == 'attribute':
+            rowIndex = metadata['matchValues'].index(spectra[metadata['matchAttribute']])
+
+        elif metadata.get('matchType') == 'filename':
+            if metadata.get('looseMatch') == True:
+                for index, val in enumerate(metadata['matchValues']):
+                    reg = r".*%s.*" % val
+                    if re.match(reg, datasheet['name']):
+                        rowIndex = index
+            else:
+                rowIndex = metadata['matchValues'].index(datasheet['name'])
+
+        elif metadata('matchType') == 'sheetname' and 'sheetname' in datasheet:
+            rowIndex = metadata['matchValues'].index(datasheet['sheetname'])
+    except:
+        pass
+
+    if rowIndex == -1:
+        return
+
+    rowIndex = rowIndex + 1 + metadata['localRange']['start']
+    for attr in metadata['attributes']:
+        if attr.get('type') == 'metadata' or attr.get('type') == 'data':
+            col = int(attr['pos'].split('-')[1])
+            if dataarray[rowIndex][col]:
+                val = dataarray[rowIndex][col]
+                spectra[attr['name']] = dataarray[rowIndex][col]
