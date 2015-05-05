@@ -16,6 +16,7 @@ from ckanext.esis.lib.setup import WorkspaceSetup
 from ckanext.esis.lib.process import ProcessWorkspace
 import ckanext.esis.lib.auth as auth
 import ckanext.esis.lib.units as units
+from ckanext.esis.lib.utils import getById, getMergedResources
 
 # helpers from ./lib
 joinlib = SheetJoin()
@@ -406,7 +407,7 @@ class WorkspaceController(BaseController):
         # make sure all files on disk are up to date in the package
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
 
-        resp = self._getMergedResources(rid, resources, workspacePackage)
+        resp = getMergedResources(rid, resources, workspacePackage)
 
         units.updatePackageUnits(ckanPackage, resp.get('attributes'))
 
@@ -488,7 +489,7 @@ class WorkspaceController(BaseController):
         resources = setup.resources(workspacePackage, ckanPackage, rootDir)
         process.resources(resources, workspacePackage, ckanPackage, rootDir)
 
-        resource = self._getMergedResources(resource_id, resources, workspacePackage, removeValues=False)
+        resource = getMergedResources(resource_id, resources, workspacePackage, removeValues=False)
 
         package = self._mergeWorkspace(resources, workspacePackage, ckanPackage, fresh)
 
@@ -499,31 +500,20 @@ class WorkspaceController(BaseController):
         response.headers["Content-Type"] = "application/json"
 
         package_id = request.params.get('package_id')
+        email = request.params.get('email')
         auth.hasAccess(package_id)
+
+        if email == True or email == "true":
+            email = True
+        else:
+            email = False
 
         push = Push()
         push.setHelpers(self, setup, process, joinlib)
 
-        return json.dumps(push.pushToSearch(package_id))
+        return json.dumps(push.pushToSearch(package_id, email))
 
-    def _getMergedResources(self, resourceId, resources, workspacePackage, removeValues=True):
-        resource = self._getById(resources, resourceId)
-        if resource == None:
-            return {"error":True,"message":"resource not found"}
 
-        workspaceResource = self._getById(workspacePackage['resources'], resourceId)
-        if workspaceResource == None:
-            workspaceResource = {"datasheets":[]}
-
-        for datasheet in resource['datasheets']:
-            workspaceDs = self._getById(workspaceResource['datasheets'], datasheet['id'])
-            if workspaceDs != None:
-                for key, value in workspaceDs.iteritems():
-                    datasheet[key] = value
-                if 'matchValues' in datasheet and removeValues:
-                    del datasheet['matchValues']
-
-        return resource
 
     def rebuildUSDACollection(self):
         usdaCollection.remove({})
@@ -707,16 +697,6 @@ class WorkspaceController(BaseController):
             "package" : ckanPackage,
             "fresh" : fresh
         }
-
-    # given an array of objects that have an id attribute, get one by id
-    def _getById(self, arr, id):
-        if arr == None:
-            return None
-
-        for obj in arr:
-            if obj.get('id') == id:
-                return obj
-        return None
 
 
     # is a file marked as metadata

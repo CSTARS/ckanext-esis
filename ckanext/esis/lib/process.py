@@ -33,9 +33,9 @@ class ProcessWorkspace:
 
         file = "%s%s%s" % (rootDir, datasheet['location'], datasheet['name'])
 
-        data = self.getFile(file, datasheet)
+        data = getFile(self.workspaceDir, file, datasheet)
 
-        (layout, scope) = self.getLayout(datasheet)
+        (layout, scope) = getLayout(datasheet)
         spectra = {}
 
         if layout == 'row':
@@ -81,7 +81,7 @@ class ProcessWorkspace:
                     if sheet.get('metadata') == True:
                         if 'matches' in sheet and datasheet['id'] in sheet['matches']:
                             metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
-                            data = self.getFile(metadatafile, sheet)
+                            data = getFile(self.workspaceDir, metadatafile, sheet)
                             self.joinlib.joinOnSpectra(datasheet, spectra, sheet, data)
 
         # copy any mapped attributes
@@ -174,7 +174,7 @@ class ProcessWorkspace:
     # actually parse file information object
     # must have name and location
     def _processFile(self, datasheet, datasheets, rid, workspaceResource, metadataSheets, metadataRun):
-        ext = self._getFileExtension(datasheet['name'])
+        ext = getFileExtension(datasheet['name'])
 
         # at this point, check type and bail out if we are on a metadata and this is not metadata or vice versa
         # we have to wait till we open up and look at an excel file before we can make this decision, thus it's in
@@ -193,40 +193,6 @@ class ProcessWorkspace:
             # so pass the files array so the placeholder can be removed
             # and the new 'sheet' files can be inserted
             self._processExcel(datasheet, datasheets, rid, workspaceResource, metadataSheets, metadataRun)
-
-    def getFile(self, file, datasheet):
-        ext = self._getFileExtension(file)
-        data = None
-
-        if ext == "csv":
-            data = self._readSeperatorFile(file, ",")
-        elif ext == "tsv" or ext == "spectra":
-            data = self._readSeperatorFile(file, "\t")
-        elif ext == "xlsx" or ext == "xls":
-            if 'csv' in datasheet:
-                path = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['csv'])
-                data = self._readSeperatorFile(path, ",")
-            else: # we should never hit this!! but just in case
-                data = self._readExcelSheet(file, datasheet.get('sheetname'))
-        return data
-
-    def _readSeperatorFile(self, file, separator):
-        with open(file) as csvfile:
-            reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
-            data = []
-            for row in reader:
-                data.append(row)
-            csvfile.close()
-            return data
-        return [[]]
-
-    def _readExcelSheet(self, file, sheetname):
-        workbook = xlrd.open_workbook(file)
-        sheets = workbook.sheet_names()
-
-        for sheet in sheets:
-            if sheet == sheetname:
-                return self._getWorksheetData(workbook.sheet_by_name(sheetname))
 
 
     # given a data array [[]], process based on config
@@ -247,7 +213,7 @@ class ProcessWorkspace:
 
         # for local scope are we parsing a metadata file or a normal datasheet
         # how should be parse this file?
-        (layout, scope) = self.getLayout(sheetConfig)
+        (layout, scope) = getLayout(sheetConfig)
 
         sheetInfo['layout'] = layout
 
@@ -349,7 +315,7 @@ class ProcessWorkspace:
                     "location" : datasheet['location'],
                 }
 
-                data = self._getWorksheetData(workbook.sheet_by_name(sheet))
+                data = getWorksheetData(workbook.sheet_by_name(sheet))
 
                 # write sheet as csv for faster sheet access
                 fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], sheetInfo['csv'])
@@ -406,15 +372,6 @@ class ProcessWorkspace:
             self._processSheetArray(data, datasheet, resourceConfig, metadataSheets)
 
         #print "  --_processExcelSheets process time: %ss" % (time.time() - runTime)
-
-    def _getWorksheetData(self, sheet):
-        data = []
-        for i in range(sheet.nrows):
-            row = []
-            for j in range(sheet.ncols):
-                row.append(str(sheet.cell_value(i, j)))
-            data.append(row)
-        return data
 
 
     def _processCsv(self, datasheet, resourceConfig, metadataSheets):
@@ -608,10 +565,6 @@ class ProcessWorkspace:
                 return obj
         return None
 
-    # get the extension from a filename
-    def _getFileExtension(self, filename):
-         return re.sub(r".*\.", "", filename)
-
     def _ignoreDatasheet(self, datasheet, resourceConfig):
         datasheetConfig = self._getById(resourceConfig.get('datasheets'), datasheet['id'])
         if datasheetConfig == None:
@@ -626,17 +579,6 @@ class ProcessWorkspace:
             del datasheet['ignore']
         return False
 
-    def getLayout(self, sheetConfig):
-        layout = 'row'
-        scope = 'local'
-        if sheetConfig != None:
-            if sheetConfig.get('metadata') == True:
-                scope = 'metadata'
-                layout = 'row'
-            elif 'layout' in sheetConfig:
-                layout = sheetConfig['layout']
-        return (layout, scope)
-
 
     # get the md5 of a resource file
     # takes the resource id, local path (if github or expanded zip), and filename
@@ -644,3 +586,61 @@ class ProcessWorkspace:
         m = hashlib.md5()
         m.update("%s%s%s" % (rid, path, name))
         return m.hexdigest()
+
+def getLayout(sheetConfig):
+    layout = 'row'
+    scope = 'local'
+    if sheetConfig != None:
+        if sheetConfig.get('metadata') == True:
+            scope = 'metadata'
+            layout = 'row'
+        elif 'layout' in sheetConfig:
+            layout = sheetConfig['layout']
+    return (layout, scope)
+
+def getFile(workspaceDir, file, datasheet):
+    ext = getFileExtension(file)
+    data = None
+
+    if ext == "csv":
+        data = readSeperatorFile(file, ",")
+    elif ext == "tsv" or ext == "spectra":
+        data = readSeperatorFile(file, "\t")
+    elif ext == "xlsx" or ext == "xls":
+        if 'csv' in datasheet:
+            path = "%s%s%s" % (workspaceDir, datasheet['location'], datasheet['csv'])
+            data = readSeperatorFile(path, ",")
+        else: # we should never hit this!! but just in case
+            data = readExcelSheet(file, datasheet.get('sheetname'))
+    return data
+
+# get the extension from a filename
+def getFileExtension(filename):
+     return re.sub(r".*\.", "", filename)
+
+def readSeperatorFile(file, separator):
+    with open(file) as csvfile:
+        reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
+        data = []
+        for row in reader:
+            data.append(row)
+        csvfile.close()
+        return data
+    return [[]]
+
+def readExcelSheet(file, sheetname):
+    workbook = xlrd.open_workbook(file)
+    sheets = workbook.sheet_names()
+
+    for sheet in sheets:
+        if sheet == sheetname:
+            return getWorksheetData(workbook.sheet_by_name(sheetname))
+
+def getWorksheetData(sheet):
+    data = []
+    for i in range(sheet.nrows):
+        row = []
+        for j in range(sheet.ncols):
+            row.append(str(sheet.cell_value(i, j)))
+        data.append(row)
+    return data
