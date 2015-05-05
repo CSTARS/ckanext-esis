@@ -91,10 +91,10 @@ def sub_run(q, package, resources, ckanPackage, workspacePackage, workspaceDir, 
             },
             {
                 "subject" : "EcoSIS Push Successful",
-                "body" : ("%s,\n\nYour dataset %s has been pushed to EcoSIS Search.  "
+                "body" : ("Your dataset '%s' has been pushed to EcoSIS Search.  "
                             "You can view your dataset here:  %s#result/%s"
                             "\n\n-The EcoSIS Team") %
-                         (user.display_name, ckanPackage["title"], c.environ['pylons.pylons'].config['esis.search_url'], ckanPackage["id"])
+                         (ckanPackage["title"], c.environ['pylons.pylons'].config['esis.search_url'], ckanPackage["id"])
             }
         )
     except:
@@ -109,9 +109,9 @@ def sub_run(q, package, resources, ckanPackage, workspacePackage, workspaceDir, 
                 },
                 {
                     "subject" : "EcoSIS Push Failed",
-                    "body" : ("%s,\n\nYour recent push to search for %s has failed.  "
+                    "body" : ("Your recent push to search for '%s' has failed.  "
                               "You can try again or contact help@ecospectra.org.  "
-                              "We apologize for the inconvenience\n\n-The EcoSIS Team") % (c.userobj.display_name, ckanPackage["title"])
+                              "We apologize for the inconvenience\n\n-The EcoSIS Team") % (ckanPackage["title"])
                 }
             )
         except:

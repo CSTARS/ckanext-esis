@@ -5,6 +5,7 @@ import xlrd, csv, re, json, time, pickle, hashlib
 from pylons import config
 from controlledVocab import ControlledVocab
 from infoFile import saveInfoFile
+from ckanext.esis.lib.join import joinOnSpectra
 
 vocab = ControlledVocab()
 
@@ -82,7 +83,7 @@ class ProcessWorkspace:
                         if 'matches' in sheet and datasheet['id'] in sheet['matches']:
                             metadatafile = "%s%s%s" % (rootDir, sheet['location'], sheet['name'])
                             data = getFile(self.workspaceDir, metadatafile, sheet)
-                            self.joinlib.joinOnSpectra(datasheet, spectra, sheet, data)
+                            joinOnSpectra(datasheet, spectra, sheet, data)
 
         # copy any mapped attributes
         if package.get('attributeMap') != None:
