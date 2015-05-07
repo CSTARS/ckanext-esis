@@ -49,7 +49,7 @@ class Push:
     def pushToSearch(self, package_id, email=False):
         runTime = time.time()
         # first clean out data
-        searchCollection.remove({'value.ecosis.package_id':package_id})
+        searchCollection.remove({'_id':package_id})
         spectraCollection.remove({'ecosis.package_id': package_id})
 
         # next add resources one at a time and join spectra
@@ -97,8 +97,14 @@ def sub_run(q, package, resources, ckanPackage, workspacePackage, workspaceDir, 
                          (ckanPackage["title"], c.environ['pylons.pylons'].config['esis.search_url'], ckanPackage["id"])
             }
         )
-    except:
+
+    except Exception as e:
         try:
+            # if badness, remove from search
+            searchCollection.remove({'_id': ckanPackage['id']})
+            spectraCollection.remove({'ecosis.package_id': ckanPackage['id']})
+
+            print e
             if not email:
                 return
 

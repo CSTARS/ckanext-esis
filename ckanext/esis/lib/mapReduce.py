@@ -172,7 +172,12 @@ def updateEcosisNs(pkg, collection, spectra_count):
         if setValues['$set'].get('value.geojson') != None:
             geojson = setValues['$set'].get('value.geojson');
             del setValues['$set']['value.geojson']
-        setValues['$set']['value.ecosis']['geojson'] = processGeoJson(geojson, pkg);
+
+        geojson = processGeoJson(geojson, pkg);
+        if len(geojson.get('geometries')) == 0:
+            setValues['$set']['value.ecosis']['geojson'] = None
+        else:
+            setValues['$set']['value.ecosis']['geojson'] = geojson
 
         collection.update(
             {'_id': pkg['id']},
