@@ -112,9 +112,9 @@ def updateEcosisNs(pkg, collection, spectra_count):
             if pkg['organization']['image_url'] != "":
                 ecosis["organization_image_url"] = '/uploads/group/%s' % pkg['organization']['image_url']
         else:
-            pkg['organization'] = 'None'
+            ecosis['organization'] = 'None'
     else:
-        pkg['organization'] = 'None'
+        ecosis['organization'] = 'None'
 
     # make sure the map reduce did not create a null collection, if so, remove
     # This means there is no spectra
