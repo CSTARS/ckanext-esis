@@ -11006,7 +11006,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
     </div>
 
     <div class="well">
-        If your spectra metadata attribute names do not match <a>this</a> list, you can download
+        If your spectra metadata attribute names do not match the EcoSIS metadata names, you can download
         the attribute map file.  Fill out the file and then upload in the box to the right.  You can
         reuse this file, so you only have to fill it out once for your data.  Just make sure to set
         the attribute map for each dataset you add.
@@ -11025,7 +11025,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
                   <a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
               </div>
               <div class="flex">
-                  Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="_processMap">
+                  Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
 
                   <input type="file" style="display:none" id="addAttrMap" name="addAttrMap">
               </div>
@@ -11120,7 +11120,7 @@ Note, all features of `x-style` are available when defining styles as part of Po
           }
 
           this.$.map.value = '';
-          this._updateAttrMapList(newMap);
+          this.updateAttrMapList(newMap);
       }.bind(this);
 
       reader.readAsText(files[0]);
