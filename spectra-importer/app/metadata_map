@@ -1,22 +1,27 @@
 Measurement
-Measurement Type=
+Acquisition Method=
 Sample Platform=
 Measurement Venue=
-Measurement Scale=
+Target Type=
 Measurement Quantity=
 Index Name=
 Measurement Units=
 Wavelength Units=
-Form=
-Acquisition Conditions=
+Target Status=
+Light Source=
 Light Source Specifications=
-Spectra Collection Protocol=
+Foreoptic Type=
+Foreoptic Field of View=
+Foreoptic Specifications=
 
 Processing Information
+Processing Averaged=
+Processing Interpolated=
+Processing Resampled=
 Processing Information Details=
 
 Instrument
-Instrumentation=
+Instrument Manufacturer=
 Instrument Model=
 Instrument Serial Number=
 
