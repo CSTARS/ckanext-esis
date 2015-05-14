@@ -178,6 +178,9 @@ def joinOnSpectra(datasheet, spectra, metadata, dataarray):
     for attr in metadata['attributes']:
         if attr.get('type') == 'metadata' or attr.get('type') == 'data':
             col = int(attr['pos'].split('-')[1])
-            if dataarray[rowIndex][col]:
-                val = dataarray[rowIndex][col]
-                spectra[attr['name']] = dataarray[rowIndex][col]
+            try:
+                if dataarray[rowIndex][col]:
+                    val = dataarray[rowIndex][col]
+                    spectra[attr['name']] = dataarray[rowIndex][col]
+            except:
+                pass

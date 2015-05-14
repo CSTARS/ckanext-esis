@@ -157,8 +157,11 @@ def insertResourceSpectra(resource, rootDir, package, ckanPackage):
             for j in range(start+1, datasheet['localRange']['stop']):
                 sp = {}
                 for i in range(len(data[start])):
-                    if data[start+j][i]:
-                        sp[data[start][i]] = data[start+j][i]
+                    try:
+                        if data[start+j][i]:
+                            sp[data[start][i]] = data[start+j][i]
+                    except:
+                        pass
                 formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir);
 
         else:
@@ -172,7 +175,6 @@ def insertResourceSpectra(resource, rootDir, package, ckanPackage):
                     except:
                         pass
                 formatAndInsertSpectra(sp, datasheet, data, package, ckanPackage, metadataCache, rootDir)
-
 
 
 
