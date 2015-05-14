@@ -53,8 +53,6 @@ class ControlledVocab:
     # see if a flat version of this exists
     def getEcoSISName(self, key):
         flat = flatten(key)
-        if flat == key:
-            return key
 
         if schema.get(flat) != None:
             return schema.get(flat).get('name')

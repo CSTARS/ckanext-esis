@@ -293,7 +293,7 @@ class ProcessWorkspace:
             parsed = True
 
             fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['csv'])
-            data = self._readSeperatorFile(fullPath, ",")
+            data = readSeperatorFile(fullPath, ",")
 
             if not self._parseOnThisRun(datasheet, resourceConfig, metadataRun):
                 return
@@ -368,7 +368,7 @@ class ProcessWorkspace:
                 continue
 
             fullPath = "%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['csv'])
-            data = self._readSeperatorFile(fullPath, ",")
+            data = readSeperatorFile(fullPath, ",")
             #data = self._getWorksheetData(workbook.sheet_by_name(sheetInfo['sheetname']))
             self._processSheetArray(data, datasheet, resourceConfig, metadataSheets)
 
