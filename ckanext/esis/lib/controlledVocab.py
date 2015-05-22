@@ -57,7 +57,8 @@ class ControlledVocab:
         if schema.get(flat) != None:
             return schema.get(flat).get('name')
 
-        return key
+        # now try an clean the key
+        return re.sub(r'(\.|\$)', '', key)
 
     def enforceControlled(self, measurement):
         set = {}
