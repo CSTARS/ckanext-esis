@@ -66,7 +66,7 @@
 						<h2>Create EcoSIS Account</h2>
 						<p>
 							First your will need to create an account at <a href="http://data.ecospectra.org" target="_blank">data.ecospectra.org</a> <br />
-							Or try the sandbox located at <a href="http://dev-data.ecospectra.org" target="_blank">dev-data.ecospectra.org</a>
+							Or try the <i>sandbox</i> located at <a href="http://dev-data.ecospectra.org" target="_blank">dev-data.ecospectra.org</a>
 						</p>
 					</section>
 					<section>
@@ -89,7 +89,7 @@
 						<img src="ss/login2.png">
 					</section>
 				</section>
-				
+
 				<section>
 					<section>
 						<h2>Create Organization</h2>
@@ -102,7 +102,7 @@
 						<img src="ss/createOrg2.png">
 					</section>
 				</section>
-				
+
 				<section>
 					<section>
 						<h2>Add a Dataset</h2>
@@ -117,12 +117,14 @@
 						<img src="ss/findOrg2.png">
 					</section>
 				</section>
-				
+
 				<section>
 					<section>
 						<h2>Basic Information</h2>
-						<p>In the dataset editor fill out the preliminary data for your dataset including name, description, license (if any) and visibility flag.  Make sure your description gives people a brief overview of what this dataset is.</p>
-						<p>Then click  the 'Create Dataset' button at the bottom.  Once the dataset is created, click the 'add resources' link or the 'Resources' left hand menu item.</p>
+						<p>In the dataset editor fill out the preliminary data for your dataset including name, description, as well as standard
+							EcoSIS metadata fields.  Make sure your description gives people a brief overview of what this dataset is.</p>
+						<p>Then click  the 'Create Dataset' button at the bottom.  Once the dataset is created, click the 'add resources'
+							link or the 'Resources' left hand menu item.</p>
 					</section>
 					<section>
 						<img src="ss/addDataset.png">
@@ -131,16 +133,20 @@
 
 				<section>
 					<section>
-						<h2>Data Formats</h2>
-						<p>EcoSIS utilizes user-defined schema and recommends names for certain metadata attributes. EcoSIS uses the format of <b style="color:orange">your</b> files, with some guidance, to figure out your dataset's scheme.</p>
-						
+						<h2>Data Formats & Metadata</h2>
+						<p>EcoSIS utilizes user-defined schema as well as standard EcoSIS metadata attributes. EcoSIS uses the format
+							of <b style="color:orange">your</b> files, with some guidance, to figure out any custom schema
+							for your dataset.</p>
+
 					</section>
 					<section>
 						<p>EcoSIS expects data to be uploaded with each measurement either:</p>
 
 						<ul>
-							<li><b style="color:orange">In a single row -</b> where the first column is your attribute name and the proceeding columns are the data values, including spectra</b></li>
-							<li><b style="color:orange">In a single column -</b> where the first row is your attribute name and the proceeding rows are data values, including</b></li>
+							<li><b style="color:orange">In a single column -</b> where the first column (A) is your attribute name and the
+								proceeding columns are the data values, including spectra</b></li>
+							<li><b style="color:orange">In a single row -</b> where the first row (1) is your attribute name and the proceeding
+								rows are data values, including spectra</b></li>
 						</ul>
 
 						<table style="width:100%; text-align:center">
@@ -159,44 +165,53 @@
 						<p style="font-size:70%;margin-top:20px;color:#888">Note: wavelengths are still considered to be an attribute name.</p>
 					</section>
 					<section>
-						<p>You can add <b style="color:orange">additional/optional</b> formatting to your files to specify attribute type (data vs metadata), units and global metadata for a file.</p>
+						<p><b>Advanced:</b> You can add <b style="color:orange">additional/optional</b> formatting to your files to specify attribute type (data vs metadata), units and global metadata for a file.</p>
 
 						<ul style="font-size:70%;margin-top:20px">
 							<li>At the top of a file columns A and B can be used to define global metadata for the file with Column A being the attribute name and Column B being the attribute value.  This metadata will be applied to every spectra in the file</li>
-							<li>After the attribute name, you can add units in ().  Ex: Steam Biomas (tha)</li>
-							<li>Adding the '__d' postfix to your attribute name will tell the parser the attribute should be considered as data.  Ex: NDVI__d</li>
+							<li>After the attribute name, you can add units in <b style="color:orange">()</b>.  Ex: Steam Biomas <b style="color:orange">(tha)</b></li>
+							<li>Adding the <b style="color:orange">__d</b> postfix to your attribute name will tell the parser the attribute should be considered as data.  Ex: NDVI<b style="color:orange">__d</b></li>
 						</ul>
 
 						<img src="ss/formatSpecial.png">
 					</section>
 
 					<section>
-						<p>Finally, regardless of any formatting, only assign numeric attribute names to wavelengths. Data following any attribute name that is numeric will always be considered spectral data.</p>
+						<p>Finally, regardless of any formatting, only assign <b style="color:orange">numeric</b> attribute names to wavelengths. Data following
+							any attribute name that is numeric will always be considered <b style="color:orange">spectral data</b>.</p>
 
 						<img src="ss/formatWavelength.png">
 					</section>
 				</section>
-				
+
 				<section>
 					<section>
 						<h2>Add Resource Files</h2>
-						<p>Select which format your files will be provided in (By Column or By Row).  Then select the files you wish to upload by clicking the file selector next to 'Select File' or by dragging and dropping the files over the 'Drop files here' box.</p>
-						<p>Sample spectra and metadata files can be downloaded by clicking <a href="/demo_data.csv">here</a> and <a href="/demo_metadata.csv">here</a> (recommended).
+						<p>Select which format your files will be provided in (By Column or By Row).  Then select the files you wish to
+							upload by clicking the file selector next to 'Select File' or by dragging and dropping the files over the
+							'Drop files here' box.</p>
+						<p>Sample spectra and metadata files can be downloaded by clicking <a href="/demo_data.csv">here</a> and
+							<a href="/demo_metadata.csv">here</a> (recommended).
 					</section>
 					<section>
 						<img src="ss/upload.png">
 					</section>
 				</section>
-				
+
 				<section>
 					<section>
 						<h2>Configure Datasheets</h2>
-						<p>After the files have finished uploaded and being parsed by the EcoSIS you will be redirected to the 'Current' tab in the 'Resources' page.  Here you can see how the importer interpreted your files.  Click 'Details' to see a brief overview.</p>
-						<p style="margin-top:20px">It's very important to look over your files and make sure everything is correct. Pay special attention to joinable metadata files as you will always need to mark these files and define how the metadata is to be joined with the rest of your data.</p>
+						<p>After the files have finished uploaded and being parsed by the EcoSIS you can click <b style="color:orange">Resources</b> ->
+							<b style="color:orange">Current Resources</b>.  Here
+							you can see how the importer interpreted your files.</p>
+
+						<p style="margin-top:20px">It's very important to look over your files and make sure everything is correct. Pay special
+							attention to joinable metadata files as you will always need to mark these files and define how the metadata is to
+							be joined with the rest of your data.</p>
 					</section>
 					<section>
 						<h4>Configure Joinable Metadata</h4>
-						<p>For metadata sheets, click the 'Pencil' icon then click the 'Joinable Metadata' checkbox.</p>
+						<p>To edit datasheets, click the 'Pencil' icon then click the 'Joinable Metadata' checkbox.</p>
 
 						<table style="width:100%; text-align:center">
 							<tr>
@@ -228,7 +243,8 @@
 					</section>
 
 					<section>
-						<p>Inspect your datasheets to make sure they have been interpreted correctly.  You can click the 'Pencil' icon then click the 'Arrow' icon next to the 'Spectra' label.  You will be able to visibly inspect each spectra parsed in the file.</p>
+						<p>Inspect your datasheets to make sure they have been interpreted correctly.  You can click the <b style="color:orange">Pencil</b> icon then click
+							<b style="color:orange">View Spectra</b>.  You will be able to visibly inspect each spectra parsed in the file.</p>
 						<img src="ss/inspect3.png">
 					</section>
 
@@ -242,58 +258,63 @@
 							<li>.spectra (parsed as .tsv)</li>
 							<li>.zip<span style="color:orange">*</span></li>
 						</ul>
-						<p><span style="color:orange">*</span>Zip files will be extracted on the server.  Any files contained within the zip file that have datasheet extension will be parsed.</p>
+						<p><span style="color:orange">*</span>Zip files will be extracted on the server.  Any files contained within the zip file that have a
+							datasheet extension will be parsed.</p>
 					</section>
 				</section>
 
 				<section>
 					<section>
-						<h2>Attribute Settings / Dataset Schema</h2>
-						<p>Now we want to make sure the schema for our dataset is correct as well as define special attributes for this dataset.</p>
+						<h2>Advanced Settings</h2>
+						<p>There are two advanced operations that can be performed under the <b style="color:orange">Advanced</b> tab. You can map attribute names for your dataset
+							 to standard EcoSIS metadata names. You can also add a ordering to you dataset.</p>
 
-						<img src="ss/schema1.png" />
-					</section>
-
-					<section>
-						<h4>Schema</h4>
-						<p>In the schema section you can modify any attribute whose type is not implied by the import file format.  You can also view what attribute types are fixed by their import format and why.</p>
-
-						<img src="ss/schema2.png" />
-					</section>
-
-					<section>
-						<h4>Special Attributes</h4>
-						<p>In the dataset section you can specify special attributes that further describe your dataset.</p>
-						<ul>
-							<li><b style="color:orange">Order.</b> If your dataset has ordering (ex: the dataset is a time series) you can specify an attribute to order by. You can also specify how to parse the 'Order By' attribute (string, number or date).</li>
-							<li><b style="color:orange">Location.</b> If you would like to specify a geographic location for your dataset, you can set a location attribute.  The location attribute should be GeoJson in EPSG: 4326.</li>
-						</ul>
-					</section>
-
-					<section>
-						<img src="ss/schema3.png" />
 					</section>
 
 					<section>
 						<h4>Map Names</h4>
-						<p>Since the dataset schema is defined by the user, there are no restrictions on the names of the attributes in your dataset.  That said, it's strongly encouraged that you use the EcoSIS standard names.  If you would like you can provide a mapping of your attribute names to the EcoSIS name.  This way your data does not have to be directly modified but EcoSIS still understands your attributes.  To do this, you download the mapping (text) file, then upload for your dataset.  Note: this file can be reused for each one of your datasets.
+						<p>Since the dataset schema is defined by the user, there are no restrictions on the names of the attributes in your dataset.
+							That said, it's strongly encouraged that you use the EcoSIS standard names as well as the associated controlled vocabulary, if available.
+							If you would like you can provide a mapping of your attribute names to the EcoSIS name.  This way your data does not have to
+							be directly modified but EcoSIS still understands your attributes.  To do this, you download the mapping (text) file, then
+							upload for your dataset.  Note: this file can be reused for each one of your datasets.
+					</section>
 
+					<section>
 						<img src="ss/schema4.png" />
 					</section>
+
+					<section>
+						<h4>Dataset Ordering</h4>
+						<p>In the dataset section you can specify special attributes that further describe your dataset.  Specifically, if your
+							dataset has ordering (ex: the dataset is a timeseries) you can provide the field that should be sorted on as well as how
+							that field should be interpreted. </p>
+					</section>
+
+
+
 				</section>
-				
-				
+
+
 				<section>
 					<section>
 						<h2>Push to Search</h2>
-						<p>At this point, everything we have done has been saved on the data management server but none of the changes have been pushed to Search, the primary interface for users to find your data.  Click the 'Cloud' icon to start the push.</p>
+						<p>At this point, everything we have done has been saved on the data management server but none of the changes have been pushed to Search,
+							the primary interface for users to find your data.  Click the <b style="color:orange">Push to Search</b> tab to start the push.</p>
 
 						<img src="ss/upload1.png" />
 					</section>
+
 					<section>
-						<p>Review your dataset, then click 'Push' to start the process or 'Cancel' to go back and make edits.</p>
-						<img src="ss/upload2.png"  />
+						<p>Review your dataset, then click <b style="color:orange">Push</b> to start the process.  A minimum of 3 EcoSIS metadata attributes are
+							required to push your dataset.  Once the dataset is queued, you will receive a success notice but the dataset has not be pushed yet.
+							The push process can take some time and you will be emailed when your dataset is successfully added to search.</p>
 					</section>
+
+					<section>
+						<img src="ss/upload2.png" />
+					</section>
+
 				</section>
 
 				<section>

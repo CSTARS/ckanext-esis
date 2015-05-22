@@ -68,10 +68,13 @@
       $(window).on('hashchange', this.updateActiveTab.bind(this));
       this.updateActiveTab();
 
-      ecosis.ds.on('load', function(){
-        if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
-        else this.$.exit.setAttribute('href', '/dataset/');
-      }.bind(this));
+      if( ecosis.ds.editMode ) {
+        ecosis.ds.on('load', function(){
+          if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+        }.bind(this));
+      } else {
+        this.$.exit.setAttribute('href', '/dataset/');
+      }
     },
 
     attached : function() {
