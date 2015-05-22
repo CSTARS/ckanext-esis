@@ -1,0 +1,251 @@
+<dom-module id="ecosis-page-push">
+  <style>
+    :host {
+      display: block;
+      padding: 0 5%;
+    }
+    #main {
+      margin-bottom: 50px;
+    }
+  </style>
+
+  <template>
+    <h4 class="page-header">Push to Search</h4>
+
+
+		<div class="alert alert-danger" style="display:none" id="privateAlertPanel">
+			You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+		</div>
+
+		<div id="main">
+			<div class="help-block">
+				Please verify all information looks correct.  Once everything looks correct, click 'Push'
+        below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+         Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
+			</div>
+
+			<div class="well">
+				<h4>Basic Information</h4>
+				<table class="table">
+					<tr><td>Title</td><td id="title"></td></tr>
+					<tr><td>Name</td><td id="name"></td></tr>
+					<tr><td>Description</td><td id="notes"></td></tr>
+					<tr><td>Organization</td><td id="owner_org_name"></td></tr>
+					<tr><td>Visibility</td><td>Public</td></tr>
+				</table>
+			</div>
+
+			<div class="well">
+				<h4>Resource Information</h4>
+				<table class="table">
+					<tr><td>Total Resources</td><td id="tResources"></td></tr>
+					<tr><td>Metadata Sheets</td><td id="tMeta"></td></tr>
+					<tr><td>Spectra Sheets</td><td id="tData"></td></tr>
+					<tr><td># Parsed Spectra</td><td id="tSpectra"></td></tr>
+				</table>
+			</div>
+
+			<div class="well">
+				<h4>EcoSIS Metadata Information</h4>
+				<div id="ecosisInfo"></div>
+
+
+        <a on-click="toggleMetadata" style="cursor:pointer">EcoSIS Metadata Information</a>
+			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
+      </div>
+
+      <div>
+        <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      </div>
+
+      <div style="padding: 15px 0">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" id="responseEmailInput" checked> Email me when the dataset is available in search.
+            <div class="help-block">Datasets can take several minutes to show up in search.  We can send you and email when
+              the dataset is ready.
+            </div>
+          </label>
+        </div>
+      </div>
+
+
+      <div class="help-block" id="pushMessage" style="display:none">Queuing push to search...</div>
+		</div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-page-push',
+
+    ready : function() {
+      this.requireEcosisAttrs = 3;
+      this.warnEcosisAttrs = 8;
+
+      ecosis.ds.on('load', this.update.bind(this));
+    },
+
+    onShow : function() {
+      this.update();
+    },
+
+    update : function() {
+
+      if( ecosis.ds.data.private ) {
+        this.$.privateAlertPanel.style.display = 'block';
+        this.$.main.style.display = 'none';
+      } else {
+        this.$.privateAlertPanel.style.display = 'none';
+        this.$.main.style.display = 'block';
+
+        this.updateLabels();
+        this.updateCounts();
+      }
+    },
+
+    updateLabels : function() {
+      for( var key in ecosis.ds.data ) {
+        if( key == 'owner_org' ) {
+          for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
+            if( ecosis.user.organizations[i].id == ecosis.ds.data.owner_org ) {
+              this.$.owner_org_name.innerText = ecosis.user.organizations[i].display_name;
+              break;
+            }
+          }
+
+        } else if( this.$[key] ) {
+          this.$[key].innerText = ecosis.ds.data[key];
+        }
+
+
+      }
+    },
+
+    updateCounts : function() {
+			this.counts = {
+				metadataResources : 0,
+				measurementResources : 0,
+				measurements : 0
+			}
+
+			for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+				var resource = ecosis.ds.resources[i];
+				if( !resource.datasheets || resource.ignore ) continue;
+
+				for( var j = 0; j < resource.datasheets.length; j++ ) {
+					var datasheet = resource.datasheets[j];
+					if( datasheet.ignore ) continue;
+
+					if( datasheet.metadata ) {
+						this.counts.metadataResources++;
+					} else if ( datasheet.spectra_count ) {
+						this.counts.measurementResources++;
+						this.counts.measurements += datasheet.spectra_count;
+					}
+				}
+			}
+
+      this.$.tResources.innerText = ecosis.ds.resources.length;
+      this.$.tMeta.innerText = this.counts.metadataResources;
+      this.$.tData.innerText = this.counts.measurementResources;
+      this.$.tSpectra.innerText = this.counts.measurements;
+
+			this.updatePushStatus();
+		},
+
+		updatePushStatus : function() {
+			var attrs = [];
+			var count = 0;
+
+      // check for spectra level ecosis metadata
+			ecosis.ds.schema.forEach(function(item){
+				if( ecosis.ds.isEcosisMetadata(item.name) ) {
+          count++;
+        } else if( ecosis.ds.inverseAttributeMap[item.name] &&
+                  ecosis.ds.isEcosisMetadata(ecosis.ds.inverseAttributeMap[item.name]) ) {
+
+          count++;
+        }
+			}.bind(this));
+
+      var map = {
+        'Keywords' : 'tags',
+        'Author' : 'author',
+        'Author Email' : 'author_email',
+        'Maintainer' : 'maintainer',
+        'Maintainer Email' : 'maintainer_email'
+      }
+
+      // check dataset level ecosis metadata
+      for( var key in ecosis.ds.metadataLookup ) {
+        if( map[key] && ecosis.ds.data[map[key]] ) {
+          count++;
+        } else if( ecosis.ds.getDatasetExtra(key).value ) {
+          count++;
+        }
+      }
+
+
+			if( count < this.requireEcosisAttrs ) {
+				this.$.pushBtn.style.display = 'none';
+				this.$.ecosisInfo.innerHTML =
+					'<span class="label label-danger" style="font-size:14px">' +
+						'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
+						this.requireEcosisAttrs + ' are required to push to search.' +
+					'</span>';
+				return;
+			}
+
+			this.$.pushBtn.style.display = 'inline-block';
+			if( count < this.warnEcosisAttrs ) {
+				this.$.ecosisInfo.innerHTML =
+					'<span class="label label-warning" style="font-size:14px">' +
+						'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
+						this.warnEcosisAttrs + ' are recommended.' +
+					'</span>';
+				return;
+			}
+
+			this.$.ecosisInfo.innerHTML =
+				'<span class="label label-success" style="font-size:14px">' +
+					'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
+				'</span>';
+
+		},
+
+    push : function() {
+      this.$.pushBtn.setAttribute('disabled', '');
+      this.$.pushBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Queuing...';
+      this.$.pushMessage.style.display = 'block';
+
+      var includeEmail = $(this.$.responseEmailInput).is(':checked');
+
+      ecosis.ckan.pushToSearch(ecosis.ds.package_id, includeEmail,
+          function(resp){
+            this.$.pushBtn.removeAttribute('disabled');
+            this.$.pushBtn.innerHTML = 'Push';
+            this.$.pushMessage.style.display = 'none';
+
+            if( resp.error ) {
+                alert('Error pushing dataset to search :(');
+            } else {
+                var msg = 'Success.  Your dataset is processing.';
+                if( resp.emailingResult && resp.email ) {
+                  msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
+                } else {
+                  msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
+                }
+
+                alert(msg);
+                window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
+            }
+          }.bind(this)
+      );
+    },
+
+    toggleMetadata : function() {
+      this.$.metadataDocs.toggle();
+    }
+  })
+</script>

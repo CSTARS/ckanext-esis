@@ -1,0 +1,405 @@
+<link rel="import" href="ecosis-parser-overview.html" >
+<link rel="import" href="ecosis-metadata-join-panel.html" >
+<link rel="import" href="ecosis-spectra-panel.html" >
+
+<dom-module id="ecosis-datasheet-panel">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
+  <template>
+
+    <div id="main" style="display:none" class="animated fadeInUp">
+      <h6 id="titleLabel" style="display:none"></h6>
+
+      <span class="alert alert-danger" style="display:none" id="parseError">
+          Error parsing file
+      </span>
+
+      <!-- Is Metadata -->
+      <div id="metadataSelectPanel">
+        <div class="form-horizontal">
+          <div class="form-group">
+
+            <label for="inputIsMetadata" class="col-md-2 control-label">Joinable Metadata</label>
+            <div class="col-md-10">
+              <div class="checkbox">
+                <label>
+                  <input id="inputIsMetadata" type="checkbox" on-change="onMetadataUpdate"> This datasheet only contains metadata to be joined on given data.
+                </label>
+              </div>
+              <span class="help-block">
+                NOTE:  Metadata must be in row format.
+              </span>
+
+              <ecosis-metadata-join-panel
+                  id="joinMetadata"
+                  style="display:none"
+                  on-metadata-update='onMetadataPanelUpdate'>
+              </ecosis-metadata-join-panel>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Ignore -->
+      <div class="form-horizontal">
+        <div class="form-group">
+
+          <label for="inputIgnore" class="col-md-2 control-label">Ignore</label>
+          <div class="col-md-10">
+            <div class="checkbox">
+              <label>
+                <input id="inputIgnore" type="checkbox" on-change="onIgnoreUpdate"> This datasheet should not be parsed.
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Datasheet Orientation -->
+      <div class="form-horizontal" id="orientationPanel">
+        <div class="form-group">
+
+          <label class="col-md-2 control-label">Orientation</label>
+          <div class="col-md-10">
+            <div class="radio">
+              <label>
+                <input type="radio" id="columnInput" value="column" checked="" on-click="onOrientationChange">
+                Datasheet is laid out by column.
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" id="rowInput" value="row" on-click="onOrientationChange">
+                Datasheet is laid out by row.
+              </label>
+            </div>
+
+            <a on-click="toggleHelp">Format Help.</a>
+            <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeInRight"></ecosis-dataformat-help>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-horizontal" id="parseOverviewPanel" style="border-top: 1px solid #eee">
+        <div class="form-group">
+
+          <div class="col-md-2" style="text-align:right">
+            <a class="btn btn-link" on-click="toggleCurrentParse">
+                <i class="fa fa"></i> Format Overview
+            </a>
+          </div>
+          <div class="col-md-10">
+            <div class="help-block">
+                Visually inspect how EcoSIS is parsing this sheet.
+            </div>
+
+            <ecosis-parser-overview id="parseOverview" style="display:none"></ecosis-parser-overview>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-horizontal" id="spectraPanel" style="border-top: 1px solid #eee; display:none">
+        <div class="form-group">
+
+          <div class="col-md-2" style="text-align:right">
+            <a class="btn btn-link" on-click="toggleSpectra">View Spectra <span id="spectraCountLabel"></span></a>
+          </div>
+          <div class="col-md-10">
+            <div class="help-block">
+                View the spectra for this sheet.
+            </div>
+
+            <ecosis-spectra-panel id="spectraUi" style="display:none"></ecosis-spectra-panel>
+          </div>
+        </div>
+      </div>
+
+      <div id="updatingPanel" class="alert alert-warning" style="display:none">
+        <h6 style="color:white"><i class="fa fa-spinner fa-spin"></i> Updating...</h6>
+      </div>
+    </div>
+
+    <div id="loading">
+      <h6><i class="fa fa-spinner fa-spin"></i> Loading...</h6>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-datasheet-panel',
+
+    ready : function() {
+      this.datasheet = null;
+    },
+
+    update : function(resource, datasheet) {
+      this.resource = resource;
+      this.datasheetId = datasheet.id;
+      this.datasheet = null;
+      this.$.spectraUi.style.display = 'none';
+      this.setLoading(true);
+    },
+
+    save : function() {
+      this.setSaving(true);
+      this.$.parseOverview.style.display = 'none';
+
+      var resource = {
+          id : this.resource.id,
+          datasheets : [{
+              id : this.datasheet.id,
+              layout : this.datasheet.layout,
+              ignore : this.datasheet.ignore ? true : false,
+              metadata : this.datasheet.metadata ? true : false
+          }]
+      };
+
+      ecosis.ckan.setParseInfo(
+          ecosis.ds.package_id,
+          resource,
+          this.datasheet.id,
+          function(resp){
+            this.setSaving(false);
+
+            if( resp.error ) return alert("Error updating datasheet :(");
+
+            ecosis.ds.runAfterResourceAdd(resp);
+
+            for( var i = 0; i < resp.resources.length; i++ ) {
+                if( resp.resources[i].id != this.resource.id ) continue;
+                var r = resp.resources[i];
+
+                for( var j = 0; j < r.datasheets.length; j++ ) {
+                    if( r.datasheets[j].id == this.datasheet.id ) {
+                        for( var key in r.datasheets[j] ) {
+                            this.datasheet[key] = r.datasheets[j][key];
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // any time we perform an update like this, the state of joins may have changed,
+            // so clear any cached spectra and datasheet information using spectra.clearCache()
+            // and the update event to alert the rest of the app
+            //TODO
+            //this.$.spectraPanel.clearCache();
+
+            this.fire('update', this.resource.id);
+
+            // this 'update' event actually sets the entire resource as not loaded
+            // but we have set the correct datasheet attributes above, so go ahead
+            // and mark just this datasheet as loaded.  This will make sure things
+            // like the attribute list in the metadata panel are set correctly.
+            //setTimeout(function(){
+            //    this.datasheet.loaded = true;
+            //}.bind(this));
+
+            this.updateMetadataUi();
+            this.updateIgnoreUi();
+
+            // update spectra count
+            if( this.datasheet.spectra_count ) {
+              this.$.spectraCountLabel.innerHTML = '('+this.datasheet.spectra_count+')';
+            } else {
+              this.$.spectraCountLabel.innerHTML = '';
+            }
+
+          }.bind(this)
+      );
+    },
+
+    edit : function(callback) {
+      if( !this.datasheet ) {
+        this.loadFullDatasheet(callback);
+        return;
+      } else if( this.datasheet.id != this.datasheetId ) {
+        this.loadFullDatasheet(callback);
+        return;
+      }
+
+      // set title
+      if( this.resource.datasheets.length == 1 ) {
+        var title = this.datasheet.name;
+        if( this.datasheet.sheet ) title += ' ('+this.datasheet.sheetname+')';
+        this.$.titleLabel.innerText = title;
+      } else { // title is shown by dropdown
+        this.$.titleLabel.innerText = '';
+      }
+
+      // set count
+      if( this.datasheet.spectra_count ) {
+        this.$.spectraCountLabel.innerHTML = '('+this.datasheet.spectra_count+')';
+      } else {
+        this.$.spectraCountLabel.innerHTML = '';
+      }
+
+      // show parse error
+      if( this.datasheet.error ) this.$.parseError.style.display = 'block';
+      else this.$.parseError.style.display = 'none';
+
+      // should we show the metadata selection
+      if( this.datasheet.ignore ) this.$.metadataSelectPanel.style.display = 'none';
+      else this.$.metadataSelectPanel.style.display = 'block';
+
+
+      // set the correct layout
+      if( this.datasheet.layout == 'column' ) {
+        this.$.columnInput.setAttribute('checked', '');
+        this.$.rowInput.removeAttribute('checked');
+      } else {
+        this.$.rowInput.setAttribute('checked', '');
+        this.$.columnInput.removeAttribute('checked');
+      }
+
+      this.updateMetadataUi();
+      this.updateIgnoreUi();
+
+      if( callback ) callback();
+    },
+
+    updateMetadataUi : function() {
+      if( this.datasheet.metadata ) {
+        this.$.joinMetadata.update(this.datasheet, this.resource);
+        this.$.joinMetadata.style.display = 'block';
+        this.$.spectraPanel.style.display = 'none';
+        this.$.orientationPanel.style.display = 'none';
+        this.$.inputIsMetadata.setAttribute('checked','');
+      } else {
+        this.$.joinMetadata.style.display = 'none';
+        this.$.spectraPanel.style.display = 'block';
+        this.$.orientationPanel.style.display = 'block';
+        this.$.inputIsMetadata.removeAttribute('checked');
+      }
+    },
+
+    updateIgnoreUi : function() {
+      var panels = ['spectraPanel', 'parseOverviewPanel', 'orientationPanel', 'metadataSelectPanel'];
+
+      if( this.datasheet.ignore ) {
+        panels.forEach(function(id){
+          this.$[id].style.display = 'none';
+        }.bind(this));
+        $(this.$.inputIgnore).prop('checked', true);
+      } else {
+        panels.forEach(function(id){
+          if( id == 'spectraPanel' || id == 'orientationPanel') return; // let the updateMetadataUi handle this
+          this.$[id].style.display = 'block';
+        }.bind(this));
+        $(this.$.inputIgnore).prop('checked', false);
+      }
+    },
+
+    onOrientationChange : function(e) {
+      this.datasheet.layout = e.currentTarget.value;
+      if( this.datasheet.layout == 'column' ) {
+        $(this.$.rowInput).prop('checked', false);
+      } else {
+        $(this.$.columnInput).prop('checked', false);
+      }
+
+      this.save();
+    },
+
+    toggleCurrentParse : function() {
+      if( this.$.parseOverview.style.display == 'none' ) {
+        this.$.parseOverview.style.display = 'block';
+        this.$.parseOverview.update(this.resource, this.datasheet);
+      } else {
+        this.$.parseOverview.style.display = 'none';
+      }
+    },
+
+    toggleSpectra : function() {
+      if( this.$.spectraUi.style.display == 'none' ) {
+        this.$.spectraUi.style.display = 'block';
+        this.$.spectraUi.update(this.resource, this.datasheet);
+      } else {
+        this.$.spectraUi.style.display = 'none';
+      }
+    },
+
+    toggleHelp : function() {
+      $(this.$.formatHelp).toggle();
+    },
+
+    loadFullDatasheet : function(callback) {
+      this.setLoading(true);
+
+      ecosis.ckan.getDatasheet(ecosis.ds.package_id, this.resource.id, this.datasheetId, function(resp){
+        this.setLoading(false);
+
+        this.datasheet = resp;
+        this.edit();
+
+        if( callback ) callback();
+      }.bind(this));
+    },
+
+    setLoading : function(loading) {
+      if( loading ) {
+        this.$.main.style.display = 'none';
+        this.$.loading.style.display = 'block';
+      } else {
+        this.$.main.style.display = 'block';
+        this.$.loading.style.display = 'none';
+      }
+    },
+
+    onMetadataPanelUpdate : function(e) {
+      if( e.detail.updating ) {
+        this.$.inputIsMetadata.setAttribute('disabled', '');
+        this.$.inputIgnore.setAttribute('disabled', '');
+      } else {
+        this.$.inputIsMetadata.removeAttribute('disabled');
+        this.$.inputIgnore.removeAttribute('disabled');
+      }
+    },
+
+    onMetadataUpdate : function() {
+      if( $(this.$.inputIsMetadata).is(':checked') ) {
+        this.datasheet.metadata = true;
+        this.fire('type-change', {type: 'metadata'});
+      } else {
+        this.datasheet.metadata = false;
+        this.fire('type-change', {type: 'data'});
+      }
+
+      this.updateMetadataUi();
+
+      this.save();
+      this.fire('update', this.resource.id);
+    },
+
+    onIgnoreUpdate : function() {
+      if( $(this.$.inputIgnore).is(':checked') ) {
+        this.datasheet.ignore = true;
+      } else {
+        this.datasheet.ignore = false;
+      }
+      this.updateIgnoreUi();
+
+      this.save();
+      this.fire('update', this.resource.id);
+    },
+
+    setSaving : function(saving) {
+      this.$.updatingPanel.style.display = saving ? 'block' : 'none';
+
+      if( saving ) {
+        $(this).find('input').attr('disabled', '');
+      } else {
+        $(this).find('input').removeAttr('disabled');
+      }
+    }
+  });
+</script>

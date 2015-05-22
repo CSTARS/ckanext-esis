@@ -1,0 +1,93 @@
+<dom-module id="ecosis-page-current-resources">
+  <style>
+    :host {
+      display : block;
+      padding: 0 5%;
+    }
+    #legend {
+      padding: 20px 0;
+    }
+  </style>
+
+  <template>
+
+    <h4 class="page-header">Current Resources</h4>
+
+    <div id="resourceRoot"></div>
+
+    <div id="noResources" id="alert alert-warning" style="display:none">
+      Your dataset does not contain any resource files.  Click <a id="addLink">here</a> to upload resources.
+    </div>
+
+    <div id="legend">
+      <div style="float:right">
+        Click the <i class="fa fa-pencil"></i> icon to inspect or edit a resource.
+      </div>
+
+      <h6 style="margin-bottom:0">Resource List Legend</h6>
+      <span class="label label-success">Spectral Data File</span>
+      <span class="label label-primary">Metadata File</span>
+      <span class="label label-info">Zip Package</span>
+      <span class="label label-default">Auxiliary File (Ignored)</span>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-page-current-resources',
+
+    ready : function() {
+      if( ecosis.ds.loaded ) this.render();
+      else ecosis.ds.on('load', this.render.bind(this));
+
+      this.$.addLink.setAttribute('href', '#add-resources');
+    },
+
+    onShow : function() {
+      this.render();
+    },
+
+    render : function() {
+      if( ecosis.ds.resources.length == 0 ) {
+        this.$.noResources.style.display = 'block';
+        this.$.legend.style.display = 'none';
+        return;
+      } else {
+        this.$.noResources.style.display = 'none';
+        this.$.legend.style.display = 'block';
+      }
+
+      var html = '';
+
+      for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+        var resource = ecosis.ds.resources[i];
+        html += '<ecosis-resource-panel resourceid="'+resource.id+'"></ecosis-resource-panel>';
+      }
+
+      this.$.resourceRoot.innerHTML = html;
+
+      // listen for all update events
+      $(this.$.resourceRoot)
+        .find('ecosis-resource-panel')
+        .on('update', this.onResourceUpdate.bind(this));
+    },
+
+    onResourceUpdate : function(e) {
+      var id = e.originalEvent.detail;
+
+      var panels = this.$.resourceRoot.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < panels.length; i++ ) {
+        if( panels[i].edit && panels[i].resourceid != id ) {
+          var panel = panels[i]
+          // hide resource
+          panel.toggleEdit();
+          // clear cached 'full' datasheet
+          panel.$.datasheetUI.datasheet = null;
+        }
+      }
+    }
+
+
+  });
+</script>

@@ -1,0 +1,163 @@
+<dom-module id="ecosis-keyword-input">
+  <style>
+    :host {
+      display : block;
+    }
+    span.label {
+      font-size: 12px;
+      position: absolute;
+      right: 15px;
+      top: 15px;
+    }
+    a.btn {
+      margin: 5px;
+    }
+  </style>
+  <template>
+
+    <div class="form-horizontal">
+      <div class="form-group">
+        <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Keywords</label>
+        <div class="col-md-9">
+          <input type="text" class="form-control" id="keywordInput" on-keyup="onInputChange" placeholder="Search Keywords">
+
+          <span id="searchingPanel" class="label label-primary" style="display:none">
+            <i class="fa fa-spinner fa-spin"></i> Searching...
+          </span>
+
+          <div id="resultRoot"></div>
+          <div id="currentKeywordsRoot"></div>
+
+        </div>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-keyword-input',
+
+    ready : function() {
+        this.tokens = [];
+        this.focus = false;
+        this.searchTimer = -1;
+    },
+
+    // fires when text is typed input field
+    onInputChange : function(e) {
+        if( e.which == 13 ) this.createToken();
+        else this.search();
+    },
+
+    search : function(){
+        if( this.searchTimer != -1 ) clearTimeout(this.searchTimer);
+        if( this.$.keywordInput.value == '' ) {
+          this.setSearching(false);
+          this.$.resultRoot.innerHTML = '';
+          return;
+        }
+
+        this.setSearching(true);
+
+        this.searchTimer = setTimeout(function(){
+          ecosis.ckan.tagSearch(this.$.keywordInput.value, 10, function(resp){
+            this.setSearching(false);
+
+            this.results = resp.result.results;
+            this.renderResults();
+          }.bind(this));
+        }.bind(this), 500);
+    },
+
+    createToken : function() {
+        if(this.$.keywordInput.value.length == 0) return;
+
+        var t = {
+            label : this.$.keywordInput.value,
+            value : this.$.keywordInput.value
+        }
+        this.addToken(t, true);
+
+        this.$.keywordInput.value = '';
+        this.$.resultRoot.innerHTML = '';
+    },
+
+    addResult : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        var name = this.results[index].name;
+
+
+        this.addToken({label:name, value:name}, true);
+
+        this.$.keywordInput.value = '';
+        this.$.resultRoot.innerHTML = '';
+        this.renderTokens();
+    },
+
+    addToken : function(token, fireEvent) {
+        if( !token.value || token.value == '' ) return;
+
+        for( var i = 0; i < this.tokens.length; i++ ) {
+            if( this.tokens[i].value == token.value ) return;
+        }
+
+        token.label = token.value;
+        this.tokens.push(token);
+
+        if( fireEvent ) this.fire('add', token);
+
+        this.renderTokens();
+    },
+
+    renderResults : function() {
+      var btns = '';
+      for( var i = 0; i < this.results.length; i++ ) {
+        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
+      }
+      this.$.resultRoot.innerHTML = btns;
+
+      $(this.$.resultRoot).find('a').on('click', this.addResult.bind(this));
+    },
+
+    renderTokens : function() {
+      var btns = '';
+      for( var i = 0; i < this.tokens.length; i++ ) {
+        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
+      }
+      this.$.currentKeywordsRoot.innerHTML = btns;
+
+      $(this.$.currentKeywordsRoot).find('a').on('click', this.onTokenClick.bind(this));
+    },
+
+    getTokens : function() {
+        return this.tokens;
+    },
+
+    setTokens : function(tokens) {
+        this.tokens.splice(0,this.tokens.length);
+        for( var i = 0; i < tokens.length; i++ ) {
+            this.addToken({label: tokens[i].name, value : tokens[i].name});
+        }
+
+        this.renderTokens();
+    },
+
+    onTokenClick : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute("index"));
+        var token = this.tokens.splice(index,1)[0];
+
+        this.fire('remove', token);
+
+        // don't set focus to input
+        e.stopPropagation();
+
+        this.renderTokens();
+    },
+
+    setSearching : function(searching) {
+      this.$.searchingPanel.style.display = searching ? 'inline-block' : 'none';
+    }
+  });
+</script>

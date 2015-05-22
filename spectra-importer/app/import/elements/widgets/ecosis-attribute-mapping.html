@@ -1,0 +1,308 @@
+<dom-module id="ecosis-attribute-mapping">
+  <style>
+    :host {
+      display: block;
+    }
+    .save-label {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 1000;
+        display: none;
+    }
+    table.table th {
+      border : none;
+    }
+  </style>
+
+  <template>
+    <div class="save-label" id="saveLabel">
+      <span class="label label-primary"><i></i> Saving...</span>
+    </div>
+
+    <div class="well">
+        If your spectra metadata attribute names do not match the EcoSIS metadata names, you can download
+        the attribute map file.  Fill out the file and then upload in the box to the right.  You can
+        reuse this file, so you only have to fill it out once for your data.  Just make sure to set
+        the attribute map for each dataset you add.
+    </div>
+
+    <div class="well">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Map Spectra Attributes</h3>
+        </div>
+        <div class="panel-body">
+          <h5 class="page-header" style="margin-top:0">By File</h5>
+
+          <div class="horizontal layout">
+              <div class="flex">
+                  <a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+              </div>
+              <div class="flex">
+                  Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
+
+                  <input type="file" style="display:none" id="addAttrMap" name="addAttrMap" />
+              </div>
+          </div>
+          <div class="help-block">
+            Use this to bulk upload and set the attribute name mapping.  This is map file can be
+            reused across your datasets.  NOTE:  This will overwrite all current attribute mappings.
+          </div>
+
+          <h5 class="page-header">Individually</h5>
+          <div class="help-block">
+            Use this to add individual spectra attribute mappings.
+          </div>
+
+          <table class="table">
+            <tr>
+              <th>EcoSIS</th>
+              <th></th>
+              <th id="dsTitleLabel"></th>
+              <th></th>
+            </tr>
+            <tr>
+              <td>
+                <select id="newEcosis" class="form-control"></select>
+              </td>
+              <td>
+                <i class="fa fa-arrow-right"></i>
+              </td>
+              <td>
+                <select id="newCustom" class="form-control"></select>
+              </td>
+              <td>
+                <a class="btn btn-primary" on-click="add" style="margin: 5px"><i class="fa fa-plus"></i> Add</a>
+              </td>
+            </tr>
+          </table>
+
+          <a on-click="toggleMetadata" style="cursor:pointer">EcoSIS Metadata Information</a>
+  			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
+
+        </div>
+      </div>
+
+      <div class="panel panel-primary" id="currentPanel">
+        <div class="panel-heading">
+          <h3 class="panel-title">Current Spectra Name Mappings</h3>
+        </div>
+        <div class="panel-body" id="currentMapRoot"></div>
+      </div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-attribute-mapping',
+
+    ready : function() {
+      ecosis.ds.on('load', function(){
+        this.$.dsTitleLabel.innerText = ecosis.ds.data.title;
+        this.updateSelectList();
+        this.updateMap();
+      }.bind(this));
+    },
+
+    onShow : function() {
+      this.updateSelectList();
+      this.updateMap();
+    },
+
+    processMap : function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+
+      var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+      if( files.length == 0 ) return;
+
+      var reader = new FileReader();
+      var contents, parts;
+
+      reader.onload = function(e) {
+          var newMap = {};
+          contents = e.target.result.split('\n');
+
+          for( var i = 0; i < contents.length; i++ ) {
+              if( contents[i].indexOf('=') > -1 ) {
+                  parts = contents[i].split('=');
+                  newMap[parts[0]] = parts[1];
+                  //if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
+              }
+          }
+
+          this.$.map.value = '';
+          this.updateAttrMapList(newMap);
+      }.bind(this);
+
+      reader.readAsText(files[0]);
+    },
+
+    updateMap : function() {
+      var c = 0, item = {};
+      var map = ecosis.ds.attributeMap;
+      this.attrMapList = [];
+
+      for( var key in map ) {
+          if( map[key] && map[key].length > 0 ) {
+              this.attrMapList.push({
+                  ecosis : key,
+                  custom : map[key]
+              });
+          } else {
+              delete map[key]
+          }
+      }
+
+      this.attrMapList.sort(function(a, b){
+          if( a.ecosis > b.ecosis ) return 1;
+          if( a.ecosis < b.ecosis ) return -1;
+          return 0;
+      });
+
+      this.renderCurrentList();
+    },
+
+    updateSelectList : function() {
+      this.selectList = [];
+      this.customList = [];
+
+      var html = '<optgroup><option></option></optgroup>';
+      for( var key in ecosis.ds.metadataDefinitions ) {
+          html += '<optgroup label="'+key+'">';
+
+          var attrs = ecosis.ds.metadataDefinitions[key];
+
+          for( var i = 0; i < attrs.length; i++ ) {
+              if( !ecosis.ds.attributeMap[attrs[i].name] ) {
+                  html += '<option value="'+attrs[i].name+'">'+attrs[i].name+'</option>'
+              }
+          }
+          html += '</optgroup>';
+      }
+
+      this.$.newEcosis.innerHTML = html;
+
+      for( var i = 0; i < ecosis.ds.schema.length; i++ ) {
+          var s = ecosis.ds.schema[i];
+          if( s.type != "metadata" ) continue;
+          if( ecosis.ds.attributeMap[s.name] ) continue;
+
+          this.customList.push(s.name);
+      }
+
+      this.customList.sort(function(a, b){
+          if( a.toLowerCase() > b.toLowerCase() ) return 1;
+          if( a.toLowerCase() < b.toLowerCase() ) return -1;
+          return 0;
+      });
+
+      html = '<option></option>';
+      for( var i = 0; i < this.customList.length; i++ ) {
+        html += '<option value="'+this.customList[i]+'">'+this.customList[i]+'</option>'
+      }
+      this.$.newCustom.innerHTML = html;
+    },
+
+    renderCurrentList : function() {
+      if( Object.keys(ecosis.ds.attributeMap).length == 0 ) {
+        this.$.currentMapRoot.innerText = 'No attributes currently mapped';
+        return;
+      }
+
+      var table =
+        '<table class="table">'+
+          '<tr>'+
+              '<th>EcoSIS</th>'+
+              '<th>'+ecosis.ds.data.title+'</th>'+
+              '<th>Remove</th>'+
+          '</tr>';
+
+      for( var i = 0; i < this.attrMapList.length; i++ ) {
+        var item = this.attrMapList[i];
+        table += '<tr>'+
+              '<td>'+item.ecosis+'</td>'+
+              '<td>'+item.custom+'</td>'+
+              '<td><a class="btn btn-default" attribute="'+item.custom+'"><i class="fa fa-trash"></i></a></td>'+
+          '</tr>';
+      }
+      table += '</table>';
+
+      this.$.currentMapRoot.innerHTML = table;
+
+      $(this.$.currentMapRoot)
+        .find('a.btn')
+        .on('click', this.remove.bind(this));
+
+    },
+
+    remove : function(e) {
+      var custom = e.currentTarget.getAttribute('attribute');
+      var ecosisAttr = ecosis.ds.inverseAttributeMap[custom];
+
+      if( !confirm('Are you sure you want to remove the mapping: '+ecosisAttr+' = '+custom+'?') ) return;
+
+      delete ecosis.ds.attributeMap[ecosisAttr];
+      delete ecosis.ds.inverseAttributeMap[custom];
+
+      this.save(ecosis.ds.attributeMap);
+    },
+
+    add : function() {
+      var ecosisAttr = this.$.newEcosis.value;
+      var custom = this.$.newCustom.value;
+
+      if( ecosisAttr.length == 0 || custom.length == 0 ) return alert('Please select both attributes to map first');
+
+      ecosis.ds.attributeMap[ecosisAttr] = custom;
+      ecosis.ds.inverseAttributeMap[custom] = ecosisAttr;
+
+      this.$.newEcosis.value = '';
+      this.$.newCustom.value = '';
+
+      this.save(ecosis.ds.attributeMap);
+    },
+
+    updateAttrMapList : function(newMap) {
+      this.attrMapList = [];
+
+      var c = 0, item = {};
+      var map = newMap || this.map;
+
+      if( newMap ) {
+          ecosis.ds.attributeMap = newMap;
+          ecosis.ds.inverseAttributeMap = {};
+
+          for( var key in newMap ) {
+              if( newMap[key] != '' ) ecosis.ds.inverseAttributeMap[newMap[key]] = key;
+          }
+      }
+
+      this.save(newMap);
+    },
+
+    save : function(newMap) {
+      this.$.saveLabel.style.display = 'block';
+
+      ecosis.ckan.setAttributeMap(ecosis.ds.package_id,newMap,
+        function(resp) {
+          this.$.saveLabel.style.display = 'none';
+
+          this.updateMap();
+          this.updateSelectList();
+          if( resp.error ) alert('Error saving attribute name mapping');
+        }.bind(this)
+      )
+    },
+
+    toggleMetadata : function() {
+      this.$.metadataDocs.toggle();
+    }
+
+  })
+</script>

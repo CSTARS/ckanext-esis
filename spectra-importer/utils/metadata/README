@@ -1,0 +1,3 @@
+The schema.json generator is located here: https://github.com/CSTARS/ecosis-data-tool/blob/master/app/schema.json
+with the generator script from here: https://github.com/CSTARS/ecosis-data-tool/tree/master/schema
+The data/schema.csv is from a google spreadsheet.

@@ -1,0 +1,207 @@
+<link rel="import" href="ecosis-datasheet-select-panel.html" >
+<link rel="import" href="ecosis-datasheet-panel.html" >
+
+<dom-module id="ecosis-resource-panel">
+  <style>
+    :host {
+      display: block;
+    }
+    a.btn-link {
+      padding-top: 0;
+    }
+    span.label-danger {
+      box-shadow: 0 0 5px white;
+      border: 1px solid white;
+    }
+  </style>
+
+  <template>
+    <div class="panel panel-default" id="root">
+      <div class="panel-heading">
+        <h3 class="panel-title" >
+
+          <div class="layout horizontal">
+            <div class="flex">
+              <span id="titleLabel"></span>
+              <a class="btn btn-link" style="color:white" on-click="delete" id="trashBtn"><i class="fa fa-trash"></i></a>
+              <span class="label label-danger" id="deletePanel" style="display:none">
+                <i class="fa fa-spinner fa-spin"></i> Deleting Resource...
+              </span>
+            </div>
+            <div>
+              <a class="btn btn-link" style="color:white" id="editLink" on-click="toggleEdit">
+                <i class="fa fa-pencil" id="editLinkIcon"></i>
+              </a>
+            </div>
+          </div>
+
+        </h3>
+      </div>
+      <div class="panel-body" style="display:none; overflow:hidden" id="body">
+        <ecosis-datasheet-select-panel
+          style="display:none"
+          id="datasheetSelector"
+          on-select="onDatasheetSelected">
+        </ecosis-datasheet-select-panel>
+
+        <ecosis-datasheet-panel
+          id="datasheetUI"
+          on-type-change="onDatasheetTypeChange">
+        </ecosis-datasheet-panel>
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-resource-panel',
+
+    properties : {
+      resourceid : {
+        type : String
+      }
+    },
+
+    ready : function() {
+      this.edit = false;
+    },
+
+    attached : function() {
+      this.resource = null;
+
+      for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+        var resource = ecosis.ds.resources[i];
+        if( this.resourceid == resource.id ) {
+          this.resource = resource;
+          break;
+        }
+      }
+
+      this.update();
+    },
+
+    update : function() {
+      this.$.titleLabel.innerText = this.resource.name;
+      this.setClass();
+
+      if( !this.resource.datasheets ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else if( this.resource.datasheets.length <= 1 ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else {
+        this.$.datasheetSelector.style.display = 'block';
+        this.$.datasheetSelector.update(this.resource);
+      }
+
+      if( this.resource.datasheets ) {
+        this.selectDatasheet(0);
+      } else {
+        this.$.trashBtn.style.color = '#333';
+      }
+    },
+
+    onDatasheetTypeChange : function(e) {
+      if( e.detail.type == 'metadata' ) {
+        this.resource.datasheets[this.selectedIndex].metadata = true;
+      } else {
+        this.resource.datasheets[this.selectedIndex].metadata = false;
+      }
+      this.setClass();
+    },
+
+    setClass : function() {
+      var className = this.getPanelClass(this.getResourceType());
+      this.$.root.className = 'panel panel-'+className;
+    },
+
+    selectDatasheet : function(index, edit) {
+      // set the resource and sheet we are going to render
+      this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+
+      // if the edit flag is passed, actually load the detailed datasheet and render
+      if( edit ) {
+        this.$.datasheetSelector.setDisabled(true);
+        this.$.datasheetUI.edit(function(){
+          this.$.datasheetSelector.setDisabled(false);
+        }.bind(this));
+      }
+
+      this.selectedIndex = index;
+    },
+
+    onDatasheetSelected : function(e) {
+      this.selectDatasheet(e.detail, true);
+    },
+
+    getPanelClass : function(type) {
+      if( type == 'data' ) return 'success';
+      if( type == 'metadata' ) return 'primary';
+      if( type == 'zip' ) return 'info';
+      return 'default';
+    },
+
+    getResourceType : function() {
+      if( this.resource.datasheets && this.resource.datasheets.length == 1 && this.resource.datasheets[0].metadata ) {
+        return 'metadata';
+      }
+      if( this.resource.type == 'zip' ) {
+        return 'zip';
+      }
+      if( this.resource.type == 'datafile' ) {
+        return 'data';
+      }
+      return 'ignored';
+    },
+
+    toggleEdit : function() {
+      this.edit = !this.edit;
+
+      if( this.edit ) {
+        this.$.body.style.display = 'block';
+
+        this.$.editLink.className = 'btn btn-default';
+        this.$.editLinkIcon.className = 'fa fa-check';
+        this.$.editLinkIcon.style.color = 'black';
+
+        this.$.datasheetUI.edit();
+
+        this.fire('editing', this.resourceid);
+      } else {
+        this.$.body.style.display = 'none';
+
+        this.$.editLink.className = 'btn btn-link';
+        this.$.editLinkIcon.className = 'fa fa-pencil';
+        this.$.editLinkIcon.style.color = 'white';
+      }
+    },
+
+    delete : function() {
+      if( !confirm("Are you sure you want to remove: "+this.resource.name+"?") ) return;
+
+      this.$.deletePanel.style.display = 'inline-block';
+
+      ecosis.ckan.removeResource(this.resource.id,
+        function(resp){
+          this.$.deletePanel.style.display = 'block';
+
+          if( resp.error ) return alert("Server error deleting resource");
+
+          for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
+            if( ecosis.ds.resources[i] == this.resource ) {
+              ecosis.ds.resources.splice(i, 1);
+              ecosis.ds.fireUpdate();
+              break;
+            }
+          }
+
+          $(this).hide('slow', function(){
+            $(this).remove();
+          });
+
+          this.fire('update', this.resourceid);
+        }.bind(this)
+      );
+    },
+  });
+</script>

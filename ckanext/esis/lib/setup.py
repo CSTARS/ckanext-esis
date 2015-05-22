@@ -7,6 +7,7 @@ import ckan.logic as logic
 import ckan.lib.uploader as uploader
 from pylons import config
 from datetime import datetime, timedelta
+from infoFile import getInfoFile, setInfoCollection
 
 import os, shutil, re, json, hashlib, zipfile, subprocess, pickle, time
 
@@ -14,17 +15,22 @@ class WorkspaceSetup:
 
     dataExtension = ["xlsx","xls","spectra","csv","tsv"]
 
-    # a package will expire after two days of not being used
-    packageExpireTime = timedelta(days=2)
+    # a package will expire after 1 day of not being used
+    packageExpireTime = timedelta(days=1)
 
     workspaceCollection = None
     workspaceDir = ""
+    infoCollection = None
 
     def __init__(self):
         self.workspaceDir = "%s/workspace" % config._process_configs[1]['ecosis.workspace.root']
 
-    def setCollection(self, collection):
-        self.workspaceCollection = collection
+    def setCollection(self, wcollection, icollection):
+        self.workspaceCollection = wcollection
+
+        if icollection != None:
+            self.infoCollection = icollection
+            setInfoCollection(icollection)
 
     # Takes a package_id and initializes workspace if it doesn't exist
     # if it does, checks md5 hash and re-parses any new or updates files
@@ -83,6 +89,7 @@ class WorkspaceSetup:
             if package['last_used'] < expired and package['package_name'] != currentPackageName:
                 print ' - Cleaning expired package: %s' % package['package_name']
                 shutil.rmtree("%s/%s" % (self.workspaceDir, package['package_name']))
+                self.infoCollection.remove({'package_id': package['package_id']})
 
         # now check that all packages in workspace have not been deleted
 
@@ -121,7 +128,8 @@ class WorkspaceSetup:
 
         ext = self._getFileExtension(ckanResource['name'])
 
-        parseData = self._getParseFile(ckanResource, rootDir)
+        parseData = getInfoFile("%s/%s/info.json" % (rootDir, ckanResource['id']), ckanPackage['id'])
+        #parseData = self._getParseFile(ckanResource, rootDir)
 
         # extract zip file
         if ext == "zip":
@@ -148,6 +156,7 @@ class WorkspaceSetup:
 
             datasheets = []
             z = zipfile.ZipFile(ckanLocation, "r")
+            default = {}
             for info in z.infolist():
                 if self._isDataFile(info.filename):
                     parts = info.filename.split("/")
@@ -170,6 +179,23 @@ class WorkspaceSetup:
                     }
                     datasheets.append(datasheet)
 
+                elif re.sub(r".*\/", "", info.filename) == '.ecosis':
+                    parts = info.filename.split("/")
+
+                    zipPath = ""
+                    for i in range(0, len(parts)-1):
+                        zipPath += parts[i]+"/"
+
+                    #extract individual file
+                    z.extract(info, "%s" % zipDir)
+
+                    loc = "%s/%s.ecosis" %  (zipDir, zipPath)
+
+                    file = open(loc, 'r')
+                    default = json.loads(file.read())
+                    file.close()
+
+
             z.close()
 
             info = {
@@ -180,7 +206,8 @@ class WorkspaceSetup:
                 "url_type" : ckanResource["url_type"],
                 "md5" : self._hashfile(ckanLocation),
                 "location" : "%s/%s/info.json" % (rootDir, ckanResource['id']),
-                "changes" : True
+                "changes" : True,
+                "defaultConfig" : default
             }
 
             # save parse info to disk
@@ -248,7 +275,8 @@ class WorkspaceSetup:
         repoName = re.sub(r".*/", "", repoName)
         repoName = re.sub(r".git$","",repoName)
 
-        parseData = self._getParseFile(ckanResource, rootDir)
+        parseData = getInfoFile("%s/%s/info.json" % (rootDir, ckanResource['id']), ckanPackage['id'])
+        #parseData = self._getParseFile(ckanResource, rootDir)
 
         if os.path.exists(gitDir):
             # get the parsed data file
@@ -343,21 +371,18 @@ class WorkspaceSetup:
             "url_type" : ckanResource["url_type"]
         }
 
-     # get the parse data file if on exists
-    def _getParseFile(self, r, dir):
-        parsedFile = "%s/%s/info.json" % (dir, r['id'])
+    # get the parse data file if on exists
+    #def _getParseFile(self, r, dir):
+    #    parsedFile = "%s/%s/info.json" % (dir, r['id'])
 
-        if not os.path.exists(parsedFile):
-            return None
+    #    if not os.path.exists(parsedFile):
+    #        return None
 
-        file = open(parsedFile, 'r')
-        parseData = json.loads(file.read())
-        file.close()
-        #with open(parsedFile, 'rb') as f:
-        #    return pickle.load(f)
-        #    f.close()
+    #    file = open(parsedFile, 'r')
+    #    parseData = json.loads(file.read())
+    #    file.close()
 
-        return parseData
+    #    return parseData
 
     # get the extension from a filename
     def _getFileExtension(self, filename):

@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title>EcoSIS Importer</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <script src="scripts/build.js"></script>
+
+    <link rel="stylesheet" href="styles/build.css">
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+      google.load('visualization', '1.0', {'packages':['corechart']});
+    </script>
+
+    <link rel="import" href="elements.html" />
+  </head>
+
+  <body>
+
+    <ecosis-header></ecosis-header>
+    <ecosis-page-basic-info id="basic" class="page animated fadeIn"></ecosis-page-basic-info>
+    <ecosis-page-add-resource id="add-resources" class="page animated fadeIn"></ecosis-page-add-resource>
+    <ecosis-page-current-resources id="current-resources" class="page animated fadeIn"></ecosis-page-current-resources>
+    <ecosis-page-advanced id="advanced" class="page animated fadeIn"></ecosis-page-advanced>
+    <ecosis-page-push id="push" class="page animated fadeIn"></ecosis-page-push>
+
+
+
+    <!-- Splash Screen -->
+    <div class="modal fade" id="splash" tabindex="-1" role="dialog" aria-labelledby="splashLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="splashLabel"><i class="fa fa-spinner fa-spin"></i> Loading...</h4>
+          </div>
+          <div class="modal-body">
+            Preparing workspace.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

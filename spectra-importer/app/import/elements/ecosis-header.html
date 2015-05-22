@@ -1,0 +1,101 @@
+<dom-module id="ecosis-header">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+  <template>
+    <nav class="navbar navbar-default">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#ecosis-header-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">EcoSIS Importer</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="ecosis-header-collapse">
+          <ul class="nav navbar-nav">
+
+            <li class="active"><a  id="basicInfo"><i class="fa fa-info-circle"></i> Basic Information</a></li>
+
+            <li class="dropdown" id="resourcesDropdown" style="display:none">
+              <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                <i class="fa fa-files-o"></i> Resources <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a id="addResources"><i class="fa fa-plus"></i> Add Resources</a></li>
+                <li><a id="currentResources"><i class="fa fa-list"></i> Current Resources</a></li>
+              </ul>
+            </li>
+
+            <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+          </ul>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://tutorial.ecospectra.org" target="_blank"><i class="fa fa-question-circle"></i> Help</a></li>
+            <li><a id="exit"><i class="fa fa-sign-in"></i> Exit</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-header',
+
+    properties : {
+      hack : {
+        type : String,
+        value : ''
+      }
+    },
+
+    ready : function() {
+      // such BS polymer!
+      this.$.basicInfo.setAttribute('href', '#basic-info');
+      this.$.addResources.setAttribute('href', '#add-resources');
+      this.$.currentResources.setAttribute('href', '#current-resources');
+      this.$.advanced.setAttribute('href', '#advanced');
+      this.$.push.setAttribute('href', '#push');
+
+      $(window).on('hashchange', this.updateActiveTab.bind(this));
+      this.updateActiveTab();
+
+      ecosis.ds.on('load', function(){
+        if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+        else this.$.exit.setAttribute('href', '/dataset/');
+      }.bind(this));
+    },
+
+    attached : function() {
+      if( ecosis.ds.editMode ) {
+        this.$.resourcesDropdown.style.display = 'block';
+        this.$.advanced.style.display = 'block';
+        this.$.push.style.display = 'block';
+      }
+    },
+
+    updateActiveTab : function() {
+      $('li').removeClass('active');
+
+      var loc = window.location.hash.replace(/#/,'');
+      var ele = $(this).find('a[href="#'+loc+'"]');
+
+      if( ele.length > 0 && (loc == 'add-resources' || loc == 'current-resources') ) {
+        $(this.$.resourcesDropdown).addClass('active');
+      } else if ( ele.length > 0 ) {
+        ele.parent().addClass('active');
+      } else {
+        $(this.$.basicInfo).parent().addClass('active');
+      }
+    }
+
+  });
+</script>

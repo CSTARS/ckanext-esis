@@ -8,9 +8,13 @@ module.exports = function (grunt) {
     // Time how long tasks take. Can help when optimizing build times
     require('time-grunt')(grunt);
 
-    grunt.loadNpmTasks('grunt-manifest');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-vulcanize');
+    grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-cssmin');
 
 
     // Define the configuration for all the tasks
@@ -38,78 +42,59 @@ module.exports = function (grunt) {
             server: '.tmp'
         },
 
-        // Renames files for browser caching purposes
-        /*rev: {
-            dist: {
-                files: {
-                    src: [
-                        '<%= yeoman.dist %>/editor/scripts/build.js'
-                        //'<%= yeoman.dist %>/css/build.css'
-                    ]
-                }
-            }
-        },*/
-
         // Reads HTML for usemin blocks to enable smart builds that automatically
         // concat, minify and revision files. Creates configurations in memory so
         // additional tasks can operate on them
         useminPrepare: {
             options: {
-                root : '<%= yeoman.app %>/editor',
-                dest: '<%= yeoman.dist %>/editor',
+                root : '<%= yeoman.app %>/import',
+                dest: '<%= yeoman.dist %>/import',
                 verbose : true
             },
-            html: '<%= yeoman.app %>/editor/index.html'
+            html: '<%= yeoman.app %>/import/index.html'
         },
 
         // Performs rewrites based on rev and the useminPrepare configuration
         usemin: {
             options: {
-                assetsDirs: ['<%= yeoman.dist %>/editor']
+                assetsDirs: ['<%= yeoman.dist %>/import']
             },
-            html: ['<%= yeoman.dist %>/editor/{,*/}*.html']
-            //css: ['<%= yeoman.dist %>/css/{,*/}*.css']
+            html: ['<%= yeoman.dist %>/import/{,*/}*.html'],
+            css: ['<%= yeoman.dist %>/import/{,*/}*.css']
         },
 
-        
+
         // Copies remaining files to places other tasks can use
         copy: {
             dist: {
                 files: [{
                     expand: true,
                     dot: true,
-                    cwd: '<%= yeoman.app %>/editor',
-                    dest: '<%= yeoman.dist %>/editor',
+                    cwd: '<%= yeoman.app %>/import',
+                    dest: '<%= yeoman.dist %>/import',
                     src: [
-                        '*.{html,handlebars}',
-                        'components/**',
-                        'elements/**',
-                        'workers/**',
-                        'styles/**'
+                        '*.{html,handlebars}'
                     ]
                 },
                 {
                     expand: true,
                     dot: true,
-                    src: ['metadata.js','metadata_map'], 
+                    src: ['metadata_map'],
                     dest: '<%= yeoman.dist %>',
                     cwd: '<%= yeoman.app %>'
+                },
+                {
+                    expand: true,
+                    dot: true,
+                    src: '*.*',
+                    dest: '<%= yeoman.dist %>/import/fonts',
+                    cwd: '<%= yeoman.app %>/import/components/font-awesome/fonts'
                 }]
             }
         },
 
 
         shell: {
-            // usemin compresses the css and js, makeing the components lib
-            // unnecessary except the polymer script
-            'clear-bower-components' : {
-                options: {
-                    stdout: true,
-                    stderr: true
-                },
-                command: 'rm -rf <%= yeoman.dist %>/editor/components && '+
-                         'rm -rf <%= yeoman.dist %>/editor/elements'
-            },
             server : {
                 options: {
                     stdout: true,
@@ -139,7 +124,7 @@ module.exports = function (grunt) {
                     inline : true
                 },
                 files : {
-                    '<%= yeoman.dist %>/editor/elements.html': ['<%= yeoman.dist %>/editor/elements.html']
+                    '<%= yeoman.dist %>/import/elements.html': ['<%= yeoman.app %>/import/elements.html']
                 }
             }
         },
@@ -151,12 +136,11 @@ module.exports = function (grunt) {
         'copy:dist',
         'useminPrepare',
         'concat:generated',
-        //'cssmin:generated',
+        'cssmin:generated',
         'uglify:generated',
         //'rev',
         'usemin',
-        'vulcanize',
-        'shell:clear-bower-components'
+        'vulcanize'
     ]);
 
     grunt.registerTask('server', [
