@@ -68,6 +68,10 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
 
+        # TODO: override the package delete button, make sure that deleted packages are removed from search as well
+        # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
+        # TODO: should probably override the API call as well
+
         # connect workspace calls
         controller = 'ckanext.esis.workspace:WorkspaceController'
         map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')

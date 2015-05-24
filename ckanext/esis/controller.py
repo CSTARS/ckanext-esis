@@ -203,7 +203,8 @@ class SpectraController(PackageController):
             return json.dumps({"loggedIn": False})
 
         context = {'model': model, 'user': c.user}
-        orgs = logic.get_action('organization_list_for_user')(context,{})
+        # see line 604 or ckan/logic/action/get about params for this method
+        orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
         return json.dumps({
             "loggedIn": True,
