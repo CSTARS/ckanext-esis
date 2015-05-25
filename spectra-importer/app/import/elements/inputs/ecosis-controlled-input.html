@@ -43,7 +43,7 @@
 
       if( this.schema.description ) {
         this.$.help.style.display = 'block';
-        this.$.help.innerText = this.schema.description;
+        this.$.help.innerHTML = this.schema.description;
       }
 
       if( this.schema.allowOther ) {

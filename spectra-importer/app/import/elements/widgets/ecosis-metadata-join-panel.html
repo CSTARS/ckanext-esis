@@ -92,7 +92,7 @@
       for( var key in this.datasheet.matches ) {
         matchCount += this.datasheet.matches[key]
       }
-      this.$.matchCountLabel.innerText = matchCount;
+      this.$.matchCountLabel.innerHTML = matchCount;
     },
 
     onJoinIdChange : function() {

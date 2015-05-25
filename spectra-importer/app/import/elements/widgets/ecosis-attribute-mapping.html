@@ -103,7 +103,7 @@
 
     ready : function() {
       ecosis.ds.on('load', function(){
-        this.$.dsTitleLabel.innerText = ecosis.ds.data.title;
+        this.$.dsTitleLabel.innerHTML = ecosis.ds.data.title;
         this.updateSelectList();
         this.updateMap();
       }.bind(this));
@@ -211,7 +211,7 @@
 
     renderCurrentList : function() {
       if( Object.keys(ecosis.ds.attributeMap).length == 0 ) {
-        this.$.currentMapRoot.innerText = 'No attributes currently mapped';
+        this.$.currentMapRoot.innerHTML = 'No attributes currently mapped';
         return;
       }
 

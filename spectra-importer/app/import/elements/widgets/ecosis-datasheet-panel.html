@@ -231,9 +231,9 @@
       if( this.resource.datasheets.length == 1 ) {
         var title = this.datasheet.name;
         if( this.datasheet.sheet ) title += ' ('+this.datasheet.sheetname+')';
-        this.$.titleLabel.innerText = title;
+        this.$.titleLabel.innerHTML = title;
       } else { // title is shown by dropdown
-        this.$.titleLabel.innerText = '';
+        this.$.titleLabel.innerHTML = '';
       }
 
       // set count
