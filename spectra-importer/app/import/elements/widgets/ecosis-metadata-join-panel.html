@@ -101,7 +101,7 @@
     },
 
     onWorksheetMatch : function() {
-      if( this.$.worksheetMatch.checked ) {
+      if( $(this.$.worksheetMatch).is(':checked') ) {
         this.datasheet.matchType = 'sheetname';
       } else {
         this.datasheet.matchType = 'attribute';
@@ -195,19 +195,23 @@
     },
 
     updateMatchTypeUi : function() {
-      if( this.datasheet.matchType == 'attribute' ) {
-        $(this.$.filenameMatch).prop('checked', false);
-        $(this.$.worksheetMatch).prop('checked', false);
-        this.$.looseMatchPanel.style.display = 'none';
 
-      } else if( this.datasheet.matchType == 'filename' ) {
+      if( this.datasheet.matchType == 'filename' ) {
+
         $(this.$.filenameMatch).prop('checked', true);
         $(this.$.worksheetMatch).prop('checked', false);
         this.$.looseMatchPanel.style.display = 'block';
 
-      } else {
+      } else if( this.datasheet.matchType == 'sheetname'){
+
         $(this.$.filenameMatch).prop('checked', false);
         $(this.$.worksheetMatch).prop('checked', true);
+        this.$.looseMatchPanel.style.display = 'none';
+
+      } else { // matchType == 'attribute'
+
+        $(this.$.filenameMatch).prop('checked', false);
+        $(this.$.worksheetMatch).prop('checked', false);
         this.$.looseMatchPanel.style.display = 'none';
       }
 
