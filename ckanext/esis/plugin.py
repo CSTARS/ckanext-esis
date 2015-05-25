@@ -70,6 +70,8 @@ class EsisPlugin(plugins.SingletonPlugin,
 
         # TODO: override the package delete button, make sure that deleted packages are removed from search as well
         # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
+        map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
+
         # TODO: should probably override the API call as well
 
         # connect workspace calls
