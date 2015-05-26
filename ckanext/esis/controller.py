@@ -26,7 +26,7 @@ from ckanext.esis.lib.mapReduce import mapreducePackage
 from ckan.controllers.package import PackageController
 import subprocess
 
-
+NotFound = logic.NotFound
 log = logging.getLogger(__name__)
 
 # setup mongo connection
@@ -90,6 +90,31 @@ class SpectraController(PackageController):
                 shutil.rmtree("%s/%s" % (self.workspaceDir, workspace["package_name"]))
 
         return json.dumps({'success': True})
+
+    def deleteOrganizationUi(self, id):
+        # first, get a list of all organizations datasets
+        group = model.Group.get(id)
+
+        if group is None:
+            raise NotFound('Organization was not found.')
+
+        datasets = []
+        for pkg in group.packages(with_private=True):
+            datasets.append(pkg.id)
+
+        # now perform normal delete
+        context = {'model': model, 'user': c.user}
+        logic.get_action('organization_delete')(context, {'id': id})
+
+        # finally remove from spectra and datasets from search
+        searchCollection.remove({'_id' : {'$in' : datasets}})
+        spectraCollection.remove({'ecosis.package_id' : {'$in': datasets}})
+
+        response.status_int = 307
+        response.headers["Location"] = "/dashboard/organizations"
+
+        return "Redirecting"
+
 
     def verifyPrivate(self):
         response.headers["Content-Type"] = "application/json"
@@ -203,7 +228,8 @@ class SpectraController(PackageController):
             return json.dumps({"loggedIn": False})
 
         context = {'model': model, 'user': c.user}
-        orgs = logic.get_action('organization_list_for_user')(context,{})
+        # see line 604 or ckan/logic/action/get about params for this method
+        orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
         return json.dumps({
             "loggedIn": True,

@@ -34,9 +34,7 @@
     is : 'ecosis-spectra-panel',
 
     ready : function() {
-      this.$.chart.options = {
-          explorer : {}
-      }
+      this.$.chart.options = {}
     },
 
     update : function(resource, datasheet) {
@@ -67,7 +65,7 @@
     },
 
     load : function() {
-        this.$.spectraIndexLabel.innerText = this.index+1;
+        this.$.spectraIndexLabel.innerHTML = this.index+1;
 
         if( this.spectraCache[this.index] ) {
             this.renderSpectra(this.spectraCache[this.index]);
