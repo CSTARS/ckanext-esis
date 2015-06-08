@@ -67,6 +67,9 @@ class EsisPlugin(plugins.SingletonPlugin,
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+        # multi delete
+        # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...
+        map.connect('delete_resources', '/rest/deleteResources', controller=controller, action='deleteResources')
 
         # TODO: override the package delete button, make sure that deleted packages are removed from search as well
         # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
