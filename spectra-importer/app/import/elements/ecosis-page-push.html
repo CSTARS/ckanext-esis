@@ -109,13 +109,13 @@
         if( key == 'owner_org' ) {
           for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
             if( ecosis.user.organizations[i].id == ecosis.ds.data.owner_org ) {
-              this.$.owner_org_name.innerText = ecosis.user.organizations[i].display_name;
+              this.$.owner_org_name.innerHTML = ecosis.user.organizations[i].display_name;
               break;
             }
           }
 
         } else if( this.$[key] ) {
-          this.$[key].innerText = ecosis.ds.data[key];
+          this.$[key].innerHTML = ecosis.ds.data[key];
         }
 
 
@@ -146,10 +146,10 @@
 				}
 			}
 
-      this.$.tResources.innerText = ecosis.ds.resources.length;
-      this.$.tMeta.innerText = this.counts.metadataResources;
-      this.$.tData.innerText = this.counts.measurementResources;
-      this.$.tSpectra.innerText = this.counts.measurements;
+      this.$.tResources.innerHTML = ecosis.ds.resources.length;
+      this.$.tMeta.innerHTML = this.counts.metadataResources;
+      this.$.tData.innerHTML = this.counts.measurementResources;
+      this.$.tSpectra.innerHTML = this.counts.measurements;
 
 			this.updatePushStatus();
 		},

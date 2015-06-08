@@ -210,9 +210,9 @@
         this.git = resp;
         if( this.git.branch != 'master' ) {
           this.$.gitInfo.style.display = 'block';
-          this.$.gitBranchLabel.innerText = this.git.branch;
-          this.$.gitVersionLabel.innerText = this.git.version;
-          this.$.gitCommitLabel.innerText = this.git.commit;
+          this.$.gitBranchLabel.innerHTML = this.git.branch;
+          this.$.gitVersionLabel.innerHTML = this.git.version;
+          this.$.gitCommitLabel.innerHTML = this.git.commit;
         }
       }.bind(this));
     },
@@ -287,7 +287,7 @@
         window.location.href = ecosis.ckan.host + '/user/login';
       }
 
-      this.$.usernameLabel.innerText = ecosis.user.username;
+      this.$.usernameLabel.innerHTML = ecosis.user.username;
 
       // set user orgs
       var options = '<option></option>';

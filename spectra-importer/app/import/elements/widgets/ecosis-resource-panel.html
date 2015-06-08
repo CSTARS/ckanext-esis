@@ -82,7 +82,7 @@
     },
 
     update : function() {
-      this.$.titleLabel.innerText = this.resource.name;
+      this.$.titleLabel.innerHTML = this.resource.name;
       this.setClass();
 
       if( !this.resource.datasheets ) {
