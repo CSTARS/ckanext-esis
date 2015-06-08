@@ -73,7 +73,12 @@ class SpectraController(PackageController):
 
     def deletePackage(self):
         response.headers["Content-Type"] = "application/json"
-        params = self._get_request_data(request)
+
+        params = {}
+        try:
+            params = self._get_request_data(request)
+        except:
+            params = {'id': request.params.get('id')}
 
         context = {'model': model, 'user': c.user}
         logic.get_action('package_delete')(context, params)
@@ -132,23 +137,47 @@ class SpectraController(PackageController):
     # if it is, this complicates things, otherwise just pull from
     # spectra collection and then do normal delete
     def deleteResource(self):
+        response.headers["Content-Type"] = "application/json"
+
         params = self._get_request_data(request)
 
+        resp = self._deleteResource(params)
+
+        self.updateWorkspaceAfterDelete(resp['workspace'], [resp['resource']])
+
+        return json.dumps({'success': True})
+
+    def deleteResources(self):
+        response.headers["Content-Type"] = "application/json"
+
+        params = self._get_request_data(request)
         context = {'model': model, 'user': c.user}
 
-        # TODO
-        # auth.hasAccess(package_id)
+        workspace = {}
+        resources = []
+        for id in params.get('ids'):
+            resp = self._deleteResource({'id': id})
+            resources.append(resp['resource'])
+            workspace = resp['workspace']
 
+        self.updateWorkspaceAfterDelete(workspace, resources)
+
+        return json.dumps({'success': True})
+
+    def _deleteResource(self, params):
         # remove resource from disk - normally this doesn't happen
+        context = {'model': model, 'user': c.user}
         r = logic.get_action('resource_show')(context, params)
+
+        # this will fire error if user does not have access
+        logic.get_action('resource_delete')(context, params)
+        id = params.get('id')
+
         if r.get('url_type') == "upload":
             upload = uploader.ResourceUpload(r)
             path = upload.get_path(r['id'])
             if os.path.exists(path):
                 os.remove(path)
-
-        logic.get_action('resource_delete')(context, params)
-        id = params.get('id')
 
         # now remove any spectra that were related
         spectraCollection.remove({'ecosis.resource_id': id})
@@ -170,23 +199,28 @@ class SpectraController(PackageController):
             if os.path.exists("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id'])):
                 shutil.rmtree("%s/%s/%s" % (self.workspaceDir, workspace["package_name"], r['id']))
 
-            # reprocess all metadata
-            (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(workspace['package_id'])
-            resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+        return {'workspace': workspace, 'resource': r}
 
-            # remove any cached match counts
-            for resource in resources:
-                if resource.get('datasheets') == None:
+    # after resources are deleted we need to update all join information
+    def updateWorkspaceAfterDelete(self, workspace, workspaceResources):
+        # reprocess all metadata
+        (workspacePackage, ckanPackage, rootDir, fresh) = setup.init(workspace['package_id'])
+        resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+
+        # remove any cached match counts
+        for resource in resources:
+            if resource.get('datasheets') == None:
+                continue
+
+            for sheet in resource.get('datasheets'):
+                if sheet.get('metadata') != True:
+                    continue
+                if sheet.get('matches') == None:
                     continue
 
-                for sheet in resource.get('datasheets'):
-                    if sheet.get('metadata') != True:
-                        continue
-                    if sheet.get('matches') == None:
-                        continue
+                matches = sheet.get('matches')
 
-                    matches = sheet.get('matches')
-
+                for r in workspaceResources:
                     for datasheet in r.get('datasheets'):
                         if matches.get(datasheet.get('id')):
                             del matches[datasheet.get('id')]
@@ -195,11 +229,13 @@ class SpectraController(PackageController):
                             resource['changes'] = True
                             resource['location'] = "%s/%s/info.json" % (rootDir, resource['id'])
 
-            process.resources(resources, workspacePackage, ckanPackage, rootDir)
+                            break
 
-            # save the units for the package
-            units.updatePackageUnits(ckanPackage, units.getAllAttributes(resources))
 
+        process.resources(resources, workspacePackage, ckanPackage, rootDir)
+
+        # save the units for the package
+        units.updatePackageUnits(ckanPackage, units.getAllAttributes(resources))
 
     # rebuild entire search index
     def rebuildIndex(self):

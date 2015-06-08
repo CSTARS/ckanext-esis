@@ -400,18 +400,21 @@ class WorkspaceSetup:
 
     # returns the md5 hash of a file, file should be a string location
     def _hashfile(self, file):
-        f = open(file, 'rb')
-        blocksize = 65536
-        hasher = hashlib.md5()
+        try:
+            f = open(file, 'rb')
+            blocksize = 65536
+            hasher = hashlib.md5()
 
-        buf = f.read(blocksize)
-        while len(buf) > 0:
-            hasher.update(buf)
             buf = f.read(blocksize)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = f.read(blocksize)
 
-        md5 = hasher.hexdigest()
-        f.close()
-        return md5
+            md5 = hasher.hexdigest()
+            f.close()
+            return md5
+        except:
+            return ''
 
     def _ignoreResource(self, ckanResource, workspacePackage):
         workspaceResource = self._getById(workspacePackage['resources'], ckanResource['id'])
