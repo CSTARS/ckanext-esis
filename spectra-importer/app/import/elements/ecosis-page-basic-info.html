@@ -338,6 +338,7 @@
     },
 
     save : function() {
+      this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
@@ -376,6 +377,10 @@
           );
         }.bind(this)
       );
+    },
+
+    fireScoreUpdate : function() {
+      this.fire('score-update');
     },
 
     /* change handlers */

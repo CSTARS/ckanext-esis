@@ -13,6 +13,9 @@
       box-shadow: 0 0 5px white;
       border: 1px solid white;
     }
+    input[type="checkbox"]:after {
+      border: 2px solid white !important;
+    }
   </style>
 
   <template>
@@ -22,6 +25,7 @@
 
           <div class="layout horizontal">
             <div class="flex">
+              <input type="checkbox" id="select" on-click="fireSelectEvent"/>
               <span id="titleLabel"></span>
               <a class="btn btn-link" style="color:white" on-click="delete" id="trashBtn"><i class="fa fa-trash"></i></a>
               <span class="label label-danger" id="deletePanel" style="display:none">
@@ -176,9 +180,25 @@
       }
     },
 
+    fireSelectEvent : function() {
+      this.fire('resource-select');
+    },
+
+    select : function(select) {
+      if( select ) $(this.$.select).prop('checked', true);
+      else $(this.$.select).prop('checked', false);
+    },
+
+    isSelected : function() {
+      return $(this.$.select).is(':checked');
+    },
+
     delete : function() {
       if( !confirm("Are you sure you want to remove: "+this.resource.name+"?") ) return;
+      this.forceDelete();
+    },
 
+    forceDelete : function() {
       this.$.deletePanel.style.display = 'inline-block';
 
       ecosis.ckan.removeResource(this.resource.id,
@@ -202,6 +222,6 @@
           this.fire('update', this.resourceid);
         }.bind(this)
       );
-    },
+    }
   });
 </script>

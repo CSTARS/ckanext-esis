@@ -1,5 +1,5 @@
 var ecosis = (function(){
-  var host = window.location.host.indexOf(':3000') > -1 ? 'http://72.33.202.211:5000' : window.location.protocol+'//'+window.location.host;
+  var host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.2.138:5000' : window.location.protocol+'//'+window.location.host;
   var pages = ['add-resources', 'current-resources', 'advanced', 'push', 'basic'];
 
   function getVar(variable) {
@@ -48,10 +48,16 @@ var ecosis = (function(){
     ecosis.ds.on('load', function(){
       updatePage();
       $('#splash').modal('hide');
+
+      setTimeout(function(){
+        document.querySelector('ecosis-header').onScoreUpdated();
+      }, 1000);
+    });
+
+    document.querySelector('#basic').addEventListener('score-update', function() {
+      document.querySelector('ecosis-header').onScoreUpdated();
     });
   });
-
-
 
 
   $(window).on('hashchange', updatePage);

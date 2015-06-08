@@ -13,6 +13,12 @@
 
     <h4 class="page-header">Current Resources</h4>
 
+    <div id="removeAll" style="margin-bottom: 20px">
+      <a class="btn btn-link" on-click="selectAll">Select All</a>
+      <a class="btn btn-link" on-click="unselectAll">Unselect All</a>
+
+      <a class="btn btn-danger pull-right" id="deleteAll" on-click="deleteAll" style="display:none">Delete All Selected</a>
+    </div>
     <div id="resourceRoot"></div>
 
     <div id="noResources" id="alert alert-warning" style="display:none">
@@ -52,10 +58,12 @@
       if( ecosis.ds.resources.length == 0 ) {
         this.$.noResources.style.display = 'block';
         this.$.legend.style.display = 'none';
+        this.$.removeAll.style.display = 'none';
         return;
       } else {
         this.$.noResources.style.display = 'none';
         this.$.legend.style.display = 'block';
+        this.$.removeAll.style.display = 'block';
       }
 
       var html = '';
@@ -70,7 +78,67 @@
       // listen for all update events
       $(this.$.resourceRoot)
         .find('ecosis-resource-panel')
-        .on('update', this.onResourceUpdate.bind(this));
+        .on('update', this.onResourceUpdate.bind(this))
+        .on('resource-select', this.onResourceSelect.bind(this));
+    },
+
+    onResourceSelect : function() {
+      this.updateSelectState();
+    },
+
+    deleteAll : function() {
+      if( !confirm('Are you sure you want to delete all selected resources?') ) return;
+
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      var ids = [];
+      for( var i = 0; i < eles.length; i++ ) {
+        eles[i].$.deletePanel.style.display = 'inline-block';
+        ids.push(eles[i].resource.id);
+      }
+
+      ecosis.ckan.deleteResources(ids, function(resp){
+        if( resp.error ) return alert('Error: '+resp.message+' :(');
+
+        for( var i = 0; i < eles.length; i++ ) $(eles[i]).remove();
+
+        for( var i = ecosis.ds.resources.length - 1; i >= 0; i-- ) {
+          if( ids.indexOf(ecosis.ds.resources[i].id) > -1 ) {
+            ecosis.ds.resources.splice(i, 1);
+          }
+        }
+
+        ecosis.ds.fireUpdate();
+
+        if( ecosis.ds.resources.length == 0 ) {
+          this.$.noResources.style.display = 'block';
+          this.$.legend.style.display = 'none';
+          this.$.removeAll.style.display = 'none';
+        }
+
+      }.bind(this));
+    },
+
+    selectAll : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) eles[i].select(true);
+      this.updateSelectState();
+    },
+
+    unselectAll : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) eles[i].select(false);
+      this.updateSelectState();
+    },
+
+    updateSelectState : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) {
+        if( eles[i].isSelected() ) {
+          this.$.deleteAll.style.display = 'block';
+          return;
+        }
+      }
+      this.$.deleteAll.style.display = 'none';
     },
 
     onResourceUpdate : function(e) {
@@ -86,6 +154,13 @@
           panel.$.datasheetUI.datasheet = null;
         }
       }
+
+      if( ecosis.ds.resources.length == 0 ) {
+        this.$.noResources.style.display = 'block';
+        this.$.legend.style.display = 'none';
+        this.$.removeAll.style.display = 'none';
+      }
+
     }
 
 

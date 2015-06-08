@@ -72,11 +72,13 @@
     },
 
     createToken : function() {
-        if(this.$.keywordInput.value.length == 0) return;
+        var value = this.clean(this.$.keywordInput.value)
+
+        if( value.length == 0 ) return;
 
         var t = {
-            label : this.$.keywordInput.value,
-            value : this.$.keywordInput.value
+            label : value,
+            value : value
         }
         this.addToken(t, true);
 
@@ -114,7 +116,7 @@
     renderResults : function() {
       var btns = '';
       for( var i = 0; i < this.results.length; i++ ) {
-        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
+        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
       }
       this.$.resultRoot.innerHTML = btns;
 
@@ -124,7 +126,7 @@
     renderTokens : function() {
       var btns = '';
       for( var i = 0; i < this.tokens.length; i++ ) {
-        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
+        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
       }
       this.$.currentKeywordsRoot.innerHTML = btns;
 
@@ -158,6 +160,10 @@
 
     setSearching : function(searching) {
       this.$.searchingPanel.style.display = searching ? 'inline-block' : 'none';
+    },
+
+    clean : function(txt) {
+      return txt.replace(/[^A-Za-z0-9-_\s]/g, '');
     }
   });
 </script>

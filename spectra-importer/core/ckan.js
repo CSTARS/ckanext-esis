@@ -278,6 +278,13 @@ module.exports = function(config) {
     });
   }
 
+  this.deleteResources = function(resourceIds, callback) {
+    postRaw(this.host+'/rest/deleteResources', JSON.stringify({ids : resourceIds }), function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp);
+    });
+  }
+
   this.pushToSearch = function(pkgid, includeEmail, callback) {
     includeEmail = includeEmail ? 'true' : 'false';
     get(this.host+'/workspace/push?package_id='+pkgid+'&email='+includeEmail, function(err, resp) {

@@ -72,8 +72,8 @@
         </div>
     </div>
 
-    <div id="completePanel" style="display:none; margin-top:20px">
-      <a id="completePanelLink" class="btn btn-default"><i class="fa fa-list"></i> Open resource list</a>
+    <div id="completePanel" style="display:none; margin-top:20px;">
+      <a id="completePanelLink" class="btn btn-primary animated fadeInDownBig"><i class="fa fa-list"></i> Open resource list</a>
     </div>
 
     <div style="margin-top: 40px">
@@ -179,24 +179,35 @@
     },
 
     onUploadComplete : function() {
-        // set default layout and parse workspace
-        ecosis.ckan.setDefaultLayout(
-            ecosis.ds.package_id, this.newResourceIds, this.defaultType,
-            function(resp) {
-                if( resp.error ) return console.log('Error setting default resource layout :(');
+      if( this.newResourceIds.length == 0 ) {
+        this.onProcessingComplete();
+        return;
+      }
 
-                this.$.file.value = '';
-                ecosis.ds.runAfterResourceAdd(resp);
-                this.fire('resource-add');
-                this.setProcessing(false);
+      // set default layout and parse workspace
+      ecosis.ckan.setDefaultLayout(
+          ecosis.ds.package_id, this.newResourceIds, this.defaultType,
+          function(resp) {
+              if( resp.error ) return console.log('Error setting default resource layout :(');
 
-                this.$.completePanel.style.display = 'block';
-            }.bind(this)
-        )
+              ecosis.ds.runAfterResourceAdd(resp);
+              this.onProcessingComplete();
+              this.fire('resource-add');
+
+          }.bind(this)
+      )
+    },
+
+    onProcessingComplete : function() {
+      this.$.file.value = '';
+      this.setProcessing(false);
+
+      alert('Upload finished.');
+      this.$.completePanel.style.display = 'block';
     },
 
     uploadFiles : function(type, index) {
-        if( this.staggedFiles.length == index ) {
+        if( this.staggedFiles.length <= index ) {
             // now tell server to parse resources with given type
             this.onUploadComplete();
             return;
