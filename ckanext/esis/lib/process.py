@@ -383,7 +383,7 @@ class ProcessWorkspace:
 
     # parse a csv or tsv file location into array
     def _processSeperatorFile(self, datasheet, separator, resourceConfig, metadataSheets):
-        with open("%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['name']), 'rb') as csvfile:
+        with open("%s%s%s" % (self.workspaceDir, datasheet['location'], datasheet['name']), 'rU') as csvfile:
             reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
             data = []
             for row in reader:
@@ -620,7 +620,7 @@ def getFileExtension(filename):
      return re.sub(r".*\.", "", filename)
 
 def readSeperatorFile(file, separator):
-    with open(file) as csvfile:
+    with open(file, 'rU') as csvfile:
         reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
         data = []
         for row in reader:
