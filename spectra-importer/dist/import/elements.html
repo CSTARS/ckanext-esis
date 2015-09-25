@@ -6643,11 +6643,16 @@ this._removeChildren();
           <span class="label label-success" style="display:none" id="valid">
             URL: <span id="urlLabelInput"></span>
           </span>
+
+          <div id="message" class="help-block">
+            Please note: your dataset title is <i>PERMANENT</i>.  Please think about the title you choose.
+            Finally, do not use _ or - use spaces instead.  This will help search.
+          
         </div>
       </div>
     </div>
 
-  </template>
+  </div></template>
 </dom-module>
 
 <script>
@@ -6782,11 +6787,13 @@ this._removeChildren();
     },
 
     createToken : function() {
-        if(this.$.keywordInput.value.length == 0) return;
+        var value = this.clean(this.$.keywordInput.value)
+
+        if( value.length == 0 ) return;
 
         var t = {
-            label : this.$.keywordInput.value,
-            value : this.$.keywordInput.value
+            label : value,
+            value : value
         }
         this.addToken(t, true);
 
@@ -6824,7 +6831,7 @@ this._removeChildren();
     renderResults : function() {
       var btns = '';
       for( var i = 0; i < this.results.length; i++ ) {
-        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
+        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
       }
       this.$.resultRoot.innerHTML = btns;
 
@@ -6834,7 +6841,7 @@ this._removeChildren();
     renderTokens : function() {
       var btns = '';
       for( var i = 0; i < this.tokens.length; i++ ) {
-        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
+        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
       }
       this.$.currentKeywordsRoot.innerHTML = btns;
 
@@ -6868,6 +6875,10 @@ this._removeChildren();
 
     setSearching : function(searching) {
       this.$.searchingPanel.style.display = searching ? 'inline-block' : 'none';
+    },
+
+    clean : function(txt) {
+      return txt.replace(/[^A-Za-z0-9-_\s]/g, '');
     }
   });
 </script>
@@ -6879,7 +6890,7 @@ this._removeChildren();
     }
   </style>
   <template>
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container-fluid">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#ecosis-header-collapse">
@@ -6888,7 +6899,7 @@ this._removeChildren();
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">EcoSIS Importer</a>
+          <span class="navbar-brand">EcoSIS Importer <span id="score2" class="visible-xs-inline"></span></span>
         </div>
 
         <div class="collapse navbar-collapse" id="ecosis-header-collapse">
@@ -6908,6 +6919,7 @@ this._removeChildren();
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
             <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+            <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
@@ -6972,6 +6984,18 @@ this._removeChildren();
       } else {
         $(this.$.basicInfo).parent().addClass('active');
       }
+    },
+
+    onScoreUpdated : function() {
+      var score = ecosis.ds.getScore();
+      var total = Object.keys(ecosis.ds.metadataLookup).length;
+
+      var label = 'success';
+      if( score < 3 ) label = 'danger';
+      else if( score < 8 ) label = 'warning';
+
+      this.$.score.innerHTML = '<span class="label label-'+label+'">'+score+'/'+total+'</span>';
+      this.$.score2.innerHTML = '<span class="label label-'+label+'">'+score+'/'+total+'</span>';
     }
 
   });
@@ -8537,6 +8561,9 @@ this._removeChildren();
       box-shadow: 0 0 5px white;
       border: 1px solid white;
     }
+    input[type="checkbox"]:after {
+      border: 2px solid white !important;
+    }
   </style>
 
   <template>
@@ -8546,6 +8573,7 @@ this._removeChildren();
 
           <div class="layout horizontal">
             <div class="flex">
+              <input type="checkbox" id="select" on-click="fireSelectEvent">
               <span id="titleLabel"></span>
               <a class="btn btn-link" style="color:white" on-click="delete" id="trashBtn"><i class="fa fa-trash"></i></a>
               <span class="label label-danger" id="deletePanel" style="display:none">
@@ -8695,9 +8723,25 @@ this._removeChildren();
       }
     },
 
+    fireSelectEvent : function() {
+      this.fire('resource-select');
+    },
+
+    select : function(select) {
+      if( select ) $(this.$.select).prop('checked', true);
+      else $(this.$.select).prop('checked', false);
+    },
+
+    isSelected : function() {
+      return $(this.$.select).is(':checked');
+    },
+
     delete : function() {
       if( !confirm("Are you sure you want to remove: "+this.resource.name+"?") ) return;
+      this.forceDelete();
+    },
 
+    forceDelete : function() {
       this.$.deletePanel.style.display = 'inline-block';
 
       ecosis.ckan.removeResource(this.resource.id,
@@ -8721,7 +8765,7 @@ this._removeChildren();
           this.fire('update', this.resourceid);
         }.bind(this)
       );
-    },
+    }
   });
 </script>
 
@@ -9066,6 +9110,7 @@ this._removeChildren();
     },
 
     save : function() {
+      this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
@@ -9104,6 +9149,10 @@ this._removeChildren();
           );
         }.bind(this)
       );
+    },
+
+    fireScoreUpdate : function() {
+      this.fire('score-update');
     },
 
     /* change handlers */
@@ -9198,6 +9247,12 @@ this._removeChildren();
 
     <h4 class="page-header">Current Resources</h4>
 
+    <div id="removeAll" style="margin-bottom: 20px">
+      <a class="btn btn-link" on-click="selectAll">Select All</a>
+      <a class="btn btn-link" on-click="unselectAll">Unselect All</a>
+
+      <a class="btn btn-danger pull-right" id="deleteAll" on-click="deleteAll" style="display:none">Delete All Selected</a>
+    </div>
     <div id="resourceRoot"></div>
 
     <div id="noResources" style="display:none">
@@ -9237,10 +9292,12 @@ this._removeChildren();
       if( ecosis.ds.resources.length == 0 ) {
         this.$.noResources.style.display = 'block';
         this.$.legend.style.display = 'none';
+        this.$.removeAll.style.display = 'none';
         return;
       } else {
         this.$.noResources.style.display = 'none';
         this.$.legend.style.display = 'block';
+        this.$.removeAll.style.display = 'block';
       }
 
       var html = '';
@@ -9255,7 +9312,67 @@ this._removeChildren();
       // listen for all update events
       $(this.$.resourceRoot)
         .find('ecosis-resource-panel')
-        .on('update', this.onResourceUpdate.bind(this));
+        .on('update', this.onResourceUpdate.bind(this))
+        .on('resource-select', this.onResourceSelect.bind(this));
+    },
+
+    onResourceSelect : function() {
+      this.updateSelectState();
+    },
+
+    deleteAll : function() {
+      if( !confirm('Are you sure you want to delete all selected resources?') ) return;
+
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      var ids = [];
+      for( var i = 0; i < eles.length; i++ ) {
+        eles[i].$.deletePanel.style.display = 'inline-block';
+        ids.push(eles[i].resource.id);
+      }
+
+      ecosis.ckan.deleteResources(ids, function(resp){
+        if( resp.error ) return alert('Error: '+resp.message+' :(');
+
+        for( var i = 0; i < eles.length; i++ ) $(eles[i]).remove();
+
+        for( var i = ecosis.ds.resources.length - 1; i >= 0; i-- ) {
+          if( ids.indexOf(ecosis.ds.resources[i].id) > -1 ) {
+            ecosis.ds.resources.splice(i, 1);
+          }
+        }
+
+        ecosis.ds.fireUpdate();
+
+        if( ecosis.ds.resources.length == 0 ) {
+          this.$.noResources.style.display = 'block';
+          this.$.legend.style.display = 'none';
+          this.$.removeAll.style.display = 'none';
+        }
+
+      }.bind(this));
+    },
+
+    selectAll : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) eles[i].select(true);
+      this.updateSelectState();
+    },
+
+    unselectAll : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) eles[i].select(false);
+      this.updateSelectState();
+    },
+
+    updateSelectState : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) {
+        if( eles[i].isSelected() ) {
+          this.$.deleteAll.style.display = 'block';
+          return;
+        }
+      }
+      this.$.deleteAll.style.display = 'none';
     },
 
     onResourceUpdate : function(e) {
@@ -9271,6 +9388,13 @@ this._removeChildren();
           panel.$.datasheetUI.datasheet = null;
         }
       }
+
+      if( ecosis.ds.resources.length == 0 ) {
+        this.$.noResources.style.display = 'block';
+        this.$.legend.style.display = 'none';
+        this.$.removeAll.style.display = 'none';
+      }
+
     }
 
 
@@ -9351,8 +9475,8 @@ this._removeChildren();
         </div>
     </div>
 
-    <div id="completePanel" style="display:none; margin-top:20px">
-      <a id="completePanelLink" class="btn btn-default"><i class="fa fa-list"></i> Open resource list</a>
+    <div id="completePanel" style="display:none; margin-top:20px;">
+      <a id="completePanelLink" class="btn btn-primary animated fadeInDownBig"><i class="fa fa-list"></i> Open resource list</a>
     </div>
 
     <div style="margin-top: 40px">
@@ -9457,24 +9581,35 @@ this._removeChildren();
     },
 
     onUploadComplete : function() {
-        // set default layout and parse workspace
-        ecosis.ckan.setDefaultLayout(
-            ecosis.ds.package_id, this.newResourceIds, this.defaultType,
-            function(resp) {
-                if( resp.error ) return console.log('Error setting default resource layout :(');
+      if( this.newResourceIds.length == 0 ) {
+        this.onProcessingComplete();
+        return;
+      }
 
-                this.$.file.value = '';
-                ecosis.ds.runAfterResourceAdd(resp);
-                this.fire('resource-add');
-                this.setProcessing(false);
+      // set default layout and parse workspace
+      ecosis.ckan.setDefaultLayout(
+          ecosis.ds.package_id, this.newResourceIds, this.defaultType,
+          function(resp) {
+              if( resp.error ) return console.log('Error setting default resource layout :(');
 
-                this.$.completePanel.style.display = 'block';
-            }.bind(this)
-        )
+              ecosis.ds.runAfterResourceAdd(resp);
+              this.onProcessingComplete();
+              this.fire('resource-add');
+
+          }.bind(this)
+      )
+    },
+
+    onProcessingComplete : function() {
+      this.$.file.value = '';
+      this.setProcessing(false);
+
+      alert('Upload finished.');
+      this.$.completePanel.style.display = 'block';
     },
 
     uploadFiles : function(type, index) {
-        if( this.staggedFiles.length == index ) {
+        if( this.staggedFiles.length <= index ) {
             // now tell server to parse resources with given type
             this.onUploadComplete();
             return;
@@ -10267,37 +10402,7 @@ this._removeChildren();
 		},
 
 		updatePushStatus : function() {
-			var attrs = [];
-			var count = 0;
-
-      // check for spectra level ecosis metadata
-			ecosis.ds.schema.forEach(function(item){
-				if( ecosis.ds.isEcosisMetadata(item.name) ) {
-          count++;
-        } else if( ecosis.ds.inverseAttributeMap[item.name] &&
-                  ecosis.ds.isEcosisMetadata(ecosis.ds.inverseAttributeMap[item.name]) ) {
-
-          count++;
-        }
-			}.bind(this));
-
-      var map = {
-        'Keywords' : 'tags',
-        'Author' : 'author',
-        'Author Email' : 'author_email',
-        'Maintainer' : 'maintainer',
-        'Maintainer Email' : 'maintainer_email'
-      }
-
-      // check dataset level ecosis metadata
-      for( var key in ecosis.ds.metadataLookup ) {
-        if( map[key] && ecosis.ds.data[map[key]] ) {
-          count++;
-        } else if( ecosis.ds.getDatasetExtra(key).value ) {
-          count++;
-        }
-      }
-
+			var count = ecosis.ds.getScore();
 
 			if( count < this.requireEcosisAttrs ) {
 				this.$.pushBtn.style.display = 'none';

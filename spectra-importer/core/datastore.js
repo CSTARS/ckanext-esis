@@ -185,4 +185,38 @@ module.exports = function(config) {
     }
     return false;
   }
+
+  this.getScore = function() {
+    var count = 0;
+
+    // check for spectra level ecosis metadata
+    this.schema.forEach(function(item){
+      if( this.isEcosisMetadata(item.name) ) {
+        count++;
+      } else if( this.inverseAttributeMap[item.name] &&
+                this.isEcosisMetadata(this.inverseAttributeMap[item.name]) ) {
+
+        count++;
+      }
+    }.bind(this));
+
+    var map = {
+      'Keywords' : 'tags',
+      'Author' : 'author',
+      'Author Email' : 'author_email',
+      'Maintainer' : 'maintainer',
+      'Maintainer Email' : 'maintainer_email'
+    }
+
+    // check dataset level ecosis metadata
+    for( var key in this.metadataLookup ) {
+      if( map[key] && this.data[map[key]] ) {
+        count++;
+      } else if( this.getDatasetExtra(key).value ) {
+        count++;
+      }
+    }
+
+    return count;
+  }
 }

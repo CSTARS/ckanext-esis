@@ -155,37 +155,7 @@
 		},
 
 		updatePushStatus : function() {
-			var attrs = [];
-			var count = 0;
-
-      // check for spectra level ecosis metadata
-			ecosis.ds.schema.forEach(function(item){
-				if( ecosis.ds.isEcosisMetadata(item.name) ) {
-          count++;
-        } else if( ecosis.ds.inverseAttributeMap[item.name] &&
-                  ecosis.ds.isEcosisMetadata(ecosis.ds.inverseAttributeMap[item.name]) ) {
-
-          count++;
-        }
-			}.bind(this));
-
-      var map = {
-        'Keywords' : 'tags',
-        'Author' : 'author',
-        'Author Email' : 'author_email',
-        'Maintainer' : 'maintainer',
-        'Maintainer Email' : 'maintainer_email'
-      }
-
-      // check dataset level ecosis metadata
-      for( var key in ecosis.ds.metadataLookup ) {
-        if( map[key] && ecosis.ds.data[map[key]] ) {
-          count++;
-        } else if( ecosis.ds.getDatasetExtra(key).value ) {
-          count++;
-        }
-      }
-
+			var count = ecosis.ds.getScore();
 
 			if( count < this.requireEcosisAttrs ) {
 				this.$.pushBtn.style.display = 'none';
