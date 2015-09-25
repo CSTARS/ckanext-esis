@@ -433,10 +433,6 @@ class ProcessWorkspace:
         if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
             type = "wavelength"
             name = re.sub(r"\.0+$", "", name)
-        elif re.match(r".*__d$", name) or isData:
-            name = re.sub(r"__d$", "", name)
-            type = "data"
-            declared = True
 
         name = vocab.getEcoSISName(name)
 
