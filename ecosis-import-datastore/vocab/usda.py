@@ -1,9 +1,9 @@
 usdaCollection = None
 
-def init(collection):
+def init(collections):
     global usdaCollection
 
-    usdaCollection = collection
+    usdaCollection = collections.get('usda')
 
 def setCodes(spectra):
     if not 'USDA Symbol' in spectra:

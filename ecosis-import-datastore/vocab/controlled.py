@@ -7,7 +7,7 @@ def init(schemaDef):
 
     schema = schemaDef
 
-def getEcoSISName(self, key):
+def getEcoSISName(key):
     flat = utils.flatten(key)
 
     if schema.get(flat) != None:

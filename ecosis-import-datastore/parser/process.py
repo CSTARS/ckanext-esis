@@ -1,13 +1,12 @@
 import utils, csv, excel
 
-resourceCollection = None
-spectraCollection = None
+collections = None
 
-def init(rCollection, sCollection):
-    global resourceCollection, spectraCollection
 
-    resourceCollection = rCollection
-    spectraCollection = sCollection
+def init(co):
+    global collections
+
+    collections = co
 
 def processFile(file="", packageId="", resourceId="", sheetId=None, options={}):
     ext = utils.getFileExtension(file)
@@ -16,7 +15,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}):
     ignore = False
 
     # get config for sheet if on exists
-    sheetConfig = resourceCollection.find_one({
+    sheetConfig = collections.get('resource').find_one({
         "resourceId" : resourceId,
         "packageId" : packageId,
         "sheetId" : sheetId
@@ -36,7 +35,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}):
     sheetConfig['sheetId'] = sheetId
 
     # clear spectra collection
-    spectraCollection.remove({
+    collections.get('spectra').remove({
         "resourceId" : resourceId,
         "packageId" : packageId,
         "sheetId" : sheetId
@@ -77,7 +76,7 @@ def _processTsv(sheetConfig):
 
 # parse a csv or tsv file location into array
 def _processSeperatorFile(separator, sheetConfig):
-    with open("%s%s%s" % sheetConfig.get('file'), 'rU') as csvfile:
+    with open(sheetConfig.get('file'), 'rU') as csvfile:
         reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
         data = []
         for row in reader:
@@ -132,11 +131,11 @@ def _processSheetArray(data, sheetConfig):
     elif 'globalRange' in sheetConfig:
         del sheetConfig['globalRange']
 
-    resourceCollection.update({
+    collections.get('resource').update({
         "resourceId" : sheetConfig.get('resourceId'),
         "packageId" : sheetConfig.get('packageId'),
         "sheetId" : sheetConfig.get('sheetId')
-    }, sheetConfig)
+    }, sheetConfig, upsert=True)
 
     # create a quick lookup for 'tweaked' names
     nameMap = {}
@@ -152,14 +151,14 @@ def _processSheetArray(data, sheetConfig):
             for i in range(len(data[start])):
                 try:
                     if data[start+j][i]:
-                        sp[_getName(data[start][i])] = data[start+j][i]
-                except:
+                        sp[_getName(nameMap, data[start][i])] = data[start+j][i]
+                except Exception as e:
                     pass
 
             # add global data
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']):
-                    sp[_getName(data[i][0])] = data[i][1]
+                    sp[_getName(nameMap, data[i][0])] = data[i][1]
 
             _insertSpectra(sp, sheetConfig)
 
@@ -170,7 +169,7 @@ def _processSheetArray(data, sheetConfig):
             for i in range(start, localRange['stop']):
                 try:
                     if data[i][j]:
-                        sp[_getName(data[i][0])] = data[i][j]
+                        sp[_getName(nameMap, data[i][0])] = data[i][j]
                 except:
                     pass
 
@@ -182,9 +181,9 @@ def _processSheetArray(data, sheetConfig):
             _insertSpectra(sp, sheetConfig)
 
 def _insertSpectra(sp, sheetConfig):
-    type = sheetConfig.get("type")
-    if type == None:
-        type = "data"
+    type = "data"
+    if sheetConfig.get('metadata') == True:
+        type = "metadata"
 
     data = {
         "spectra" : sp,
@@ -193,7 +192,7 @@ def _insertSpectra(sp, sheetConfig):
         "sheetId" : sheetConfig.get("sheetId"),
         "type" : type
     }
-    spectraCollection.insert(data)
+    collections.get('spectra').insert(data)
 
 def _getName(nameMap, name):
     mapped = nameMap.get(name)

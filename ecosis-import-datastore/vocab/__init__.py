@@ -1,6 +1,6 @@
 import controlled, usda
 
-def init(schema, usdaCollection):
+def init(schema, collections):
     controlled.init(schema)
-    usda.init(usdaCollection)
+    usda.init(collections)
 

@@ -1,30 +1,41 @@
 import re, dateutil, json
 import package as ckanPackageQuery
+import resource as ckanResourceQuery
 from vocab import usda
 from vocab import controlled as controlledVocab
 
-spectraCollection = None
-resourceCollection = None
-packageCollection = None
+collections = None
+host = ""
 
-def init(rCollection, spCollection, pCollection, pgConn):
-    global spectraCollection, resourceCollection, packageCollection
+def init(co, pgConn, hostUrl):
+    global collections, host
 
-    spectraCollection = spCollection
-    resourceCollection = rCollection
-    packageCollection = pCollection
+    collections = co
+    host = hostUrl
+
     ckanPackageQuery.init(pgConn)
+    ckanResourceQuery.init(pgConn)
 
 def get(packageId="", index=0):
-    main = spectraCollection.find_one({"type": "data", "packageId": packageId}, skip=index)
+    main = collections.get('spectra').find_one({"type": "data", "packageId": packageId}, skip=index)
+
+    if main == None:
+        raise Exception('Unabled to get spectra from package_id: %s at index %s' % (packageId, index))
+
     spectra = main.get('spectra')
+
+    sheetInfo = collections.get('resource').find_one({
+        "packageId": packageId,
+        "resourceId": main.get("resourceId"),
+        "sheetId" : main.get("sheetId")
+    })
 
     package = ckanPackageQuery.get(packageId)
 
     join(packageId, spectra)
     moveWavelengths(spectra)
 
-    config = packageCollection.find_one({"packageId": packageId})
+    config = collections.get('package').find_one({"packageId": packageId})
     if config == None:
         config = {}
 
@@ -34,7 +45,7 @@ def get(packageId="", index=0):
 
     controlledVocab.enforce(spectra)
 
-    addEcosisNamespace(spectra, packageId, package, main)
+    addEcosisNamespace(spectra, package, main, sheetInfo)
     setSort(spectra, package)
     setLocation(spectra)
 
@@ -42,14 +53,14 @@ def get(packageId="", index=0):
 
 def total(packageId, resourceId=None):
     query = {
-        type : "data",
-        packageId : packageId
+        "type" : "data",
+        "packageId" : packageId
     }
 
     if resourceId != None:
         query['resourceId'] = resourceId
 
-    return spectraCollection.count(query)
+    return collections.get('spectra').count(query)
 
 def setLocation(spectra):
     if spectra.get('geojson') != None:
@@ -88,8 +99,9 @@ def setLocation(spectra):
             pass
 
 def setSort(spectra, package):
-    sort_on = getPackageExtra("sort_on", package)
-    sort_type = getPackageExtra("sort_type", package)
+    sort_on = package['extras'].get("sort_on")
+    sort_type = package['extras'].get("sort_type")
+
     if sort_on != None:
         if sort_on in spectra:
             if sort_type == 'datetime':
@@ -105,13 +117,17 @@ def setSort(spectra, package):
             else:
                 spectra['ecosis']['sort'] = spectra[sort_on]
 
-def addEcosisNamespace(spectra, packageId, package, main):
+def addEcosisNamespace(spectra, package, main, sheetInfo):
+    resource = ckanResourceQuery.get(sheetInfo.get('resourceId'))
+
     ecosis = {
-        'package_id': packageId,
+        'package_id': sheetInfo.get("packageId"),
         'package_title': package.get('title'),
         'resource_id' : main.get('resourceId'),
-        'filename': main.get('resourceName'),
+        'filename': resource.get('name'),
         'datasheet_id': main.get('sheetId'),
+        'dataset_link' : '%s#result/%s' % (host, sheetInfo.get('packageId')),
+        'dataset_api_link' : '%spackage/get?id=%s' % (host, sheetInfo.get('packageId'))
     }
 
     if package.get('organization') != None:
@@ -130,13 +146,21 @@ def moveWavelengths(spectra):
     for name in spectra:
         if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
             wavelengths[name] = spectra[name]
-            del spectra[name]
+
+    for name in wavelengths:
+        del spectra[name]
+
     spectra['datapoints'] = wavelengths
 
 def join(packageId, spectra):
-    joinableSheets = resourceCollection.find({"type": "metadata", "packageId": packageId})
+    joinableSheets = collections.get('resource').find({"metadata": True, "packageId": packageId})
+
     for sheetConfig in joinableSheets:
-        joinVar = spectra.get(sheetConfig.get('joinOn'))
+        joinOn = sheetConfig.get('joinOn')
+        if joinOn == None:
+            continue
+
+        joinVar = spectra.get(joinOn)
 
         if joinVar != None:
             query = {
@@ -144,20 +168,10 @@ def join(packageId, spectra):
                 "packageId" : packageId,
                 "resourceId" : sheetConfig["resourceId"]
             }
-            query[sheetConfig.get('joinOn')] = joinVar
+            query["spectra.%s" % sheetConfig.get('joinOn')] = joinVar
 
-            joinData = spectraCollection.find_one(query)
+            joinData = collections.get('spectra').find_one(query)
             if joinData != None:
                 for key in joinData.get("spectra"):
                     if spectra.get(key) == None:
                         spectra[key] = joinData.get("spectra").get(key)
-
-def getPackageExtra(attr, pkg):
-    extra = pkg.get('extras')
-    if extra == None:
-        return None
-
-    for item in extra:
-        if item.get('key') == attr:
-            return item.get('value')
-    return None

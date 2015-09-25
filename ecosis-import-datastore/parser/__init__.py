@@ -1,4 +1,4 @@
 import process
 
-def init(rCollection, sCollection):
-    process.init(rCollection, sCollection)
+def init(collections):
+    process.init(collections)

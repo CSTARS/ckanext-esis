@@ -58,7 +58,7 @@ def _isEmptyRow(row):
 
 # parse out the attribute information from the attribute information
 # TODO: check for units and attribute data type
-def parseAttrType(self, name, pos, isData=False):
+def parseAttrType(name, pos):
     original = name
     units = None
 

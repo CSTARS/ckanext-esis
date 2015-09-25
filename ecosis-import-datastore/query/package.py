@@ -24,4 +24,13 @@ def get(package_id):
     for row in rows:
         package['extras'][row['key']] = row['value']
 
+    ownerOrg = package.get('owner_org')
+    if ownerOrg != None and ownerOrg != "":
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("select * from group where id = %s", (ownerOrg,))
+        rows = cur.fetchall()
+
+        if len(rows) > 0:
+            package['organization'] = rows[0]
+
     return package
