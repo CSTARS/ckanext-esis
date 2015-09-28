@@ -10,13 +10,13 @@ import os.path
 from ckan.lib.base import BaseController
 from ckan.common import request, response
 
-from ckanext.esis.lib.join import SheetJoin
-from ckanext.esis.lib.push import Push
-from ckanext.esis.lib.setup import WorkspaceSetup
-from ckanext.esis.lib.process import ProcessWorkspace, getFile
-import ckanext.esis.lib.auth as auth
-import ckanext.esis.lib.units as units
-from ckanext.esis.lib.utils import getById, getMergedResources
+from ckanext.ecosis.lib.join import SheetJoin
+from ckanext.ecosis.lib.push import Push
+from ckanext.ecosis.lib.setup import WorkspaceSetup
+from ckanext.ecosis.lib.process import ProcessWorkspace, getFile
+import ckanext.ecosis.lib.auth as auth
+import ckanext.ecosis.lib.units as units
+from ckanext.ecosis.lib.utils import getById, getMergedResources
 
 # helpers from ./lib
 joinlib = SheetJoin()
@@ -24,17 +24,17 @@ joinlib = SheetJoin()
 log = logging.getLogger(__name__)
 
 # setup mongo connection
-client = MongoClient(config._process_configs[1]['esis.mongo.url'])
-db = client[config._process_configs[1]['esis.mongo.db']]
+client = MongoClient(config._process_configs[1]['ecosis.mongo.url'])
+db = client[config._process_configs[1]['ecosis.mongo.db']]
 
-workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
+workspaceCollectionName = config._process_configs[1]['ecosis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
 
-infoCollectionName = config._process_configs[1]['esis.mongo.info_collection']
+infoCollectionName = config._process_configs[1]['ecosis.mongo.info_collection']
 infoCollection = db[infoCollectionName]
 
 # TODO: need to add usda parsing to getSpectra
-usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
+usdaCollection = db[config._process_configs[1]['ecosis.mongo.usda_collection']]
 
 
 setup = WorkspaceSetup()

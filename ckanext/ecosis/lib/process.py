@@ -5,7 +5,7 @@ import xlrd, csv, re, json, time, pickle, hashlib
 from pylons import config
 from controlledVocab import ControlledVocab
 from infoFile import saveInfoFile
-from ckanext.esis.lib.join import joinOnSpectra
+from ckanext.ecosis.lib.join import joinOnSpectra
 
 vocab = ControlledVocab()
 

@@ -3,7 +3,7 @@ from bson.code import Code
 from bson.son import SON
 from pylons import config
 
-searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
+searchCollectionName = config._process_configs[1]['ecosis.mongo.search_collection']
 path = os.path.dirname(os.path.abspath(__file__))
 
 # read in mapreduce strings

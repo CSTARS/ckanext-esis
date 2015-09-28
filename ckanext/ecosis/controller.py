@@ -16,12 +16,14 @@ from bson.code import Code
 from bson.son import SON
 import os, shutil
 
-from ckanext.esis.lib.setup import WorkspaceSetup
-from ckanext.esis.lib.process import ProcessWorkspace
-from ckanext.esis.lib.join import SheetJoin
-import ckanext.esis.lib.auth as auth
-import ckanext.esis.lib.units as units
-from ckanext.esis.lib.mapReduce import mapreducePackage
+from ckanext.ecosis.lib.setup import WorkspaceSetup
+from ckanext.ecosis.lib.process import ProcessWorkspace
+from ckanext.ecosis.lib.join import SheetJoin
+import ckanext.ecosis.lib.auth as auth
+import ckanext.ecosis.lib.units as units
+from ckanext.ecosis.lib.mapReduce import mapreducePackage
+
+import ckanext
 
 from ckan.controllers.package import PackageController
 import subprocess
@@ -30,18 +32,18 @@ NotFound = logic.NotFound
 log = logging.getLogger(__name__)
 
 # setup mongo connection
-client = MongoClient(config._process_configs[1]['esis.mongo.url'])
-db = client[config._process_configs[1]['esis.mongo.db']]
+client = MongoClient(config._process_configs[1]['ecosis.mongo.url'])
+db = client[config._process_configs[1]['ecosis.mongo.db']]
 
-spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection']]
+spectraCollection = db[config._process_configs[1]['ecosis.mongo.spectra_collection']]
 
-searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
+searchCollectionName = config._process_configs[1]['ecosis.mongo.search_collection']
 searchCollection = db[searchCollectionName]
 
-workspaceCollectionName = config._process_configs[1]['esis.mongo.workspace_collection']
+workspaceCollectionName = config._process_configs[1]['ecosis.mongo.workspace_collection']
 workspaceCollection = db[workspaceCollectionName]
 
-usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
+usdaCollection = db[config._process_configs[1]['ecosis.mongo.usda_collection']]
 
 joinlib = SheetJoin()
 setup = WorkspaceSetup()

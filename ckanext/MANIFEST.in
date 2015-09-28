@@ -1,2 +1,2 @@
-recursive-include ckanext/esis/templates                                           *
-recursive-include ckanext/esis/public                                              *
+recursive-include ckanext/ecosis/templates                                           *
+recursive-include ckanext/ecosis/public                                              *

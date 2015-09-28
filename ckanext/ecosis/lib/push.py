@@ -5,21 +5,21 @@ from ckan.lib.base import c
 from pymongo import MongoClient
 from pylons import config
 import dateutil.parser, json, inspect
-from ckanext.esis.lib.mapReduce import mapreducePackage
-from ckanext.esis.lib.controlledVocab import ControlledVocab
-from ckanext.esis.lib.utils import getMergedResources
-from ckanext.esis.lib.process import getLayout, getFile
-from ckanext.esis.lib.join import joinOnSpectra
+from ckanext.ecosis.lib.mapReduce import mapreducePackage
+from ckanext.ecosis.lib.controlledVocab import ControlledVocab
+from ckanext.ecosis.lib.utils import getMergedResources
+from ckanext.ecosis.lib.process import getLayout, getFile
+from ckanext.ecosis.lib.join import joinOnSpectra
 from ckan.lib.email_notifications import send_notification
 
-client = MongoClient(config._process_configs[1]['esis.mongo.url'])
-db = client[config._process_configs[1]['esis.mongo.db']]
-spectraCollection = db[config._process_configs[1]['esis.mongo.spectra_collection']]
-searchCollectionName = config._process_configs[1]['esis.mongo.search_collection']
+client = MongoClient(config._process_configs[1]['ecosis.mongo.url'])
+db = client[config._process_configs[1]['ecosis.mongo.db']]
+spectraCollection = db[config._process_configs[1]['ecosis.mongo.spectra_collection']]
+searchCollectionName = config._process_configs[1]['ecosis.mongo.search_collection']
 searchCollection = db[searchCollectionName]
 
-usdaCollection = db[config._process_configs[1]['esis.mongo.usda_collection']]
-searchCollection = db[config._process_configs[1]['esis.mongo.search_collection']]
+usdaCollection = db[config._process_configs[1]['ecosis.mongo.usda_collection']]
+searchCollection = db[config._process_configs[1]['ecosis.mongo.search_collection']]
 
 vocab = ControlledVocab();
 vocab.setCollection(usdaCollection)
@@ -94,7 +94,7 @@ def sub_run(q, package, resources, ckanPackage, workspacePackage, workspaceDir, 
                 "body" : ("Your dataset '%s' has been pushed to EcoSIS Search.  "
                             "You can view your dataset here:  %s#result/%s"
                             "\n\n-The EcoSIS Team") %
-                         (ckanPackage["title"], c.environ['pylons.pylons'].config['esis.search_url'], ckanPackage["id"])
+                         (ckanPackage["title"], c.environ['pylons.pylons'].config['ecosis.search_url'], ckanPackage["id"])
             }
         )
 

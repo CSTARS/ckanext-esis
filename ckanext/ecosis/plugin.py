@@ -2,7 +2,7 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import pylons.config as config
 
-class EsisPlugin(plugins.SingletonPlugin,
+class EcosisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
     '''An example IDatasetForm CKAN plugin.
 
@@ -19,7 +19,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
 
-    # set helpers for esis templates
+    # set helpers for ecosis templates
     def get_helpers(self):
         # Example:
         #return { 'to_json' : 'self.to_json' }
@@ -42,7 +42,7 @@ class EsisPlugin(plugins.SingletonPlugin,
 
     # override?
     def set_map(self, map):
-        controller = 'ckanext.esis.controller:SpectraController'
+        controller = 'ckanext.ecosis.controller:SpectraController'
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
@@ -78,7 +78,7 @@ class EsisPlugin(plugins.SingletonPlugin,
         # TODO: should probably override the API call as well
 
         # connect workspace calls
-        controller = 'ckanext.esis.workspace:WorkspaceController'
+        controller = 'ckanext.ecosis.workspace:WorkspaceController'
         map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('process_workspace', '/workspace/process', controller=controller, action='processWorkspace')
         map.connect('process_resource', '/workspace/processResource', controller=controller, action='processResource')
@@ -110,17 +110,17 @@ class EsisPlugin(plugins.SingletonPlugin,
         return schema
 
     def create_package_schema(self):
-        schema = super(EsisPlugin, self).create_package_schema()
+        schema = super(EcosisPlugin, self).create_package_schema()
         schema = self._modify_package_schema(schema)
         return schema
 
     def update_package_schema(self):
-        schema = super(EsisPlugin, self).update_package_schema()
+        schema = super(EcosisPlugin, self).update_package_schema()
         schema = self._modify_package_schema(schema)
         return schema
 
     def show_package_schema(self):
-        schema = super(EsisPlugin, self).show_package_schema()
+        schema = super(EcosisPlugin, self).show_package_schema()
 
         return schema
 
@@ -130,26 +130,26 @@ class EsisPlugin(plugins.SingletonPlugin,
         return
 
     def setup_template_variables(self, context, data_dict):
-        return super(EsisPlugin, self).setup_template_variables(
+        return super(EcosisPlugin, self).setup_template_variables(
                 context, data_dict)
 
     def new_template(self):
-        return super(EsisPlugin, self).new_template()
+        return super(EcosisPlugin, self).new_template()
 
     def read_template(self):
-        return super(EsisPlugin, self).read_template()
+        return super(EcosisPlugin, self).read_template()
 
     def edit_template(self):
-        return super(EsisPlugin, self).edit_template()
+        return super(EcosisPlugin, self).edit_template()
 
     def comments_template(self):
-        return super(EsisPlugin, self).comments_template()
+        return super(EcosisPlugin, self).comments_template()
 
     def search_template(self):
-        return super(EsisPlugin, self).search_template()
+        return super(EcosisPlugin, self).search_template()
 
     def history_template(self):
-        return super(EsisPlugin, self).history_template()
+        return super(EcosisPlugin, self).history_template()
 
     def package_form(self):
-        return super(EsisPlugin, self).package_form()
+        return super(EcosisPlugin, self).package_form()
