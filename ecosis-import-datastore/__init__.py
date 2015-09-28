@@ -1,17 +1,18 @@
-import parser, query, vocab
+import parser, ckan, vocab, delete, query, workspace
 import json, ConfigParser, time
 from pymongo import MongoClient
 import psycopg2
-import parser.process as importer
+from utils import storage as ckanFileStorage
 
-from query import package
+from ckan import package
 
-def init(schema, collections, pgConn, host):
+def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
     parser.init(collections)
-    query.init(collections, pgConn, host)
+    ckan.init(pgConn)
+    query.init(collections, host)
     vocab.init(schema, collections)
-
-
+    delete.init(collections)
+    workspace.init(collections, resourceUtil, workspacePath)
 
 def test():
     t = time.time()*1000
@@ -35,27 +36,18 @@ def test():
     db = client[config.get("app:main", "ecosis.mongo.db")]
 
     collections = {
-        "spectra" : db["workspace_spectra"],
-        "resource" : db["workspace_resources"],
-        "package" : db["workspace_packages"],
+        "spectra" : db[config.get("app:main", "ecosis.mongo.workspace_spectra_collection")],
+        "resource" : db[config.get("app:main", "ecosis.mongo.workspace_resource_collection")],
+        "package" : db[config.get("app:main", "ecosis.mongo.workspace_package_collection")],
         "usda" : db[config.get("app:main", "ecosis.mongo.usda_collection")]
     }
 
-    init(schema, collections, pgConn, config.get("app:main", "ecosis.search_url"))
+    ckanFileStorage.init(config)
+    init(schema, collections, pgConn, config.get("app:main", "ecosis.search_url"), ckanFileStorage, config.get("app:main", "ecosis.workspace.root"))
 
-    importer.processFile(file, '05cd4761-49ff-4f0d-9a6c-0a0adb223f69', '41d27ad5-802e-4e95-a3ee-102bc423b31b', None, {"layout":"column", "metadata": False})
-    importer.processFile(metadataFile, '05cd4761-49ff-4f0d-9a6c-0a0adb223f69', '04db4e2b-8904-41a0-8f96-b4de1ac9fe0a', None, {"metadata":True,"joinOn":"spectra"})
+    workspace.clean()
+    workspace.prepare('05cd4761-49ff-4f0d-9a6c-0a0adb223f69')
 
-    print "%sms" % ((time.time()*1000)-t)
-    t = time.time()*1000
-
-    total = query.total("05cd4761-49ff-4f0d-9a6c-0a0adb223f69")
-    for j in range(0, 100):
-        for i in range(0, total):
-            sp = query.get("05cd4761-49ff-4f0d-9a6c-0a0adb223f69", i)
-
-
-    print "%sms" % ((time.time()*1000)-t)
 
 
 if __name__ == "__main__":

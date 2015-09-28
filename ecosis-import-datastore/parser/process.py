@@ -1,4 +1,5 @@
 import utils, csv, excel
+import ckan.resource as ckanResourceQuery
 
 collections = None
 
@@ -8,8 +9,11 @@ def init(co):
 
     collections = co
 
-def processFile(file="", packageId="", resourceId="", sheetId=None, options={}):
-    ext = utils.getFileExtension(file)
+def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, resource=None):
+    if resource is None:
+        resource = ckanResourceQuery.get(resourceId)
+
+    ext = utils.getFileExtension(resource.get('name'))
 
     # check for ignore conditions
     ignore = False
@@ -106,7 +110,7 @@ def _processSheetArray(data, sheetConfig):
     if localRange['start'] == localRange['stop']:
         return
 
-    # query all the attribute types based on layout
+    # ckan all the attribute types based on layout
     attrTypes = []
     if layout == "row":
         for i in range(0, len(data[localRange['start']])):

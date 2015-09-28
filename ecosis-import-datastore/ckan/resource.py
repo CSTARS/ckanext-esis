@@ -18,3 +18,9 @@ def get(resource_id):
         resource = resource[0]
 
     return resource
+
+# get all active resources
+def active(package_id):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("select * from resource where state = 'active' and url_type = 'upload' and package_id = %s", (package_id,))
+    return cur.fetchall()

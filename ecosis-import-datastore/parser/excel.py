@@ -37,6 +37,10 @@ def process(collection, file, packageId, resourceId, sheetConfig):
                         "sheetId": id
                     }
 
+                # tack on zip stuff
+                if sheetConfig.get("fromZip") == True:
+                    config["fromZip"] = True
+                    config["zip"] = sheetConfig.get("zip")
 
             data = getWorksheetData(workbook.sheet_by_name(sheet))
 

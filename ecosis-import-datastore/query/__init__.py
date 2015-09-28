@@ -1,20 +1,19 @@
 import re, dateutil, json
-import package as ckanPackageQuery
-import resource as ckanResourceQuery
+import ckan.package as ckanPackageQuery
+import ckan.resource as ckanResourceQuery
+import workspace
 from vocab import usda
 from vocab import controlled as controlledVocab
 
 collections = None
 host = ""
 
-def init(co, pgConn, hostUrl):
+def init(co, hostUrl):
     global collections, host
 
     collections = co
     host = hostUrl
-
-    ckanPackageQuery.init(pgConn)
-    ckanResourceQuery.init(pgConn)
+    workspace.init(co)
 
 def get(packageId="", index=0):
     main = collections.get('spectra').find_one({"type": "data", "packageId": packageId}, skip=index)
@@ -175,3 +174,4 @@ def join(packageId, spectra):
                 for key in joinData.get("spectra"):
                     if spectra.get(key) == None:
                         spectra[key] = joinData.get("spectra").get(key)
+

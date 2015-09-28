@@ -41,7 +41,7 @@ def mapreducePackage(ckanPkg, attributes, spectraCollection, searchCollection):
 
     # TODO: remove this later on
     #finalize = Code(self.mapreduce['finalize'])
-    #spectraCollection.map_reduce(map, reduce, finalize=finalizeJs, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": pkg['id']})
+    #spectraCollection.map_reduce(map, reduce, finalize=finalizeJs, out=SON([("merge", searchCollectionName)]), ckan={"ecosis.package_id": pkg['id']})
 
     spectraCollection.map_reduce(mapJs, reduceJs, finalize=finalizeJs, out=SON([("merge", searchCollectionName)]), query={"ecosis.package_id": ckanPkg['id']})
     spectra_count = spectraCollection.find({"ecosis.package_id": ckanPkg['id']}).count()
