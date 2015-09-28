@@ -34,6 +34,7 @@ Assuming the file is a supported tabular type.  Currently:
  - xls
  - xlsx
  - spectra (parsed as tsv)
+ - zip (extracted and crawled for above filetypes)
 
 The files will be parsed and added to the spectra workspace collection.  This
 collection contains 'chunks' for spectra based on the current parse information.
@@ -65,6 +66,18 @@ This collection contains the 'options' provided above as well as:
   "package_id" : String,
   "resource_id" : String,
   "sheet_id" : String,
+
+  // flag that this a from a ckan resource that was a zip file
+  // the importer is then faking as a new resource that CKAN is unaware of
+  "fromZip" : Boolean,
+
+  // if this resource is from a zipfile, keep track of the 'parent' zipfile info
+  "zip" : {
+    // zip file name
+    "name" : String,
+    // zip file resource id (known to CKAN)
+    "resource_id" : String
+  },
 
   // the tabular data parser figures out where the data actually starts and stops.
   // so if the first row with data is row 8, then start would be 8.
