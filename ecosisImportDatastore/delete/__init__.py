@@ -1,10 +1,13 @@
+import os, shutil
 
 collections = None
+workspaceDir = None
 
-def init(mongoCollections):
-    global collections
+def init(mongoCollections, workspaceDirectory):
+    global collections, workspaceDir
 
     collections = mongoCollections
+    workspaceDir = workspaceDirectory
 
 def package(package_id):
     collections.get('package').remove({
@@ -18,6 +21,10 @@ def package(package_id):
     collections.get('resource').remove({
         "packageId": package_id,
     })
+
+    # clear anything placed on the filesystem workspace
+    workspacePath = os.path.join(workspaceDir, package_id)
+    shutil.rmtree(workspacePath)
 
 
 def resource(package_id, resource_id):

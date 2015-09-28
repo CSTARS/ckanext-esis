@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import re, os, shutil, zipfile, hashlib
-import ckan.resource as ckanResourceQuery
-import parser.process as importer
+import ecosisImportDatastore.ckan.resource as ckanResourceQuery
+import ecosisImportDatastore.parser.process as importer
 
 dataExtension = ["xlsx","xls","spectra","csv","tsv"]
 packageExpireTime = timedelta(days=1)

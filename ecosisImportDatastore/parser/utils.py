@@ -1,5 +1,5 @@
 import re
-from vocab import controlled as controlledVocabulary
+from ..vocab import controlled as controlledVocabulary
 
 def getFileExtension(filename):
      return re.sub(r".*\.", "", filename)

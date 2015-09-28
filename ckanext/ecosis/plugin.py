@@ -63,9 +63,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
         # override the routes to delete packages and resources
-        map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
+        #map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-        map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
+        #map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
         # multi delete
         # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...
@@ -92,6 +92,14 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('get_layout_overview', '/workspace/getLayoutOverview', controller=controller, action='getLayoutOverview')
         map.connect('get_spectra', '/workspace/getSpectra', controller=controller, action='getSpectra')
         map.connect('push_to_search', '/workspace/push', controller=controller, action='pushToSearch')
+
+
+        controller = 'ckanext.ecosis.controller:EcosisController'
+        map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
+        map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
+
+
+
 
         return map
 

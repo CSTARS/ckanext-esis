@@ -1,5 +1,5 @@
 import utils, csv, excel
-import ckan.resource as ckanResourceQuery
+import ecosisImportDatastore.ckan.resource as ckanResourceQuery
 
 collections = None
 

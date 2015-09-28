@@ -1,5 +1,6 @@
 import parser, ckan, vocab, delete, query, workspace
 import json, ConfigParser, time
+import query.workspace as workspaceQuery
 from pymongo import MongoClient
 import psycopg2
 from utils import storage as ckanFileStorage
@@ -11,7 +12,7 @@ def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
     ckan.init(pgConn)
     query.init(collections, host)
     vocab.init(schema, collections)
-    delete.init(collections)
+    delete.init(collections, workspacePath)
     workspace.init(collections, resourceUtil, workspacePath)
 
 def test():
@@ -48,7 +49,8 @@ def test():
     workspace.clean()
     workspace.prepare('05cd4761-49ff-4f0d-9a6c-0a0adb223f69')
 
-
+    result  = workspaceQuery.get('05cd4761-49ff-4f0d-9a6c-0a0adb223f69')
+    foo = 1
 
 if __name__ == "__main__":
     test()

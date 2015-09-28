@@ -1,9 +1,9 @@
 import re, dateutil, json
-import ckan.package as ckanPackageQuery
-import ckan.resource as ckanResourceQuery
+import ecosisImportDatastore.ckan.package as ckanPackageQuery
+import ecosisImportDatastore.ckan.resource as ckanResourceQuery
 import workspace
-from vocab import usda
-from vocab import controlled as controlledVocab
+from ..vocab import usda
+from ..vocab import controlled as controlledVocab
 
 collections = None
 host = ""

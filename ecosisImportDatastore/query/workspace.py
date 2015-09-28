@@ -1,4 +1,5 @@
-import ckan.resource as ckanResourceQuery
+import ecosisImportDatastore.ckan.resource as ckanResourceQuery
+import ecosisImportDatastore.ckan.package as ckanPackageQuery
 
 collections = None
 
@@ -13,9 +14,17 @@ def get(package_id):
     resources = ckanResourceQuery.active(package_id)
 
     response = {
-        "package" : None,
-        "resources" : []
+        "package" : collections.get("package").find_one({"packageId":package_id}),
+        "resources" : [],
+        "ckan" : {
+            "package" : ckanPackageQuery.get(package_id),
+            "resources" : resources
+        }
     }
+
+    if response['package'] is None:
+        response['package'] = {}
+
 
     for resource in resources:
         sheets = collections.get("resource").find({
@@ -23,12 +32,8 @@ def get(package_id):
             "resourceId" : resource.get('id')
         })
 
-        # resource has not been processed
-        if sheets is None or len(sheets) == 0:
-            continue
-
         for sheet in sheets:
-            response.get('resources').push(sheet)
+            response.get('resources').append(sheet)
 
     # now add all zip file resources
     resources = collections.get("resource").find({
@@ -37,4 +42,6 @@ def get(package_id):
     })
 
     for resourceOrSheet in resources:
-        response.get('resources').push(resourceOrSheet)
+        response.get('resources').append(resourceOrSheet)
+
+    return response
