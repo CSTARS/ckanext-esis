@@ -42,47 +42,11 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
     # override?
     def set_map(self, map):
-        controller = 'ckanext.ecosis.controller:SpectraController'
-        # Most of the routes are defined via the IDatasetForm interface
-        # (ie they are the ones for a package type)
-
-        # new routes
-
-
-
-
-
-
-
-        # multi delete
-
-
-        # TODO: override the package delete button, make sure that deleted packages are removed from search as well
-        # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
-        # map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
-
-        # TODO: should probably override the API call as well
-
-        # connect workspace calls
-        controller = 'ckanext.ecosis.workspace:WorkspaceController'
-        map.connect('process_workspace', '/workspace/process', controller=controller, action='processWorkspace')
-        map.connect('process_resource', '/workspace/processResource', controller=controller, action='processResource')
-        map.connect('set_parse_info', '/workspace/setParseInfo', controller=controller, action='setParseInformation')
-        map.connect('update_join', '/workspace/updateJoin', controller=controller, action='updateJoin')
-        map.connect('set_default_layout', '/workspace/setDefaultLayout', controller=controller, action='setDefaultLayout')
-        map.connect('get_datasheet', '/workspace/getDatasheet', controller=controller, action='getDatasheet')
-        map.connect('set_attribute_info', '/workspace/setAttributeInfo', controller=controller, action='setAttributeInfo')
-        map.connect('set_dataset_attributes', '/workspace/setDatasetAttributes', controller=controller, action='setDatasetAttributes')
-        map.connect('set_attribute_map', '/workspace/setAttributeMap', controller=controller, action='setAttributeMap')
-        map.connect('get_layout_overview', '/workspace/getLayoutOverview', controller=controller, action='getLayoutOverview')
-        map.connect('get_spectra', '/workspace/getSpectra', controller=controller, action='getSpectra')
-        map.connect('push_to_search', '/workspace/push', controller=controller, action='pushToSearch')
-
 
         # The 'new' way
         controller = 'ckanext.ecosis.controller:EcosisController'
 
-        # Standard
+        # Standard CKAN overrides
         map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
@@ -98,20 +62,32 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
 
-        # ecosis
+        # ecosis - admin
         map.connect('rebuild_index', '/ecosis/admin/rebuildIndex', controller=controller, action='rebuildIndex')
         map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
 
-
+        # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
+        map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setWorkspaceOptions')
 
+        # ecosis - root
         map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
         map.connect('userInfo', '/ecosis/userInfo', controller=controller, action='userInfo')
 
+        # ecosis - resource
         # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...
         # still the case? - JM
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
+        map.connect('process_resource', '/ecosis/resource/process', controller=controller, action='processResource')
+        map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
+
+        # ecosis - spectra
+        map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='get')
+
+        # ecosis - workspace
+        map.connect('prepare_workspace', '/ecosis/workspace/prepare', controller=controller, action='prepareWorkspace')
+        map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
 
 
         return map
@@ -122,11 +98,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         return []
 
     def _modify_package_schema(self, schema):
-        #schema.update({
-        #        'access_level': [tk.get_validator('ignore_missing'),
-        #            tk.get_converter('convert_to_tags')('access_levels')]
-        #        })
-
         # Add custom access_level as extra field
         return schema
 

@@ -1,29 +1,33 @@
+import urllib2, json
+import ckan.lib.helpers as h
 
-def getMergedResources(resourceId, resources, workspacePackage, removeValues=True):
-    resource = getById(resources, resourceId)
-    if resource == None:
-        return {"error":True,"message":"resource not found"}
+# replicating default param parsing in ckan... really python... really...
+# TODO: see if this is really needed
+def get_request_data(request):
+    try:
+        keys = request.POST.keys()
+        # Parsing breaks if there is a = in the value, so for now
+        # we will check if the data is actually all in a single key
+        if keys and request.POST[keys[0]] in [u'1', u'']:
+            request_data = keys[0]
+        else:
+            request_data = urllib2.unquote_plus(request.body)
+    except Exception, inst:
+        msg = "Could not find the POST data: %r : %s" % \
+              (request.POST, inst)
+        raise ValueError(msg)
 
-    workspaceResource = getById(workspacePackage['resources'], resourceId)
-    if workspaceResource == None:
-        workspaceResource = {"datasheets":[]}
+    try:
+        request_data = h.json.loads(request_data, encoding='utf8')
+    except ValueError, e:
+        raise ValueError('Error decoding JSON data. '
+                         'Error: %r '
+                         'JSON data extracted from the request: %r' %
+                          (e, request_data))
+    return request_data
 
-    for datasheet in resource['datasheets']:
-        workspaceDs = getById(workspaceResource['datasheets'], datasheet['id'])
-        if workspaceDs != None:
-            for key, value in workspaceDs.iteritems():
-                datasheet[key] = value
-            if 'matchValues' in datasheet and removeValues:
-                del datasheet['matchValues']
-
-    return resource
-
-# given an array of objects that have an id attribute, get one by id
-def getById(arr, id):
-    if arr == None:
-        return None
-
-    for obj in arr:
-        if obj.get('id') == id:
-            return obj
-    return None
+def handleError(e):
+    json.dumps({
+        "error": True,
+        "message": str(e)
+    })
