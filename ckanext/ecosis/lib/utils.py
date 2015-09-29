@@ -1,5 +1,6 @@
-import urllib2, json
+import urllib2, json, datetime
 import ckan.lib.helpers as h
+from ckan.common import response
 
 # replicating default param parsing in ckan... really python... really...
 # TODO: see if this is really needed
@@ -27,7 +28,18 @@ def get_request_data(request):
     return request_data
 
 def handleError(e):
+    response.headers["Content-Type"] = "application/json"
+
     return json.dumps({
         "error": True,
         "message": str(e)
     })
+
+def jsonStringify(obj):
+    return json.dumps(obj, default=jsondefault)
+
+def jsondefault(obj):
+    if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
+        return obj.isoformat()
+    else:
+        return None

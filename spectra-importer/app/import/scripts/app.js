@@ -34,6 +34,15 @@ var ecosis = (function(){
     if( ele && ele.onShow ) ele.onShow();
   }
 
+  function onLoad(){
+    updatePage();
+    $('#splash').modal('hide');
+
+    setTimeout(function(){
+      document.querySelector('ecosis-header').onScoreUpdated();
+    }, 1000);
+  }
+
   // show splash screen
   $(document).ready(function(){
     $('.page').hide();
@@ -44,15 +53,23 @@ var ecosis = (function(){
       return;
     }
 
-    $('#splash').modal();
-    ecosis.ds.on('load', function(){
-      updatePage();
-      $('#splash').modal('hide');
+    if( ecosis.ds.loaded || ecosis.ds.loadingError ) {
+      if( ecosis.ds.loadingError ) {
+        alert('Error loading workspace: '+ecosis.ds.loadingError.message);
+      } else {
+        onLoad()
+      }
+    } else {
+      $('#splash').modal();
+      ecosis.ds.on('load-error', function(e){
+        alert('Error loading workspace: '+e.message);
+        $('#splash').modal('hide');
+      });
 
-      setTimeout(function(){
-        document.querySelector('ecosis-header').onScoreUpdated();
-      }, 1000);
-    });
+      ecosis.ds.on('load', onLoad);
+    }
+
+
 
     document.querySelector('#basic').addEventListener('score-update', function() {
       document.querySelector('ecosis-header').onScoreUpdated();

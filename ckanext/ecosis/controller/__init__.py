@@ -10,10 +10,7 @@ from ckan.controllers.package import PackageController
 from ecosis.controller import git, admin, organization, package, resource, spectra, user
 from ecosis.controller import workspace as workspaceController
 from ecosis.lib.utils import handleError
-
-
-# import relative module
-from ecosis import datastore as workspace
+from ecosis import datastore
 
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
@@ -41,7 +38,7 @@ collections = {
 
 upload = uploader.ResourceUpload({})
 
-workspace.init(schema, collections, pgConn, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
+datastore.init(schema, collections, pgConn, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
 
 
 class EcosisController(PackageController):
@@ -107,6 +104,12 @@ class EcosisController(PackageController):
     def prepareWorkspace(self):
         try:
             return workspaceController.prepare()
+        except Exception as e:
+            return handleError(e)
+
+    def getWorkspace(self):
+        try:
+            return workspaceController.get()
         except Exception as e:
             return handleError(e)
 

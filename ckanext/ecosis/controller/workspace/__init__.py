@@ -2,6 +2,7 @@ import ecosis.datastore.workspace as workspace
 import ecosis.datastore.query.workspace as workspaceQuery
 from ecosis.lib.auth import hasAccess
 from ecosis.datastore.push import Push
+from ecosis.lib.utils import jsonStringify
 
 from ckan.common import request, response
 from ckan.lib.base import c, model
@@ -12,13 +13,18 @@ def prepare():
 
     package_id = request.params.get('package_id')
 
-    hasAccess(package_id)
+    # get package by name or id
+    context = {'model': model, 'user': c.user}
+    ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
-    force = request.params.get('package_id')
+    if ckanPackage == None:
+        raise Exception('Invalid package ID')
+
+    force = request.params.get('force')
     if force == None:
         force = False
 
-    return workspace.prepare(package_id, force)
+    return jsonStringify(workspace.prepare(ckanPackage.get("id"), force))
 
 def pushToSearch(self):
     response.headers["Content-Type"] = "application/json"
@@ -38,13 +44,15 @@ def pushToSearch(self):
 
     push = Push()
 
-    return push.run(ckanPackage, email, c.user)
+    return jsonStringify(push.run(ckanPackage, email, c.user))
 
 def get():
     response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
 
-    hasAccess(package_id)
+    # get package by name or id
+    context = {'model': model, 'user': c.user}
+    ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
-    return workspaceQuery.get(package_id)
+    return jsonStringify(workspaceQuery.get(ckanPackage.get("id")))

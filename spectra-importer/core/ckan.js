@@ -7,16 +7,20 @@ var isBrowser = request.agent ? false : true;
 module.exports = function(config) {
   this.host = config.host || '/';
 
-  this.processWorkspace = function(pkgid, callback) {
-    get(this.host+'/ecosis/workspace/process?package_id='+pkgid, function(err, resp){
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+  this.prepareWorkspace = function(pkgid, callback) {
+    get(this.host+'/ecosis/workspace/prepare?force=true&package_id='+pkgid, function(err, resp){
+      callback(resp.body);
+    });
+  }
+
+  this.getWorkspace = function(pkgid, callback) {
+    get(this.host+'/ecosis/workspace/get?package_id='+pkgid, function(err, resp){
       callback(resp.body);
     });
   }
 
   this.getActiveUser = function(callback) {
     get(this.host+'/ecosis/user/get', function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body)
     });
   }

@@ -68,6 +68,7 @@
     },
 
     ready : function() {
+      this.datatypes = ['xls','xlsx','csv','tsv','spectra'];
       this.edit = false;
     },
 
@@ -146,15 +147,21 @@
     },
 
     getResourceType : function() {
-      if( this.resource.datasheets && this.resource.datasheets.length == 1 && this.resource.datasheets[0].metadata ) {
-        return 'metadata';
+      if( this.resource.datasheets && this.resource.datasheets.length == 1 ) {
+        if( this.resource.datasheets[0].metadata ) {
+          return 'metadata';
+        } else if( this.resource.datasheets[0].ignore ) {
+          return 'ignored';
+        }
       }
-      if( this.resource.type == 'zip' ) {
+
+      var type = this.resource.name.replace(/.*\./,'').toLowerCase();
+      if( type == 'zip' ) {
         return 'zip';
-      }
-      if( this.resource.type == 'datafile' ) {
+      } else if( this.datatypes.indexOf(type) > -1 ) {
         return 'data';
       }
+
       return 'ignored';
     },
 

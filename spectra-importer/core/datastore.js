@@ -86,59 +86,89 @@ module.exports = function(config) {
   };
 
   this.load = function() {
-    this.ckan.processWorkspace(this.package_id, function(result){
+    this.ckan.prepareWorkspace(this.package_id, function(result){
 
       if( result.error ) {
-        this.loadingError = true;
-        ee.emit('error', {message : result});
-        return callback();
+        this.loadingError = result;
+        ee.emit('load-error', result);
+        return
       }
 
-      this.result = result;
-      this._setData();
+      this.ckan.getWorkspace(this.package_id, function(result){
+        if( result.error ) {
+          this.loadingError = result;
+          ee.emit('load-error', result);
+          return
+        }
 
+        this.result = result;
+        this._setData();
 
-      this.loaded = true;
-      ee.emit('load');
+        this.loaded = true;
+        ee.emit('load');
+
+      }.bind(this));
     }.bind(this));
   };
 
   // helper for when data loads
   this._setData = function() {
     this.editMode = true;
-    this.package_id = this.result.package.id;
+
+    var ckanPackage = this.result.ckan.package;
+    this.package_id = ckanPackage.id;
 
     // set the default attirbutes for this dataset
     for( var key in this.data ) {
-      if( this.result.package[key] ) this.data[key] = this.result.package[key];
+      if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
     }
 
     this.schema = [];
-    for( var attrName in this.result.attributes ) {
-      var attr = this.result.attributes[attrName];
-      attr.name = attrName;
-      this.schema.push(attr);
-    }
+    /*
+      for( var attrName in this.result.attributes ) {
+        var attr = this.result.attributes[attrName];
+        attr.name = attrName;
+        this.schema.push(attr);
+      }
+    */
 
-    this.wavelengths = this.result.wavelengths;
+    /*
+      this.wavelengths = this.result.wavelengths;
+    */
 
-    if( this.result.datasetAttributes ) {
-      this.datasetAttributes = this.result.datasetAttributes;
-    }
+    /*
+      if( this.result.datasetAttributes ) {
+        this.datasetAttributes = this.result.datasetAttributes;
+      }
+    */
 
-    if( this.result.attributeMap ) {
-      this.attributeMap = this.result.attributeMap;
-      for( var key in this.result.attributeMap ) {
-        this.inverseAttributeMap[this.result.attributeMap[key]] = key;
+    this.datasheets = this.result.resources;
+
+    if( this.result.package.map ) {
+      this.attributeMap = this.result.package.map;
+      for( var key in this.result.package.map ) {
+        this.inverseAttributeMap[this.result.package.map[key]] = key;
       }
     }
 
-    this.result.resources.sort(function(a, b){
+    this.result.ckan.resources.sort(function(a, b){
       if( a.name > b.name ) return 1;
       if( a.name < b.name ) return -1;
       return 0;
     });
-    this.resources = this.result.resources;
+
+    this.resources = this.result.ckan.resources;
+
+    // map resources to datasheets for daster lookup
+    for( var i = 0; i < this.resources.length; i++ ) {
+      var datasheets = [];
+      for( var j = 0; j < this.datasheets.length; j++ ) {
+        if( this.datasheets[j].resourceId == this.resources[i].id ) {
+          datasheets.push(this.datasheets[j]);
+        }
+      }
+      this.resources[i].datasheets = datasheets;
+    }
 
     this.fireUpdate();
   }

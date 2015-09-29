@@ -30,15 +30,13 @@
                   <input id="inputIsMetadata" type="checkbox" on-change="onMetadataUpdate"> This datasheet only contains metadata to be joined on given data.
                 </label>
               </div>
-              <span class="help-block">
-                NOTE:  Metadata must be in row format.
-              </span>
-
-              <ecosis-metadata-join-panel
-                  id="joinMetadata"
-                  style="display:none"
-                  on-metadata-update='onMetadataPanelUpdate'>
-              </ecosis-metadata-join-panel>
+              <!--
+                <ecosis-metadata-join-panel
+                    id="joinMetadata"
+                    style="display:none"
+                    on-metadata-update='onMetadataPanelUpdate'>
+                </ecosis-metadata-join-panel>
+              -->
             </div>
 
           </div>
@@ -138,35 +136,35 @@
     is : 'ecosis-datasheet-panel',
 
     ready : function() {
-      this.datasheet = null;
+      this.sheet = null;
     },
 
     update : function(resource, datasheet) {
       this.resource = resource;
-      this.datasheetId = datasheet.id;
-      this.datasheet = null;
+      this.sheet = datasheet;
+
       this.$.spectraUi.style.display = 'none';
-      this.setLoading(true);
+
+      this.edit();
+      this.setLoading(false);
     },
 
     save : function() {
       this.setSaving(true);
       this.$.parseOverview.style.display = 'none';
 
-      var resource = {
-          id : this.resource.id,
-          datasheets : [{
-              id : this.datasheet.id,
-              layout : this.datasheet.layout,
-              ignore : this.datasheet.ignore ? true : false,
-              metadata : this.datasheet.metadata ? true : false
-          }]
-      };
+      var options = {
+        layout : this.sheet.layout,
+        metadata : this.sheet.metadata,
+        ignore : this.sheet.ignore,
+        joinOn : this.sheet.joinOn
+      }
 
-      ecosis.ckan.setParseInfo(
+      ecosis.ckan.processResource(
           ecosis.ds.package_id,
-          resource,
-          this.datasheet.id,
+          this.sheet.resourceId,
+          this.sheet.sheetId,
+          options,
           function(resp){
             this.setSaving(false);
 
@@ -179,9 +177,9 @@
                 var r = resp.resources[i];
 
                 for( var j = 0; j < r.datasheets.length; j++ ) {
-                    if( r.datasheets[j].id == this.datasheet.id ) {
+                    if( r.datasheets[j].id == this.sheet.id ) {
                         for( var key in r.datasheets[j] ) {
-                            this.datasheet[key] = r.datasheets[j][key];
+                            this.sheet[key] = r.datasheets[j][key];
                         }
                         break;
                     }
@@ -201,15 +199,15 @@
             // and mark just this datasheet as loaded.  This will make sure things
             // like the attribute list in the metadata panel are set correctly.
             //setTimeout(function(){
-            //    this.datasheet.loaded = true;
+            //    this.sheet.loaded = true;
             //}.bind(this));
 
             this.updateMetadataUi();
             this.updateIgnoreUi();
 
             // update spectra count
-            if( this.datasheet.spectra_count ) {
-              this.$.spectraCountLabel.innerHTML = '('+this.datasheet.spectra_count+')';
+            if( this.sheet.spectra_count ) {
+              this.$.spectraCountLabel.innerHTML = '('+this.sheet.spectra_count+')';
             } else {
               this.$.spectraCountLabel.innerHTML = '';
             }
@@ -219,41 +217,41 @@
     },
 
     edit : function(callback) {
-      if( !this.datasheet ) {
+      /*if( !this.sheet ) {
         this.loadFullDatasheet(callback);
         return;
-      } else if( this.datasheet.id != this.datasheetId ) {
+      } else if( this.sheet.id != this.resourceid ) {
         this.loadFullDatasheet(callback);
         return;
-      }
+      }*/
 
       // set title
       if( this.resource.datasheets.length == 1 ) {
-        var title = this.datasheet.name;
-        if( this.datasheet.sheet ) title += ' ('+this.datasheet.sheetname+')';
+        var title = this.sheet.name;
+        if( this.sheet.sheetId ) title += ' ('+this.sheet.sheetId+')';
         this.$.titleLabel.innerHTML = title;
       } else { // title is shown by dropdown
         this.$.titleLabel.innerHTML = '';
       }
 
       // set count
-      if( this.datasheet.spectra_count ) {
-        this.$.spectraCountLabel.innerHTML = '('+this.datasheet.spectra_count+')';
+      if( this.sheet.spectra_count ) {
+        this.$.spectraCountLabel.innerHTML = '('+this.sheet.spectra_count+')';
       } else {
         this.$.spectraCountLabel.innerHTML = '';
       }
 
       // show parse error
-      if( this.datasheet.error ) this.$.parseError.style.display = 'block';
+      if( this.sheet.error ) this.$.parseError.style.display = 'block';
       else this.$.parseError.style.display = 'none';
 
       // should we show the metadata selection
-      if( this.datasheet.ignore ) this.$.metadataSelectPanel.style.display = 'none';
+      if( this.sheet.ignore ) this.$.metadataSelectPanel.style.display = 'none';
       else this.$.metadataSelectPanel.style.display = 'block';
 
 
       // set the correct layout
-      if( this.datasheet.layout == 'column' ) {
+      if( this.sheet.layout == 'column' ) {
         this.$.columnInput.setAttribute('checked', '');
         this.$.rowInput.removeAttribute('checked');
       } else {
@@ -268,16 +266,16 @@
     },
 
     updateMetadataUi : function() {
-      if( this.datasheet.metadata ) {
-        this.$.joinMetadata.update(this.datasheet, this.resource);
+      if( this.sheet.metadata ) {
+        this.$.joinMetadata.update(this.sheet, this.resource);
         this.$.joinMetadata.style.display = 'block';
         this.$.spectraPanel.style.display = 'none';
-        this.$.orientationPanel.style.display = 'none';
+        //this.$.orientationPanel.style.display = 'none';
         this.$.inputIsMetadata.setAttribute('checked','');
       } else {
         this.$.joinMetadata.style.display = 'none';
         this.$.spectraPanel.style.display = 'block';
-        this.$.orientationPanel.style.display = 'block';
+        //this.$.orientationPanel.style.display = 'block';
         this.$.inputIsMetadata.removeAttribute('checked');
       }
     },
@@ -285,7 +283,7 @@
     updateIgnoreUi : function() {
       var panels = ['spectraPanel', 'parseOverviewPanel', 'orientationPanel', 'metadataSelectPanel'];
 
-      if( this.datasheet.ignore ) {
+      if( this.sheet.ignore ) {
         panels.forEach(function(id){
           this.$[id].style.display = 'none';
         }.bind(this));
@@ -300,8 +298,8 @@
     },
 
     onOrientationChange : function(e) {
-      this.datasheet.layout = e.currentTarget.value;
-      if( this.datasheet.layout == 'column' ) {
+      this.sheet.layout = e.currentTarget.value;
+      if( this.sheet.layout == 'column' ) {
         $(this.$.rowInput).prop('checked', false);
       } else {
         $(this.$.columnInput).prop('checked', false);
@@ -313,7 +311,7 @@
     toggleCurrentParse : function() {
       if( this.$.parseOverview.style.display == 'none' ) {
         this.$.parseOverview.style.display = 'block';
-        this.$.parseOverview.update(this.resource, this.datasheet);
+        this.$.parseOverview.update(this.resource, this.sheet);
       } else {
         this.$.parseOverview.style.display = 'none';
       }
@@ -322,7 +320,7 @@
     toggleSpectra : function() {
       if( this.$.spectraUi.style.display == 'none' ) {
         this.$.spectraUi.style.display = 'block';
-        this.$.spectraUi.update(this.resource, this.datasheet);
+        this.$.spectraUi.update(this.resource, this.sheet);
       } else {
         this.$.spectraUi.style.display = 'none';
       }
@@ -333,16 +331,31 @@
     },
 
     loadFullDatasheet : function(callback) {
-      this.setLoading(true);
 
-      ecosis.ckan.getDatasheet(ecosis.ds.package_id, this.resource.id, this.datasheetId, function(resp){
+      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+        var sheet = ecosis.ds.datasheets[i];
+        if( this.sheetId ) {
+          if( sheet.resourceId == this.resourceid && sheet.sheetId == this.sheetId ) {
+            this.sheet = sheet;
+            break;
+          }
+        } else if( sheet.resourceId == this.resourceid ) {
+          this.sheet = sheet;
+        }
+      }
+
+      this.edit();
+
+      if( callback ) callback();
+
+      /*ecosis.ckan.getDatasheet(ecosis.ds.package_id, this.resource.id, this.sheetId, function(resp){
         this.setLoading(false);
 
-        this.datasheet = resp;
+        this.sheet = resp;
         this.edit();
 
         if( callback ) callback();
-      }.bind(this));
+      }.bind(this));*/
     },
 
     setLoading : function(loading) {
@@ -367,10 +380,10 @@
 
     onMetadataUpdate : function() {
       if( $(this.$.inputIsMetadata).is(':checked') ) {
-        this.datasheet.metadata = true;
+        this.sheet.metadata = true;
         this.fire('type-change', {type: 'metadata'});
       } else {
-        this.datasheet.metadata = false;
+        this.sheet.metadata = false;
         this.fire('type-change', {type: 'data'});
       }
 
@@ -382,9 +395,9 @@
 
     onIgnoreUpdate : function() {
       if( $(this.$.inputIgnore).is(':checked') ) {
-        this.datasheet.ignore = true;
+        this.sheet.ignore = true;
       } else {
-        this.datasheet.ignore = false;
+        this.sheet.ignore = false;
       }
       this.updateIgnoreUi();
 
