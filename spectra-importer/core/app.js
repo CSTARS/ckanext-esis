@@ -28,6 +28,7 @@ module.exports = function(config) {
       this.userLoadError = true;
     }
 
+
     this.user = resp;
     ee.emit('user-load');
   }.bind(this));

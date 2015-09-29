@@ -73,7 +73,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - root
         map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
-        map.connect('userInfo', '/ecosis/userInfo', controller=controller, action='userInfo')
+        map.connect('userInfo', '/ecosis/user/get', controller=controller, action='userInfo')
 
         # ecosis - resource
         # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...

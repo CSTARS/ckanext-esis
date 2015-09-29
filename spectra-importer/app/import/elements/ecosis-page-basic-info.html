@@ -27,8 +27,15 @@
     <div class="well" style="font-size: 14px; color: #888">
       <div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome <span id="usernameLabel"></span>.</div>
       Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />
-      First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
+      <b>First time adding data?</b>  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
+      <br /><br />
+      <div>
+        <i class="fa fa-star" style="color:#2196f3"></i> = Recommented Input.  If you can't fill out everything, please try
+        and at least fill out any starred field.
+      </div>
     </div>
+
+
 
     <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
 
@@ -155,7 +162,7 @@
 
         <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
 
-        <div id="helpCreatePanel" class="help-block" style="display:none">
+        <div id="helpCreatePanel" class="text text-warning" style="display:none">
           You must provide a valid dataset title to create.
         </div>
       </div>
@@ -164,16 +171,9 @@
       </div>
     </div>
 
-
-
-    <div class="well">
-      <div>
-        <i class="fa fa-star" style="color:#2196f3"></i> Recommented Input.  If you can't fill out everything, please try
-        and at least fill out any starred field.
-      </div>
-
+    <div class="well" style="margin-top: 30px">
       <div class="bugs" style="margin-top:20px">
-          Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+        <i class="fa fa-bug"></i>  Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-ecosis/issues" target="_blank">here!</a>
       </div>
 
       <div class="gitInfo" id="gitInfo" style="display:none">
@@ -206,7 +206,7 @@
 
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
 
-      $.get(ecosis.ckan.host+'/spectra/gitInfo', function(resp){
+      ecosis.ckan.gitInfo(function(resp){
         this.git = resp;
         if( this.git.branch != 'master' ) {
           this.$.gitInfo.style.display = 'block';

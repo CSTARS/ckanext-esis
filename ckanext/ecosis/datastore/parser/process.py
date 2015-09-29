@@ -2,7 +2,7 @@ import csv
 
 import utils
 import excel
-import ecosis.datastore.ckan.resource as ckanResourceQuery
+from ecosis.datastore.ckan import resource as ckanResourceQuery
 
 collections = None
 

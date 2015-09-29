@@ -19,7 +19,8 @@
     "time-grunt": "^1.1.1",
     "grunt-usemin": "^3.0.0",
     "browserify": "^9.0.8",
-    "superagent": "^1.2.0"
+    "superagent": "^1.2.0",
+    "grunt-browserify": "~4.0.1"
   },
   "devDependencies": {
     "grunt-contrib-clean": "^0.6.0",

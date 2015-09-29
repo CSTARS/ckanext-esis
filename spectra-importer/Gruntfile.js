@@ -15,7 +15,16 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-cssmin');
+    grunt.loadNpmTasks('grunt-browserify');
 
+    var files = {
+      'app/import/scripts/bundle.js': ['core/app.js']
+    };
+
+    var browserifyOptions = {
+      debug : true, // include source maps
+      standalone : 'Ecosis'
+    };
 
     // Define the configuration for all the tasks
     grunt.initConfig({
@@ -25,6 +34,24 @@ module.exports = function (grunt) {
             // Configurable paths
             app: 'app',
             dist: 'dist',
+        },
+
+        browserify : {
+          build: {
+            files: files,
+            options: {
+              browserifyOptions : browserifyOptions
+            }
+          },
+          watch : {
+            files: files,
+            options: {
+              browserifyOptions : browserifyOptions,
+              keepAlive : true,
+              watch : true,
+              debug : true
+            }
+          }
         },
 
         // Empties folders to start fresh

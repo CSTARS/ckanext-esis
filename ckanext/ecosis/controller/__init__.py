@@ -8,8 +8,8 @@ import pylons.config as config
 import ckan.lib.uploader as uploader
 from ckan.controllers.package import PackageController
 from ecosis.controller import git, admin, organization, package, resource, spectra, user
-import ecosis.controller.workspace as workspaceController
-from utils import handleError
+from ecosis.controller import workspace as workspaceController
+from ecosis.lib.utils import handleError
 
 
 # import relative module
@@ -18,7 +18,7 @@ from ecosis import datastore as workspace
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
 path = os.path.dirname(__file__)
-schema = os.path.join(path, "../../spectra-importer/core/schema.json")
+schema = os.path.join(path, "../../../spectra-importer/core/schema.json")
 
 pgConnStr = config.get("sqlalchemy.url")
 pgConn = psycopg2.connect(pgConnStr)
@@ -131,5 +131,11 @@ class EcosisController(PackageController):
     def getSpectra(self):
         try:
             return spectra.get()
+        except Exception as e:
+            return handleError(e)
+
+    def pushToSearch(self):
+        try:
+            return workspaceController.pushToSearch()
         except Exception as e:
             return handleError(e)

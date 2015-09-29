@@ -1,4 +1,5 @@
 import ecosis.datastore.workspace as workspace
+import ecosis.datastore.query.workspace as workspaceQuery
 from ecosis.lib.auth import hasAccess
 from ecosis.datastore.push import Push
 
@@ -38,3 +39,12 @@ def pushToSearch(self):
     push = Push()
 
     return push.run(ckanPackage, email, c.user)
+
+def get():
+    response.headers["Content-Type"] = "application/json"
+
+    package_id = request.params.get('package_id')
+
+    hasAccess(package_id)
+
+    return workspaceQuery.get(package_id)

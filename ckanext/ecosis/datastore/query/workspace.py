@@ -1,5 +1,5 @@
-import ecosis.datastore.ckan.resource as ckanResourceQuery
-import ecosis.datastore.ckan.package as ckanPackageQuery
+from  ecosis.datastore.ckan import resource as ckanResourceQuery
+from  ecosis.datastore.ckan import package as ckanPackageQuery
 
 collections = None
 

@@ -50,7 +50,7 @@ def setOptions():
 
     return json.dumps({'success': True})
 
-def createPackageRedirect(self):
+def createPackageRedirect():
     group = request.params.get('group')
     response.status_int = 307
 

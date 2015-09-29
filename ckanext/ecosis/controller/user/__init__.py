@@ -3,7 +3,7 @@ from ckan.lib.base import c, model
 import ckan.logic as logic
 import json
 
-def userInfo():
+def info():
     response.headers["Content-Type"] = "application/json"
     if len(c.user) == 0:
         return json.dumps({"loggedIn": False})

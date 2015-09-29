@@ -27,7 +27,7 @@ def get_request_data(request):
     return request_data
 
 def handleError(e):
-    json.dumps({
+    return json.dumps({
         "error": True,
         "message": str(e)
     })

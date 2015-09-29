@@ -5,9 +5,9 @@ import shutil
 import zipfile
 import hashlib
 
-import ecosis.datastore.ckan.resource as ckanResourceQuery
-import ecosis.datastore.ckan.package as ckanPackageQuery
-import ecosis.datastore.parser.process as importer
+from ecosis.datastore.ckan import resource as ckanResourceQuery
+from ecosis.datastore.ckan import package as ckanPackageQuery
+from ecosis.datastore.parser import process as importer
 
 dataExtension = ["xlsx","xls","spectra","csv","tsv"]
 allowedOptions = ['map', 'sort']

@@ -3,11 +3,12 @@ import json
 
 import dateutil
 
-import ecosis.datastore.ckan.package as ckanPackageQuery
-import ecosis.datastore.ckan.resource as ckanResourceQuery
+from ecosis.datastore.ckan import package as ckanPackageQuery
+from ecosis.datastore.ckan import resource as ckanResourceQuery
+from ecosis.datastore.vocab import usda
+from ecosis.datastore.vocab import  controlled as controlledVocab
 import workspace
-from ..vocab import usda
-from ..vocab import controlled as controlledVocab
+
 
 collections = None
 host = ""
@@ -46,7 +47,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0):
     package = ckanPackageQuery.get(packageId)
 
     join(packageId, spectra)
-    moveWavelengths(spectra)
+    moveWavelengths(spectra)  # this also replaces , with .
 
     config = collections.get('package').find_one({"packageId": packageId})
     if config == None:
@@ -159,8 +160,8 @@ def mapNames(spectra, config):
 def moveWavelengths(spectra):
     wavelengths = {}
     for name in spectra:
-        if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
-            wavelengths[name] = spectra[name]
+        if re.match(r"^-?\d+\,?\d*", name) or re.match(r"^-?\d*\,\d+", name):
+            wavelengths[uncleanKey(name)] = spectra[name]
 
     for name in wavelengths:
         del spectra[name]
@@ -190,6 +191,9 @@ def join(packageId, spectra):
                 for key in joinData.get("spectra"):
                     if spectra.get(key) == None:
                         spectra[key] = joinData.get("spectra").get(key)
+
+def uncleanKey(key):
+    return re.sub(r',', '.', key)
 
 def getResource(resource_id, sheet_id=None):
     return collections.get('resource').find_one({

@@ -73,10 +73,17 @@ def parseAttrType(name, pos):
 
     type = "metadata"
     if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
-        type = "data"
+        type = "wavelength"
         name = re.sub(r"\.0+$", "", name)
 
     name = controlledVocabulary.getEcoSISName(name)
+
+    # clean up name for Mongo
+    if type == "metadata":
+        name = re.sub(r'[\.\$]', '', name)
+    else:
+        name = re.sub(r'\$', '', name)
+        name = re.sub(r'\.', ',', name)
 
     attr = {
         "type" : type,

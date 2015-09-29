@@ -1,10 +1,9 @@
 from multiprocessing import Process, Queue
 
 import insert
-import ecosis.datastore.mapreduce as mapreduce
-import ecosis.datastore.query as query
-import ecosis.datastore.delete as deleteUtils
-
+from ecosis.datastore import mapreduce
+from ecosis.datastore import query
+from ecosis.datastore import delete as deleteUtils
 
 
 # grrrrr
