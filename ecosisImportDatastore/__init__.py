@@ -40,7 +40,10 @@ def test():
         "spectra" : db[config.get("app:main", "ecosis.mongo.workspace_spectra_collection")],
         "resource" : db[config.get("app:main", "ecosis.mongo.workspace_resource_collection")],
         "package" : db[config.get("app:main", "ecosis.mongo.workspace_package_collection")],
-        "usda" : db[config.get("app:main", "ecosis.mongo.usda_collection")]
+        "usda" : db[config.get("app:main", "ecosis.mongo.usda_collection")],
+
+        "search_package" : db[config.get("app:main", "ecosis.mongo.search_collection")],
+        "spectra" : db[config.get("app:main", "ecosis.mongo.spectra_collection")]
     }
 
     ckanFileStorage.init(config)

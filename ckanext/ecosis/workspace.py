@@ -515,25 +515,6 @@ class WorkspaceController(BaseController):
 
 
 
-    def rebuildUSDACollection(self):
-        usdaCollection.remove({})
-        rows = []
-
-        try:
-            resp = urllib2.urlopen('http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on')
-            rows = re.sub(r'\r', '', resp.read()).split('\n')
-            header = re.sub(r'"', '', rows[0]).split(',')
-
-            for i in range(1, len(rows)-1):
-                row = re.sub(r'"', '', rows[i]).split(',')
-                item = {}
-                for j in range(0, len(header)-1):
-                    item[header[j]] = row[j]
-                usdaCollection.insert(item)
-
-        except Exception as e:
-            return json.dumps({'error': True})
-        return json.dumps({'success':True, 'count': len(rows)-2})
 
     #
     # HELPERS

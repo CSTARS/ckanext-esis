@@ -46,40 +46,25 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # Most of the routes are defined via the IDatasetForm interface
         # (ie they are the ones for a package type)
 
-         # new routes
-        map.connect('rebuild_index', '/spectra/rebuildIndex', controller=controller, action='rebuildIndex')
-        map.connect('git_info', '/spectra/gitInfo', controller=controller, action='gitInfo')
-        map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
-        map.connect('userInfo', '/ecosis/userInfo', controller=controller, action='userInfo')
-        map.connect('verifyPrivate', '/ecosis/verifyPrivate', controller=controller, action='verifyPrivate')
-        map.connect('getSchema', '/ecosis/getSchema', controller=controller, action='getSchema')
+        # new routes
 
-        # route all resource edit screens to main ecosis dataset editor
-        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
-        # TODO: can we get fancy and point at specific action or resource?
-        map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackageRedirect')
-        map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackageRedirect')
-        map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackageRedirect')
-        map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
-        # override the routes to delete packages and resources
-        #map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
-        map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-        #map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
-        map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+
+
+
+
+
         # multi delete
-        # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...
-        map.connect('delete_resources', '/rest/deleteResources', controller=controller, action='deleteResources')
+
 
         # TODO: override the package delete button, make sure that deleted packages are removed from search as well
         # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
-        map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
+        # map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
 
         # TODO: should probably override the API call as well
 
         # connect workspace calls
         controller = 'ckanext.ecosis.workspace:WorkspaceController'
-        map.connect('rebuild_usda_collection', '/spectra/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('process_workspace', '/workspace/process', controller=controller, action='processWorkspace')
         map.connect('process_resource', '/workspace/processResource', controller=controller, action='processResource')
         map.connect('set_parse_info', '/workspace/setParseInfo', controller=controller, action='setParseInformation')
@@ -94,11 +79,39 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('push_to_search', '/workspace/push', controller=controller, action='pushToSearch')
 
 
+        # The 'new' way
         controller = 'ckanext.ecosis.controller:EcosisController'
+
+        # Standard
         map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
+        map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
+        map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+        # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
+        map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
+        # route all resource edit screens to main ecosis dataset editor
+        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
+        # TODO: can we get fancy and point at specific action or resource?
+        map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackageRedirect')
+        map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackageRedirect')
+        map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackageRedirect')
+        map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
 
 
+        # ecosis
+        map.connect('rebuild_index', '/ecosis/admin/rebuildIndex', controller=controller, action='rebuildIndex')
+        map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
+        map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
+
+
+        map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
+
+        map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
+        map.connect('userInfo', '/ecosis/userInfo', controller=controller, action='userInfo')
+
+        # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...
+        # still the case? - JM
+        map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
 
 
         return map

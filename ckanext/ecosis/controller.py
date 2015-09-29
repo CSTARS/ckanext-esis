@@ -4,12 +4,15 @@ import pylons.config as config
 import ckan.lib.uploader as uploader
 from ckan.controllers.package import PackageController
 
-import package
+import package, organization, resource, admin, git, user
 from utils import handleError
 
 # import relative module
 import ecosisImportDatastore as workspace
 
+
+# TODO: move this to config
+usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
 path = os.path.dirname(__file__)
 schema = os.path.join(path, "../../spectra-importer/core/schema.json")
@@ -28,12 +31,15 @@ collections = {
     "spectra" : db[config.get("ecosis.mongo.workspace_spectra_collection")],
     "resource" : db[config.get("ecosis.mongo.workspace_resource_collection")],
     "package" : db[config.get("ecosis.mongo.workspace_package_collection")],
-    "usda" : db[config.get("ecosis.mongo.usda_collection")]
+    "usda" : db[config.get("ecosis.mongo.usda_collection")],
+    "search_package" : db[config.get("ecosis.mongo.search_collection")],
+    "search_spectra" : db[config.get("ecosis.mongo.spectra_collection")]
 }
 
 upload = uploader.ResourceUpload({})
 
 workspace.init(schema, collections, pgConn, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
+
 
 class EcosisController(PackageController):
 
@@ -41,7 +47,56 @@ class EcosisController(PackageController):
         try:
             return package.delete()
         except Exception as e:
-            return handleError()
+            return handleError(e)
 
-    def test(self):
-        return 'hello world'
+    # delete org from UI
+    def deleteOrganizationUi(self, id):
+        organization.delete(id)
+
+    def setPrivate(self):
+        try:
+            return package.setPrivate()
+        except Exception as e:
+            return handleError(e)
+
+    def deleteResouce(self):
+        try:
+            return resource.delete()
+        except Exception as e:
+            return handleError(e)
+
+    def deleteResouces(self):
+        try:
+            return resource.deleteMany()
+        except Exception as e:
+            return handleError(e)
+
+    def rebuildIndex(self):
+        try:
+            return admin.rebuildIndex(collections)
+        except Exception as e:
+            return handleError(e)
+
+    def gitInfo(self):
+        try:
+            return git.info()
+        except Exception as e:
+            return handleError(e)
+
+    def userInfo(self):
+        try:
+            return user.info()
+        except Exception as e:
+            return handleError(e)
+
+    def createPackageRedirect(self):
+        package.createPackageRedirect()
+
+    def editPackageRedirect(self, id):
+        package.editPackageRedirect(id)
+
+    def rebuildUSDACollection(self):
+        try:
+            return user.rebuildUSDACollection(collections, usdaApiUrl)
+        except Exception as e:
+            return handleError(e)

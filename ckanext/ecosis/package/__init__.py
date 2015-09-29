@@ -28,3 +28,28 @@ def delete():
     deleteUtil.package(params['id'])
 
     return json.dumps({'success': True})
+
+def setPrivate():
+    response.headers["Content-Type"] = "application/json"
+    package_id = request.params.get('id')
+    hasAccess(package_id)
+
+    deleteUtil.cleanFromSearch(package_id)
+
+    return json.dumps({'success': True})
+
+def createPackageRedirect(self):
+    group = request.params.get('group')
+    response.status_int = 307
+
+    if group == None:
+        response.headers["Location"] = "/import/"
+    else:
+        response.headers["Location"] = "/import/?group=%s" % group.encode('ascii','ignore')
+
+    return "Redirecting"
+
+def editPackageRedirect(id):
+    response.status_int = 307
+    response.headers["Location"] = "/import/?id=%s" % id.encode('ascii','ignore')
+    return "Redirecting"
