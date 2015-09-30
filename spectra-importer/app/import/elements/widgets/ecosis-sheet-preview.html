@@ -1,0 +1,179 @@
+<dom-module id="ecosis-sheet-preview">
+  <style>
+    :host {
+      display: block
+    }
+    .info {
+      text-align: center;
+      margin-top: 10px !important;
+    }
+  </style>
+
+  <template>
+
+    <h5 class="info page-header" id="info"></h5>
+
+    <div class="layout horizontal">
+        <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
+
+        <div class="flex">
+          <div class="row">
+            <div class="col-sm-6">
+              <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
+            </div>
+            <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
+          </div>
+        </div>
+
+        <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : "ecosis-sheet-preview",
+
+    ready : function() {
+      this.index = 0;
+    },
+
+    load : function(index) {
+      if( index !== undefined ) this.index = index;
+
+      if( this.index >= this.info.count ) {
+        this.index = this.info.count-1;
+      } else if ( this.index < 0 ) {
+        this.index = 0;
+      }
+
+      this.info.innerHTML = 'Loading index: '+this.index;
+
+      if( this.sheet.metadata ) {
+        ecosis.ckan.getMetadataChunk(
+          this.sheet.packageId,
+          this.sheet.resourceId,
+          this.sheet.sheetId,
+          this.index,
+          this.renderMetadataResp.bind(this)
+        );
+      } else {
+        ecosis.ckan.getSpectra(
+          this.sheet.packageId,
+          this.sheet.resourceId,
+          this.sheet.sheetId,
+          this.index,
+          this.renderSpectraResp.bind(this)
+        );
+      }
+    },
+
+    renderMetadataResp : function(resp) {
+      if( resp.error ) {
+        return alert(resp.message);
+      }
+
+      this.renderTable(resp.metadata);
+
+      if( resp.joinKey && resp.metadata[resp.joinKey] ) {
+        this.$.chartRoot.innerHTML =
+          '<h4 style="text-align:center">Joined On:</h4> '+
+          '<h5 style="text-align:center">'+resp.joinKey+' = <span style="color:#888">'+resp.metadata[resp.joinKey]+'</span></h5>'+
+          '<h4 style="text-align:center">Matches:</h4>'+
+          '<h5 style="text-align:center; color:#888">'+(resp.joinedResources.length == 0 ? 'None' : resp.joinedResources.join(', '))+'</h5>';
+      } else {
+        this.$.chartRoot.innerHTML = 'No join key provided, please select one below'
+      }
+
+
+      this.$.info.innerHTML = '<b>Join Count:</b> '+this.info.joinCount+', <b>Total '+this.sheet.layout+'s: </b>'
+        +this.info.total+', <b>Current '+this.sheet.layout+': </b>'+(this.index+1)
+    },
+
+    renderSpectraResp : function(resp) {
+      if( resp.error ) {
+        return alert(resp.message);
+      }
+
+      this.renderTable(resp, ['ecosis', 'datapoints']);
+      this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+
+      this.$.info.innerHTML = '<b>Total '+this.sheet.layout+'s: </b>'+this.info.total+', <b>Current '+this.sheet.layout+': </b>'+(this.index+1);
+
+      var data = [];
+      for( var key in resp.datapoints ) {
+          data.push([
+              parseFloat(key),
+              parseFloat(resp.datapoints[key])
+          ])
+      }
+
+      data.sort(function(a, b){
+          if( a[0] > b[0] ) return 1;
+          if( a[0] < b[0] ) return -1;
+          return 0;
+      });
+
+      data.splice(0, 0, ['Wavelength', '']);
+      this.$.chartRoot.firstChild.setHeight(300);
+      this.$.chartRoot.firstChild.setData(data);
+    },
+
+    renderTable : function(metadata, ignorelist) {
+      if( ignorelist === undefined ) ignorelist = [];
+
+      var table = '<h5>Metadata</h5><table class="table">';
+      var c = 0;
+      for( var key in metadata ) {
+        if( ignorelist.indexOf(key) > -1 ) continue;
+        table += '<tr><td>'+key+'</td><td>'+metadata[key]+'</td></tr>';
+
+        c++;
+        if( c == 100 ) {
+          table += '<tr><td>...</td><td>...</td></tr>';
+          break;
+        }
+      }
+      this.$.tableRoot.innerHTML = table+'</table>';
+    },
+
+    update : function(sheet) {
+      if( sheet ) {
+        this.sheet = sheet;
+      }
+
+      if( this.sheet.ignore ) return;
+
+      if( this.sheet.metadata ) {
+        this.updateMetadata();
+      } else {
+        this.updateSpectra();
+      }
+    },
+
+    updateMetadata : function() {
+      ecosis.ckan.getMetadataInfo(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.info = resp;
+        this.load();
+      }.bind(this));
+    },
+
+    updateSpectra : function() {
+      ecosis.ckan.getSpectraCount(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.info = resp;
+        this.load();
+      }.bind(this));
+    },
+
+    moveLeft : function() {
+      this.index--;
+      this.load();
+    },
+
+    moveRight : function() {
+      this.index++;
+      this.load();
+    }
+
+  })
+</script>

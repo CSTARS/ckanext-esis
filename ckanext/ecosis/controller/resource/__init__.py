@@ -97,40 +97,36 @@ def get():
 
     return jsonStringify(query.getResource(rid, sid))
 
-
-def getLayoutOverview():
+def getMetadataChunk():
     response.headers["Content-Type"] = "application/json"
 
-    rid = request.params.get('resource_id')
-    sid = request.params.get('datasheet_id')
+    package_id = request.params.get('package_id')
+    resource_id = request.params.get('resource_id')
+    sheet_id = request.params.get('sheet_id')
 
-    # initialize the workspace and get the package config as well as the ckan package
-    #(workspacePackage, ckanPackage, rootDir, fresh) = setup.init(request.params.get('package_id'))
+    return jsonStringify(query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex()))
 
-    # make sure all files on disk are up to date in the package
-    #resources = setup.resources(workspacePackage, ckanPackage, rootDir)
+def getMetadataInfo():
+    response.headers["Content-Type"] = "application/json"
 
-    #r = getById(resources, rid)
-    #if r == None:
-    #    return json.dumps({'error':True, 'message':'resource does not exist'})
+    package_id = request.params.get('package_id')
+    resource_id = request.params.get('resource_id')
+    sheet_id = request.params.get('sheet_id')
 
-    #s = getById(r['datasheets'], sid)
-    #if s == None:
-    #    return json.dumps({'error':True, 'message':'datasheet does not exist'})
+    return jsonStringify(query.getMetadataInfo(package_id, resource_id, sheet_id))
 
-    #file = "%s%s%s" % (self.workspaceDir, s['location'], s['name'])
-    #s['data'] = getFile(self.workspaceDir, file, s)
+def getSpectraCount():
+    response.headers["Content-Type"] = "application/json"
 
-    # limit to 250 x 250
-    #if len(s['data']) > 250:
-    #    s['data'] = s['data'][0:250]
-    #for row in s['data']:
-    #    if len(row) > 250:
-    #        row = row[0:250]
+    package_id = request.params.get('package_id')
+    resource_id = request.params.get('resource_id')
+    sheet_id = request.params.get('sheet_id')
 
-    #removeAttr = ['location', 'attributes']
-    #for attr in removeAttr:
-    #    if attr in s:
-    #        del s[attr]
+    return jsonStringify(query.total(package_id, resource_id, sheet_id))
 
-    #return json.dumps(s)
+def _getIndex():
+    index = request.params.get('index')
+    if index is None:
+        return 0
+    else:
+        return int(index)

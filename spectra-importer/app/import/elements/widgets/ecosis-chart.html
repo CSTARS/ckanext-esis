@@ -45,6 +45,11 @@
       }.bind(this));
     },
 
+    setHeight : function(height) {
+      this.height = height;
+      this.$.root.style.height = height+'px';
+    },
+
     setOnloadHandler : function() {
         if( this.onLoadHandlerSet ) return;
 

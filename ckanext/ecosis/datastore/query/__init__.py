@@ -1,7 +1,4 @@
-import re
-import json
-
-import dateutil
+import re, pymongo, json, dateutil
 
 from ecosis.datastore.ckan import package as ckanPackageQuery
 from ecosis.datastore.ckan import resource as ckanResourceQuery
@@ -31,7 +28,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0):
     if sheetId is not None:
         query["sheetId"] = sheetId
 
-    main = collections.get('spectra').find_one(query, skip=index)
+    main = collections.get('spectra').find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
 
     if main == None:
         raise Exception('Unabled to get spectra from package_id: %s at index %s' % (packageId, index))
@@ -76,15 +73,16 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
     if sheetId is not None:
         query['sheetId'] = sheetId
 
-    chunk = collections.get('spectra').find_one(query, skip=index)
+    chunk = collections.get('spectra').find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
     if chunk is None:
-        chunk = {}
+        raise Exception('Invalid resource ids given')
 
     del query['type']
     sheetInfo = collections.get('resource').find_one(query)
 
     joinedNames = []
-    if sheetInfo is not None and sheetInfo.get("joinOn") is not None and chunk.get('spectra') is not None:
+    joinOn = sheetInfo.get("joinOn")
+    if sheetInfo is not None and joinOn is not None and joinOn != "" and chunk.get('spectra') is not None:
         # now make join query
         joinQuery = {
             "type" : "data",
@@ -106,6 +104,40 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
         "joinKey" : sheetInfo.get("joinOn")
     }
 
+# get number or chunks and number of joined chunks
+def getMetadataInfo(packageId, resourceId=None, sheetId=None):
+    query = {
+        "packageId" : packageId
+    }
+
+    if resourceId is not None:
+        query['resourceId'] = resourceId
+    if sheetId is not None:
+        query['sheetId'] = sheetId
+
+    sheetInfo = collections.get('resource').find_one(query)
+    if sheetInfo is None:
+        raise Exception('No resource found')
+
+    query['type'] = "metadata"
+
+    attrs = collections.get('spectra').distinct('spectra.%s' % sheetInfo.get('joinOn'), query)
+    total = collections.get('spectra').count(query)
+
+    query = {
+        "packageId" : packageId,
+        "type" : "data"
+    }
+    query['spectra.%s' % sheetInfo.get('joinOn')] = {
+        "$in" : attrs
+    }
+
+    return {
+        "joinCount": collections.get('spectra').count(query),
+        "total" : total
+    }
+
+
 def total(packageId, resourceId=None, sheetId=None):
     query = {
         "type" : "data",
@@ -117,7 +149,7 @@ def total(packageId, resourceId=None, sheetId=None):
     if sheetId is not None:
         query['sheetId'] = sheetId
 
-    return collections.get('spectra').count(query)
+    return {"total" : collections.get('spectra').count(query)}
 
 def setLocation(spectra):
     if spectra.get('geojson') != None:

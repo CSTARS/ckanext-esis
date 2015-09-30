@@ -11,12 +11,16 @@
 
   <template>
 
-    <div id="main" style="display:none" class="animated fadeInUp">
+    <div id="main" class="animated fadeInUp">
       <h6 id="titleLabel" style="display:none"></h6>
+
+      <ecosis-sheet-preview id="preview" style="margin-bottom: 25px"></ecosis-sheet-preview>
 
       <span class="alert alert-danger" style="display:none" id="parseError">
           Error parsing file
       </span>
+
+      <h4 class="page-header">Sheet Settings</h4>
 
       <!-- Is Metadata -->
       <div id="metadataSelectPanel">
@@ -30,13 +34,6 @@
                   <input id="inputIsMetadata" type="checkbox" on-change="onMetadataUpdate"> This sheet contains metadata to be joined on given data.
                 </label>
               </div>
-              <!--
-                <ecosis-metadata-join-panel
-                    id="joinMetadata"
-                    style="display:none"
-                    on-metadata-update='onMetadataPanelUpdate'>
-                </ecosis-metadata-join-panel>
-              -->
             </div>
 
           </div>
@@ -77,13 +74,13 @@
             <div class="radio">
               <label>
                 <input type="radio" id="columnInput" value="column" checked="" on-click="onOrientationChange">
-                Datasheet is laid out by column.
+                My observations are by column.
               </label>
             </div>
             <div class="radio">
               <label>
                 <input type="radio" id="rowInput" value="row" on-click="onOrientationChange">
-                Datasheet is laid out by row.
+                My observations are by row.
               </label>
             </div>
 
@@ -94,47 +91,9 @@
         </div>
       </div>
 
-      <div class="form-horizontal" id="parseOverviewPanel" style="border-top: 1px solid #eee">
-        <div class="form-group">
-
-          <div class="col-md-2" style="text-align:right">
-            <a class="btn btn-link" on-click="toggleCurrentParse">
-                <i class="fa fa"></i> Format Overview
-            </a>
-          </div>
-          <div class="col-md-10">
-            <div class="help-block">
-                Visually inspect how EcoSIS is parsing this sheet.
-            </div>
-
-            <ecosis-parser-overview id="parseOverview" style="display:none"></ecosis-parser-overview>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-horizontal" id="spectraPanel" style="border-top: 1px solid #eee; display:none">
-        <div class="form-group">
-
-          <div class="col-md-2" style="text-align:right">
-            <a class="btn btn-link" on-click="toggleSpectra">View Spectra <span id="spectraCountLabel"></span></a>
-          </div>
-          <div class="col-md-10">
-            <div class="help-block">
-                View the spectra for this sheet.
-            </div>
-
-            <ecosis-spectra-panel id="spectraUi" style="display:none"></ecosis-spectra-panel>
-          </div>
-        </div>
-      </div>
-
       <div id="updatingPanel" class="alert alert-warning" style="display:none">
         <h6 style="color:white"><i class="fa fa-spinner fa-spin"></i> Updating...</h6>
       </div>
-    </div>
-
-    <div id="loading">
-      <h6><i class="fa fa-spinner fa-spin"></i> Loading...</h6>
     </div>
 
   </template>
@@ -151,16 +110,10 @@
     update : function(resource, datasheet) {
       this.resource = resource;
       this.sheet = datasheet;
-
-      this.$.spectraUi.style.display = 'none';
-
-      this.edit();
-      this.setLoading(false);
     },
 
     save : function() {
       this.setSaving(true);
-      this.$.parseOverview.style.display = 'none';
 
       var options = {
         layout : this.sheet.layout,
@@ -190,30 +143,16 @@
             }
 
             this.fire('update', this.resource.id);
+            this.$.preview.update(this.sheet);
 
             this.updateMetadataUi();
             this.updateIgnoreUi();
-
-            // update spectra count
-            if( this.sheet.spectra_count ) {
-              this.$.spectraCountLabel.innerHTML = '('+this.sheet.spectra_count+')';
-            } else {
-              this.$.spectraCountLabel.innerHTML = '';
-            }
 
           }.bind(this)
       );
     },
 
     edit : function(callback) {
-      /*if( !this.sheet ) {
-        this.loadFullDatasheet(callback);
-        return;
-      } else if( this.sheet.id != this.resourceid ) {
-        this.loadFullDatasheet(callback);
-        return;
-      }*/
-
       // set title
       if( this.resource.datasheets.length == 1 ) {
         var title = this.sheet.name;
@@ -223,12 +162,7 @@
         this.$.titleLabel.innerHTML = '';
       }
 
-      // set count
-      if( this.sheet.spectra_count ) {
-        this.$.spectraCountLabel.innerHTML = '('+this.sheet.spectra_count+')';
-      } else {
-        this.$.spectraCountLabel.innerHTML = '';
-      }
+      this.$.preview.update(this.sheet);
 
       // show parse error
       if( this.sheet.error ) this.$.parseError.style.display = 'block';
@@ -258,31 +192,29 @@
       if( this.sheet.metadata ) {
         this.$.joinMetadata.update(this.sheet, this.resource);
         this.$.joinMetadataOuter.style.display = 'block';
-        this.$.spectraPanel.style.display = 'none';
-        //this.$.orientationPanel.style.display = 'none';
         this.$.inputIsMetadata.setAttribute('checked','');
       } else {
         this.$.joinMetadataOuter.style.display = 'none';
-        this.$.spectraPanel.style.display = 'block';
-        //this.$.orientationPanel.style.display = 'block';
         this.$.inputIsMetadata.removeAttribute('checked');
       }
     },
 
     updateIgnoreUi : function() {
-      var panels = ['spectraPanel', 'parseOverviewPanel', 'orientationPanel', 'metadataSelectPanel'];
+      var panels = ['orientationPanel', 'metadataSelectPanel'];
 
       if( this.sheet.ignore ) {
         panels.forEach(function(id){
           this.$[id].style.display = 'none';
         }.bind(this));
         $(this.$.inputIgnore).prop('checked', true);
+        this.$.preview.style.display = 'none';
       } else {
         panels.forEach(function(id){
           if( id == 'spectraPanel' || id == 'orientationPanel') return; // let the updateMetadataUi handle this
           this.$[id].style.display = 'block';
         }.bind(this));
         $(this.$.inputIgnore).prop('checked', false);
+        this.$.preview.style.display = 'block';
       }
     },
 
@@ -295,24 +227,6 @@
       }
 
       this.save();
-    },
-
-    toggleCurrentParse : function() {
-      if( this.$.parseOverview.style.display == 'none' ) {
-        this.$.parseOverview.style.display = 'block';
-        this.$.parseOverview.update(this.resource, this.sheet);
-      } else {
-        this.$.parseOverview.style.display = 'none';
-      }
-    },
-
-    toggleSpectra : function() {
-      if( this.$.spectraUi.style.display == 'none' ) {
-        this.$.spectraUi.style.display = 'block';
-        this.$.spectraUi.update(this.resource, this.sheet);
-      } else {
-        this.$.spectraUi.style.display = 'none';
-      }
     },
 
     toggleHelp : function() {

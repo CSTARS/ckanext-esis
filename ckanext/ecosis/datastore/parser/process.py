@@ -1,7 +1,5 @@
-import csv
+import csv, utils, excel, hashlib, datetime, time
 
-import utils
-import excel
 from ecosis.datastore.ckan import resource as ckanResourceQuery
 
 collections = None
@@ -32,8 +30,19 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         sheetConfig = {}
 
     # update with passed options
+    keyCount = 0
     for key in options:
         sheetConfig[key] = options[key]
+        keyCount += 1
+
+    # now get md5 of current file
+    hash = _hashfile(file)
+    if sheetConfig.get('hash') == hash and keyCount == 0:
+        # no changes to file for config, just exit
+        return {
+            "ignored" : True,
+            "message" : "nothing todo. hash is equal and new config given"
+        }
 
     # make sure defaults are set
     sheetConfig['file'] = file
@@ -53,8 +62,20 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     elif ext != "csv" and ext != "tsv" and ext != "spectra" and ext != "xlsx" and ext != "xls":
         ignore = True
 
-    if ignore == True: # return
-        return
+    if ignore == True: # save and return
+        collections.get('resource').update({
+            "resourceId" : sheetConfig.get('resourceId'),
+            "packageId" : sheetConfig.get('packageId'),
+            "sheetId" : sheetConfig.get('sheetId')
+        }, sheetConfig, upsert=True)
+
+        return {
+            "ignored" : True,
+            "message" : "ignore flag set or invalid file type"
+        }
+
+    sheetConfig['hash'] = hash
+    sheetConfig['processed'] = datetime.datetime.utcnow()
 
     response = None
     if ext == "csv":
@@ -72,7 +93,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
             _processSheetArray(sheet.data, file, packageId, resourceId, sheet.config)
     else:
         return {
-            "message" : "not parsed"
+            "message" : "not parsed, invalid file type"
         }
 
 def _processCsv(sheetConfig):
@@ -151,6 +172,7 @@ def _processSheetArray(data, sheetConfig):
             nameMap[info.get('originalName')] = info.get('name')
 
     # now lets insert into mongo
+    index = 0
     if layout == 'row':
         start = localRange['start']
         for j in range(start+1, localRange['stop']):
@@ -167,7 +189,8 @@ def _processSheetArray(data, sheetConfig):
                 for i in range(globalRange['start'], globalRange['stop']):
                     sp[_getName(nameMap, data[i][0])] = data[i][1]
 
-            _insertSpectra(sp, sheetConfig)
+            index += 1
+            _insertSpectra(sp, sheetConfig, index)
 
     else:
         start = localRange['start']
@@ -185,9 +208,10 @@ def _processSheetArray(data, sheetConfig):
                 for i in range(globalRange['start'], globalRange['stop']):
                     sp[_getName(data[i][0])] = data[i][1]
 
-            _insertSpectra(sp, sheetConfig)
+            index += 1
+            _insertSpectra(sp, sheetConfig, index)
 
-def _insertSpectra(sp, sheetConfig):
+def _insertSpectra(sp, sheetConfig, index):
     type = "data"
     if sheetConfig.get('metadata') == True:
         type = "metadata"
@@ -197,12 +221,28 @@ def _insertSpectra(sp, sheetConfig):
         "packageId" : sheetConfig.get("packageId"),
         "resourceId" : sheetConfig.get("resourceId"),
         "sheetId" : sheetConfig.get("sheetId"),
+        "index" : index,
         "type" : type
     }
     collections.get('spectra').insert(data)
+
+def _hashfile(file):
+    f = open(file, 'rb')
+    blocksize = 65536
+    hasher = hashlib.md5()
+
+    buf = f.read(blocksize)
+    while len(buf) > 0:
+        hasher.update(buf)
+        buf = f.read(blocksize)
+
+    md5 = hasher.hexdigest()
+    f.close()
+    return md5
 
 def _getName(nameMap, name):
     mapped = nameMap.get(name)
     if mapped != None:
         return mapped
     return name
+

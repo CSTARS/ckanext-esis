@@ -81,10 +81,13 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
         map.connect('process_resource', '/ecosis/resource/process', controller=controller, action='processResource')
         map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
+        map.connect('get_spectra_metadata', '/ecosis/resource/getMetadataChunk', controller=controller, action='getMetadataChunk')
+        map.connect('getMetadataInfo', '/ecosis/resource/getMetadataInfo', controller=controller, action='getMetadataInfo')
+        map.connect('get_spectra_count', '/ecosis/resource/getSpectraCount', controller=controller, action='getSpectraCount')
+
 
         # ecosis - spectra
         map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')
-        map.connect('get_spectra_metadata', '/ecosis/spectra/getMetadataChunk', controller=controller, action='getMetadataChunk')
 
         # ecosis - workspace
         map.connect('prepare_workspace', '/ecosis/workspace/prepare', controller=controller, action='prepareWorkspace')

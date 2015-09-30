@@ -33,6 +33,8 @@
               </span>
             </div>
             <div>
+              <a class="btn btn-link" style="color:white" id="downloadBtn" target="_blank"><i class="fa fa-download"></i></a>
+
               <a class="btn btn-link" style="color:white" id="editLink" on-click="toggleEdit">
                 <i class="fa fa-pencil" id="editLinkIcon"></i>
               </a>
@@ -104,6 +106,10 @@
       } else {
         this.$.trashBtn.style.color = '#333';
       }
+
+      var url = ecosis.ckan.host+'/dataset/'+this.resource.package_id+'/resource/'+this.resource.id+'/download/'+this.resource.name;
+
+      this.$.downloadBtn.setAttribute('href', url);
     },
 
     onDatasheetTypeChange : function(e) {
@@ -148,10 +154,10 @@
 
     getResourceType : function() {
       if( this.resource.datasheets && this.resource.datasheets.length == 1 ) {
-        if( this.resource.datasheets[0].metadata ) {
-          return 'metadata';
-        } else if( this.resource.datasheets[0].ignore ) {
+        if( this.resource.datasheets[0].ignore ) {
           return 'ignored';
+        } else if( this.resource.datasheets[0].metadata ) {
+          return 'metadata';
         }
       }
 

@@ -135,6 +135,53 @@ module.exports = function(config) {
     });
   }
 
+  this.getMetadataInfo = function(package_id, resource_id, sheet_id, callback) {
+      var params = '?package_id=' + package_id +
+      '&resource_id=' + resource_id;
+      if( sheet_id ) params += '&sheet_id='+sheet_id;
+
+      get(this.host+'/ecosis/resource/getMetadataInfo'+params, function(err, resp) {
+        if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+        callback(resp.body);
+      });
+  }
+
+  this.getMetadataChunk = function(package_id, resource_id, sheet_id, index, callback) {
+      var params = '?package_id=' + package_id +
+      '&resource_id=' + resource_id +
+      '&index='+index;
+      if( sheet_id ) params += '&sheet_id='+sheet_id;
+
+      get(this.host+'/ecosis/resource/getMetadataChunk'+params, function(err, resp) {
+        if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+        callback(resp.body);
+      });
+  }
+
+  this.getSpectra = function(pkgid, rid, sid, index, callback) {
+    var params = '?package_id=' + pkgid +
+      '&resource_id=' + rid +
+      '&index='+index;
+    if( sid ) params += '&sheet_id='+sid;
+
+    get(this.host+'/ecosis/spectra/get'+params, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+  this.getSpectraCount = function(pkgid, rid, sid, callback) {
+    var params = '?package_id=' + pkgid +
+      '&resource_id=' + rid;
+    if( sid ) params += '&sheet_id='+sid;
+
+    get(this.host+'/ecosis/resource/getSpectraCount'+params, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+
   this.processResource = function(pkgid, resource_id, sheet_id, options, callback) {
     var data = {
         package_id : pkgid,
@@ -165,18 +212,6 @@ module.exports = function(config) {
         }
       }
 
-      callback(resp.body);
-    });
-  }
-
-  this.getSpectra = function(pkgid, rid, sid, index, callback) {
-    var params = '?package_id=' + pkgid +
-      '&resource_id=' + rid +
-      '&datasheet_id=' + sid +
-      '&index='+index;
-
-    get(this.host+'/ecosis/spectra/get'+params, function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body);
     });
   }
