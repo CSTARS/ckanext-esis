@@ -208,6 +208,26 @@ module.exports = function(config) {
     });
   }
 
+  // get all attirbutes from sheets marked as data
+  this.getDatasheetAttributes = function() {
+    var attrs = {}, sheet, attr;
+
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      sheet = this.datasheets[i];
+      if( sheet.metadata ) continue;
+
+      for( var j = 0; j < sheet.attributes.length; j++ ) {
+        attr = sheet.attributes[j];
+
+        if( attr.type != "metadata" ) continue;
+        if( attrs[attr.name] ) continue;
+        attrs[attr.name] = 1;
+      }
+    }
+
+    return Object.keys(attrs);
+  }
+
   this.isEcosisMetadata = function(name) {
     name = name.replace(/\s/g, '').toLowerCase();
     for( var key in this.metadataLookup ) {

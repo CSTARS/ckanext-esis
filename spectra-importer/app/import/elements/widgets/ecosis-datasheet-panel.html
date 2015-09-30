@@ -27,7 +27,7 @@
             <div class="col-md-10">
               <div class="checkbox">
                 <label>
-                  <input id="inputIsMetadata" type="checkbox" on-change="onMetadataUpdate"> This datasheet only contains metadata to be joined on given data.
+                  <input id="inputIsMetadata" type="checkbox" on-change="onMetadataUpdate"> This sheet contains metadata to be joined on given data.
                 </label>
               </div>
               <!--
@@ -39,6 +39,15 @@
               -->
             </div>
 
+          </div>
+          <div class="form-group" id="joinMetadataOuter">
+            <label for="inputIsMetadata" class="col-md-2 control-label">Join On</label>
+            <div class="col-md-10">
+                <ecosis-metadata-join-panel
+                    id="joinMetadata"
+                    on-joinon-selected='save'>
+                </ecosis-metadata-join-panel>
+            </div>
           </div>
         </div>
       </div>
@@ -170,37 +179,17 @@
 
             if( resp.error ) return alert("Error updating datasheet :(");
 
-            ecosis.ds.runAfterResourceAdd(resp);
+            this.sheet = resp;
+            for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+              if( ecosis.ds.datasheets[i].resourceId == resp.resourceId &&
+                  ecosis.ds.datasheets[i].sheetId == resp.sheetId ) {
 
-            for( var i = 0; i < resp.resources.length; i++ ) {
-                if( resp.resources[i].id != this.resource.id ) continue;
-                var r = resp.resources[i];
-
-                for( var j = 0; j < r.datasheets.length; j++ ) {
-                    if( r.datasheets[j].id == this.sheet.id ) {
-                        for( var key in r.datasheets[j] ) {
-                            this.sheet[key] = r.datasheets[j][key];
-                        }
-                        break;
-                    }
-                }
+                  ecosis.ds.datasheets[i] = resp;
+                  break;
+              }
             }
 
-            // any time we perform an update like this, the state of joins may have changed,
-            // so clear any cached spectra and datasheet information using spectra.clearCache()
-            // and the update event to alert the rest of the app
-            //TODO
-            //this.$.spectraPanel.clearCache();
-
             this.fire('update', this.resource.id);
-
-            // this 'update' event actually sets the entire resource as not loaded
-            // but we have set the correct datasheet attributes above, so go ahead
-            // and mark just this datasheet as loaded.  This will make sure things
-            // like the attribute list in the metadata panel are set correctly.
-            //setTimeout(function(){
-            //    this.sheet.loaded = true;
-            //}.bind(this));
 
             this.updateMetadataUi();
             this.updateIgnoreUi();
@@ -268,12 +257,12 @@
     updateMetadataUi : function() {
       if( this.sheet.metadata ) {
         this.$.joinMetadata.update(this.sheet, this.resource);
-        this.$.joinMetadata.style.display = 'block';
+        this.$.joinMetadataOuter.style.display = 'block';
         this.$.spectraPanel.style.display = 'none';
         //this.$.orientationPanel.style.display = 'none';
         this.$.inputIsMetadata.setAttribute('checked','');
       } else {
-        this.$.joinMetadata.style.display = 'none';
+        this.$.joinMetadataOuter.style.display = 'none';
         this.$.spectraPanel.style.display = 'block';
         //this.$.orientationPanel.style.display = 'block';
         this.$.inputIsMetadata.removeAttribute('checked');

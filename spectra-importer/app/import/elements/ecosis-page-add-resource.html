@@ -185,15 +185,14 @@
       }
 
       // set default layout and parse workspace
-      ecosis.ckan.setDefaultLayout(
-          ecosis.ds.package_id, this.newResourceIds, this.defaultType,
+      ecosis.ckan.processResource(
+          ecosis.ds.package_id, this.newResourceIds, null, {layout: this.defaultType},
           function(resp) {
               if( resp.error ) return console.log('Error setting default resource layout :(');
 
               ecosis.ds.runAfterResourceAdd(resp);
               this.onProcessingComplete();
               this.fire('resource-add');
-
           }.bind(this)
       )
     },

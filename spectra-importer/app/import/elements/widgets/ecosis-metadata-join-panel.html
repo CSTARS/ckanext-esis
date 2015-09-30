@@ -1,65 +1,14 @@
 <dom-module id="ecosis-metadata-join-panel">
   <template>
-
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title">
-          Join On:&nbsp;&nbsp;
-          <select id="joinId" on-change="onJoinIdChange" style="color: #333"></select>
-        </h3>
-      </div>
-      <div class="panel-body">
-
-        <!-- Filename match -->
-        <div class="form-horizontal">
-          <div class="form-group">
-            <label for="filenameMatch" class="col-lg-3">Filename Match</label>
-            <div class="col-lg-9">
-              <div class="checkbox">
-                <label>
-                  <input id="filenameMatch" type="checkbox" on-click="onFilenameMatch">
-                  Match attributes to resource filename.
-                </label>
-              </div>
-
-              <!-- Exact Match -->
-              <div id="looseMatchPanel" style="margin-top: 15px">
-                <div class="checkbox">
-                  <label>
-                    <input id="looseMatch" type="checkbox" on-click="onLooseMatch">
-                    <b>Loose match</b>. If checked, the filename just needs to contain
-                    the attribute value to match.  Otherwise the attribute value must
-                    match the filename exactly.
-                  </label>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div class="form-group" id="worksheetMatchPanel">
-            <label for="looseMatch" class="col-lg-3">Worksheet Match</label>
-            <div class="col-lg-9">
-              <div class="checkbox">
-                <label>
-                  <input id="worksheetMatch" type="checkbox" on-click="onWorksheetMatch">
-                  Match on Worksheet Name.
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div id="updatingPanel" class="alert alert-success" style="display:none">
-          <i class="fa fa-spinner fa-spin"></i> Joining...
-        </div>
-
-        <div id="matchCountPanel" class="label label-primary">
-          Matched to <span id="matchCountLabel">matchCount</span> measurements.
-        </div>
-      </div>
+    <div id="hasMatches">
+      <select id="joinId" class="form-control" on-input="onJoinIdChange"></select>
+      <div id="msg"></div>
     </div>
-
+    <div id="noMatches" class="text text-warning">
+      The attribute names (keys) in this sheet do not match any other data sheet.  To join
+      this metadata you must use common keys in both your metadata sheet and your
+      data sheet.  This key is often known as a primary key in SQL/relational land.<br /><br />
+    </div>
   </template>
 </dom-module>
 
@@ -75,101 +24,45 @@
       if( datasheet ) this.datasheet = datasheet;
       if( resource ) this.resourceId = resource.id;
 
-      this.updateMatchTypeUi();
-
       var options = '<option></option>';
+      var knownAttrs = ecosis.ds.getDatasheetAttributes();
+      var c = 0;
+
       for( var i = 0; i < this.datasheet.attributes.length; i++ ) {
         var attr = this.datasheet.attributes[i];
-        if( attr.type == 'metadata' ) {
+        if( attr.type == 'metadata' && knownAttrs.indexOf(attr.name) > -1 ) {
           options += '<option value="'+attr.name+'" '+
-              (this.datasheet.matchAttribute == attr.name ? 'selected' : '') +
+              (this.datasheet.joinOn == attr.name ? 'selected' : '') +
               '>'+attr.name+'</option>';
+          c++;
         }
       }
       this.$.joinId.innerHTML = options;
+
+      if( c == 0 ) {
+        this.$.noMatches.style.display = 'block';
+        this.$.hasMatches.style.display = 'none';
+      } else {
+        this.$.noMatches.style.display = 'none';
+        this.$.hasMatches.style.display = 'block';
+      }
 
       var matchCount = 0;
       for( var key in this.datasheet.matches ) {
         matchCount += this.datasheet.matches[key]
       }
-      this.$.matchCountLabel.innerHTML = matchCount;
+      //this.$.matchCountLabel.innerHTML = matchCount;
     },
 
     onJoinIdChange : function() {
-      this.datasheet.matchAttribute = this.$.joinId.value;
+      debugger;
+      this.datasheet.joinOn = this.$.joinId.value;
       this.updateServer();
     },
 
-    onWorksheetMatch : function() {
-      if( $(this.$.worksheetMatch).is(':checked') ) {
-        this.datasheet.matchType = 'sheetname';
-      } else {
-        this.datasheet.matchType = 'attribute';
-      }
-
-      this.updateMatchTypeUi();
-      this.updateServer();
-    },
-
-    onFilenameMatch : function() {
-      if( this.$.filenameMatch.checked ) {
-        this.datasheet.matchType = 'filename';
-        this.datasheet.looseMatch = this.$.looseMatch.checked;
-      } else {
-        this.datasheet.matchType = 'attribute';
-      }
-
-      this.updateMatchTypeUi();
-      this.updateServer();
-    },
-
-    onLooseMatch : function() {
-      this.datasheet.looseMatch = this.$.looseMatch.checked;
-
-      this.updateMatchTypeUi();
-      this.updateServer();
-    },
 
     updateServer : function() {
-      if( !this.datasheet.matchAttribute || this.datasheet.matchAttribute == '' ) return;
-
-      this.setUpdating(true);
-
-      if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
-
-      this.updateTimer = setTimeout(function(){
-        this.updateTimer = -1;
-        this.join();
-      }.bind(this), 1000);
-    },
-
-    join : function() {
-
-      var matchType = this.datasheet.matchType;
-      if( !matchType || matchType == '' ) matchType = 'attribute';
-
-      ecosis.ckan.updateJoin(
-        ecosis.ds.package_id,
-        this.resourceId,
-        {
-          id : this.datasheet.id,
-          layout : 'row',
-          matchAttribute : this.datasheet.matchAttribute,
-          matchType : matchType,
-          metadata : true,
-          looseMatch : this.datasheet.looseMatch ? true : false
-        },
-        function(resp){
-          this.setUpdating(false);
-          if( resp.error ) return alert('Error updating join information :(');
-
-          for( var key in resp ) {
-            this.datasheet[key] = resp[key];
-          }
-
-          this.update(this.datasheet);
-        }.bind(this)
-      );
+      this.fire('joinon-selected', this.datasheet.joinOn);
     },
 
     setUpdating : function(updating) {
@@ -193,41 +86,6 @@
         this.fire('metadata-update', {updating: false});
       }
     },
-
-    updateMatchTypeUi : function() {
-
-      if( this.datasheet.matchType == 'filename' ) {
-
-        $(this.$.filenameMatch).prop('checked', true);
-        $(this.$.worksheetMatch).prop('checked', false);
-        this.$.looseMatchPanel.style.display = 'block';
-
-      } else if( this.datasheet.matchType == 'sheetname'){
-
-        $(this.$.filenameMatch).prop('checked', false);
-        $(this.$.worksheetMatch).prop('checked', true);
-        this.$.looseMatchPanel.style.display = 'none';
-
-      } else { // matchType == 'attribute'
-
-        $(this.$.filenameMatch).prop('checked', false);
-        $(this.$.worksheetMatch).prop('checked', false);
-        this.$.looseMatchPanel.style.display = 'none';
-      }
-
-      if( this.datasheet.sheetname ) {
-        this.$.worksheetMatchPanel.style.display = 'block';
-      } else {
-        this.$.worksheetMatchPanel.style.display = 'none';
-      }
-
-
-      if( this.datasheet.looseMatch ) {
-        $(this.$.looseMatch).prop('checked', true);
-      } else {
-        $(this.$.looseMatch).prop('checked', false);
-      }
-    }
 
   })
 </script>

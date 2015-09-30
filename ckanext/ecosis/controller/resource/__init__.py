@@ -10,6 +10,7 @@ from ecosis.lib.auth import hasAccess
 import ecosis.datastore.delete as deleteUtil
 import ecosis.datastore.query as query
 import ecosis.datastore.workspace as workspace
+from ecosis.lib.utils import jsonStringify
 
 parseOptions = ["ignore", "layout", "metadata", "joinOn"]
 
@@ -31,7 +32,7 @@ def deleteMany(self, params):
     for id in params.get('ids'):
         _delete({'id': id})
 
-    return json.dumps({'success': True})
+    return jsonStringify({'success': True})
 
 def _delete(params):
     # remove resource from disk - normally this doesn't happen
@@ -58,6 +59,7 @@ def process():
 
     sheet_id = request.params.get('sheet_id')
     resource_id = request.params.get('resource_id')
+    ids = request.params.get('resource_ids')
 
     try:
         options = json.loads(request.params.get('options'))
@@ -69,11 +71,20 @@ def process():
     safeOptions = {}
     for option in parseOptions:
         if option in options:
-            safeOptions[option] = safeOptions[option]
+            safeOptions[option] = options[option]
 
-    workspace.prepareFile(package_id, resource_id, sheet_id, safeOptions)
 
-    return query.getResource(resource_id, sheet_id)
+    result = []
+    if ids is not None:
+        ids = json.loads(ids)
+        for resource_id in ids:
+            workspace.prepareFile(package_id, resource_id, sheet_id, safeOptions)
+            result.append(query.getResource(resource_id))
+    else:
+        workspace.prepareFile(package_id, resource_id, sheet_id, safeOptions)
+        result = query.getResource(resource_id, sheet_id)
+
+    return jsonStringify(result)
 
 def get():
     response.headers["Content-Type"] = "application/json"
@@ -84,7 +95,7 @@ def get():
 
     hasAccess(pid)
 
-    return query.getResource(rid, sid)
+    return jsonStringify(query.getResource(rid, sid))
 
 
 def getLayoutOverview():

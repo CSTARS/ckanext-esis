@@ -137,6 +137,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def getMetadataChunk(self):
+        try:
+            return spectra.getMetadataChunk()
+        except Exception as e:
+            return handleError(e)
+
     def pushToSearch(self):
         try:
             return workspaceController.pushToSearch()

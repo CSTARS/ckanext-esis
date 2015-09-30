@@ -65,6 +65,47 @@ def get(packageId="", resourceId=None, sheetId=None, index=0):
 
     return spectra
 
+def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
+    query = {
+        "type" : "metadata",
+        "packageId" : packageId
+    }
+
+    if resourceId is not None:
+        query['resourceId'] = resourceId
+    if sheetId is not None:
+        query['sheetId'] = sheetId
+
+    chunk = collections.get('spectra').find_one(query, skip=index)
+    if chunk is None:
+        chunk = {}
+
+    del query['type']
+    sheetInfo = collections.get('resource').find_one(query)
+
+    joinedNames = []
+    if sheetInfo is not None and sheetInfo.get("joinOn") is not None and chunk.get('spectra') is not None:
+        # now make join query
+        joinQuery = {
+            "type" : "data",
+            "packageId" : packageId
+        }
+
+        joinQuery['spectra.%s' % sheetInfo.get("joinOn")] = chunk.get('spectra')[sheetInfo.get("joinOn")]
+
+        joined = collections.get('spectra').find(joinQuery)
+        for r in joined:
+            joinedName = ckanResourceQuery.get(r.get('resourceId'))
+            if joinedName is not None:
+                joinedNames.append(joinedName.get("name"))
+
+
+    return {
+        "metadata" : chunk.get('spectra'),
+        "joinedResources" : joinedNames,
+        "joinKey" : sheetInfo.get("joinOn")
+    }
+
 def total(packageId, resourceId=None, sheetId=None):
     query = {
         "type" : "data",

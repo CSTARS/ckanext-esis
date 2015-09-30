@@ -138,9 +138,15 @@ module.exports = function(config) {
   this.processResource = function(pkgid, resource_id, sheet_id, options, callback) {
     var data = {
         package_id : pkgid,
-        resource_id : resource_id,
-        sheet_id : sheet_id,
         options : JSON.stringify(options)
+    }
+
+    // apply to multiple resources, helper for first upload
+    if( Array.isArray(resource_id) ) {
+      data.resource_ids = JSON.stringify(resource_id)
+    } else {
+      data.resource_id = resource_id;
+      data.sheet_id = sheet_id;
     }
 
     post(this.host+'/ecosis/resource/process', data, function(err, resp) {

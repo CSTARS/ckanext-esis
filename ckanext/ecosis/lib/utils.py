@@ -30,6 +30,12 @@ def get_request_data(request):
 def handleError(e):
     response.headers["Content-Type"] = "application/json"
 
+    if hasattr(e, 'message'):
+        return json.dumps({
+            "error": True,
+            "message": e.message
+        })
+
     return json.dumps({
         "error": True,
         "message": str(e)

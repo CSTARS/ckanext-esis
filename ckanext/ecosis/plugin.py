@@ -83,7 +83,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
 
         # ecosis - spectra
-        map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='get')
+        map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')
+        map.connect('get_spectra_metadata', '/ecosis/spectra/getMetadataChunk', controller=controller, action='getMetadataChunk')
 
         # ecosis - workspace
         map.connect('prepare_workspace', '/ecosis/workspace/prepare', controller=controller, action='prepareWorkspace')
