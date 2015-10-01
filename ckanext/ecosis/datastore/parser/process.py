@@ -74,13 +74,14 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
             "message" : "ignore flag set or invalid file type"
         }
 
-    sheetConfig['hash'] = hash
     sheetConfig['processed'] = datetime.datetime.utcnow()
 
     response = None
     if ext == "csv":
+        sheetConfig['hash'] = hash
         response = _processCsv(sheetConfig)
     elif ext == "tsv" or ext == "spectra":
+        sheetConfig['hash'] = hash
         response = _processTsv(sheetConfig)
     elif ext == "xlsx" or ext == "xls":
         # TODO: add flag so we can specify we only want to update one sheet here
@@ -88,9 +89,10 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         # an excel file is going to actually expand to several files
         # so pass the files array so the placeholder can be removed
         # and the new 'sheet' files can be inserted
-        sheets = excel.process(sheetConfig)
+        sheets = excel.process(collections.get("resource"), sheetConfig, hash)
+
         for sheet in sheets:
-            _processSheetArray(sheet.data, file, packageId, resourceId, sheet.config)
+            _processSheetArray(sheet.get('data'), sheet.get('config'))
     else:
         return {
             "message" : "not parsed, invalid file type"

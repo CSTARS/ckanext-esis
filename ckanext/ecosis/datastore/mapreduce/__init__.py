@@ -52,7 +52,7 @@ def updateEcosisNs(pkg, spectra_count):
     sort = config.get("sort")
     if sort is None:
         sort = {}
-    
+
     ecosis = {
         "pushed" : datetime.utcnow(),
         "organization" : "",

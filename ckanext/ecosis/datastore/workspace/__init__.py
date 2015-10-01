@@ -36,17 +36,37 @@ def clean(current_package_id=None):
         if package.get("package_id") == current_package_id:
             continue
 
-        collections.get('spectra').remove({
-            "packageId" : package.get("package_id"),
-        })
+        cleanPackage(package.get('package_id'))
 
-        package["prepared"] = False
-        collections.get("package").update({"packageId", package.get("package_id")}, package)
+def cleanPackage(package_id):
+    # remove all spectra chunks
+    collections.get('spectra').remove({
+        "packageId" : package_id,
+    })
 
-        # clear anything placed on the filesystem workspace
-        workspacePath = os.path.join(workspaceDir, package.get("package_id"))
+    # set not prepared
+    collections.get("package").update({
+        "packageId": package_id
+    },{
+        "$set" : {
+            "prepared" : False
+        }
+    })
 
-        # clean out any existing extraction
+    # remove all hash file ids.  next time we process, we should assume all is bad
+    collections.get("resource").update({
+        "packageId": package_id
+    },{
+        "$set" : {
+            "hash" : None
+        }
+    })
+
+    # clear anything placed on the filesystem workspace
+    workspacePath = os.path.join(workspaceDir, package_id)
+
+    # clean out any existing extraction
+    if os.path.exists(workspacePath):
         shutil.rmtree(workspacePath)
 
 def touch(package_id):
@@ -129,7 +149,8 @@ def extractZip(package_id, resource_id, zipPath, zipName):
     workspacePath = os.path.join(workspaceDir, package_id, resource_id)
 
     # clean out any existing extraction
-    shutil.rmtree(workspacePath)
+    if os.path.exists(workspacePath):
+        shutil.rmtree(workspacePath)
 
     z = zipfile.ZipFile(zipPath, "r")
 

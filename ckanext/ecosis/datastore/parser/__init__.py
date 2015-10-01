@@ -1,4 +1,5 @@
-import process
+import process, excel
 
-def init(collections):
+def init(collections, workspaceDir):
     process.init(collections)
+    excel.init(workspaceDir)

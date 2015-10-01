@@ -21,8 +21,12 @@ def prepare():
         raise Exception('Invalid package ID')
 
     force = request.params.get('force')
+    clean = request.params.get('clean')
     if force == None:
         force = False
+
+    if clean == "true":
+        workspace.cleanPackage(ckanPackage.get("id"))
 
     return jsonStringify(workspace.prepare(ckanPackage.get("id"), force))
 

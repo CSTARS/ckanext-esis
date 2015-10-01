@@ -1,4 +1,10 @@
-import xlrd
+import xlrd, os, shutil, csv, datetime, json
+
+workspaceDir = None
+
+def init(workspaceDirectory):
+    global workspaceDir
+    workspaceDir = workspaceDirectory
 
 # src:
 #  https://github.com/python-excel/xlrd
@@ -7,52 +13,59 @@ import xlrd
 #  https://secure.simplistix.co.uk/svn/xlrd/trunk/xlrd/doc/xlrd.html?p=4966
 # Known Issues:
 #  Looks like some versions of officelibre and badness that xlrd doesn't like...
-def process(collection, file, packageId, resourceId, sheetConfig):
+def process(collection, sheetConfig, hash):
     # remove the place holder, the sheets will be the actual 'files'
     datasheets = []
 
-    try:
-        workbook = xlrd.open_workbook(file)
-        sheets = workbook.sheet_names()
+    sheetIds = []
+    if sheetConfig.get('hash') != hash:
+        sheetIds = cacheWrite(collection, sheetConfig, hash)
+    else:
+        workspacePath = os.path.join(workspaceDir, sheetConfig.get('packageId'), sheetConfig.get('resourceId'))
+        fullPath = os.path.join(workspacePath,'sheets.json')
+        f = open(fullPath, 'r')
+        sheetIds = json.load(f)
+        f.close()
 
+    for sheetId in sheetIds:
+        configSheetId = sheetConfig.get('sheetId')
 
-        for i, sheet in enumerate(sheets):
-            id = "%s-%s" % (i, sheet)
+        config = None
 
-            config = None
+        if configSheetId == sheetId:
+            # we are processing a single sheet
+            config = sheetConfig
 
-            if sheetConfig.get('sheetId') == id:
-                config = sheetConfig
-            else:
-                config = collection.find_one({
-                    "packageId" : packageId,
-                    "resourceId" : resourceId,
-                    "sheetId" : id
-                })
+        elif configSheetId is None:
+            # we are processing everything
+            config = collection.find_one({
+                "packageId" : sheetConfig.get('packageId'),
+                "resourceId" : sheetConfig.get('resourceId'),
+                "sheetId" : sheetId
+            })
 
-                if config == None:
-                    config = {
-                        "packageId" : packageId,
-                        "resourceId" : resourceId,
-                        "sheetId": id
-                    }
+            if config == None:
+                config = {
+                    "packageId" : sheetConfig.get('packageId'),
+                    "resourceId" : sheetConfig.get('resourceId'),
+                    "sheetId": sheetId
+                }
 
-                # tack on zip stuff
-                if sheetConfig.get("fromZip") == True:
-                    config["fromZip"] = True
-                    config["zip"] = sheetConfig.get("zip")
+        config['hash'] = hash
 
-            data = getWorksheetData(workbook.sheet_by_name(sheet))
+        if configSheetId == sheetId or configSheetId is None:
+
+            # tack on zip stuff
+            if sheetConfig.get("fromZip") == True:
+                config["fromZip"] = True
+                config["zip"] = sheetConfig.get("zip")
+
+            data = cacheRead(config)
 
             datasheets.append({
                 "data" : data,
-                config : config
+                "config" : config
             })
-
-
-    #TODO: how do we really want to handle this?
-    except Exception as e:
-        pass
 
     return datasheets
 
@@ -64,3 +77,85 @@ def getWorksheetData(sheet):
             row.append(str(sheet.cell_value(i, j)))
         data.append(row)
     return data
+
+# read a single sheet
+def cacheRead(sheetConfig):
+    id = sheetConfig.get('sheetId').split('-')[0]
+    filename = '%s.csv' % id
+    workspacePath = os.path.join(workspaceDir, sheetConfig.get('packageId'), sheetConfig.get('resourceId'), filename)
+
+    with open(workspacePath) as csvfile:
+        reader = csv.reader(csvfile, delimiter=",", quotechar='"')
+        data = []
+        for row in reader:
+            data.append(row)
+        csvfile.close()
+        return data
+    return [[]]
+
+# write excel files to disk as csv for faster read time
+# excel read is unreal slow in python.
+def cacheWrite(collection, sheetConfig, hash):
+
+    # we need to update the csv file cache
+    workspacePath = os.path.join(workspaceDir, sheetConfig.get('packageId'), sheetConfig.get('resourceId'))
+
+    # clean out any existing extraction
+    if os.path.exists(workspacePath):
+        shutil.rmtree(workspacePath)
+
+    os.makedirs(workspacePath)
+
+    sheetNames = []
+
+    try:
+        workbook = xlrd.open_workbook(sheetConfig.get('file'))
+        sheets = workbook.sheet_names()
+
+        for i, sheet in enumerate(sheets):
+            sheetNames.append('%s-%s' % (i, sheet))
+            data = getWorksheetData(workbook.sheet_by_name(sheet))
+            fullPath = os.path.join(workspacePath,'%s.csv' % i)
+
+            csvfile = open(fullPath, 'wb')
+
+            wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+            for row in data:
+                wr.writerow(row)
+            csvfile.close()
+
+    except Exception as e:
+        print e
+        pass
+
+    # make sure we save the hash
+    excelConfig = collection.find_one({
+        "packageId" : sheetConfig.get('packageId'),
+        "resourceId" : sheetConfig.get('resourceId'),
+        "sheetId" : None
+    })
+
+    if excelConfig is None:
+        excelConfig = {
+            "file" : sheetConfig.get('file'),
+            "packageId" : sheetConfig.get('packageId'),
+            "resourceId" : sheetConfig.get('resourceId'),
+            "sheetId" : None,
+            "hash" : hash,
+            "cached" : datetime.datetime.utcnow(),
+            "excel" : True
+        }
+
+    collection.update({
+        "resourceId" : sheetConfig.get('resourceId'),
+        "packageId" : sheetConfig.get('packageId'),
+        "sheetId" : None
+    }, excelConfig, upsert=True)
+
+    # save ids
+    fullPath = os.path.join(workspacePath,'sheets.json')
+    f = open(fullPath, 'w')
+    json.dump(sheetNames, f)
+    f.close()
+
+    return sheetNames

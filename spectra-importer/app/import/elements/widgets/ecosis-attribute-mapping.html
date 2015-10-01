@@ -194,9 +194,7 @@
       for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
         sheet = ecosis.ds.datasheets[i];
         for( var j = 0; j < sheet.attributes.length; j++ ) {
-          if( sheet.attributes[j].type == 'metadata' ) {
-            attrs[sheet.attributes[j].name] = 1;
-          }
+          attrs[sheet.attributes[j]] = 1;
         }
       }
 

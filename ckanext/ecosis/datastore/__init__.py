@@ -19,7 +19,7 @@ from ckan import package
 
 
 def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
-    parser.init(collections)
+    parser.init(collections, workspacePath)
     ckan.init(pgConn)
     query.init(collections, host)
     vocab.init(schema, collections)
