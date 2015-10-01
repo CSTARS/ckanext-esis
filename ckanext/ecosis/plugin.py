@@ -69,7 +69,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
-        map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setWorkspaceOptions')
+        map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setPackageOptions')
 
         # ecosis - root
         map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')

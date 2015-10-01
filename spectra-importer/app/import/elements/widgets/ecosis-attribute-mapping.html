@@ -29,10 +29,10 @@
         the attribute map for each dataset you add.
     </div>
 
-    <div class="well">
+    <div>
       <div class="panel panel-primary">
         <div class="panel-heading">
-          <h3 class="panel-title">Map Spectra Attributes</h3>
+          <h3 class="panel-title">Map your names to EcoSIS names</h3>
         </div>
         <div class="panel-body">
           <h5 class="page-header" style="margin-top:0">By File</h5>
@@ -88,7 +88,7 @@
 
       <div class="panel panel-primary" id="currentPanel">
         <div class="panel-heading">
-          <h3 class="panel-title">Current Spectra Name Mappings</h3>
+          <h3 class="panel-title">Current Map</h3>
         </div>
         <div class="panel-body" id="currentMapRoot"></div>
       </div>
@@ -173,6 +173,7 @@
       this.customList = [];
 
       var html = '<optgroup><option></option></optgroup>';
+
       for( var key in ecosis.ds.metadataDefinitions ) {
           html += '<optgroup label="'+key+'">';
 
@@ -188,12 +189,22 @@
 
       this.$.newEcosis.innerHTML = html;
 
-      for( var i = 0; i < ecosis.ds.schema.length; i++ ) {
-          var s = ecosis.ds.schema[i];
-          if( s.type != "metadata" ) continue;
-          if( ecosis.ds.attributeMap[s.name] ) continue;
 
-          this.customList.push(s.name);
+      var attrs = {}, sheet;
+      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+        sheet = ecosis.ds.datasheets[i];
+        for( var j = 0; j < sheet.attributes.length; j++ ) {
+          if( sheet.attributes[j].type == 'metadata' ) {
+            attrs[sheet.attributes[j].name] = 1;
+          }
+        }
+      }
+
+      attrs = Object.keys(attrs);
+
+      for( var i = 0; i < attrs.length; i++ ) {
+          if( ecosis.ds.attributeMap[attrs[i]] ) continue;
+          this.customList.push(attrs[i]);
       }
 
       this.customList.sort(function(a, b){
@@ -289,7 +300,11 @@
     save : function(newMap) {
       this.$.saveLabel.style.display = 'block';
 
-      ecosis.ckan.setAttributeMap(ecosis.ds.package_id,newMap,
+      var options = {
+        map : newMap
+      };
+
+      ecosis.ckan.setPackageOptions(ecosis.ds.package_id, options,
         function(resp) {
           this.$.saveLabel.style.display = 'none';
 

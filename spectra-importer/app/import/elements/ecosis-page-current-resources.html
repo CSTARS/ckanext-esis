@@ -90,16 +90,20 @@
       if( !confirm('Are you sure you want to delete all selected resources?') ) return;
 
       var eles = this.querySelectorAll('ecosis-resource-panel');
-      var ids = [];
+      var ids = [], usedEles = [];
       for( var i = 0; i < eles.length; i++ ) {
+        if( !eles[i].isSelected() ) continue;
         eles[i].$.deletePanel.style.display = 'inline-block';
         ids.push(eles[i].resource.id);
+        usedEles.push(eles[i]);
       }
 
       ecosis.ckan.deleteResources(ids, function(resp){
         if( resp.error ) return alert('Error: '+resp.message+' :(');
 
-        for( var i = 0; i < eles.length; i++ ) $(eles[i]).remove();
+        for( var i = 0; i < usedEles.length; i++ ) {
+          $(usedEles[i]).remove();
+        }
 
         for( var i = ecosis.ds.resources.length - 1; i >= 0; i-- ) {
           if( ids.indexOf(ecosis.ds.resources[i].id) > -1 ) {

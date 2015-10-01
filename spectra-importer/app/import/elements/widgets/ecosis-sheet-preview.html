@@ -13,7 +13,7 @@
 
     <h5 class="info page-header" id="info"></h5>
 
-    <div class="layout horizontal">
+    <div class="layout horizontal center">
         <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
 
         <div class="flex">
@@ -27,6 +27,9 @@
 
         <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
     </div>
+
+    <div id="sliderRoot" style="margin-top: 15px"></div>
+
   </template>
 </dom-module>
 
@@ -46,6 +49,8 @@
       } else if ( this.index < 0 ) {
         this.index = 0;
       }
+
+      this.slider.slider('setValue', this.index+1);
 
       this.info.innerHTML = 'Loading index: '+this.index;
 
@@ -82,9 +87,8 @@
           '<h4 style="text-align:center">Matches:</h4>'+
           '<h5 style="text-align:center; color:#888">'+(resp.joinedResources.length == 0 ? 'None' : resp.joinedResources.join(', '))+'</h5>';
       } else {
-        this.$.chartRoot.innerHTML = 'No join key provided, please select one below'
+        this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
       }
-
 
       this.$.info.innerHTML = '<b>Join Count:</b> '+this.info.joinCount+', <b>Total '+this.sheet.layout+'s: </b>'
         +this.info.total+', <b>Current '+this.sheet.layout+': </b>'+(this.index+1)
@@ -96,7 +100,10 @@
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);
-      this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+
+      if( !(this.$.chartRoot.firstChild && this.$.chartRoot.firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
+        this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+      }
 
       this.$.info.innerHTML = '<b>Total '+this.sheet.layout+'s: </b>'+this.info.total+', <b>Current '+this.sheet.layout+': </b>'+(this.index+1);
 
@@ -116,7 +123,33 @@
 
       data.splice(0, 0, ['Wavelength', '']);
       this.$.chartRoot.firstChild.setHeight(300);
+      this.$.chartRoot.firstChild.options = {
+        animation:{
+          duration: 700,
+          easing: 'out',
+        }
+      }
       this.$.chartRoot.firstChild.setData(data);
+    },
+
+    initSlider : function() {
+      this.$.sliderRoot.innerHTML = '<input id="slider" style="width:100%" data-slider-id="ex1Slider" type="text"'+
+        ' data-slider-min="1" data-slider-max="'+this.info.total+'" data-slider-step="1" data-slider-value="'+this.index+'"/>';
+
+      this.$.slider = this.querySelector('#slider');
+      this.slider = $(this.$.sliderRoot.firstChild).slider({});
+      $(this.$.slider).parent().width('100%');
+
+      var updateTimer = -1;
+
+      this.slider.on('slideStop', function(e){
+        if( updateTimer != -1 ) clearTimeout(updateTimer);
+        updateTimer = setTimeout(function(){
+          updateTimer = -1;
+          console.log(e.value-1)
+          this.load(e.value-1);
+        }.bind(this), 100);
+      }.bind(this));
     },
 
     renderTable : function(metadata, ignorelist) {
@@ -154,6 +187,7 @@
     updateMetadata : function() {
       ecosis.ckan.getMetadataInfo(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
         this.info = resp;
+        this.initSlider();
         this.load();
       }.bind(this));
     },
@@ -161,6 +195,7 @@
     updateSpectra : function() {
       ecosis.ckan.getSpectraCount(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
         this.info = resp;
+        this.initSlider();
         this.load();
       }.bind(this));
     },

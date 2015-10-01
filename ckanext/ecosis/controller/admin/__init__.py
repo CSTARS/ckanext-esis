@@ -73,7 +73,7 @@ def rebuildUSDACollection(collections, usdaApiUrl):
         raise Exception('Nope.')
 
     usdaCollection = collections.get('usda')
-    usdaCollection.get('usda').remove({})
+    usdaCollection.remove({})
 
     resp = urllib2.urlopen(usdaApiUrl)
     rows = re.sub(r'\r', '', resp.read()).split('\n')

@@ -18,8 +18,6 @@ path = os.path.dirname(__file__)
 schema = os.path.join(path, "../../../spectra-importer/core/schema.json")
 
 pgConnStr = config.get("sqlalchemy.url")
-pgConn = psycopg2.connect(pgConnStr)
-
 
 with open(schema) as schema_file:
     schema = json.load(schema_file)
@@ -38,7 +36,7 @@ collections = {
 
 upload = uploader.ResourceUpload({})
 
-datastore.init(schema, collections, pgConn, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
+datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
 
 
 class EcosisController(PackageController):
@@ -59,13 +57,13 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def deleteResouce(self):
+    def deleteResource(self):
         try:
             return resource.delete()
         except Exception as e:
             return handleError(e)
 
-    def deleteResouces(self):
+    def deleteResources(self):
         try:
             return resource.deleteMany()
         except Exception as e:
@@ -127,7 +125,7 @@ class EcosisController(PackageController):
 
     def setPackageOptions(self):
         try:
-            return resource.get()
+            return package.setOptions()
         except Exception as e:
             return handleError(e)
 

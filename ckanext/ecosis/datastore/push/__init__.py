@@ -15,7 +15,7 @@ def init(collections):
 
 class Push:
 
-    def run(self, ckanPackage, email=False, user={}):
+    def run(self, ckanPackage, emailOnComplete=False, emailAddress="", username=""):
         # first clean out data
         deleteUtils.cleanFromSearch(ckanPackage.get('id'))
 
@@ -23,15 +23,15 @@ class Push:
             raise Exception('This dataset is private')
 
         q = Queue()
-        p = Process(target=sub_run, args=(q, ckanPackage, email, user))
+        p = Process(target=sub_run, args=(q, ckanPackage, emailOnComplete, emailAddress, username))
         p.start()
 
-        return {'success': True, 'emailing': email, 'email': user.get('email')}
+        return {'success': True, 'emailing': emailOnComplete, 'email': emailAddress}
 
 
-def sub_run(q, ckanPackage, email, user):
+def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
     try:
-        total = query.total(ckanPackage.get('id'))
+        total = query.total(ckanPackage.get('id')).get('total')
 
         for i in range(0, total):
             spectra = query.get(ckanPackage.get('id'), index=i)
@@ -39,13 +39,13 @@ def sub_run(q, ckanPackage, email, user):
 
         mapreduce.mapreducePackage(ckanPackage)
 
-        if not email:
+        if not emailOnComplete:
             return
 
         send_notification(
             {
-                "email" : user.get('email'),
-                "display_name" : user.get('display_name')
+                "email" : emailAddress,
+                "display_name" : username
             },
             {
                 "subject" : "EcoSIS Push Successful",
@@ -62,13 +62,13 @@ def sub_run(q, ckanPackage, email, user):
             deleteUtils.cleanFromSearch(ckanPackage.get('id'))
 
             print e
-            if not email:
+            if not emailOnComplete:
                 return
 
             send_notification(
                 {
-                    "email" : user.get('email'),
-                    "display_name" : user.get('display_name')
+                    "email" : emailAddress,
+                    "display_name" : username
                 },
                 {
                     "subject" : "EcoSIS Push Failed",

@@ -59,7 +59,7 @@ def touch(package_id):
 
 def setOptions(package_id, options):
 
-    packageInfo = collections.get("package").findOne({"packageId": package_id})
+    packageInfo = collections.get("package").find_one({"packageId": package_id})
     if packageInfo is None:
         return
 

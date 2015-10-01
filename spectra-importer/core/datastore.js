@@ -123,33 +123,44 @@ module.exports = function(config) {
       if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
     }
 
-    this.schema = [];
-    /*
-      for( var attrName in this.result.attributes ) {
-        var attr = this.result.attributes[attrName];
-        attr.name = attrName;
-        this.schema.push(attr);
+    if( this.data.extras && !Array.isArray(this.data.extras) ) {
+      var arr = [];
+      for( var key in this.data.extras) {
+        arr.push({
+          key : key,
+          value : this.data.extras[key]
+        });
       }
-    */
+      this.data.extras = arr;
+    }
 
-    /*
-      this.wavelengths = this.result.wavelengths;
-    */
-
-    /*
-      if( this.result.datasetAttributes ) {
-        this.datasetAttributes = this.result.datasetAttributes;
+    if( this.data.tags ) {
+      var arr = [];
+      for( var i = 0; i < this.data.tags.length; i++ ) {
+        arr.push({
+          name : this.data.tags[i],
+          display_name : this.data.tags[i]
+        });
       }
-    */
+      this.data.tags = arr;
+    }
 
     this.datasheets = this.result.resources;
 
+    this.attributeMap = {};
+    this.inverseAttributeMap = {};
     if( this.result.package.map ) {
       this.attributeMap = this.result.package.map;
       for( var key in this.result.package.map ) {
         this.inverseAttributeMap[this.result.package.map[key]] = key;
       }
     }
+
+    this.sort = {};
+    if( this.result.package.sort ) {
+      this.sort = this.result.package.sort;
+    }
+
 
     this.result.ckan.resources.sort(function(a, b){
       if( a.name > b.name ) return 1;
@@ -240,7 +251,8 @@ module.exports = function(config) {
     var count = 0;
 
     // check for spectra level ecosis metadata
-    this.schema.forEach(function(item){
+    // TODO
+    /*this.schema.forEach(function(item){
       if( this.isEcosisMetadata(item.name) ) {
         count++;
       } else if( this.inverseAttributeMap[item.name] &&
@@ -248,7 +260,7 @@ module.exports = function(config) {
 
         count++;
       }
-    }.bind(this));
+    }.bind(this));*/
 
     var map = {
       'Keywords' : 'tags',
@@ -266,6 +278,10 @@ module.exports = function(config) {
         count++;
       }
     }
+
+    if( this.data.notes ) count++;
+    if( this.data.owner_org ) count++;
+
 
     return count;
   }

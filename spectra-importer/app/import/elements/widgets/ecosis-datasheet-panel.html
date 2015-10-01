@@ -11,7 +11,7 @@
 
   <template>
 
-    <div id="main" class="animated fadeInUp">
+    <div id="main" class="animated fadeIn">
       <h6 id="titleLabel" style="display:none"></h6>
 
       <ecosis-sheet-preview id="preview" style="margin-bottom: 25px"></ecosis-sheet-preview>
@@ -57,7 +57,7 @@
           <div class="col-md-10">
             <div class="checkbox">
               <label>
-                <input id="inputIgnore" type="checkbox" on-change="onIgnoreUpdate"> This datasheet should not be parsed.
+                <input id="inputIgnore" type="checkbox" on-change="onIgnoreUpdate"> This sheet should not be parsed.
               </label>
             </div>
           </div>
@@ -142,6 +142,7 @@
               }
             }
 
+            ecosis.ds.fireUpdate();
             this.fire('update', this.resource.id);
             this.$.preview.update(this.sheet);
 

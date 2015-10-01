@@ -38,13 +38,13 @@
             <div class="radio">
               <label>
                 <input type="radio" name="optionsRadios" id="columnInput" value="column" checked="" on-click="onRadioChange">
-                My data is laid out by column
+                My observations are by column.
               </label>
             </div>
             <div class="radio">
               <label>
                 <input type="radio" name="optionsRadios" id="rowInput" value="row" on-click="onRadioChange">
-                My data is laid out by row
+                My observations are by row.
               </label>
             </div>
           </div>
@@ -184,15 +184,22 @@
         return;
       }
 
-      // set default layout and parse workspace
       ecosis.ckan.processResource(
           ecosis.ds.package_id, this.newResourceIds, null, {layout: this.defaultType},
           function(resp) {
-              if( resp.error ) return console.log('Error setting default resource layout :(');
+              if( resp.error ) return alert(resp.message);
 
-              ecosis.ds.runAfterResourceAdd(resp);
-              this.onProcessingComplete();
-              this.fire('resource-add');
+              // proly a smarter way to do things, but for now, reload entire workspace
+              ecosis.ckan.getWorkspace(ecosis.ds.package_id, function(result){
+                if( result.error ) {
+                  return alert(result.message);
+                }
+
+                ecosis.ds.runAfterResourceAdd(result);
+                this.onProcessingComplete();
+                this.fire('resource-add');
+
+              }.bind(this));
           }.bind(this)
       )
     },

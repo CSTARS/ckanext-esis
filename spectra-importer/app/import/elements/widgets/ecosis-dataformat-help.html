@@ -78,10 +78,10 @@
                 <td></td>
             </td>
             <tr>
-                <td class="column attr">column Attribute</td>
-                <td class="column">column 1 value</td>
-                <td class="column highlight" style="border-top:1px solid red">column 2 value</td>
-                <td class="column">column 3 value</td>
+                <td class="column attr">id</td>
+                <td class="column">id1</td>
+                <td class="column highlight" style="border-top:1px solid red">id2</td>
+                <td class="column">id3</td>
             </tr>
             <tr>
                 <td class="column attr">USDA Code</td>
@@ -90,10 +90,16 @@
                 <td class="column">ACRU</td>
             </tr>
             <tr>
-                <td class="column attr">id</td>
-                <td class="column">id1</td>
-                <td class="column highlight">id2</td>
-                <td class="column">id3</td>
+                <td class="column attr">LAI (m2/m2)</td>
+                <td class="column">1.812</td>
+                <td class="column highlight">.441</td>
+                <td class="column">1.501</td>
+            </tr>
+            <tr>
+                <td class="column attr">NDVI</td>
+                <td class="column">.53</td>
+                <td class="column highlight">.5</td>
+                <td class="column">.48</td>
             </tr>
             <tr>
                 <td class="data attr">400<span style="color:red">*</span></td>
@@ -104,23 +110,9 @@
             <tr>
                 <td class="data attr">410<span style="color:red">*</span></td>
                 <td class="data">.400</td>
-                <td class="data highlight">.430</td>
+                <td class="data highlight" style="border-bottom:1px solid red">.430</td>
                 <td class="data">.568</td>
             </tr>
-            <tr>
-                <td class="data attr">LAI__d (m2/m2)</td>
-                <td class="data">1.812</td>
-                <td class="data highlight">.441</td>
-                <td class="data">1.501</td>
-            </tr>
-            <tr>
-                <td class="data attr">NDVI__d</td>
-                <td class="data">.53</td>
-                <td class="data highlight" style="border-bottom:1px solid red">.5</td>
-                <td class="data">.48</td>
-            </tr>
-
-
         </table>
     </div>
 
@@ -159,16 +151,16 @@
                 <td class="column attr">id</td>
                 <td class="column attr">Metadata Attribute</td>
                 <td class="column attr">USDA Code</td>
-                <td class="data attr">LAI__d (m2/m2)</td>
-                <td class="data attr">NDVI__d</td>
+                <td class="column attr">LAI (m2/m2)</td>
                 <td class="data attr">400<span style="color:red">*</span></td>
+                <td class="data attr">410<span style="color:red">*</span></td>
             </tr>
             <tr>
                 <td class="column attr highlight-row" style="border-left: 1px solid red">2008-07-24</td>
                 <td class="column highlight-row">id1</td>
                 <td class="column highlight-row">metadata value 1</td>
                 <td class="column highlight-row">ORYZA</td>
-                <td class="data highlight-row">1.190</td>
+                <td class="column highlight-row">1.190</td>
                 <td class="data highlight-row">.53</td>
                 <td class="data highlight-row" style="border-right: 1px solid red">.487</td>
             </tr>
@@ -177,7 +169,7 @@
                 <td class="column">id2</td>
                 <td class="column">metadata value 2</td>
                 <td class="column">ACRU</td>
-                <td class="data">0.606</td>
+                <td class="column">0.606</td>
                 <td class="data">.50</td>
                 <td class="data">.400</td>
             </tr>
@@ -185,21 +177,22 @@
     </div>
 
     <div class="note">
-        Any <b>numeric</b><span style="color:red">*</span> attribute name will be considered wavelength
-        <span class="data note-label">data</span>.  Any attribute name with a <b>__d</b> postfix will be
-        considered <span class="data note-label">data</span>.  All other fields will be considered
-        <span class="column note-label">metadata</span>.  You will have the opportunity to manually
-        specify the difference later on as well.
+        <h6>Wavelengths</h6>
+        Any <b>numeric</b><span style="color:red">*</span> field name will be considered
+        <span class="data note-label">wavelength measurement</span>.  All other fields will be considered
+        <span class="column note-label">metadata</span>.  Metadata fields can supply units.
     </div>
 
     <div class="note">
+        <h6>Global Metadata</h6>
         <span class="file note-label">Global File Metadata</span> is applied to everything in the file
         and is completely <b>optional</b>.  You can also upload a seperate metadata file which can be
         joined to your data later on in the import process.
     </div>
 
     <div class="note">
-        Units can be specified by placing them in parentheses <b>(m2/m2)</b> after the attribute name.
+      <h6>Units</h6>
+      Units can be specified by placing them in parentheses <b>(m2/m2)</b> after the attribute name.
     </div>
 
     <div style="margin-top:15px">

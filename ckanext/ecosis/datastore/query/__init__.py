@@ -57,7 +57,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0):
     controlledVocab.enforce(spectra)
 
     addEcosisNamespace(spectra, package, main, sheetInfo)
-    setSort(spectra, package)
+    setSort(spectra, config)
     setLocation(spectra)
 
     return spectra
@@ -187,24 +187,33 @@ def setLocation(spectra):
         except:
             pass
 
-def setSort(spectra, package):
-    sort_on = package['extras'].get("sort_on")
-    sort_type = package['extras'].get("sort_type")
+def setSort(spectra, config):
+    if 'sort' not in config:
+        return
 
-    if sort_on != None:
-        if sort_on in spectra:
-            if sort_type == 'datetime':
-                try:
-                    spectra['ecosis']['sort'] = dateutil.parser.parse(spectra[sort_on])
-                except:
-                    pass
-            elif sort_type == 'numeric':
-                try:
-                    spectra['ecosis']['sort'] = float(spectra[sort_on])
-                except:
-                    pass
-            else:
-                spectra['ecosis']['sort'] = spectra[sort_on]
+    sort = config.get('sort')
+
+    on = sort.get('on')
+    type = sort.get('type')
+
+    if on is None:
+        return
+
+    if on not in spectra:
+        return
+
+    if type == 'datetime':
+        try:
+            spectra['ecosis']['sort'] = dateutil.parser.parse(spectra[on])
+        except:
+            pass
+    elif type == 'numeric':
+        try:
+            spectra['ecosis']['sort'] = float(spectra[on])
+        except:
+            pass
+    else:
+        spectra['ecosis']['sort'] = spectra[on]
 
 def addEcosisNamespace(spectra, package, main, sheetInfo):
     resource = ckanResourceQuery.get(sheetInfo.get('resourceId'))
@@ -225,8 +234,8 @@ def addEcosisNamespace(spectra, package, main, sheetInfo):
     spectra['ecosis'] = ecosis
 
 def mapNames(spectra, config):
-    if config.get("attributeMap") != None:
-        for key, value in config["attributeMap"].iteritems():
+    if config.get("map") != None:
+        for key, value in config["map"].iteritems():
             if value in spectra:
                 spectra[key] = spectra[value]
 

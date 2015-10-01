@@ -17,19 +17,20 @@ parseOptions = ["ignore", "layout", "metadata", "joinOn"]
 def delete():
     response.headers["Content-Type"] = "application/json"
 
-    params = utils._get_request_data(request)
+    params = utils.get_request_data(request)
 
     # remove resource from disk - normally this doesn't happen
     _delete(params)
 
     return json.dumps({'success': True})
 
-def deleteMany(self, params):
+def deleteMany():
     response.headers["Content-Type"] = "application/json"
 
-    params = utils._get_request_data(request)
+    params = utils.get_request_data(request)
+    ids = params.get('ids')
 
-    for id in params.get('ids'):
+    for id in ids:
         _delete({'id': id})
 
     return jsonStringify({'success': True})

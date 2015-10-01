@@ -40,8 +40,6 @@ def test():
 
 
     pgConnStr = config.get("app:main", "sqlalchemy.url")
-    pgConn = psycopg2.connect(pgConnStr)
-
 
     with open(schema) as schema_file:
         schema = json.load(schema_file)
@@ -60,7 +58,7 @@ def test():
     }
 
     ckanFileStorage.init(config)
-    init(schema, collections, pgConn, config.get("app:main", "ecosis.search_url"), ckanFileStorage, config.get("app:main", "ecosis.workspace.root"))
+    init(schema, collections, pgConnStr, config.get("app:main", "ecosis.search_url"), ckanFileStorage, config.get("app:main", "ecosis.workspace.root"))
 
     workspace.clean()
     workspace.prepare('05cd4761-49ff-4f0d-9a6c-0a0adb223f69')

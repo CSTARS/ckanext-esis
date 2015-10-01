@@ -26,7 +26,7 @@ def prepare():
 
     return jsonStringify(workspace.prepare(ckanPackage.get("id"), force))
 
-def pushToSearch(self):
+def pushToSearch():
     response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
@@ -44,7 +44,7 @@ def pushToSearch(self):
 
     push = Push()
 
-    return jsonStringify(push.run(ckanPackage, email, c.user))
+    return jsonStringify(push.run(ckanPackage, email, c.userobj.email, c.userobj.display_name))
 
 def get():
     response.headers["Content-Type"] = "application/json"

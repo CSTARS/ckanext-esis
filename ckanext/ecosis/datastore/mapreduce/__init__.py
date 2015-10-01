@@ -40,14 +40,19 @@ def init(mongoCollections, jsonSchema):
 # pkg should be a ckan pkg
 # collection should be the search collection
 def mapreducePackage(ckanPackage):
-    collections.get("spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, out=SON([("merge", config.get("search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
-    spectra_count = collections.get("spectra").find({"ecosis.package_id": ckanPackage['id']}).count()
+    collections.get("search_spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, out=SON([("merge", config.get("ecosis.mongo.search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
+    spectra_count = collections.get("search_spectra").find({"ecosis.package_id": ckanPackage['id']}).count()
 
     updateEcosisNs(ckanPackage, spectra_count)
 
 def updateEcosisNs(pkg, spectra_count):
-    collection = collections.get('spectra')
+    config = collections.get("package").find_one({"package_id": pkg.get("id")})
+    collection = collections.get('search_package')
 
+    sort = config.get("sort")
+    if sort is None:
+        sort = {}
+    
     ecosis = {
         "pushed" : datetime.utcnow(),
         "organization" : "",
@@ -70,8 +75,8 @@ def updateEcosisNs(pkg, spectra_count):
         },
         "resources" : [],
         "geojson" : None,
-        "sort_on" : getPackageExtra("sort_on", pkg),
-        "sort_description" : getPackageExtra("sort_description", pkg),
+        "sort_on" : sort.get("on"),
+        "sort_description" : sort.get("description")
     }
 
     # append the units
@@ -149,7 +154,7 @@ def updateEcosisNs(pkg, spectra_count):
 
         # set the known data attributes
         for key in mrValue['data_keys__']:
-            ecosis['spectra_schema']['data'].append(re.sub(r',', '.', key))
+            ecosis['package_schema']['wavelengths'].append(re.sub(r',', '.', key))
         setValues['$unset']['value.data_keys__'] = ''
 
         # now, lets remove any non-ecosis metadata that has more than 100 entries
@@ -159,7 +164,7 @@ def updateEcosisNs(pkg, spectra_count):
             if key == 'data_keys__':
                 continue
 
-            ecosis['spectra_schema']['metadata'].append(re.sub(r',', '.', key))
+            ecosis['package_schema']['metadata'].append(re.sub(r',', '.', key))
 
             if key in names or values == None:
                 continue
