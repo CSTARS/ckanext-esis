@@ -60,7 +60,7 @@ def cleanPackage(package_id):
         "$set" : {
             "hash" : None
         }
-    })
+    },multi=True)
 
     # clear anything placed on the filesystem workspace
     workspacePath = os.path.join(workspaceDir, package_id)

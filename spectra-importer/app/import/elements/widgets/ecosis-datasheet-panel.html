@@ -128,6 +128,10 @@
           this.sheet.sheetId,
           options,
           function(resp){
+            if( Array.isArray(resp) ) {
+              resp = resp[0];
+            }
+
             this.setSaving(false);
 
             if( resp.error ) return alert("Error updating datasheet :(");
@@ -176,11 +180,15 @@
 
       // set the correct layout
       if( this.sheet.layout == 'column' ) {
-        this.$.columnInput.setAttribute('checked', '');
-        this.$.rowInput.removeAttribute('checked');
+        $(this.$.columnInput).prop('checked', true);
+        $(this.$.rowInput).prop('checked', false);
+        //this.$.columnInput.setAttribute('checked', '');
+        //this.$.rowInput.removeAttribute('checked');
       } else {
-        this.$.rowInput.setAttribute('checked', '');
-        this.$.columnInput.removeAttribute('checked');
+        //this.$.rowInput.setAttribute('checked', '');
+        //this.$.columnInput.removeAttribute('checked');
+        $(this.$.columnInput).prop('checked', false);
+        $(this.$.rowInput).prop('checked', true);
       }
 
       this.updateMetadataUi();
@@ -193,10 +201,12 @@
       if( this.sheet.metadata ) {
         this.$.joinMetadata.update(this.sheet, this.resource);
         this.$.joinMetadataOuter.style.display = 'block';
-        this.$.inputIsMetadata.setAttribute('checked','');
+
+        $(this.$.inputIsMetadata).prop('checked', true);
       } else {
         this.$.joinMetadataOuter.style.display = 'none';
-        this.$.inputIsMetadata.removeAttribute('checked');
+
+        $(this.$.inputIsMetadata).prop('checked', false);
       }
     },
 

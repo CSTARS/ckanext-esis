@@ -6,20 +6,23 @@
   </style>
 
   <template>
-    <div class="layout horizontal">
-      <div>
-        <a class="btn btn-default" on-click="back" id="back">
-          <i class="fa fa-arrow-left"></i>
-        </a>
-      </div>
-      <div class="flex" style="text-align:center; padding: 0 25px">
-          <select id="select" class="form-control" on-change="onSelect"></select>
-      </div>
-      <div>
-        <a class="btn btn-default" on-click="forward" id="forward">
-          <i class="fa fa-arrow-right"></i>
-        </a>
-      </div>
+    <div class="well well-sm">
+      <div class="layout horizontal center">
+        <div>
+          <a class="btn btn-default" on-click="back" id="back">
+            <i class="fa fa-arrow-left"></i>
+          </a>
+        </div>
+        <div style="padding:0 15px">Sheet:</div>
+        <div class="flex" style="text-align:center; padding: 0 25px 0 0">
+            <select id="select" class="form-control" on-change="onSelect"></select>
+        </div>
+        <div>
+          <a class="btn btn-default" on-click="forward" id="forward">
+            <i class="fa fa-arrow-right"></i>
+          </a>
+        </div>
+    </div>
   </div>
   </template>
 </dom-module>
@@ -35,7 +38,8 @@
       var options = '';
       for( var i = 0; i < resource.datasheets.length; i++ ) {
         var ds = resource.datasheets[i];
-        options += '<option value="'+i+'">'+ds.name+(ds.sheetname ? ' '+ds.sheetname : '')+'</option>';
+        var name = ds.sheetId.split('-')[1]
+        options += '<option value="'+i+'">'+name+'</option>';
       }
       this.$.select.innerHTML = options;
     },

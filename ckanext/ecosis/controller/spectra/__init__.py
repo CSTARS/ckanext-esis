@@ -10,7 +10,7 @@ def get():
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
 
-    return jsonStringify(query.get(package_id, resource_id, sheet_id, _getIndex()))
+    return jsonStringify(query.get(package_id, resource_id, sheet_id, _getIndex(), showProcessInfo=True))
 
 
 def _getIndex():

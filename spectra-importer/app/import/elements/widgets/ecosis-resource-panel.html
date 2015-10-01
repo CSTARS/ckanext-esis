@@ -132,10 +132,7 @@
 
       // if the edit flag is passed, actually load the detailed datasheet and render
       if( edit ) {
-        this.$.datasheetSelector.setDisabled(true);
-        this.$.datasheetUI.edit(function(){
-          this.$.datasheetSelector.setDisabled(false);
-        }.bind(this));
+        this.$.datasheetUI.edit();
       }
 
       this.selectedIndex = index;

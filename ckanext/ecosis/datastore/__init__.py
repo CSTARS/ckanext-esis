@@ -19,6 +19,8 @@ from ckan import package
 
 
 def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
+    ensureIndexes(collections)
+
     parser.init(collections, workspacePath)
     ckan.init(pgConn)
     query.init(collections, host)
@@ -27,6 +29,16 @@ def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
     workspace.init(collections, resourceUtil, workspacePath)
     mapreduce.init(collections, schema)
     push.init(collections)
+
+def ensureIndexes(collections):
+    collections.get('spectra').create_index('index')
+    collections.get('spectra').create_index('packageId')
+
+    collections.get('resource').create_index('sheetId')
+
+    collections.get('package').create_index('packageId')
+    collections.get('resource').create_index('packageId')
+    collections.get('resource').create_index('resourceId')
 
 def test():
     t = time.time()*1000

@@ -36,6 +36,8 @@ def process(collection, sheetConfig, hash):
             # we are processing a single sheet
             config = sheetConfig
 
+            # update just these attributes
+
         elif configSheetId is None:
             # we are processing everything
             config = collection.find_one({
@@ -48,12 +50,14 @@ def process(collection, sheetConfig, hash):
                 config = {
                     "packageId" : sheetConfig.get('packageId'),
                     "resourceId" : sheetConfig.get('resourceId'),
+                    "layout" : sheetConfig.get('layout'),
                     "sheetId": sheetId
                 }
 
-        config['hash'] = hash
+
 
         if configSheetId == sheetId or configSheetId is None:
+            config['hash'] = hash
 
             # tack on zip stuff
             if sheetConfig.get("fromZip") == True:
@@ -145,6 +149,10 @@ def cacheWrite(collection, sheetConfig, hash):
             "cached" : datetime.datetime.utcnow(),
             "excel" : True
         }
+    else:
+        excelConfig['excel'] = True;
+        excelConfig['cached'] = datetime.datetime.utcnow();
+        excelConfig['hash'] = hash
 
     collection.update({
         "resourceId" : sheetConfig.get('resourceId'),

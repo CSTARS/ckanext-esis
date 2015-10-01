@@ -30,10 +30,10 @@
 
       for( var i = 0; i < this.datasheet.attributes.length; i++ ) {
         var attr = this.datasheet.attributes[i];
-        if( attr.type == 'metadata' && knownAttrs.indexOf(attr.name) > -1 ) {
-          options += '<option value="'+attr.name+'" '+
-              (this.datasheet.joinOn == attr.name ? 'selected' : '') +
-              '>'+attr.name+'</option>';
+        if( knownAttrs.indexOf(attr) > -1 ) {
+          options += '<option value="'+attr+'" '+
+              (this.datasheet.joinOn == attr ? 'selected' : '') +
+              '>'+attr+'</option>';
           c++;
         }
       }

@@ -15,9 +15,9 @@ def init(co, hostUrl):
 
     collections = co
     host = hostUrl
-    workspace.init(co)
+    workspace.init(co, getResource)
 
-def get(packageId="", resourceId=None, sheetId=None, index=0):
+def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False):
     # build out query
     query = {
         "type" : "data",
@@ -43,20 +43,25 @@ def get(packageId="", resourceId=None, sheetId=None, index=0):
 
     package = ckanPackageQuery.get(packageId)
 
-    join(packageId, spectra)
+    attributeProcessInfo = []
+    join(packageId, spectra, attributeProcessInfo)
     moveWavelengths(spectra)  # this also replaces , with .
 
     config = collections.get('package').find_one({"packageId": packageId})
     if config == None:
         config = {}
 
-    mapNames(spectra, config)
+    mapNames(spectra, config, attributeProcessInfo)
 
-    usda.setCodes(spectra)
+    usda.setCodes(spectra, info=attributeProcessInfo)
 
     controlledVocab.enforce(spectra)
 
-    addEcosisNamespace(spectra, package, main, sheetInfo)
+    if showProcessInfo:
+        addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=attributeProcessInfo)
+    else:
+        addEcosisNamespace(spectra, package, main, sheetInfo)
+
     setSort(spectra, config)
     setLocation(spectra)
 
@@ -95,7 +100,11 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
         for r in joined:
             joinedName = ckanResourceQuery.get(r.get('resourceId'))
             if joinedName is not None:
-                joinedNames.append(joinedName.get("name"))
+                joinedNames.append({
+                    "resourceId" : r.get('resourceId'),
+                    "sheetId" : r.get('sheetId'),
+                    "name" : joinedName.get('name')
+                })
 
 
     return {
@@ -215,7 +224,7 @@ def setSort(spectra, config):
     else:
         spectra['ecosis']['sort'] = spectra[on]
 
-def addEcosisNamespace(spectra, package, main, sheetInfo):
+def addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=None):
     resource = ckanResourceQuery.get(sheetInfo.get('resourceId'))
 
     ecosis = {
@@ -225,19 +234,28 @@ def addEcosisNamespace(spectra, package, main, sheetInfo):
         'filename': resource.get('name'),
         'datasheet_id': main.get('sheetId'),
         'dataset_link' : '%s#result/%s' % (host, sheetInfo.get('packageId')),
-        'dataset_api_link' : '%spackage/get?id=%s' % (host, sheetInfo.get('packageId'))
+        'dataset_api_link' : '%spackage/get?id=%s' % (host, sheetInfo.get('packageId')),
     }
+
+    if processInfo is not None:
+        ecosis['processInfo'] = processInfo
 
     if package.get('organization') != None:
         ecosis['organization'] = package['organization']['title']
 
     spectra['ecosis'] = ecosis
 
-def mapNames(spectra, config):
+def mapNames(spectra, config, processInfo):
     if config.get("map") != None:
         for key, value in config["map"].iteritems():
             if value in spectra:
                 spectra[key] = spectra[value]
+
+                processInfo.append({
+                    "type" : "mapped",
+                    "key" : key,
+                    "from" : value
+                })
 
 def moveWavelengths(spectra):
     wavelengths = {}
@@ -250,7 +268,7 @@ def moveWavelengths(spectra):
 
     spectra['datapoints'] = wavelengths
 
-def join(packageId, spectra):
+def join(packageId, spectra, processInfo):
     joinableSheets = collections.get('resource').find({"metadata": True, "packageId": packageId})
 
     for sheetConfig in joinableSheets:
@@ -271,14 +289,44 @@ def join(packageId, spectra):
             joinData = collections.get('spectra').find_one(query)
             if joinData != None:
                 for key in joinData.get("spectra"):
-                    if spectra.get(key) == None:
+                    if key not in spectra:
                         spectra[key] = joinData.get("spectra").get(key)
+
+                        processInfo.append({
+                            "type" : "join",
+                            "key" : key,
+                            "resourceId" : joinData.get("resourceId"),
+                            "sheetId" : joinData.get("sheetId"),
+                        })
 
 def uncleanKey(key):
     return re.sub(r',', '.', key)
 
 def getResource(resource_id, sheet_id=None):
-    return collections.get('resource').find_one({
-        "resourceId" : resource_id,
-        "sheetId" : sheet_id
+    query = {
+        "resourceId" : resource_id
+    }
+    if sheet_id is not None:
+        query['sheetId'] = sheet_id
+
+    sheets = collections.get("resource").find(query,{
+        "localRange" : 0,
+        "hash" : 0,
+        "file" : 0,
+        "_id" : 0
     })
+
+    response = []
+    for sheet in sheets:
+        # only send metadata attributes
+        metadata = []
+        if sheet.get('attributes') is not None:
+            for attr in sheet.get('attributes'):
+                if attr.get("type") != "metadata":
+                    continue
+
+                metadata.append(attr.get("name"))
+        sheet['attributes'] = metadata
+        response.append(sheet)
+
+    return response

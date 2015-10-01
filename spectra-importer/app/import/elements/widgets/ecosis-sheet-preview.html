@@ -44,8 +44,8 @@
     load : function(index) {
       if( index !== undefined ) this.index = index;
 
-      if( this.index >= this.info.count ) {
-        this.index = this.info.count-1;
+      if( this.index >= this.info.total ) {
+        this.index = this.info.total-1;
       } else if ( this.index < 0 ) {
         this.index = 0;
       }
@@ -81,11 +81,20 @@
       this.renderTable(resp.metadata);
 
       if( resp.joinKey && resp.metadata[resp.joinKey] ) {
+        var joined = 'None';
+        if( resp.joinedResources.length > 0 ) {
+          joined = '';
+          for( var i = 0; i < resp.joinedResources.length; i++ ) {
+            joined += resp.joinedResources[i].name + (resp.joinedResources[i].sheetId ? ' ('+resp.joinedResources[i].sheetId.split('-')[1]+')' : '')
+            if( i < resp.joinedResources.length-1 ) joined += ', ';
+          }
+        }
+
         this.$.chartRoot.innerHTML =
           '<h4 style="text-align:center">Joined On:</h4> '+
           '<h5 style="text-align:center">'+resp.joinKey+' = <span style="color:#888">'+resp.metadata[resp.joinKey]+'</span></h5>'+
           '<h4 style="text-align:center">Matches:</h4>'+
-          '<h5 style="text-align:center; color:#888">'+(resp.joinedResources.length == 0 ? 'None' : resp.joinedResources.join(', '))+'</h5>';
+          '<h6 style="text-align:center; color:#888">'+joined+'</h6>';
       } else {
         this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
       }
@@ -159,7 +168,7 @@
       var c = 0;
       for( var key in metadata ) {
         if( ignorelist.indexOf(key) > -1 ) continue;
-        table += '<tr><td>'+key+'</td><td>'+metadata[key]+'</td></tr>';
+        table += '<tr><td>'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
 
         c++;
         if( c == 100 ) {
@@ -168,6 +177,43 @@
         }
       }
       this.$.tableRoot.innerHTML = table+'</table>';
+    },
+
+    getProcessInfo : function(key, metadata) {
+      if( !metadata.ecosis.processInfo ) return '';
+
+      var matches = [];
+      for( var i = 0; i < metadata.ecosis.processInfo.length; i++ ) {
+        if( metadata.ecosis.processInfo[i].key == key ) {
+          matches.push(metadata.ecosis.processInfo[i]);
+        }
+      }
+
+      if( matches.length == 0 ) return '';
+
+      var resp = '';
+      for( var i = 0; i < matches.length; i++ ) {
+          resp += this.getProcessMessage(matches[i]);
+      }
+      return resp;
+    },
+
+    getProcessMessage : function(info) {
+      var header = '<div style="font-size:11px;color:#999;font-style:italic">';
+      var footer = '</div>';
+
+      if( info.type == 'join' ) {
+        try {
+          var name = ecosis.ds.resourceLookup[info.resourceId].name;
+          return header+'<b>Joined</b> from '+name+(info.sheetId ? ' ('+info.sheetId.split('-')[1]+')' : '')+footer;
+        } catch(e) {}
+      } else if ( info.type == 'usda lookup') {
+        return header+'<b>Appended</b> from USDA Symbol'+footer;
+      } else if ( info.type == 'mapped') {
+        return header+'<b>Mapped</b> from '+info.from+footer;
+      }
+
+      return '';
     },
 
     update : function(sheet) {

@@ -169,6 +169,7 @@ module.exports = function(config) {
     });
 
     this.resources = this.result.ckan.resources;
+    this.resourceLookup = {};
 
     // map resources to datasheets for daster lookup
     for( var i = 0; i < this.resources.length; i++ ) {
@@ -178,6 +179,7 @@ module.exports = function(config) {
           datasheets.push(this.datasheets[j]);
         }
       }
+      this.resourceLookup[this.resources[i].id] = this.resources[i];
       this.resources[i].datasheets = datasheets;
     }
 
@@ -229,10 +231,7 @@ module.exports = function(config) {
 
       for( var j = 0; j < sheet.attributes.length; j++ ) {
         attr = sheet.attributes[j];
-
-        if( attr.type != "metadata" ) continue;
-        if( attrs[attr.name] ) continue;
-        attrs[attr.name] = 1;
+        attrs[attr] = 1;
       }
     }
 

@@ -51,11 +51,14 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     sheetConfig['sheetId'] = sheetId
 
     # clear spectra collection
-    collections.get('spectra').remove({
+    removeQuery = {
         "resourceId" : resourceId,
-        "packageId" : packageId,
-        "sheetId" : sheetId
-    })
+        "packageId" : packageId
+    }
+    if sheetId is not None:
+        removeQuery["sheetId"] = sheetId
+    collections.get('spectra').remove(removeQuery)
+
 
     if sheetConfig.get('ignore') == True:
         ignore = True
