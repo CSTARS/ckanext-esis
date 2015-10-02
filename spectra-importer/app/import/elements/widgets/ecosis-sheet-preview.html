@@ -4,14 +4,13 @@
       display: block
     }
     .info {
-      text-align: center;
       margin-top: 10px !important;
     }
   </style>
 
   <template>
 
-    <h5 class="info page-header" id="info"></h5>
+    <h4 class="info page-header" id="info"></h4>
 
     <div class="layout horizontal center">
         <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
@@ -99,8 +98,9 @@
         this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
       }
 
-      this.$.info.innerHTML = '<b>Join Count:</b> '+this.info.joinCount+', <b>Total '+this.sheet.layout+'s: </b>'
-        +this.info.total+', <b>Current '+this.sheet.layout+': </b>'+(this.index+1)
+      this.$.info.innerHTML =
+        'Preview <small><b>Showing '+this.sheet.layout+' </b>'+(this.index+1)+' <b>of</b> '+this.info.total+', '+
+        '<b>Join Count:</b> '+this.info.joinCount+'</small>';
     },
 
     renderSpectraResp : function(resp) {
@@ -114,7 +114,7 @@
         this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
       }
 
-      this.$.info.innerHTML = '<b>Total '+this.sheet.layout+'s: </b>'+this.info.total+', <b>Current '+this.sheet.layout+': </b>'+(this.index+1);
+      this.$.info.innerHTML = 'Preview <small><b>Showing '+this.sheet.layout+' </b>'+(this.index+1)+' <b>of</b> '+this.info.total+'</small>';
 
       var data = [];
       for( var key in resp.datapoints ) {
@@ -177,9 +177,13 @@
         }
       }
       this.$.tableRoot.innerHTML = table+'</table>';
+
+      $(this.$.tableRoot).find('[data-toggle="tooltip"]').tooltip()
+      console.log($(this.$.tableRoot).find('[data-toggle="tooltip"]'));
     },
 
     getProcessInfo : function(key, metadata) {
+      if( !metadata.ecosis ) return '';
       if( !metadata.ecosis.processInfo ) return '';
 
       var matches = [];
@@ -202,15 +206,18 @@
       var header = '<div style="font-size:11px;color:#999;font-style:italic">';
       var footer = '</div>';
 
+      header = '<a style="cursor:pointer" data-toggle="tooltip" data-placement="bottom" data-original-title="';
+      footer = '">*</a>';
+
       if( info.type == 'join' ) {
         try {
           var name = ecosis.ds.resourceLookup[info.resourceId].name;
-          return header+'<b>Joined</b> from '+name+(info.sheetId ? ' ('+info.sheetId.split('-')[1]+')' : '')+footer;
+          return header+'Joined from '+name+(info.sheetId ? ' ('+info.sheetId.split('-')[1]+')' : '')+footer;
         } catch(e) {}
       } else if ( info.type == 'usda lookup') {
-        return header+'<b>Appended</b> from USDA Symbol'+footer;
+        return header+'Appended from USDA Symbol'+footer;
       } else if ( info.type == 'mapped') {
-        return header+'<b>Mapped</b> from '+info.from+footer;
+        return header+'Mapped from '+info.from+footer;
       }
 
       return '';

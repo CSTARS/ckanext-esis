@@ -16,12 +16,14 @@
     input[type="checkbox"]:after {
       border: 2px solid white !important;
     }
+    .alert-primary {
+      background-color: #2196f3;
+    }
   </style>
 
   <template>
-    <div class="panel panel-default" id="root">
-      <div class="panel-heading">
-        <h3 class="panel-title" >
+    <div class="alert alert-default" id="root">
+
 
           <div class="layout horizontal">
             <div class="flex">
@@ -40,21 +42,6 @@
               </a>
             </div>
           </div>
-
-        </h3>
-      </div>
-      <div class="panel-body" style="display:none; overflow:hidden" id="body">
-        <ecosis-datasheet-select-panel
-          style="display:none"
-          id="datasheetSelector"
-          on-select="onDatasheetSelected">
-        </ecosis-datasheet-select-panel>
-
-        <ecosis-datasheet-panel
-          id="datasheetUI"
-          on-type-change="onDatasheetTypeChange">
-        </ecosis-datasheet-panel>
-      </div>
     </div>
   </template>
 </dom-module>
@@ -92,18 +79,8 @@
       this.$.titleLabel.innerHTML = this.resource.name;
       this.setClass();
 
-      if( !this.resource.datasheets ) {
-        this.$.datasheetSelector.style.display = 'none';
-      } else if( this.resource.datasheets.length <= 1 ) {
-        this.$.datasheetSelector.style.display = 'none';
-      } else {
-        this.$.datasheetSelector.style.display = 'block';
-        this.$.datasheetSelector.update(this.resource);
-      }
 
-      if( this.resource.datasheets ) {
-        this.selectDatasheet(0);
-      } else {
+      if( !this.resource.datasheets ) {
         this.$.trashBtn.style.color = '#333';
       }
 
@@ -112,34 +89,10 @@
       this.$.downloadBtn.setAttribute('href', url);
     },
 
-    onDatasheetTypeChange : function(e) {
-      if( e.detail.type == 'metadata' ) {
-        this.resource.datasheets[this.selectedIndex].metadata = true;
-      } else {
-        this.resource.datasheets[this.selectedIndex].metadata = false;
-      }
-      this.setClass();
-    },
 
     setClass : function() {
       var className = this.getPanelClass(this.getResourceType());
-      this.$.root.className = 'panel panel-'+className;
-    },
-
-    selectDatasheet : function(index, edit) {
-      // set the resource and sheet we are going to render
-      this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
-
-      // if the edit flag is passed, actually load the detailed datasheet and render
-      if( edit ) {
-        this.$.datasheetUI.edit();
-      }
-
-      this.selectedIndex = index;
-    },
-
-    onDatasheetSelected : function(e) {
-      this.selectDatasheet(e.detail, true);
+      this.$.root.className = 'style-scope ecosis-resource-panel alert alert-'+className;
     },
 
     getPanelClass : function(type) {
@@ -169,25 +122,14 @@
     },
 
     toggleEdit : function() {
+      var resourcePopup = document.querySelector('#resourcePopup');
+      resourcePopup.show(this.resource,{
+        onDatasheetTypeChange : this.setClass.bind(this)
+      });
+
       this.edit = !this.edit;
 
-      if( this.edit ) {
-        this.$.body.style.display = 'block';
-
-        this.$.editLink.className = 'btn btn-default';
-        this.$.editLinkIcon.className = 'fa fa-check';
-        this.$.editLinkIcon.style.color = 'black';
-
-        this.$.datasheetUI.edit();
-
-        this.fire('editing', this.resourceid);
-      } else {
-        this.$.body.style.display = 'none';
-
-        this.$.editLink.className = 'btn btn-link';
-        this.$.editLinkIcon.className = 'fa fa-pencil';
-        this.$.editLinkIcon.style.color = 'white';
-      }
+      this.fire('editing', this.resourceid);
     },
 
     fireSelectEvent : function() {

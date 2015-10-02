@@ -28,7 +28,13 @@ def prepare():
     if clean == "true":
         workspace.cleanPackage(ckanPackage.get("id"))
 
-    return jsonStringify(workspace.prepare(ckanPackage.get("id"), force))
+
+    result = workspace.prepare(ckanPackage.get("id"), force)
+
+    if clean == "true":
+        result['cleaned'] = True
+
+    return jsonStringify(result)
 
 def pushToSearch():
     response.headers["Content-Type"] = "application/json"

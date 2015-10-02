@@ -36,12 +36,15 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         keyCount += 1
 
     # now get md5 of current file
-    hash = _hashfile(file)
+    hash = hashfile(file)
     if sheetConfig.get('hash') == hash and keyCount == 0:
         # no changes to file for config, just exit
         return {
             "ignored" : True,
-            "message" : "nothing todo. hash is equal and new config given"
+            "message" : "nothing todo. hash is equal and new config given",
+            "resourceId" : resourceId,
+            "fromZip" : sheetConfig.get("fromZip"),
+            "name" : resource.get("name")
         }
 
     # make sure defaults are set
@@ -74,7 +77,10 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
 
         return {
             "ignored" : True,
-            "message" : "ignore flag set or invalid file type"
+            "message" : "ignore flag set or invalid file type",
+            "resourceId" : resourceId,
+            "fromZip" : resource.get("fromZip"),
+            "name" : resource.get("name")
         }
 
     sheetConfig['processed'] = datetime.datetime.utcnow()
@@ -83,9 +89,11 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     if ext == "csv":
         sheetConfig['hash'] = hash
         response = _processCsv(sheetConfig)
+        response['name'] = resource.get('name')
     elif ext == "tsv" or ext == "spectra":
         sheetConfig['hash'] = hash
         response = _processTsv(sheetConfig)
+        response['name'] = resource.get('name')
     elif ext == "xlsx" or ext == "xls":
         # TODO: add flag so we can specify we only want to update one sheet here
 
@@ -93,19 +101,23 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         # so pass the files array so the placeholder can be removed
         # and the new 'sheet' files can be inserted
         sheets = excel.process(collections.get("resource"), sheetConfig, hash)
-
+        response = []
         for sheet in sheets:
-            _processSheetArray(sheet.get('data'), sheet.get('config'))
+            t = _processSheetArray(sheet.get('data'), sheet.get('config'))
+            t['sheetId'] = sheet.get('config').get('sheetId')
+            t['name'] = resource.get('name')
+            response.append(t)
     else:
-        return {
+        response = {
             "message" : "not parsed, invalid file type"
         }
+    return response
 
 def _processCsv(sheetConfig):
-    _processSeperatorFile(",", sheetConfig)
+    return _processSeperatorFile(",", sheetConfig)
 
 def _processTsv(sheetConfig):
-    _processSeperatorFile("\t", sheetConfig)
+    return _processSeperatorFile("\t", sheetConfig)
 
 # parse a csv or tsv file location into array
 def _processSeperatorFile(separator, sheetConfig):
@@ -116,7 +128,7 @@ def _processSeperatorFile(separator, sheetConfig):
             data.append(row)
         csvfile.close()
 
-        _processSheetArray(data, sheetConfig)
+        return _processSheetArray(data, sheetConfig)
 
 def _processSheetArray(data, sheetConfig):
     # for local scope are we parsing a metadata file or a normal datasheet
@@ -216,6 +228,13 @@ def _processSheetArray(data, sheetConfig):
             index += 1
             _insertSpectra(sp, sheetConfig, index)
 
+    return {
+        "processed" : True,
+        "resourceId" : sheetConfig.get("resourceId"),
+        "fromZip" : sheetConfig.get("fromZip"),
+        "count" : index
+    }
+
 def _insertSpectra(sp, sheetConfig, index):
     type = "data"
     if sheetConfig.get('metadata') == True:
@@ -231,7 +250,7 @@ def _insertSpectra(sp, sheetConfig, index):
     }
     collections.get('spectra').insert(data)
 
-def _hashfile(file):
+def hashfile(file):
     f = open(file, 'rb')
     blocksize = 65536
     hasher = hashlib.md5()

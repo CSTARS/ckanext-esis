@@ -94,7 +94,7 @@ def setOptions(package_id, options):
 def prepare(package_id, force=False):
     packageInfo = collections.get("package").find_one({
         "packageId" : package_id,
-    })
+    },{"_id" : 0})
 
     if packageInfo is None:
         packageInfo = {
@@ -115,16 +115,23 @@ def prepare(package_id, force=False):
     # get all package resources
     resources = ckanResourceQuery.active(package_id)
 
+    status = []
     for resource in resources:
 
         filepath = resourceUtil.get_path(resource.get('id'))
         ext = _getFileExtension(resource.get('name'))
 
         if ext == "zip":
-            extractZip(package_id, resource.get('id'), filepath, resource.get('name'))
-        else:
-            importer.processFile(filepath, package_id, resource.get('id'), resource=resource)
+            # TODO: we should be checking a zip hash before we go unzipping every time
+            results = extractZip(package_id, resource.get('id'), filepath, resource.get('name'))
+            for result in results:
+                status.append(result)
 
+        else:
+            result = importer.processFile(filepath, package_id, resource.get('id'), resource=resource)
+            status.append(result)
+
+    packageInfo["runInfo"] = status
     packageInfo["lastTouched"] = datetime.utcnow()
     packageInfo["prepared"] = True
 
@@ -146,6 +153,43 @@ def prepareFile(package_id, resource_id, sheet_id=None, options={}):
 
 # extract zip file and set resources
 def extractZip(package_id, resource_id, zipPath, zipName):
+    status = []
+
+    # check to see if there are any changes
+    zipFileInfo = collections.get("resource").find_one({
+        "packageId" : package_id,
+        "resourceId" : resource_id
+    })
+    if zipFileInfo is None:
+        zipFileInfo = {}
+    hash = importer.hashfile(zipPath)
+
+
+    if zipFileInfo.get("hash") == hash:
+        status.append({
+            "resourceId" : resource_id,
+            "name" : zipName,
+            "unzipped" : False,
+            "message" : "nothing todo, hash is equal"
+        })
+        return status
+
+    zipFileInfo['hash'] = hash
+    zipFileInfo['resourceId'] = resource_id
+    zipFileInfo['packageId'] = package_id
+    zipFileInfo['file'] = zipPath
+
+    collections.get("resource").update({
+        "packageId" : package_id,
+        "resourceId" : resource_id
+    }, zipFileInfo, upsert=True)
+
+    status.append({
+        "resourceId" : resource_id,
+        "name" : zipName,
+        "unzipped" : True
+    })
+
     workspacePath = os.path.join(workspaceDir, package_id, resource_id)
 
     # clean out any existing extraction
@@ -154,17 +198,13 @@ def extractZip(package_id, resource_id, zipPath, zipName):
 
     z = zipfile.ZipFile(zipPath, "r")
 
+    zipPackageIds = []
     for info in z.infolist():
         if _isDataFile(info.filename):
-            parts = info.filename.split("/")
-
-            zipPath = ""
-            for i in range(0, len(parts)-1):
-                zipPath += parts[i]+"/"
 
             # create id for individual file
             name = re.sub(r".*/", "", info.filename)
-            id = _getZipResourceId(resource_id, zipPath, name)
+            id = _getZipResourceId(resource_id, info.filename)
 
             #extract individual file
             z.extract(info, workspacePath)
@@ -173,7 +213,7 @@ def extractZip(package_id, resource_id, zipPath, zipName):
                 "packageId" : package_id,
                 "resourceId" : id,
                 "name" : name,
-                "file" : workspacePath,
+                "file" : os.path.join(workspacePath, info.filename),
                 "zip" : {
                     "name" : zipName,
                     "resourceId" : resource_id
@@ -181,15 +221,40 @@ def extractZip(package_id, resource_id, zipPath, zipName):
                 "fromZip" : True
             }
 
-            collections.get("resource").insert(resource)
+            collections.get("resource").update({
+                "packageId" : package_id,
+                "resourceId" : id
+            }, resource, upsert=True)
+
+            zipPackageIds.append(id)
 
             # now we pass with new resource id, but path to file
-            importer.processFile(workspacePath, package_id, id, resource=resource)
+            result = importer.processFile(resource.get('file'), package_id, id, resource=resource)
+            status.append(result)
         # TODO: implement .ecosis file
 
-def _getZipResourceId(rid, path, name):
+    # cleanup
+    collections.get("resource").remove({
+        "packageId" : package_id,
+        "zip.resourceId" : resource_id,
+        "resourceId" : {
+            "$nin" : zipPackageIds
+        }
+    })
+
+    collections.get("spectra").remove({
+        "packageId" : package_id,
+        "zip.resourceId" : resource_id,
+        "resourceId" : {
+            "$nin" : zipPackageIds
+        }
+    })
+
+    return status
+
+def _getZipResourceId(rid, name):
     m = hashlib.md5()
-    m.update("%s%s%s" % (rid, path, name))
+    m.update("%s%s" % (rid, name))
     return m.hexdigest()
 
 def _getFileExtension(filename):

@@ -1,0 +1,77 @@
+<dom-module id="ecosis-resource-popup">
+  <template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="title"></h4>
+          </div>
+          <div class="modal-body" style="padding: 25px">
+            <ecosis-datasheet-select-panel
+              style="display:none"
+              id="datasheetSelector"
+              on-select="onDatasheetSelected">
+            </ecosis-datasheet-select-panel>
+
+            <ecosis-datasheet-panel
+              id="datasheetUI"
+              on-type-change="onDatasheetTypeChange">
+            </ecosis-datasheet-panel>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-resource-popup',
+
+    ready : function() {
+      this.popup = $(this.$.popup);
+      this.popup.remove();
+      $('body').append(this.popup);
+      this.popup.modal({show: false});
+    },
+
+    show : function(resource, handlers) {
+      this.resource = resource;
+      this.handlers = handlers;
+
+      this.$.title.innerHTML = this.resource.name;
+
+      if( !this.resource.datasheets ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else if( this.resource.datasheets.length <= 1 ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else {
+        this.$.datasheetSelector.style.display = 'block';
+        this.$.datasheetSelector.update(this.resource);
+      }
+
+      this.selectDatasheet(0);
+
+      this.popup.modal('show');
+    },
+
+    onDatasheetTypeChange : function() {
+      this.handlers.onDatasheetTypeChange();
+    },
+
+    selectDatasheet : function(index, edit) {
+      // set the resource and sheet we are going to render
+      this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+      this.$.datasheetUI.edit();
+    },
+
+    onDatasheetSelected : function(e) {
+      this.selectDatasheet(e.detail, true);
+    }
+  })
+</script>
