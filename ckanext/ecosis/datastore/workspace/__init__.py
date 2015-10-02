@@ -178,6 +178,7 @@ def extractZip(package_id, resource_id, zipPath, zipName):
     zipFileInfo['resourceId'] = resource_id
     zipFileInfo['packageId'] = package_id
     zipFileInfo['file'] = zipPath
+    zipFileInfo['isZip'] = True
 
     collections.get("resource").update({
         "packageId" : package_id,

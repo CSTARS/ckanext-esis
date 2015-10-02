@@ -304,8 +304,12 @@ def uncleanKey(key):
 
 def getResource(resource_id, sheet_id=None):
     query = {
-        "resourceId" : resource_id
+        "$or" : [
+            {"resourceId" : resource_id},
+            {"zip.resourceId" : resource_id}
+        ]
     }
+
     if sheet_id is not None:
         query['sheetId'] = sheet_id
 
@@ -320,13 +324,20 @@ def getResource(resource_id, sheet_id=None):
     for sheet in sheets:
         # only send metadata attributes
         metadata = []
+        attributeRepeatFlag = False # proly have wrong layout
         if sheet.get('attributes') is not None:
             for attr in sheet.get('attributes'):
                 if attr.get("type") != "metadata":
                     continue
 
+                if attr.get("name") in metadata:
+                    attributeRepeatFlag = True
+                    continue
+
                 metadata.append(attr.get("name"))
         sheet['attributes'] = metadata
+        if attributeRepeatFlag:
+            sheet['repeatAttributes'] = True
         response.append(sheet)
 
     return response

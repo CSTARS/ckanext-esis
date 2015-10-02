@@ -17,7 +17,9 @@ def get(package_id):
     resources = ckanResourceQuery.active(package_id)
 
     response = {
-        "package" : collections.get("package").find_one({"packageId":package_id}),
+        "package" : collections.get("package").find_one({
+            "packageId": package_id,
+        }, {"runInfo": 0, "_id": 0}),
         "resources" : [],
         "ckan" : {
             "package" : ckanPackageQuery.get(package_id),
@@ -34,18 +36,18 @@ def get(package_id):
 
         for sheet in sheets:
             # we don't care about root excel files, only the sheets
-            if sheet.get('excel') == True:
+            if sheet.get('excel') == True or sheet.get('isZip') == True:
                 continue
 
             response.get('resources').append(sheet)
 
     # now add all zip file resources
-    resources = collections.get("resource").find({
-        "packageId" : package_id,
-        "fromZip" : True
-    })
+    #resources = collections.get("resource").find({
+    #    "packageId" : package_id,
+    #    "fromZip" : True
+    #})
 
-    for resourceOrSheet in resources:
-        response.get('resources').append(resourceOrSheet)
+    #for resourceOrSheet in resources:
+    #    response.get('resources').append(resourceOrSheet)
 
     return response
