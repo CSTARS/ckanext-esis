@@ -140,14 +140,27 @@ def prepare(package_id, force=False):
 
 # helper for single file process, handles zip condition
 def prepareFile(package_id, resource_id, sheet_id=None, options={}):
-    resource = ckanResourceQuery.get(resource_id)
-    filepath = resourceUtil.get_path(resource_id)
+    sheetInfo = collections.get("resource").find_one({
+        "resourceId" : resource_id,
+        "sheetId" : sheet_id
+    })
+
+    if 'name' in sheetInfo:
+        resource = sheetInfo
+    else:
+        resource = ckanResourceQuery.get(resource_id)
+
+    if 'file' in sheetInfo:
+        filepath = sheetInfo.get('file')
+    else:
+        filepath = resourceUtil.get_path(resource_id)
+
     ext = _getFileExtension(resource.get('name'))
 
     if ext == "zip":
         extractZip(package_id, resource.get('id'), filepath, resource.get('name'))
     else:
-        importer.processFile(filepath, package_id, resource.get('id'), sheetId=sheet_id, options=options, resource=resource)
+        importer.processFile(filepath, package_id, resource_id, sheetId=sheet_id, options=options, resource=resource)
 
 
 

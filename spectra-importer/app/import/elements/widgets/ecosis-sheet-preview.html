@@ -100,7 +100,7 @@
       }
 
       this.$.info.innerHTML =
-        '<i class="fa fa-binoculars"></i> Preview <small>Showing '+this.sheet.layout+' <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small> '+
+        '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small><b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small> '+
         '<small class="pull-right">Join Count: '+this.info.joinCount+'</small>';
     },
 
@@ -115,7 +115,7 @@
         this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
       }
 
-      this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> Preview <small>Showing '+this.sheet.layout+' <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
+      this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small> <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
 
       var data = [];
       for( var key in resp.datapoints ) {

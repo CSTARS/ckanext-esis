@@ -98,13 +98,23 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
 
         joined = collections.get('spectra').find(joinQuery)
         for r in joined:
-            joinedName = ckanResourceQuery.get(r.get('resourceId'))
+            # this is really SHITTY
+            # TODO: figure out best place to commonly store resource name
             joinedInfo = collections.get('resource').find_one(
                 {
                     'resourceId': r.get('resourceId'),
                     'sheetId': r.get('sheetId')
                 },
                 {"layout": 1})
+
+            
+            if 'name' in joinedInfo:
+                joinedName = joinedInfo
+            else:
+                try:
+                    joinedName = ckanResourceQuery.get(r.get('resourceId'))
+                except:
+                    joinedName = {}
 
             if joinedName is not None:
                 joinedNames.append({

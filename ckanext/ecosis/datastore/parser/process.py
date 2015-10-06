@@ -11,20 +11,23 @@ def init(co):
     collections = co
 
 def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, resource=None):
-    if resource is None:
-        resource = ckanResourceQuery.get(resourceId)
-
-    ext = utils.getFileExtension(resource.get('name'))
-
-    # check for ignore conditions
-    ignore = False
-
     # get config for sheet if on exists
     sheetConfig = collections.get('resource').find_one({
         "resourceId" : resourceId,
         "packageId" : packageId,
         "sheetId" : sheetId
     })
+
+    if resource is None:
+        if 'name' in sheetConfig:
+            resource = sheetConfig
+        else:
+            resource = ckanResourceQuery.get(resourceId)
+
+    ext = utils.getFileExtension(resource.get('name'))
+
+    # check for ignore conditions
+    ignore = False
 
     if sheetConfig == None:
         sheetConfig = {}
