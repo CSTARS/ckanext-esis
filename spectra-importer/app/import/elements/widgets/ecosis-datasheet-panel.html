@@ -20,7 +20,7 @@
           Error parsing file
       </span>
 
-      <h4 class="page-header">Sheet Settings</h4>
+      <h4 class="page-header"><i class="fa fa-cogs"></i> Sheet Settings</h4>
 
       <!-- Is Metadata -->
       <div id="metadataSelectPanel">
@@ -147,12 +147,16 @@
             }
 
             ecosis.ds.fireUpdate();
-            this.fire('update', this.resource.id);
+
             this.$.preview.update(this.sheet);
 
             this.updateMetadataUi();
             this.updateIgnoreUi();
 
+            this.fire('sheet-update', {
+              id : resp.resourceId,
+              sheetId : resp.sheetId
+            });
           }.bind(this)
       );
     },
@@ -201,11 +205,9 @@
       if( this.sheet.metadata ) {
         this.$.joinMetadata.update(this.sheet, this.resource);
         this.$.joinMetadataOuter.style.display = 'block';
-
         $(this.$.inputIsMetadata).prop('checked', true);
       } else {
         this.$.joinMetadataOuter.style.display = 'none';
-
         $(this.$.inputIsMetadata).prop('checked', false);
       }
     },
@@ -221,7 +223,6 @@
         this.$.preview.style.display = 'none';
       } else {
         panels.forEach(function(id){
-          if( id == 'spectraPanel' || id == 'orientationPanel') return; // let the updateMetadataUi handle this
           this.$[id].style.display = 'block';
         }.bind(this));
         $(this.$.inputIgnore).prop('checked', false);
@@ -261,15 +262,6 @@
       this.edit();
 
       if( callback ) callback();
-
-      /*ecosis.ckan.getDatasheet(ecosis.ds.package_id, this.resource.id, this.sheetId, function(resp){
-        this.setLoading(false);
-
-        this.sheet = resp;
-        this.edit();
-
-        if( callback ) callback();
-      }.bind(this));*/
     },
 
     setLoading : function(loading) {
@@ -301,10 +293,7 @@
         this.fire('type-change', {type: 'data'});
       }
 
-      this.updateMetadataUi();
-
       this.save();
-      this.fire('update', this.resource.id);
     },
 
     onIgnoreUpdate : function() {
@@ -313,10 +302,8 @@
       } else {
         this.sheet.ignore = false;
       }
-      this.updateIgnoreUi();
 
       this.save();
-      this.fire('update', this.resource.id);
     },
 
     setSaving : function(saving) {

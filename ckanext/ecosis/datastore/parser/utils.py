@@ -9,6 +9,8 @@ def getLayout(sheetConfig):
 
     if 'layout' in sheetConfig:
         layout = sheetConfig['layout']
+    else: # set default for saving
+        sheetConfig['layout'] = 'row'
 
     return layout
 

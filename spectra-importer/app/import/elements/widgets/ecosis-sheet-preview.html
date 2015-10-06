@@ -84,7 +84,8 @@
         if( resp.joinedResources.length > 0 ) {
           joined = '';
           for( var i = 0; i < resp.joinedResources.length; i++ ) {
-            joined += resp.joinedResources[i].name + (resp.joinedResources[i].sheetId ? ' ('+resp.joinedResources[i].sheetId.split('-')[1]+')' : '')
+            joined += resp.joinedResources[i].name + (resp.joinedResources[i].sheetId ? ' - '+resp.joinedResources[i].sheetId.split('-')[1]+'' : '')+
+              ' on '+(resp.joinedResources[i].layout || 'row')+' '+resp.joinedResources[i].index;
             if( i < resp.joinedResources.length-1 ) joined += ', ';
           }
         }
@@ -99,8 +100,8 @@
       }
 
       this.$.info.innerHTML =
-        'Preview <small><b>Showing '+this.sheet.layout+' </b>'+(this.index+1)+' <b>of</b> '+this.info.total+', '+
-        '<b>Join Count:</b> '+this.info.joinCount+'</small>';
+        '<i class="fa fa-binoculars"></i> Preview <small>Showing '+this.sheet.layout+' <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small> '+
+        '<small class="pull-right">Join Count: '+this.info.joinCount+'</small>';
     },
 
     renderSpectraResp : function(resp) {
@@ -114,7 +115,7 @@
         this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
       }
 
-      this.$.info.innerHTML = 'Preview <small><b>Showing '+this.sheet.layout+' </b>'+(this.index+1)+' <b>of</b> '+this.info.total+'</small>';
+      this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> Preview <small>Showing '+this.sheet.layout+' <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
 
       var data = [];
       for( var key in resp.datapoints ) {
@@ -155,7 +156,6 @@
         if( updateTimer != -1 ) clearTimeout(updateTimer);
         updateTimer = setTimeout(function(){
           updateTimer = -1;
-          console.log(e.value-1)
           this.load(e.value-1);
         }.bind(this), 100);
       }.bind(this));
@@ -179,7 +179,6 @@
       this.$.tableRoot.innerHTML = table+'</table>';
 
       $(this.$.tableRoot).find('[data-toggle="tooltip"]').tooltip()
-      console.log($(this.$.tableRoot).find('[data-toggle="tooltip"]'));
     },
 
     getProcessInfo : function(key, metadata) {

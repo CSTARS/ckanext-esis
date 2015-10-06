@@ -75,6 +75,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def verifyWorkspace(self):
+        try:
+            return admin.verifyWorkspace(collections)
+        except Exception as e:
+            return handleError(e)
+
     def gitInfo(self):
         try:
             return git.info()

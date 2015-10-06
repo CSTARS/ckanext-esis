@@ -171,6 +171,24 @@ module.exports = function(config) {
     this.resources = this.result.ckan.resources;
     this.resourceLookup = {};
 
+    // create fake stubs for zip file resources
+    var alreadyAdded = {};
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      if( !this.datasheets[i].fromZip ) continue;
+      if( alreadyAdded[this.datasheets[i].resourceId] ) continue;
+
+      var r = this.datasheets[i];
+
+      this.resources.push({
+        id : r.resourceId,
+        package_id : r.packageId,
+        fromZip : true,
+        zip : r.zip,
+        name : r.name
+      });
+      alreadyAdded[r.resourceId] = 1;
+    }
+
     // map resources to datasheets for daster lookup
     for( var i = 0; i < this.resources.length; i++ ) {
       var datasheets = [];

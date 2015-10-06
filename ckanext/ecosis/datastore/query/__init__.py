@@ -99,11 +99,20 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
         joined = collections.get('spectra').find(joinQuery)
         for r in joined:
             joinedName = ckanResourceQuery.get(r.get('resourceId'))
+            joinedInfo = collections.get('resource').find_one(
+                {
+                    'resourceId': r.get('resourceId'),
+                    'sheetId': r.get('sheetId')
+                },
+                {"layout": 1})
+
             if joinedName is not None:
                 joinedNames.append({
                     "resourceId" : r.get('resourceId'),
                     "sheetId" : r.get('sheetId'),
-                    "name" : joinedName.get('name')
+                    "name" : joinedName.get('name'),
+                    "layout" : joinedInfo.get('layout'),
+                    "index" : r.get("index")
                 })
 
 
@@ -225,17 +234,29 @@ def setSort(spectra, config):
         spectra['ecosis']['sort'] = spectra[on]
 
 def addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=None):
-    resource = ckanResourceQuery.get(sheetInfo.get('resourceId'))
+    name = sheetInfo.get('name')
+    if name is None and sheetInfo.get('fromZip') != True:
+        resource = ckanResourceQuery.get(sheetInfo.get('resourceId'))
+        name = resource.get('name')
 
     ecosis = {
         'package_id': sheetInfo.get("packageId"),
         'package_title': package.get('title'),
         'resource_id' : main.get('resourceId'),
-        'filename': resource.get('name'),
-        'datasheet_id': main.get('sheetId'),
+        'filename': name,
+        'sheet_id': main.get('sheetId'),
+        'layout' : sheetInfo.get('layout'),
+        'index' : main.get('index'),
         'dataset_link' : '%s#result/%s' % (host, sheetInfo.get('packageId')),
         'dataset_api_link' : '%spackage/get?id=%s' % (host, sheetInfo.get('packageId')),
     }
+
+    if 'zip' in sheetInfo:
+        ecosis['zip_package'] = {
+            "id" : sheetInfo.get('zip').get('resourceId'),
+            "name" : sheetInfo.get('zip').get('name')
+        }
+
 
     if processInfo is not None:
         ecosis['processInfo'] = processInfo

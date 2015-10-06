@@ -16,7 +16,7 @@
 
             <ecosis-datasheet-panel
               id="datasheetUI"
-              on-type-change="onDatasheetTypeChange">
+              on-sheet-update="onDatasheetUpdate">
             </ecosis-datasheet-panel>
           </div>
           <div class="modal-footer">
@@ -60,8 +60,8 @@
       this.popup.modal('show');
     },
 
-    onDatasheetTypeChange : function() {
-      this.handlers.onDatasheetTypeChange();
+    onDatasheetUpdate : function() {
+      this.handlers.onDatasheetUpdate();
     },
 
     selectDatasheet : function(index, edit) {

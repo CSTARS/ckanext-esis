@@ -65,6 +65,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # ecosis - admin
         map.connect('rebuild_index', '/ecosis/admin/rebuildIndex', controller=controller, action='rebuildIndex')
         map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
+        map.connect('verifyWorkspace', '/ecosis/admin/verifyWorkspace', controller=controller, action='verifyWorkspace')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
 
         # ecosis - package

@@ -19,6 +19,9 @@
     .alert-primary {
       background-color: #2196f3;
     }
+    .alert-default {
+      background-color: #888;
+    }
   </style>
 
   <template>
@@ -76,7 +79,8 @@
     },
 
     update : function() {
-      this.$.titleLabel.innerHTML = this.resource.name;
+      this.$.titleLabel.innerHTML = this.resource.name +
+        (this.resource.fromZip ? ' <i>from '+this.resource.zip.name+'</i>' : '');
       this.setClass();
 
 
@@ -91,7 +95,25 @@
 
 
     setClass : function() {
-      var className = this.getPanelClass(this.getResourceType());
+      var type = this.getResourceType();
+
+      // update icons as well;
+      if( this.resource.fromZip ) {
+        this.$.trashBtn.style.display = 'none';
+        this.$.downloadBtn.style.display = 'none';
+      } else {
+        this.$.trashBtn.style.display = 'inline-block';
+        this.$.downloadBtn.style.display = 'inline-block';
+      }
+
+      if( type == 'zip' ) {
+        this.$.editLink.style.display = 'none';
+      } else {
+        this.$.editLink.style.display = 'inline-block';
+      }
+
+      // update css class
+      var className = this.getPanelClass(type);
       this.$.root.className = 'style-scope ecosis-resource-panel alert alert-'+className;
     },
 
@@ -124,7 +146,7 @@
     toggleEdit : function() {
       var resourcePopup = document.querySelector('#resourcePopup');
       resourcePopup.show(this.resource,{
-        onDatasheetTypeChange : this.setClass.bind(this)
+        onDatasheetUpdate : this.setClass.bind(this)
       });
 
       this.edit = !this.edit;

@@ -88,6 +88,43 @@ def rebuildUSDACollection(collections, usdaApiUrl):
 
     return json.dumps({'success':True, 'count': len(rows)-2})
 
+# check workspace collections for badness
+def verifyWorkspace(collections):
+    if not isAdmin():
+        raise Exception('Nope.')
+
+    packages = collections.get('package').find({},{"packageId":1})
+    ids = []
+    repeatPackages = []
+    pCount = 0
+    for package in packages:
+        if package.get("packageId") in ids:
+            repeatPackages.append(package.get("packageId"))
+        else:
+            pCount += 1
+            ids.append(package.get("packageId"))
+
+    resources = collections.get('resource').find({},{"resourceId":1,"sheetId": 1})
+    ids = []
+    repeatResources = []
+    rCount = 0
+    for resource in resources:
+        id = "%s %s" % (resource.get("resourceId"), resource.get("sheetId"))
+        if id in ids:
+            repeatResources.append(id)
+        else:
+            rCount += 1
+            ids.append(id)
+
+    return json.dumps({
+        "packageCount" : pCount,
+        "resourceCount" : rCount,
+        "repeats" : {
+            "resources" : repeatResources,
+            "packages" : repeatPackages
+        }
+    })
+
 def isAdmin():
     if c.userobj == None:
         return False
