@@ -1,9 +1,9 @@
 import re, pymongo, json, dateutil
 
-from ecosis.datastore.ckan import package as ckanPackageQuery
-from ecosis.datastore.ckan import resource as ckanResourceQuery
-from ecosis.datastore.vocab import usda
-from ecosis.datastore.vocab import  controlled as controlledVocab
+from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
+from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
+from ckanext.ecosis.datastore.vocab import usda
+from ckanext.ecosis.datastore.vocab import controlled as controlledVocab
 import workspace
 
 
@@ -107,8 +107,11 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
                 },
                 {"layout": 1})
 
-            
-            if 'name' in joinedInfo:
+
+            if joinedInfo is None: # Badness
+                joinedName = {}
+                joinedInfo = {}
+            elif 'name' in joinedInfo:
                 joinedName = joinedInfo
             else:
                 try:

@@ -1,8 +1,7 @@
-import ecosis.datastore.workspace as workspace
-import ecosis.datastore.query.workspace as workspaceQuery
-from ecosis.lib.auth import hasAccess
-from ecosis.datastore.push import Push
-from ecosis.lib.utils import jsonStringify
+import ckanext.ecosis.datastore.workspace as workspace
+import ckanext.ecosis.datastore.query.workspace as workspaceQuery
+from ckanext.ecosis.datastore.push import Push
+from ckanext.ecosis.lib.utils import jsonStringify
 
 from ckan.common import request, response
 from ckan.lib.base import c, model

@@ -1,7 +1,7 @@
 from ckan.common import request, response
 
-from ecosis.lib.utils import jsonStringify
-import ecosis.datastore.query as query
+from ckanext.ecosis.lib.utils import jsonStringify
+import ckanext.ecosis.datastore.query as query
 
 def get():
     response.headers["Content-Type"] = "application/json"

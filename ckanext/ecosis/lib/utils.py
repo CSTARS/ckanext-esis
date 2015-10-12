@@ -33,12 +33,12 @@ def handleError(e):
     if hasattr(e, 'message'):
         return json.dumps({
             "error": True,
-            "message": e.message
+            "message": "%s:%s" % (type(e).__name__, e.message)
         })
 
     return json.dumps({
         "error": True,
-        "message": str(e)
+        "message": "%s:%s" % (type(e).__name__, str(e))
     })
 
 def jsonStringify(obj):

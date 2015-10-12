@@ -1,9 +1,9 @@
 import json
 
-import ecosis.lib.utils as utils
-import ecosis.datastore.delete as deleteUtil
-from ecosis.lib.auth import hasAccess
-import ecosis.datastore.workspace as workspace
+import ckanext.ecosis.lib.utils as utils
+import ckanext.ecosis.datastore.delete as deleteUtil
+from ckanext.ecosis.lib.auth import hasAccess
+import ckanext.ecosis.datastore.workspace as workspace
 from ckan.common import request, response
 from ckan.lib.base import c, model
 import ckan.logic as logic

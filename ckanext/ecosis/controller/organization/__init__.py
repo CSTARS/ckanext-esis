@@ -1,6 +1,6 @@
 from ckan.common import response
 from ckan.lib.base import c, model
-from ecosis import datastore as deleteUtil
+from ckanext.ecosis import datastore as deleteUtil
 import ckan.logic as logic
 
 NotFound = logic.NotFound

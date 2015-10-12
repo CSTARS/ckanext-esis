@@ -1,4 +1,4 @@
-from ckan.common import request, response
+from ckan.common import response
 import subprocess, json, re, os
 
 path = os.path.dirname(os.path.abspath(__file__))

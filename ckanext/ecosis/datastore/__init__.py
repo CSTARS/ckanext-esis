@@ -3,7 +3,6 @@ import ConfigParser
 import time
 
 from pymongo import MongoClient
-import psycopg2
 
 import parser
 import ckan

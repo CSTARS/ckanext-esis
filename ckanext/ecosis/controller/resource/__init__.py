@@ -5,12 +5,13 @@ from ckan.common import request, response
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
-import ecosis.lib.utils as utils
-from ecosis.lib.auth import hasAccess
-import ecosis.datastore.delete as deleteUtil
-import ecosis.datastore.query as query
-import ecosis.datastore.workspace as workspace
-from ecosis.lib.utils import jsonStringify
+
+import ckanext.ecosis.lib.utils as utils
+from ckanext.ecosis.lib.auth import hasAccess
+import ckanext.ecosis.datastore.delete as deleteUtil
+import ckanext.ecosis.datastore.query as query
+import ckanext.ecosis.datastore.workspace as workspace
+from ckanext.ecosis.lib.utils import jsonStringify
 
 parseOptions = ["ignore", "layout", "metadata", "joinOn"]
 

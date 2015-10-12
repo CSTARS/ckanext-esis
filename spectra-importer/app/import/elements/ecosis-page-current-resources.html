@@ -31,10 +31,11 @@
       </div>
 
       <h6 style="margin-bottom:0">Resource List Legend</h6>
-      <span class="label label-success">Spectral Data File</span>
-      <span class="label label-primary">Metadata File</span>
-      <span class="label label-info">Zip Package</span>
-      <span class="label label-default">Auxiliary File (Ignored)</span>
+      <span class="label label-success">Data Sheet</span>
+      <span class="label label-primary">Metadata Sheet</span>
+      <span class="label label-warning">Zip Package</span>
+      <span class="label label-info">Multi-Sheet File</span>
+      <span class="label label-default">Ignored</span>
     </div>
   </template>
 </dom-module>
@@ -68,8 +69,11 @@
 
       var html = '';
 
+
       for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
         var resource = ecosis.ds.resources[i];
+        if( resource.fromZip ) continue;
+
         html += '<ecosis-resource-panel resourceid="'+resource.id+'"></ecosis-resource-panel>';
       }
 
@@ -82,6 +86,14 @@
         .on('resource-select', this.onResourceSelect.bind(this));
     },
 
+    // make sure all resource panel css classes are correct
+    verifyPanelCss : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) {
+        this.setClass();
+      }
+    },
+
     onResourceSelect : function() {
       this.updateSelectState();
     },
@@ -92,8 +104,8 @@
       var eles = this.querySelectorAll('ecosis-resource-panel');
       var ids = [], usedEles = [];
       for( var i = 0; i < eles.length; i++ ) {
-        if( !eles[i].isSelected() ) continue;
-        eles[i].$.deletePanel.style.display = 'inline-block';
+        if( !eles[i].isSelected() || eles[i].resource.fromZip ) continue;
+        eles[i].querySelector('#deletePanel').style.display = 'inline-block';
         ids.push(eles[i].resource.id);
         usedEles.push(eles[i]);
       }

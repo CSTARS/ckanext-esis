@@ -62,6 +62,8 @@ def process(collection, sheetConfig, hash):
             # tack on zip stuff
             if sheetConfig.get("fromZip") == True:
                 config["fromZip"] = True
+                config["name"] = sheetConfig.get("name")
+                config["file"] = sheetConfig.get("file")
                 config["zip"] = sheetConfig.get("zip")
 
             data = cacheRead(config)
@@ -153,6 +155,11 @@ def cacheWrite(collection, sheetConfig, hash):
         excelConfig['excel'] = True;
         excelConfig['cached'] = datetime.datetime.utcnow();
         excelConfig['hash'] = hash
+
+    # if we have a 'fake' resource, it's from a zipfile, make sure we save the name
+    if sheetConfig.get('fromZip') and 'name' in sheetConfig:
+        excelConfig['name'] = sheetConfig['name']
+        excelConfig['file'] = sheetConfig.get('file')
 
     collection.update({
         "resourceId" : sheetConfig.get('resourceId'),

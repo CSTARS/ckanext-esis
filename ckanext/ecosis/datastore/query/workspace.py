@@ -1,5 +1,5 @@
-from ecosis.datastore.ckan import resource as ckanResourceQuery
-from ecosis.datastore.ckan import package as ckanPackageQuery
+from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
+from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
 # WHY is this not working?
 # from . import getResource
 

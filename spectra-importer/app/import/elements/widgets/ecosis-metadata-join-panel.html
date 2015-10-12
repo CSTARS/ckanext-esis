@@ -5,7 +5,7 @@
       <div id="msg"></div>
     </div>
     <div id="noMatches" class="text text-warning">
-      The attribute names (keys) in this sheet do not match any other data sheet.  To join
+      The field names (keys) in this sheet do not match any other data sheet.  To join
       this metadata you must use common keys in both your metadata sheet and your
       data sheet.  This key is often known as a primary key in SQL/relational land.<br /><br />
     </div>
@@ -41,10 +41,18 @@
 
       if( c == 0 ) {
         this.$.noMatches.style.display = 'block';
-        this.$.hasMatches.style.display = 'none';
+
+        // show all
+        for( var i = 0; i < this.datasheet.attributes.length; i++ ) {
+          var attr = this.datasheet.attributes[i];
+          options += '<option value="'+attr+'" '+
+              (this.datasheet.joinOn == attr ? 'selected' : '') +
+              '>'+attr+'</option>';
+        }
+        this.$.joinId.innerHTML = options;
+
       } else {
         this.$.noMatches.style.display = 'none';
-        this.$.hasMatches.style.display = 'block';
       }
 
       var matchCount = 0;

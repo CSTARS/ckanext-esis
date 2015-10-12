@@ -1,10 +1,10 @@
-from ckan.common import request, response
+from ckan.common import response
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
 import json, subprocess, os, urllib2, re
 
-from ecosis.datastore.mapreduce import mapreducePackage
+from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 
 # rebuild entire search index
 def rebuildIndex(collections):
@@ -119,6 +119,8 @@ def verifyWorkspace(collections):
     return json.dumps({
         "packageCount" : pCount,
         "resourceCount" : rCount,
+        "spectraCount" : collections.get('spectra').count({"type": "data"}),
+        "metadataCount" : collections.get('spectra').count({"type": "metadata"}),
         "repeats" : {
             "resources" : repeatResources,
             "packages" : repeatPackages

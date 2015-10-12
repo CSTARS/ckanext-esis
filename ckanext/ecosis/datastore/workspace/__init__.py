@@ -5,9 +5,9 @@ import shutil
 import zipfile
 import hashlib
 
-from ecosis.datastore.ckan import resource as ckanResourceQuery
-from ecosis.datastore.ckan import package as ckanPackageQuery
-from ecosis.datastore.parser import process as importer
+from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
+from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
+from ckanext.ecosis.datastore.parser import process as importer
 
 dataExtension = ["xlsx","xls","spectra","csv","tsv"]
 allowedOptions = ['map', 'sort']
@@ -145,6 +145,9 @@ def prepareFile(package_id, resource_id, sheet_id=None, options={}):
         "sheetId" : sheet_id
     })
 
+    if sheetInfo is None:
+        sheetInfo = {}
+
     if 'name' in sheetInfo:
         resource = sheetInfo
     else:
@@ -158,14 +161,14 @@ def prepareFile(package_id, resource_id, sheet_id=None, options={}):
     ext = _getFileExtension(resource.get('name'))
 
     if ext == "zip":
-        extractZip(package_id, resource.get('id'), filepath, resource.get('name'))
+        extractZip(package_id, resource.get('id'), filepath, resource.get('name'), options=options)
     else:
         importer.processFile(filepath, package_id, resource_id, sheetId=sheet_id, options=options, resource=resource)
 
 
 
 # extract zip file and set resources
-def extractZip(package_id, resource_id, zipPath, zipName):
+def extractZip(package_id, resource_id, zipPath, zipName, options={}):
     status = []
 
     # check to see if there are any changes
@@ -218,6 +221,10 @@ def extractZip(package_id, resource_id, zipPath, zipName):
 
             # create id for individual file
             name = re.sub(r".*/", "", info.filename)
+
+            if re.match(r"^\..*", name): # ignore .dot files
+                continue
+
             id = _getZipResourceId(resource_id, info.filename)
 
             #extract individual file
@@ -243,7 +250,7 @@ def extractZip(package_id, resource_id, zipPath, zipName):
             zipPackageIds.append(id)
 
             # now we pass with new resource id, but path to file
-            result = importer.processFile(resource.get('file'), package_id, id, resource=resource)
+            result = importer.processFile(resource.get('file'), package_id, id, resource=resource, options=options)
             status.append(result)
         # TODO: implement .ecosis file
 

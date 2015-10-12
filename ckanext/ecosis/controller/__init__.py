@@ -1,16 +1,15 @@
 import json
 import os
 
-import psycopg2
 from pymongo import MongoClient
 import pylons.config as config
 
 import ckan.lib.uploader as uploader
 from ckan.controllers.package import PackageController
-from ecosis.controller import git, admin, organization, package, resource, spectra, user
-from ecosis.controller import workspace as workspaceController
-from ecosis.lib.utils import handleError
-from ecosis import datastore
+from ckanext.ecosis.controller import git, admin, organization, package, resource, spectra, user
+from ckanext.ecosis.controller import workspace as workspaceController
+from ckanext.ecosis.lib.utils import handleError
+from ckanext.ecosis import datastore
 
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 

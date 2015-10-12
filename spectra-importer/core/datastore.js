@@ -161,14 +161,25 @@ module.exports = function(config) {
       this.sort = this.result.package.sort;
     }
 
+    this.resources = this.result.ckan.resources;
 
-    this.result.ckan.resources.sort(function(a, b){
+    var zips = {}; // used to quickly add resource stubs
+    for( var i = 0; i < this.resources.length; i++ ) {
+      if( this.resources[i].format.toLowerCase() === 'zip' ) {
+        zips[this.resources[i].id] = this.resources[i];
+        this.resources[i].childResources = [];
+        this.resources[i].isZip = true;
+      }
+    }
+
+
+    this.resources.sort(function(a, b){
       if( a.name > b.name ) return 1;
       if( a.name < b.name ) return -1;
       return 0;
     });
 
-    this.resources = this.result.ckan.resources;
+
     this.resourceLookup = {};
 
     // create fake stubs for zip file resources
@@ -179,14 +190,18 @@ module.exports = function(config) {
 
       var r = this.datasheets[i];
 
-      this.resources.push({
+      var stub = {
         id : r.resourceId,
         package_id : r.packageId,
         fromZip : true,
         zip : r.zip,
         name : r.name
-      });
-      alreadyAdded[r.resourceId] = 1;
+      }
+
+      zips[r.zip.resourceId].childResources.push(stub);
+      this.resources.push(stub);
+
+      alreadyAdded[r.resourceId] = 1; // why?
     }
 
     // map resources to datasheets for daster lookup
@@ -197,11 +212,37 @@ module.exports = function(config) {
           datasheets.push(this.datasheets[j]);
         }
       }
+
       this.resourceLookup[this.resources[i].id] = this.resources[i];
       this.resources[i].datasheets = datasheets;
     }
 
     this.fireUpdate();
+  }
+
+  this.setSheet = function(sheet) {
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      if( this.datasheets[i].resourceId == sheet.resourceId &&
+          this.datasheets[i].sheetId == sheet.sheetId ) {
+
+          this.datasheets[i] = sheet;
+          break;
+      }
+    }
+
+    var resource = this.resourceLookup[sheet.resourceId];
+    if( !resource ) {
+      console.log('Attempting to set sheet with a resourceId that does not exist');
+      console.log(sheet);
+      return;
+    }
+
+    for( var i = 0; i < resource.datasheets.length; i++ ) {
+      if( resource.datasheets[i].sheetId == sheet.sheetId ) {
+          resource.datasheets[i] = sheet;
+          break;
+      }
+    }
   }
 
   this.fireUpdate = function() {

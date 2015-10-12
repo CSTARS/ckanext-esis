@@ -4,7 +4,8 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <div class="alert alert-success wizardMode"><h5 style="color:white">Upload Complete!</h5>Configure Uploaded Sheets</div>
             <h4 class="modal-title" id="title"></h4>
           </div>
           <div class="modal-body" style="padding: 25px">
@@ -20,7 +21,22 @@
             </ecosis-datasheet-panel>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <div class="singleMode">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+            <div class="wizardMode">
+              <div class="layout horizontal">
+                <div>
+                  <button type="button" class="btn btn-default" on-click="prev">Previous</button>
+                </div>
+                <div class="flex" style="text-align:center">
+                  <button type="button" class="btn btn-primary" data-dismiss="modal">Finished</button>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-default" on-click="next">Next</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
@@ -37,12 +53,57 @@
       this.popup = $(this.$.popup);
       this.popup.remove();
       $('body').append(this.popup);
-      this.popup.modal({show: false});
+
+      this.popup.modal({
+        show: false,
+        backdrop : 'static'
+      });
     },
 
-    show : function(resource, handlers) {
-      this.resource = resource;
+    next : function() {
+      this.index++;
+      if( this.index > this.resources.length-1 ) {
+        this.index = this.resources.length - 1;
+        return;
+      }
+      this.show(this.resources[this.index]);
+    },
+
+    prev : function() {
+      this.index--;
+      if( this.index < 0 ) {
+        this.index = 0;
+        return;
+      }
+      this.show(this.resources[this.index]);
+    },
+
+    setMode : function(mode) {
+      if( mode === 'single' ) {
+        $(this.$.popup).find('.singleMode').show();
+        $(this.$.popup).find('.wizardMode').hide();
+      } else {
+        $(this.$.popup).find('.singleMode').hide();
+        $(this.$.popup).find('.wizardMode').show();
+      }
+    },
+
+    uploadWizard : function(resources, handlers ) {
+      this.setMode('wizard');
+      this.resources = resources;
+      this.index = 0;
       this.handlers = handlers;
+      this.show(resources[0]);
+    },
+
+    edit : function(resource, handlers) {
+      this.setMode('single');
+      this.handlers = handlers;
+      this.show(resource);
+    },
+
+    show : function(resource) {
+      this.resource = resource;
 
       this.$.title.innerHTML = this.resource.name;
 
@@ -61,7 +122,7 @@
     },
 
     onDatasheetUpdate : function() {
-      this.handlers.onDatasheetUpdate();
+      if( this.handlers ) this.handlers.onDatasheetUpdate();
     },
 
     selectDatasheet : function(index, edit) {

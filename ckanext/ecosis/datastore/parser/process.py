@@ -1,6 +1,6 @@
-import csv, utils, excel, hashlib, datetime, time
+import csv, utils, excel, hashlib, datetime
 
-from ecosis.datastore.ckan import resource as ckanResourceQuery
+from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 
 collections = None
 
