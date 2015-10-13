@@ -36,7 +36,7 @@ def clean(current_package_id=None):
         if package.get("package_id") == current_package_id:
             continue
 
-        cleanPackage(package.get('package_id'))
+        cleanPackage(package.get('packageId'))
 
 def cleanPackage(package_id):
     # remove all spectra chunks

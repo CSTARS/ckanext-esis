@@ -24,6 +24,9 @@ def prepare():
     if force == None:
         force = False
 
+    # remove old unused packages
+    workspace.clean(current_package_id=package_id)
+
     if clean == "true":
         workspace.cleanPackage(ckanPackage.get("id"))
 

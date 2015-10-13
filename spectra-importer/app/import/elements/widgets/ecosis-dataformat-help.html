@@ -49,7 +49,7 @@
   </style>
   <template>
 
-    <div class="note">
+    <div class="well">
         EcoSIS accepts data in several tabular formats.  These tabular files can have measurements laid out by column or by row.
         If you would like help filling out metadata or packaging your spectra, try the
         <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Metadata Editor</a> to generate nice
@@ -57,7 +57,7 @@
     </div>
 
     <div id="column">
-        <b>Column Orientation</b>
+        <h4>Column Orientation</h4>
         <table class="preview">
             <tr>
                 <td class="file attr">File metadata 1</td>
@@ -102,13 +102,13 @@
                 <td class="column">.48</td>
             </tr>
             <tr>
-                <td class="data attr">400<span style="color:red">*</span></td>
+                <td class="data attr">400</td>
                 <td class="data">.34</td>
                 <td class="data highlight">.345</td>
                 <td class="data">.454</td>
             </tr>
             <tr>
-                <td class="data attr">410<span style="color:red">*</span></td>
+                <td class="data attr">410</td>
                 <td class="data">.400</td>
                 <td class="data highlight" style="border-bottom:1px solid red">.430</td>
                 <td class="data">.568</td>
@@ -117,7 +117,7 @@
     </div>
 
     <div id="row">
-        <b>Row Orientation</b>
+        <h4>Row Orientation</h4>
         <table class="preview">
             <tr>
                 <td class="file attr">File metadata 1</td>
@@ -152,8 +152,8 @@
                 <td class="column attr">Metadata Attribute</td>
                 <td class="column attr">USDA Code</td>
                 <td class="column attr">LAI (m2/m2)</td>
-                <td class="data attr">400<span style="color:red">*</span></td>
-                <td class="data attr">410<span style="color:red">*</span></td>
+                <td class="data attr">400</td>
+                <td class="data attr">410</td>
             </tr>
             <tr>
                 <td class="column attr highlight-row" style="border-left: 1px solid red">2008-07-24</td>
@@ -177,26 +177,26 @@
     </div>
 
     <div class="note">
-        <h6>Wavelengths</h6>
-        Any <b>numeric</b><span style="color:red">*</span> field name will be considered
+        <h5>Wavelengths</h5>
+        Any <span class="data note-label">numeric</span> field name will be considered
         <span class="data note-label">wavelength measurement</span>.  All other fields will be considered
         <span class="column note-label">metadata</span>.  Metadata fields can supply units.
     </div>
 
     <div class="note">
-        <h6>Global Metadata</h6>
+        <h5>Global Metadata</h5>
         <span class="file note-label">Global File Metadata</span> is applied to everything in the file
         and is completely <b>optional</b>.  You can also upload a seperate metadata file which can be
         joined to your data later on in the import process.
     </div>
 
     <div class="note">
-      <h6>Units</h6>
-      Units can be specified by placing them in parentheses <b>(m2/m2)</b> after the attribute name.
+      <h5>Units</h5>
+      Units can be specified by placing them in parentheses <b>(m2/m2)</b> after the field name.
     </div>
 
     <div style="margin-top:15px">
-        Still lost?  <a href="http://tutorial.ecocolumn.org/walkthrough/#/7" target="_blank">Click
+        Still lost?  <a href="http://tutorial.ecospectra.org/walkthrough/#/7" target="_blank">Click
           here</a> to checkout the tutorial on data formats.
     </div>
 
