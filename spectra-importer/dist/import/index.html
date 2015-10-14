@@ -21,7 +21,6 @@
   </head>
 
   <body>
-
     <ecosis-header></ecosis-header>
 
     <div style="padding-top: 60px">
@@ -32,16 +31,18 @@
       <ecosis-page-push id="push" class="page animated fadeIn"></ecosis-page-push>
     </div>
 
+    <ecosis-resource-popup id="resourcePopup"></ecosis-resource-popup>
 
     <!-- Splash Screen -->
     <div class="modal fade" id="splash" tabindex="-1" role="dialog" aria-labelledby="splashLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h4 class="modal-title" id="splashLabel"><i class="fa fa-spinner fa-spin"></i> Loading...</h4>
+            <h4 class="modal-title" id="splashLabel"><i class="fa fa-circle-o-notch fa-spin"></i> Preparing workspace...</h4>
           </div>
           <div class="modal-body">
-            Preparing workspace.
+            Depending on the size of your dataset and the last time it was accessed, this
+            may take several minutes.
           </div>
         </div>
       </div>
