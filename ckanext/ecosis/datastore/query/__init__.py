@@ -180,7 +180,13 @@ def total(packageId, resourceId=None, sheetId=None):
     if sheetId is not None:
         query['sheetId'] = sheetId
 
-    return {"total" : collections.get('spectra').count(query)}
+    # need to support 2.8 drive cause pythons 3.0 seems to be a POS
+    try:
+        # 3.0 way
+        return {"total" : collections.get('spectra').count(query)}
+    except:
+        # 2.8 way
+        return {"total" : collections.get('spectra').find(query).count() }
 
 def setLocation(spectra):
     if spectra.get('geojson') != None:
