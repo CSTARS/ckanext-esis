@@ -49,7 +49,8 @@ def cleanPackage(package_id):
         "packageId": package_id
     },{
         "$set" : {
-            "prepared" : False
+            "prepared" : False,
+            "runInfo" : None
         }
     })
 

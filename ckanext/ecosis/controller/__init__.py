@@ -23,6 +23,7 @@ with open(schema) as schema_file:
 
 client = MongoClient(config.get("ecosis.mongo.url"))
 db = client[config.get("ecosis.mongo.db")]
+print config.get("ecosis.mongo.db")
 
 collections = {
     "spectra" : db[config.get("ecosis.mongo.workspace_spectra_collection")],
