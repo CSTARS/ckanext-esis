@@ -1,0 +1,62 @@
+<dom-module id="ecosis-error-popup">
+  <template>
+    <div class="modal fade" id="popup" style="z-index: 10000">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title text text-danger">Oooh no, badness :(</h4>
+          </div>
+
+          <div class="modal-body" style="padding: 0 25px">
+            <h5 class="text text-danger">Error: <span id="message"></span></h5>
+
+            <div id="report" style="margin: 50px 15px 20px 15px">
+              Please help us fix bugs by reporting them
+              <a href="https://github.com/CSTARS/ckanext-ecosis/issues/new" target="_blank">here on GitHub</a>.
+              <br />It's quick, easy and we will even help with the message:
+            </div>
+            <div class="well">
+              <div><b>Package ID:</b> <span id="project"></span></div>
+              <div><b>Message:</b> <span id="message2"></span></div>
+              <div><b>Code:</b> <span id="code"></span></div>
+              <br />
+              <div>[Any Additional Info Here]</div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+  </template>
+
+  <script>
+    Polymer({
+      is : "ecosis-error-popup",
+
+      ready : function() {
+        this.popup = $(this.$.popup);
+        this.popup.remove();
+        $('body').append(this.popup);
+
+        this.popup.modal({
+          show: false,
+          backdrop : 'static'
+        });
+      },
+
+      show : function(e) {
+        this.$.message.innerHTML = e.message;
+        this.$.message2.innerHTML = e.message || '';
+        this.$.project.innerHTML = ecosis.ds.package_id;
+        this.$.code.innerHTML = e.code || -1;
+
+        this.popup.modal('show');
+      }
+    });
+  </script>
+</dom-module>

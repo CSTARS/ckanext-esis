@@ -190,12 +190,18 @@
       ecosis.ckan.processResource(
           ecosis.ds.package_id, this.newResourceIds, null, {layout: this.defaultType},
           function(resp) {
-              if( resp.error ) return alert(resp.message);
+              if( resp.error ) {
+                // ERROR 3
+                resp.code = 3;
+                return ecosis.errorPopup.show(resp);
+              }
 
               // proly a smarter way to do things, but for now, reload entire workspace
               ecosis.ckan.getWorkspace(ecosis.ds.package_id, function(result){
                 if( result.error ) {
-                  return alert(result.message);
+                  // ERROR 4
+                  result.code = 4;
+                  return ecosis.errorPopup.show(result);
                 }
 
                 ecosis.ds.runAfterResourceAdd(result);

@@ -75,8 +75,11 @@
 
     renderMetadataResp : function(resp) {
       if( resp.error ) {
-        return alert(resp.message);
+        // ERROR 18
+        resp.code = 18;
+        return ecosis.errorPopup.show(resp);
       }
+
 
       this.renderTable(resp.metadata);
 
@@ -107,7 +110,9 @@
 
     renderSpectraResp : function(resp) {
       if( resp.error ) {
-        return alert(resp.message);
+        // ERROR 18
+        resp.code = 18;
+        ecosis.errorPopup.show(resp);
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);

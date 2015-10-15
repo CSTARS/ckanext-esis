@@ -111,7 +111,11 @@
       }
 
       ecosis.ckan.deleteResources(ids, function(resp){
-        if( resp.error ) return alert('Error: '+resp.message+' :(');
+        if( resp.error ) {
+          // ERROR 11
+          resp.code = 11;
+          return ecosis.errorPopup.show(resp);
+        }
 
         for( var i = 0; i < usedEles.length; i++ ) {
           $(usedEles[i]).remove();

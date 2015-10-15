@@ -1,5 +1,11 @@
 {% ckan_extends %}
 
+{% block content_action %}
+  {% if h.check_access('package_update', {'id':pkg.id }) %}
+    <a class="btn btn-success btn-large" style="margin-top:-8px" href="/dataset/edit/{{pkg.name}}"><i class="icon-wrench"></i> Manage Spectra</a>
+  {% endif %}
+{% endblock %}
+
 {% block package_notes %}
   {% if c.pkg_notes_formatted %}
     <div class="notes embedded-content">

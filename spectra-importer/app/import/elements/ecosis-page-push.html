@@ -198,18 +198,21 @@
             this.$.pushMessage.style.display = 'none';
 
             if( resp.error ) {
-                alert('Error pushing dataset to search :(');
-            } else {
-                var msg = 'Success.  Your dataset is processing.';
-                if( resp.emailingResult && resp.email ) {
-                  msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
-                } else {
-                  msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
-                }
-
-                alert(msg);
-                window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
+              // ERROR 12
+              resp.code = 12;
+              resp.message += '. Error pushing dataset to search.';
+              return ecosis.errorPopup.show(resp);
             }
+
+            var msg = 'Success.  Your dataset is processing.';
+            if( resp.emailingResult && resp.email ) {
+              msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
+            } else {
+              msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
+            }
+
+            alert(msg);
+            window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
           }.bind(this)
       );
     },

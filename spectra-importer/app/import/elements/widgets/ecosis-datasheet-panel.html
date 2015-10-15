@@ -1,6 +1,4 @@
-<link rel="import" href="ecosis-parser-overview.html" >
 <link rel="import" href="ecosis-metadata-join-panel.html" >
-<link rel="import" href="ecosis-spectra-panel.html" >
 
 <dom-module id="ecosis-datasheet-panel">
   <style>
@@ -136,7 +134,12 @@
 
             this.setSaving(false);
 
-            if( resp.error ) return alert("Error updating datasheet :(");
+            if( resp.error ) {
+              // ERROR 16
+              resp.code = 16;
+              resp.message += '.  Error updating datasheet.';
+              return ecosis.errorPopup.show(resp);
+            }
 
             this.sheet = resp;
             ecosis.ds.setSheet(resp);

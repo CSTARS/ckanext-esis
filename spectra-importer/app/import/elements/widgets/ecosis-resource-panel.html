@@ -219,7 +219,12 @@
         function(resp){
           this.querySelector('#deletePanel').style.display = 'block';
 
-          if( resp.error ) return alert("Server error deleting resource");
+          if( resp.error ) {
+            // ERROR 17
+            resp.code = 17;
+            resp.message += '. Server error deleting resource.';
+            return ecosis.errorPopup.show(resp);
+          }
 
           for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
             if( ecosis.ds.resources[i] == this.resource ) {

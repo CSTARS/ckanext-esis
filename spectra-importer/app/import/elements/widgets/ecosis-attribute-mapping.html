@@ -308,7 +308,12 @@
 
           this.updateMap();
           this.updateSelectList();
-          if( resp.error ) alert('Error saving attribute name mapping');
+          if( resp.error ) {
+            // ERROR 13
+            resp.code = 13;
+            resp.message += '. Error saving attribute name mapping.';
+            ecosis.errorPopup.show(resp);
+          }
         }.bind(this)
       )
     },

@@ -311,7 +311,13 @@
       if( confirm('Are you sure your want to remove this dataset?') ) {
         if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
           ecosis.ckan.deletePackage(ecosis.ds.package_id,
-            function(err, resp) {
+            function(resp) {
+              if( resp.error ) {
+                // ERROR 5
+                resp.code = 5;
+                return ecosis.errorPopup.show(resp);
+              }
+
               alert('dataset deleted.');
               window.location = '/dataset';
             }
@@ -329,8 +335,18 @@
             this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
             this.$.createDatasetBtn.removeAttribute('disabled');
 
-            if( resp.error ) return alert('Failed to create dataset :(');
-            if( !resp.id ) return alert('Failed to create dataset :(');
+            if( resp.error ) {
+              // ERROR 6
+              resp.code = 6;
+              return ecosis.errorPopup.show(resp);
+            }
+            if( !resp.id ) {
+              // ERROR 7
+              return ecosis.errorPopup.show({
+                message : 'Failed to create dataset',
+                code : 7
+              });
+            }
 
             // set the page
             window.location = '/import/?id='+resp.name+'#add-resources';
@@ -359,7 +375,11 @@
         function(resp) {
           if( resp.error ) {
             this.$.saveLabel.style.display = 'none';
-            return alert('Failed to fetch for dataset update :(');
+
+            // ERROR 8
+            resp.code = 8;
+            resp.message += '. Failed to fetch package for update.'
+            return ecosis.errorPopup.show(resp);
           }
 
           var metadata = resp.result;
@@ -371,8 +391,19 @@
             function(resp) {
               this.$.saveLabel.style.display = 'none';
 
-              if( resp.error ) return alert('Failed to update dataset :(');
-              if( !resp.result.id ) return alert('Failed to update dataset :(');
+              if( resp.error ) {
+                // ERROR 9
+                resp.code = 9;
+                resp.message += '. Failed to update dataset.'
+                return ecosis.errorPopup.show(resp);
+              }
+              if( !resp.result.id )  {
+                // ERROR 10
+                return ecosis.errorPopup.show({
+                  message : 'Failed to update dataset',
+                  code : 10
+                });
+              }
 
             }.bind(this)
           );

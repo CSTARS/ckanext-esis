@@ -166,7 +166,12 @@
           function(resp) {
             this.$.saveLabel.style.display = 'none';
 
-            if( resp.error ) return alert('Failed to update dataset :(');
+            if( resp.error ) {
+              // ERROR 14
+              resp.code = 14;
+              resp.message += '. Failed to set dataset sort order.';
+              ecosis.errorPopup.show(resp);
+            }
           }.bind(this)
         );
     }
