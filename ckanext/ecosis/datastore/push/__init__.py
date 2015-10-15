@@ -58,6 +58,8 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
 
     except Exception as e:
         try:
+            print 'ERROR pushing to search: %s' % ckanPackage.get('id')
+
             # if badness, remove from search
             deleteUtils.cleanFromSearch(ckanPackage.get('id'))
 

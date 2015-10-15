@@ -46,7 +46,7 @@ def mapreducePackage(ckanPackage):
     updateEcosisNs(ckanPackage, spectra_count)
 
 def updateEcosisNs(pkg, spectra_count):
-    config = collections.get("package").find_one({"package_id": pkg.get("id")})
+    config = collections.get("package").find_one({"packageId": pkg.get("id")})
     collection = collections.get('search_package')
 
     sort = config.get("sort")
