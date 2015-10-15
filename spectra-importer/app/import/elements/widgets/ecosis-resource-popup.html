@@ -5,7 +5,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <div class="alert alert-success wizardMode"><h5 style="color:white">Upload Complete!</h5>Configure Uploaded Sheets</div>
+            <div class="alert alert-success wizardMode"><h5 style="color:white">Upload Complete!</h5>Configure uploaded sheets below.</div>
             <h4 class="modal-title" id="title"></h4>
           </div>
           <div class="modal-body" style="padding: 25px">
@@ -122,6 +122,7 @@
     },
 
     onDatasheetUpdate : function() {
+      this.$.datasheetSelector.updateClass();
       if( this.handlers ) this.handlers.onDatasheetUpdate();
     },
 
