@@ -4,6 +4,7 @@ from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.vocab import usda
 from ckanext.ecosis.datastore.vocab import controlled as controlledVocab
+from ckanext.ecosis.datastore.utils import mongo
 import workspace
 
 
@@ -152,8 +153,8 @@ def getMetadataInfo(packageId, resourceId=None, sheetId=None):
 
     query['type'] = "metadata"
 
-    attrs = collections.get('spectra').distinct('spectra.%s' % sheetInfo.get('joinOn'), query)
-    total = collections.get('spectra').count(query)
+    attrs = mongo.distinct(collections.get('spectra'), 'spectra.%s' % sheetInfo.get('joinOn'), query)
+    total = mongo.count(collections.get('spectra'), query)
 
     query = {
         "packageId" : packageId,
@@ -164,7 +165,7 @@ def getMetadataInfo(packageId, resourceId=None, sheetId=None):
     }
 
     return {
-        "joinCount": collections.get('spectra').count(query),
+        "joinCount": mongo.count(collections.get('spectra'), query),
         "total" : total
     }
 
@@ -181,12 +182,7 @@ def total(packageId, resourceId=None, sheetId=None):
         query['sheetId'] = sheetId
 
     # need to support 2.8 drive cause pythons 3.0 seems to be a POS
-    try:
-        # 3.0 way
-        return {"total" : collections.get('spectra').count(query)}
-    except:
-        # 2.8 way
-        return {"total" : collections.get('spectra').find(query).count() }
+    return {"total" : mongo.count(collections.get('spectra'), query)}
 
 def setLocation(spectra):
     if spectra.get('geojson') != None:
