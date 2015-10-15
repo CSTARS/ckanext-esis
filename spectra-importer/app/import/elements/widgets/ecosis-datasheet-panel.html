@@ -138,7 +138,7 @@
               // ERROR 16
               resp.code = 16;
               resp.message += '.  Error updating datasheet.';
-              return ecosis.errorPopup.show(resp);
+              return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
             }
 
             this.sheet = resp;

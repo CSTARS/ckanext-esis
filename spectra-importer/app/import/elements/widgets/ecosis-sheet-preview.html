@@ -94,7 +94,7 @@
       if( resp.error ) {
         // ERROR 18
         resp.code = 18;
-        return ecosis.errorPopup.show(resp);
+        return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
 
@@ -130,7 +130,7 @@
       if( resp.error ) {
         // ERROR 18
         resp.code = 18;
-        ecosis.errorPopup.show(resp);
+        ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);

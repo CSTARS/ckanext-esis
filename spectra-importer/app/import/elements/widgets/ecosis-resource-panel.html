@@ -123,10 +123,12 @@
       }
 
       // hide edit button if invalid file type
-      if( this.resource.datasheets && this.resource.datasheets[0].invalidFileType ) {
-        this.querySelector('#editLink').style.display = 'none';
+      if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'none';
       } else {
-        this.querySelector('#editLink').style.display = 'inline-block';
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'inline-block';
       }
 
       if( this.resource.childResources ) {

@@ -6972,6 +6972,7 @@ this.fire('dom-change');
 
 
 
+
 </head><body><div hidden="">
 
 <dom-module id="ecosis-schema-input">
@@ -8289,7 +8290,7 @@ this.fire('dom-change');
               // ERROR 16
               resp.code = 16;
               resp.message += '.  Error updating datasheet.';
-              return ecosis.errorPopup.show(resp);
+              return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
             }
 
             this.sheet = resp;
@@ -8588,10 +8589,12 @@ this.fire('dom-change');
       }
 
       // hide edit button if invalid file type
-      if( this.resource.datasheets && this.resource.datasheets[0].invalidFileType ) {
-        this.querySelector('#editLink').style.display = 'none';
+      if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'none';
       } else {
-        this.querySelector('#editLink').style.display = 'inline-block';
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'inline-block';
       }
 
       if( this.resource.childResources ) {
@@ -8814,7 +8817,7 @@ this.fire('dom-change');
       if( resp.error ) {
         // ERROR 18
         resp.code = 18;
-        return ecosis.errorPopup.show(resp);
+        return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
 
@@ -8850,7 +8853,7 @@ this.fire('dom-change');
       if( resp.error ) {
         // ERROR 18
         resp.code = 18;
-        ecosis.errorPopup.show(resp);
+        ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);
@@ -9022,8 +9025,7 @@ this.fire('dom-change');
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-            <div class="alert alert-success wizardMode"><h5 style="color:white">Upload Complete!</h5>Configure uploaded sheets below.</div>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
             <h4 class="modal-title" id="title"></h4>
           </div>
           <div class="modal-body" style="padding: 25px">
@@ -9040,13 +9042,13 @@ this.fire('dom-change');
             <div class="wizardMode">
               <div class="layout horizontal">
                 <div>
-                  <button type="button" class="btn btn-default" on-click="prev">Previous</button>
+                  <button type="button" id="prev" class="btn btn-default" on-click="prev">Previous</button>
                 </div>
                 <div class="flex" style="text-align:center">
                   <button type="button" class="btn btn-primary" data-dismiss="modal">Finished</button>
                 </div>
                 <div>
-                  <button type="button" class="btn btn-default" on-click="next">Next</button>
+                  <button type="button" id="next" class="btn btn-default" on-click="next">Next</button>
                 </div>
               </div>
             </div>
@@ -9079,6 +9081,7 @@ this.fire('dom-change');
         this.index = this.resources.length - 1;
         return;
       }
+      this.updateNav();
       this.show(this.resources[this.index]);
     },
 
@@ -9088,7 +9091,16 @@ this.fire('dom-change');
         this.index = 0;
         return;
       }
+      this.updateNav();
       this.show(this.resources[this.index]);
+    },
+
+    updateNav : function() {
+      if( this.index == 0 ) this.$.prev.setAttribute('disabled','disabled');
+      else this.$.prev.removeAttribute('disabled');
+
+      if( this.index >= this.resources.length-1 ) this.$.next.setAttribute('disabled','disabled');
+      else this.$.next.removeAttribute('disabled');
     },
 
     setMode : function(mode) {
@@ -9105,6 +9117,7 @@ this.fire('dom-change');
       this.setMode('wizard');
       this.resources = resources;
       this.index = 0;
+      this.updateNav();
       this.handlers = handlers;
       this.show(resources[0]);
     },
@@ -9173,6 +9186,7 @@ this.fire('dom-change');
               <div> - <b>Package ID:</b> <span id="project"></span></div>
               <div> - <b>Message:</b> <span id="message2"></span></div>
               <div> - <b>Code:</b> <span id="code"></span></div>
+              <div> - <b>User Agent:</b> <span id="useragent"></span></div>
               <div id="gitInfo"></div>
               <div>[Any Additional Info Here]</div>
             </div>
@@ -9196,17 +9210,34 @@ this.fire('dom-change');
         this.popup.remove();
         $('body').append(this.popup);
 
+        this.popup.on('hidden.bs.modal', function(){
+          if( this.priorPopup ) this.priorPopup.modal('show');
+        }.bind(this));
+
         this.popup.modal({
           show: false,
           backdrop : 'static'
         });
       },
 
-      show : function(e) {
+      show : function(e, popup) {
+        this.priorPopup = popup;
+        if( popup ) {
+          popup.modal('hide');
+          setTimeout(function(){
+            this._show(e);
+          }.bind(this), 350);
+        } else {
+          this._show(e);
+        }
+      },
+
+      _show : function(e) {
         this.$.message.innerHTML = e.message;
         this.$.message2.innerHTML = e.message || '';
         this.$.project.innerHTML = ecosis.ds.package_id;
         this.$.code.innerHTML = e.code || -1;
+        this.$.useragent.innerHTML = navigator.userAgent;
 
         var html = '';
         if( ecosis.git ) {
@@ -9222,6 +9253,69 @@ this.fire('dom-change');
     });
   </script>
 </dom-module>
+
+<dom-module id="ecosis-upload-splash">
+  <template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body" style="padding: 25px">
+
+            <div class="alert alert-success"><h5 style="color:white">Upload Complete!</h5></div>
+
+            <div style="text-align:center">
+              <h3><i class="fa fa-cogs"></i> Configure Resources</h3>
+
+              <div style="margin: 10px 0 30px 0">
+                You will now have a chance to configure your uploaded resources.
+              </div>
+
+              <div>
+                <a class="btn btn-default btn-lg" on-click="hide">Continue</a><a>
+              </a></div><a>
+            </a></div><a>
+
+          </a></div><a>
+        </a></div><!-- /.modal-content --><a>
+      </a></div><!-- /.modal-dialog --><a>
+    </a></div><!-- /.modal --><a>
+
+  </a></template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-upload-splash',
+
+    ready : function() {
+      this.popup = $(this.$.popup);
+      this.popup.remove();
+      $('body').append(this.popup);
+
+      this.popup.modal({
+        show: false,
+        backdrop : 'static'
+      });
+
+      this.popup.on('hidden.bs.modal', function(){
+          this.wizard.uploadWizard(this.resources, this.handlers);
+      }.bind(this));
+
+      this.wizard = document.querySelector('ecosis-resource-popup');
+    },
+
+    show : function(resources, handlers) {
+      this.resources = resources;
+      this.handlers = handlers;
+
+      this.popup.modal('show');
+    },
+
+    hide : function() {
+      this.popup.modal('hide');
+    }
+  });
+</script>
 
 <dom-module id="ecosis-chart">
   <style>
@@ -9955,7 +10049,7 @@ this.fire('dom-change');
     verifyPanelCss : function() {
       var eles = this.querySelectorAll('ecosis-resource-panel');
       for( var i = 0; i < eles.length; i++ ) {
-        this.setClass();
+        eles[i].setClass();
       }
     },
 
@@ -10279,7 +10373,7 @@ this.fire('dom-change');
         }
       }
 
-      document.querySelector('ecosis-resource-popup').uploadWizard(resources,{
+      document.querySelector('ecosis-upload-splash').show(resources,{
         onDatasheetUpdate : function(){
           // make sure all panels have correct css after update
           document.querySelector('ecosis-page-current-resources').verifyPanelCss();

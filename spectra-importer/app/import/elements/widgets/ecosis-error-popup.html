@@ -20,6 +20,7 @@
               <div> - <b>Package ID:</b> <span id="project"></span></div>
               <div> - <b>Message:</b> <span id="message2"></span></div>
               <div> - <b>Code:</b> <span id="code"></span></div>
+              <div> - <b>User Agent:</b> <span id="useragent"></span></div>
               <div id="gitInfo"></div>
               <div>[Any Additional Info Here]</div>
             </div>
@@ -43,17 +44,34 @@
         this.popup.remove();
         $('body').append(this.popup);
 
+        this.popup.on('hidden.bs.modal', function(){
+          if( this.priorPopup ) this.priorPopup.modal('show');
+        }.bind(this));
+
         this.popup.modal({
           show: false,
           backdrop : 'static'
         });
       },
 
-      show : function(e) {
+      show : function(e, popup) {
+        this.priorPopup = popup;
+        if( popup ) {
+          popup.modal('hide');
+          setTimeout(function(){
+            this._show(e);
+          }.bind(this), 350);
+        } else {
+          this._show(e);
+        }
+      },
+
+      _show : function(e) {
         this.$.message.innerHTML = e.message;
         this.$.message2.innerHTML = e.message || '';
         this.$.project.innerHTML = ecosis.ds.package_id;
         this.$.code.innerHTML = e.code || -1;
+        this.$.useragent.innerHTML = navigator.userAgent;
 
         var html = '';
         if( ecosis.git ) {
