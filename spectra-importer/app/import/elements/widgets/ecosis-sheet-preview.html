@@ -9,25 +9,31 @@
   </style>
 
   <template>
-
+    <span class="pull-right label label-warning" id="loading" style="display:none"><i class="fa fa-spin fa-circle-o-notch"></i> Loading...</span>
     <h4 class="info page-header" id="info"></h4>
 
-    <div class="layout horizontal center">
-        <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
-
-        <div class="flex">
-          <div class="row">
-            <div class="col-sm-6">
-              <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
-            </div>
-            <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
-          </div>
-        </div>
-
-        <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
+    <div id="nodata" style="display:none" class="text text-warning">
+      No data in this sheet.
     </div>
 
-    <div id="sliderRoot" style="margin-top: 15px"></div>
+    <div id="data">
+      <div class="layout horizontal center">
+          <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
+
+          <div class="flex">
+            <div class="row">
+              <div class="col-sm-6">
+                <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
+              </div>
+              <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
+            </div>
+          </div>
+
+          <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
+      </div>
+
+      <div id="sliderRoot" style="margin-top: 15px"></div>
+    </div>
 
   </template>
 </dom-module>
@@ -52,7 +58,16 @@
 
       this.slider.slider('setValue', this.index+1);
 
-      this.info.innerHTML = 'Loading index: '+this.index;
+      if( this.info.total == 0 ) {
+        this.$.nodata.style.display = 'block';
+        this.$.data.style.display = 'none';
+      } else {
+        this.$.nodata.style.display = 'none';
+        this.$.data.style.display = 'block';
+      }
+
+      // this.$.info.innerHTML = '<i class="fa fa-spin fa-circle-o-notch"></i> Loading index: '+this.index;
+      this.loading(true);
 
       if( this.sheet.metadata ) {
         ecosis.ckan.getMetadataChunk(
@@ -74,6 +89,7 @@
     },
 
     renderMetadataResp : function(resp) {
+      this.loading(false);
       if( resp.error ) {
         // ERROR 18
         resp.code = 18;
@@ -109,6 +125,7 @@
     },
 
     renderSpectraResp : function(resp) {
+      this.loading(false);
       if( resp.error ) {
         // ERROR 18
         resp.code = 18;
@@ -244,6 +261,7 @@
 
     updateMetadata : function() {
       ecosis.ckan.getMetadataInfo(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.loading(false);
         this.info = resp;
         this.initSlider();
         this.load();
@@ -252,10 +270,16 @@
 
     updateSpectra : function() {
       ecosis.ckan.getSpectraCount(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.loading(false);
         this.info = resp;
         this.initSlider();
         this.load();
       }.bind(this));
+    },
+
+    loading : function(loading) {
+      if( loading ) this.$.loading.style.display = 'inline-block';
+      else this.$.loading.style.display = 'none';
     },
 
     moveLeft : function() {
