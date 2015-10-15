@@ -122,6 +122,13 @@
         this.querySelector('#trashBtn').style.color = '#333';
       }
 
+      // hide edit button if invalid file type
+      if( this.resource.datasheets && this.resource.datasheets[0].invalidFileType ) {
+        this.querySelector('#editLink').style.display = 'none';
+      } else {
+        this.querySelector('#editLink').style.display = 'inline-block';
+      }
+
       if( this.resource.childResources ) {
         var panel = this.querySelector('#zipResources');
         panel.innerHTML = '';

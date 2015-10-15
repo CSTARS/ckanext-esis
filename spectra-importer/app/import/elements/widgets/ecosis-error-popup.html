@@ -17,10 +17,10 @@
               <br />It's quick, easy and we will even help with the message:
             </div>
             <div class="well">
-              <div><b>Package ID:</b> <span id="project"></span></div>
-              <div><b>Message:</b> <span id="message2"></span></div>
-              <div><b>Code:</b> <span id="code"></span></div>
-              <br />
+              <div> - <b>Package ID:</b> <span id="project"></span></div>
+              <div> - <b>Message:</b> <span id="message2"></span></div>
+              <div> - <b>Code:</b> <span id="code"></span></div>
+              <div id="gitInfo"></div>
               <div>[Any Additional Info Here]</div>
             </div>
           </div>
@@ -54,6 +54,15 @@
         this.$.message2.innerHTML = e.message || '';
         this.$.project.innerHTML = ecosis.ds.package_id;
         this.$.code.innerHTML = e.code || -1;
+
+        var html = '';
+        if( ecosis.git ) {
+          for( var key in ecosis.git ) {
+            html += '<div> - <b>'+key+':</b> '+ecosis.git[key]+'</div>';
+          }
+          html += '<br />';
+        }
+        this.$.gitInfo.innerHTML = html;
 
         this.popup.modal('show');
       }

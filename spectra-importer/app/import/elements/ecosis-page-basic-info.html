@@ -209,6 +209,11 @@
 
       ecosis.ckan.gitInfo(function(resp){
         this.git = resp;
+        
+        if( !resp.error ) {
+          ecosis.git = resp;
+        }
+
         if( this.git.branch != 'master' ) {
           this.$.gitInfo.style.display = 'block';
           this.$.gitBranchLabel.innerHTML = this.git.branch;

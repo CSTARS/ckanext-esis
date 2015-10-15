@@ -70,6 +70,10 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         ignore = True
     elif ext != "csv" and ext != "tsv" and ext != "spectra" and ext != "xlsx" and ext != "xls":
         ignore = True
+        sheetConfig['ignore'] = True
+        sheetConfig['invalidFileType'] = True
+        if 'layout' in sheetConfig:
+            del sheetConfig['layout']
 
     if ignore == True: # save and return
         collections.get('resource').update({
@@ -152,7 +156,12 @@ def _processSheetArray(data, sheetConfig):
 
     # no local data
     if localRange['start'] == localRange['stop']:
-        return
+        return {
+            "processed" : True,
+            "resourceId" : sheetConfig.get("resourceId"),
+            "fromZip" : sheetConfig.get("fromZip"),
+            "count" : 0
+        }
 
     # ckan all the attribute types based on layout
     attrTypes = []

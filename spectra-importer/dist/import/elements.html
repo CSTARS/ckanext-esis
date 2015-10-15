@@ -6971,6 +6971,7 @@ this.fire('dom-change');
 
 
 
+
 </head><body><div hidden="">
 
 <dom-module id="ecosis-schema-input">
@@ -8555,6 +8556,13 @@ this.fire('dom-change');
         this.querySelector('#trashBtn').style.color = '#333';
       }
 
+      // hide edit button if invalid file type
+      if( this.resource.datasheets && this.resource.datasheets[0].invalidFileType ) {
+        this.querySelector('#editLink').style.display = 'none';
+      } else {
+        this.querySelector('#editLink').style.display = 'inline-block';
+      }
+
       if( this.resource.childResources ) {
         var panel = this.querySelector('#zipResources');
         panel.innerHTML = '';
@@ -9105,10 +9113,10 @@ this.fire('dom-change');
               <br>It's quick, easy and we will even help with the message:
             </div>
             <div class="well">
-              <div><b>Package ID:</b> <span id="project"></span></div>
-              <div><b>Message:</b> <span id="message2"></span></div>
-              <div><b>Code:</b> <span id="code"></span></div>
-              <br>
+              <div> - <b>Package ID:</b> <span id="project"></span></div>
+              <div> - <b>Message:</b> <span id="message2"></span></div>
+              <div> - <b>Code:</b> <span id="code"></span></div>
+              <div id="gitInfo"></div>
               <div>[Any Additional Info Here]</div>
             </div>
           </div>
@@ -9143,11 +9151,161 @@ this.fire('dom-change');
         this.$.project.innerHTML = ecosis.ds.package_id;
         this.$.code.innerHTML = e.code || -1;
 
+        var html = '';
+        if( ecosis.git ) {
+          for( var key in ecosis.git ) {
+            html += '<div> - <b>'+key+':</b> '+ecosis.git[key]+'</div>';
+          }
+          html += '<br />';
+        }
+        this.$.gitInfo.innerHTML = html;
+
         this.popup.modal('show');
       }
     });
   </script>
 </dom-module>
+
+<dom-module id="ecosis-chart">
+  <style>
+    :host {
+        display: block;
+    }
+  </style>
+
+  <template>
+    <div id="root" style="height:400px"></div>
+
+    <div id="noData" style="color:#888">
+      No spectral data to chart.
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-chart',
+
+    properties : {
+      animate : {
+          type : Boolean,
+          value : false
+      },
+      type : {
+        type : String
+      }
+    },
+
+    ready : function() {
+      this.dt = null;
+      this.chart = null;
+      this.height = 400;
+
+      this.updateTimer = -1;
+
+      this.onLoadHandlerSet = false;
+
+      this.options = null;
+      this.cols = null;
+
+      $(window).on('resize', function(){
+          this.redraw();
+      }.bind(this));
+    },
+
+    setHeight : function(height) {
+      this.height = height;
+      this.$.root.style.height = height+'px';
+    },
+
+    setOnloadHandler : function() {
+        if( this.onLoadHandlerSet ) return;
+
+        // put in global scope by cwn-datastore
+        chartLoadHandlers.push(function(){
+            this.update();
+        }.bind(this));
+    },
+
+    setData : function(data) {
+      this.data = data;
+      this.update();
+    },
+
+    update : function() {
+        if( !window.google.visualization ) return this.setOnloadHandler();
+        if( !window.google.visualization.LineChart ) return this.setOnloadHandler();
+
+        if( this.isEmpty() ) {
+          this.$.root.style.display = 'none';
+          this.$.noData.style.display = 'block';
+          return;
+        }
+        this.$.root.style.display = 'block';
+        this.$.noData.style.display = 'none';
+
+        if( !this.chart ) {
+            if( this.type ) {
+                this.chart = new google.visualization[this.type](this.$.root);
+            } else {
+                this.chart = new google.visualization.LineChart(this.$.root);
+            }
+        }
+
+        if( this.updateTimer == -1 ) clearTimeout(this.updateTimer);
+        this.updateTimer = setTimeout(function() {
+            this.updateTimer = -1;
+            this._update();
+        }.bind(this), 500);
+    },
+
+    _update : function() {
+        if( this.cols ) {
+            this.dt = new google.visualization.DataTable();
+            for( var i = 0; i < this.cols.length; i++ ) {
+                this.dt.addColumn(this.cols[i]);
+            }
+            this.dt.addRows(this.data);
+        } else {
+            this.dt = google.visualization.arrayToDataTable(this.data);
+        }
+
+        this.redraw();
+    },
+
+    isEmpty : function() {
+        if( !this.data ) {
+            return true;
+        }
+        if( this.data.length < 2 ) {
+            return true;
+        }
+        if( this.data[0].length == 0 ) {
+            return true;
+        }
+
+        return false;
+    },
+
+    redraw : function() {
+        if( !this.chart || !this.dt ) return;
+
+        var options = {
+            legend : {
+                position : 'none'
+            }
+        };
+
+        if( this.options ) {
+            for( var key in this.options ) {
+                options[key] = this.options[key];
+            }
+        }
+
+        this.chart.draw(this.dt, options);
+    }
+  });
+</script>
 
 <dom-module id="ecosis-page-basic-info">
   <style>
@@ -9360,6 +9518,11 @@ this.fire('dom-change');
 
       ecosis.ckan.gitInfo(function(resp){
         this.git = resp;
+        
+        if( !resp.error ) {
+          ecosis.git = resp;
+        }
+
         if( this.git.branch != 'master' ) {
           this.$.gitInfo.style.display = 'block';
           this.$.gitBranchLabel.innerHTML = this.git.branch;
