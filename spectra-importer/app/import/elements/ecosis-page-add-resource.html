@@ -217,10 +217,17 @@
       var resources = [];
       for( var i = 0; i < this.newResourceIds.length; i++ ) {
         var resource = ecosis.ds.resourceLookup[this.newResourceIds[i]];
+        if( !resource.datasheets ) continue;
+
         if( resource.childResources ) {
           for( var j = 0; j < resource.childResources.length; j++ ) {
+            if( !resource.childResources[j].datasheets ) continue;
+            if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
+            
             resources.push(resource.childResources[j]);
           }
+        } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
+          continue;
         } else {
           resources.push(resource);
         }

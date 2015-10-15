@@ -1,4 +1,5 @@
 import xlrd, os, shutil, csv, datetime, json
+from ckanext.ecosis.datastore.delete import removeDeletedExcelSheets
 
 workspaceDir = None
 
@@ -36,8 +37,7 @@ def process(collection, sheetConfig, hash):
             # we are processing a single sheet
             config = sheetConfig
 
-            # update just these attributes
-
+        # update just these attributes
         elif configSheetId is None:
             # we are processing everything
             config = collection.find_one({
@@ -72,6 +72,9 @@ def process(collection, sheetConfig, hash):
                 "data" : data,
                 "config" : config
             })
+
+    # This shouldn't be required.  To do this a resource has to be deleted and replaced
+    #removeDeletedExcelSheets(sheetConfig.get('resourceId'), sheetIds)
 
     return datasheets
 

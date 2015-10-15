@@ -9263,17 +9263,18 @@ this.fire('dom-change');
 
             <div class="alert alert-success"><h5 style="color:white">Upload Complete!</h5></div>
 
-            <div style="text-align:center">
+            <div style="text-align:center" id="hasResources">
               <h3><i class="fa fa-cogs"></i> Configure Resources</h3>
 
               <div style="margin: 10px 0 30px 0">
                 You will now have a chance to configure your uploaded resources.
               </div>
+            </div>
 
-              <div>
-                <a class="btn btn-default btn-lg" on-click="hide">Continue</a><a>
-              </a></div><a>
+            <div style="text-align:center">
+              <a class="btn btn-default btn-lg" on-click="hide">Continue</a><a>
             </a></div><a>
+
 
           </a></div><a>
         </a></div><!-- /.modal-content --><a>
@@ -9298,7 +9299,8 @@ this.fire('dom-change');
       });
 
       this.popup.on('hidden.bs.modal', function(){
-          this.wizard.uploadWizard(this.resources, this.handlers);
+        if( this.resources.length == 0 ) return;
+        this.wizard.uploadWizard(this.resources, this.handlers);
       }.bind(this));
 
       this.wizard = document.querySelector('ecosis-resource-popup');
@@ -9307,6 +9309,12 @@ this.fire('dom-change');
     show : function(resources, handlers) {
       this.resources = resources;
       this.handlers = handlers;
+
+      if( resources.length == 0 ) {
+        this.$.hasResources.style.display = 'none';
+      } else {
+        this.$.hasResources.style.display = 'block';
+      }
 
       this.popup.modal('show');
     },
@@ -10364,10 +10372,17 @@ this.fire('dom-change');
       var resources = [];
       for( var i = 0; i < this.newResourceIds.length; i++ ) {
         var resource = ecosis.ds.resourceLookup[this.newResourceIds[i]];
+        if( !resource.datasheets ) continue;
+
         if( resource.childResources ) {
           for( var j = 0; j < resource.childResources.length; j++ ) {
+            if( !resource.childResources[j].datasheets ) continue;
+            if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
+            
             resources.push(resource.childResources[j]);
           }
+        } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
+          continue;
         } else {
           resources.push(resource);
         }
