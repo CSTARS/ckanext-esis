@@ -22,6 +22,7 @@
     "font-awesome": "~4.3.0",
     "leaflet": "~0.7.3",
     "bower-bootstrap-slider": "~1.0.0",
-    "seiyria-bootstrap-slider": "~5.1.1"
+    "seiyria-bootstrap-slider": "~5.1.1",
+    "isotope": "~2.2.2"
   }
 }
