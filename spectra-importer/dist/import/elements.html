@@ -568,7 +568,7 @@ debouncer.stop();
 }
 }
 });
-Polymer.version = '1.1.4';
+Polymer.version = '1.1.5';
 Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
@@ -2451,7 +2451,15 @@ this.listen(node, name, listeners[key]);
 }
 },
 listen: function (node, eventName, methodName) {
-this._listen(node, eventName, this._createEventHandler(node, eventName, methodName));
+var handler = this._recallEventHandler(this, eventName, node, methodName);
+if (!handler) {
+handler = this._createEventHandler(node, eventName, methodName);
+}
+if (handler._listening) {
+return;
+}
+this._listen(node, eventName, handler);
+handler._listening = true;
 },
 _boundListenerKey: function (eventName, methodName) {
 return eventName + ':' + methodName;
@@ -2490,6 +2498,7 @@ host[methodName](e, e.detail);
 host._warn(host._logf('_createEventHandler', 'listener method `' + methodName + '` not defined'));
 }
 };
+handler._listening = false;
 this._recordEventHandler(host, eventName, node, methodName, handler);
 return handler;
 },
@@ -2497,6 +2506,7 @@ unlisten: function (node, eventName, methodName) {
 var handler = this._recallEventHandler(this, eventName, node, methodName);
 if (handler) {
 this._unlisten(node, eventName, handler);
+handler._listening = false;
 }
 },
 _listen: function (node, eventName, handler) {
@@ -3344,6 +3354,12 @@ elt[n] = props[n];
 }
 }
 return elt;
+},
+isLightDescendant: function (node) {
+return this.contains(node) && Polymer.dom(this).getOwnerRoot() === Polymer.dom(node).getOwnerRoot();
+},
+isLocalDescendant: function (node) {
+return this.root === Polymer.dom(node).getOwnerRoot();
 }
 });
 Polymer.Bind = {
@@ -4145,6 +4161,22 @@ if (args.length) {
 this._notifySplice(array, path, 0, args.length, []);
 }
 return ret;
+},
+prepareModelNotifyPath: function (model) {
+this.mixin(model, {
+fire: Polymer.Base.fire,
+notifyPath: Polymer.Base.notifyPath,
+_EVENT_CHANGED: Polymer.Base._EVENT_CHANGED,
+_notifyPath: Polymer.Base._notifyPath,
+_pathEffector: Polymer.Base._pathEffector,
+_annotationPathEffect: Polymer.Base._annotationPathEffect,
+_complexObserverPathEffect: Polymer.Base._complexObserverPathEffect,
+_annotatedComputationPathEffect: Polymer.Base._annotatedComputationPathEffect,
+_computePathEffect: Polymer.Base._computePathEffect,
+_modelForPath: Polymer.Base._modelForPath,
+_pathMatchesEffect: Polymer.Base._pathMatchesEffect,
+_notifyBoundPaths: Polymer.Base._notifyBoundPaths
+});
 }
 });
 }());
@@ -5352,6 +5384,7 @@ properties: { __hideTemplateChildren__: { observer: '_showHideChildren' } },
 _instanceProps: Polymer.nob,
 _parentPropPrefix: '_parent_',
 templatize: function (template) {
+this._templatized = template;
 if (!template._content) {
 template._content = template.content;
 }
@@ -5362,11 +5395,11 @@ return;
 }
 var archetype = Object.create(Polymer.Base);
 this._customPrepAnnotations(archetype, template);
+this._prepParentProperties(archetype, template);
 archetype._prepEffects();
 this._customPrepEffects(archetype);
 archetype._prepBehaviors();
 archetype._prepBindings();
-this._prepParentProperties(archetype, template);
 archetype._notifyPath = this._notifyPathImpl;
 archetype._scopeElementClass = this._scopeElementClassImpl;
 archetype.listen = this._listenImpl;
@@ -5449,6 +5482,7 @@ delete parentProps[prop];
 proto = archetype._parentPropProto = Object.create(null);
 if (template != this) {
 Polymer.Bind.prepareModel(proto);
+Polymer.Base.prepareModelNotifyPath(proto);
 }
 for (prop in parentProps) {
 var parentProp = this._parentPropPrefix + prop;
@@ -5467,6 +5501,7 @@ Polymer.Bind.prepareInstance(template);
 template._forwardParentProp = this._forwardParentProp.bind(this);
 }
 this._extendTemplate(template, proto);
+template._pathEffector = this._pathEffectorImpl.bind(this);
 }
 },
 _createForwardPropEffector: function (prop) {
@@ -5477,7 +5512,7 @@ this._forwardParentProp(prop, value);
 _createHostPropEffector: function (prop) {
 var prefix = this._parentPropPrefix;
 return function (source, value) {
-this.dataHost[prefix + prop] = value;
+this.dataHost._templatized[prefix + prop] = value;
 };
 },
 _createInstancePropEffector: function (prop) {
@@ -5509,16 +5544,17 @@ var dot = path.indexOf('.');
 var root = dot < 0 ? path : path.slice(0, dot);
 dataHost._forwardInstancePath.call(dataHost, this, path, value);
 if (root in dataHost._parentProps) {
-dataHost.notifyPath(dataHost._parentPropPrefix + path, value);
+dataHost._templatized.notifyPath(dataHost._parentPropPrefix + path, value);
 }
 },
-_pathEffector: function (path, value, fromAbove) {
+_pathEffectorImpl: function (path, value, fromAbove) {
 if (this._forwardParentPath) {
 if (path.indexOf(this._parentPropPrefix) === 0) {
-this._forwardParentPath(path.substring(8), value);
+var subPath = path.substring(this._parentPropPrefix.length);
+this._forwardParentPath(subPath, value);
 }
 }
-Polymer.Base._pathEffector.apply(this, arguments);
+Polymer.Base._pathEffector.call(this._templatized, path, value, fromAbove);
 },
 _constructorImpl: function (model, host) {
 this._rootDataHost = host._getRootDataHost();
@@ -5561,8 +5597,9 @@ return host._scopeElementClass(node, value);
 stamp: function (model) {
 model = model || {};
 if (this._parentProps) {
+var templatized = this._templatized;
 for (var prop in this._parentProps) {
-model[prop] = this[this._parentPropPrefix + prop];
+model[prop] = templatized[this._parentPropPrefix + prop];
 }
 }
 return new this.ctor(model, this);
@@ -6170,7 +6207,7 @@ this.deselect(item);
 }
 } else {
 this.push('selected', item);
-skey = this._selectedColl.getKey(item);
+var skey = this._selectedColl.getKey(item);
 this.linkPaths('selected.' + skey, 'items.' + key);
 }
 } else {
@@ -6958,6 +6995,7 @@ this.fire('dom-change');
     }
   })
 </script>
+
 
 
 
@@ -8533,7 +8571,9 @@ this.fire('dom-change');
             </div>
           </div>
         </div>
-        <div class="panel-body" id="zipResources"></div>
+        <div class="panel-body">
+          <ecosis-isotope id="zipResources" selector=".zip-item"></ecosis-isotope>
+        </div>
       </div>
     </template>
 
@@ -8572,6 +8612,8 @@ this.fire('dom-change');
     },
 
     update : function() {
+      this.setAttribute('data-name', this.resource.name);
+
       if( this.resource.isZip ) {
         this.ele = this.$.zipResource.stamp();
       } else {
@@ -8598,15 +8640,19 @@ this.fire('dom-change');
       }
 
       if( this.resource.childResources ) {
-        var panel = this.querySelector('#zipResources');
-        panel.innerHTML = '';
+        this.isotope = this.querySelector('#zipResources');
+        this.isotope.clear();
 
         for( var i = 0; i < this.resource.childResources.length; i++ ) {
           var ele = document.createElement('ecosis-resource-panel');
+          ele.style.width = '100%';
+          ele.className = 'zip-item';
           ele.resource = this.resource.childResources[i]; // manually set
-          panel.appendChild(ele);
+          this.isotope.append(ele);
           ele.update();
         }
+
+        this.isotope.init();
       }
 
       var url = ecosis.ckan.host+'/dataset/'+this.resource.package_id+'/resource/'+this.resource.id+'/download/'+this.resource.name;
@@ -8614,6 +8660,15 @@ this.fire('dom-change');
       this.querySelector('#downloadBtn').setAttribute('href', url);
     },
 
+    sort : function(sortBy) {
+      if( !this.isotope ) return;
+      this.isotope.sort(sortBy);
+    },
+
+    filter : function(filter) {
+      if( !this.isotope ) return;
+      this.isotope.filter(filter);
+    },
 
     setClass : function() {
       var type = this.getResourceType();
@@ -8628,10 +8683,14 @@ this.fire('dom-change');
       }
 
       // update css class
-      if( this.resource.isZip ) return;
+      if( this.resource.isZip ) {
+        this.setAttribute('data-type', 'zip');
+        return;
+      }
 
       var className = this.getPanelClass(type);
       this.querySelector('#root').className = 'style-scope ecosis-resource-panel alert alert-'+className;
+      this.setAttribute('data-type', className);
     },
 
     getPanelClass : function(type) {
@@ -9471,6 +9530,75 @@ this.fire('dom-change');
   });
 </script>
 
+<dom-module id="ecosis-isotope">
+  <template>
+    <style>
+      :host {
+        display : block
+      }
+    </style>
+
+    <div id="grid">
+      <content></content>
+    </div>
+  </template>
+
+
+  <script>
+    Polymer({
+      is : 'ecosis-isotope',
+
+      properties : {
+        selector : {
+          type : String,
+          value : ''
+        }
+      },
+
+      clear : function() {
+        this.$.grid.innerHTML = '';
+      },
+
+      append : function(child) {
+        this.$.grid.appendChild(child);
+      },
+
+      init : function() {
+        if( this.grid ) this.grid.isotope('destroy');
+
+        this.grid = $(this.$.grid).isotope({
+          // options
+          itemSelector: this.selector,
+          layoutMode: 'vertical',
+          getSortData: {
+            name: '[data-name]', // value of attribute
+            type: '[data-type]'
+          },
+          sortAscending: true,
+          sortBy : 'name'
+        });
+
+        setTimeout(function(){
+          this.grid.isotope('updateSortData').isotope();
+        }.bind(this), 500)
+      },
+
+      html : function(html) {
+        this.$.grid.innerHTML = html;
+        this.init();
+      },
+
+      sort : function(sortBy) {
+        this.grid.isotope({sortBy : sortBy});
+      },
+
+      filter : function(filter) {
+        this.grid.isotope({filter : filter});
+      }
+    });
+  </script>
+</dom-module>
+
 <dom-module id="ecosis-page-basic-info">
   <style>
     :host {
@@ -9979,11 +10107,69 @@ this.fire('dom-change');
     #legend {
       padding: 20px 0;
     }
+    #filterPopup {
+      display : none;
+      position: absolute;
+      right : 25px;
+      margin: 10px 15px 15px 15px;
+      padding: 15px;
+      background-color: white;
+      box-shadow: 0 0 5px #ccc;
+      z-index: 100;
+      font-size: 16px;
+    }
   </style>
 
   <template>
 
-    <h4 class="page-header">Current Resources</h4>
+    <h4 class="page-header">
+      <span>Current Resources</span>
+
+      <div class="pull-right" style="margin-top: -10px">
+        <div class="btn-group">
+          <a class="btn btn-default active" on-click="toggleSortName" id="sortName">Sort by Name</a>
+          <a class="btn btn-default" on-click="toggleSortType" id="sortType">Sort by Type</a>
+        </div>
+
+        <div class="btn btn-default" on-click="toggleFilter">Filter</div>
+        <div id="filterPopup">
+          <button type="button" class="close" aria-label="Close" on-click="toggleFilter"><span aria-hidden="true">×</span></button>
+          <h5 class="page-header" style="margin-top:5px">Show</h5>
+
+
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="success">
+              <span class="text text-success">Data Sheet</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="primary">
+              <span class="text text-primary">Metadata Sheet</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="zip">
+              <span class="text text-warning">Zip Package</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="info">
+              <span class="text text-info">Multi-Sheet File</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="default">
+              <span class="text text-default">Ignored</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </h4>
 
     <div id="removeAll" style="margin-bottom: 20px">
       <a class="btn btn-link" on-click="selectAll">Select All</a>
@@ -9991,7 +10177,7 @@ this.fire('dom-change');
 
       <a class="btn btn-danger pull-right" id="deleteAll" on-click="deleteAll" style="display:none">Delete All Selected</a>
     </div>
-    <div id="resourceRoot"></div>
+    <ecosis-isotope id="resourceRoot" selector=".data-item"></ecosis-isotope>
 
     <div id="noResources" style="display:none">
       Your dataset does not contain any resource files.  Click <a id="addLink">here</a> to upload resources.
@@ -10046,16 +10232,71 @@ this.fire('dom-change');
         var resource = ecosis.ds.resources[i];
         if( resource.fromZip ) continue;
 
-        html += '<ecosis-resource-panel resourceid="'+resource.id+'"></ecosis-resource-panel>';
+        html += '<ecosis-resource-panel resourceid="'+resource.id+'" style="width:100%" class="data-item"></ecosis-resource-panel>';
       }
 
-      this.$.resourceRoot.innerHTML = html;
+      this.$.resourceRoot.html(html);
 
       // listen for all update events
       $(this.$.resourceRoot)
         .find('ecosis-resource-panel')
         .on('update', this.onResourceUpdate.bind(this))
         .on('resource-select', this.onResourceSelect.bind(this));
+
+
+      this.$.resourceRoot.init();
+    },
+
+    toggleFilter : function() {
+      $(this.$.filterPopup).toggle();
+    },
+
+    toggleSortName : function() {
+      $(this.$.sortName).addClass('active');
+      $(this.$.sortType).removeClass('active');
+      this.sort('name');
+    },
+
+    toggleSortType : function() {
+      $(this.$.sortName).removeClass('active');
+      $(this.$.sortType).addClass('active');
+      this.sort(['type','name']);
+    },
+
+    sort : function(sortValue) {
+      this.$.resourceRoot.sort(sortValue);
+      var zips = this.querySelectorAll('ecosis-resource-panel.data-item[data-type="zip"]');
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].sort(sortValue);
+      }
+    },
+
+    filter : function() {
+      var filters = this.querySelectorAll('.filter');
+      var filter = [];
+      for( var i = 0; i < filters.length; i++ ) {
+        if( !$(filters[i]).prop('checked') ) continue;
+        filter.push('[data-type="'+filters[i].getAttribute('data-type')+'"]');
+      }
+
+      filter = filter.join(', ');
+
+      // empty filter breaks isotope
+      if( filter == '' ) filter = '*';
+
+      var zips = this.querySelectorAll('ecosis-resource-panel.data-item[data-type="zip"]');
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].filter(filter);
+      }
+
+      this.$.resourceRoot.filter(filter);
+
+      // make sure everything is correct
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].filter(filter);
+      }
+
+      this.$.resourceRoot.filter(filter);
     },
 
     // make sure all resource panel css classes are correct
@@ -10112,7 +10353,10 @@ this.fire('dom-change');
 
     selectAll : function() {
       var eles = this.querySelectorAll('ecosis-resource-panel');
-      for( var i = 0; i < eles.length; i++ ) eles[i].select(true);
+      for( var i = 0; i < eles.length; i++ ) {
+        if( eles[i].style.display === 'none' ) continue;
+        eles[i].select(true);
+      }
       this.updateSelectState();
     },
 

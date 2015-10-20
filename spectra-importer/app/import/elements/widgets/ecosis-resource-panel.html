@@ -67,7 +67,9 @@
             </div>
           </div>
         </div>
-        <div class="panel-body" id="zipResources"></div>
+        <div class="panel-body">
+          <ecosis-isotope id="zipResources" selector=".zip-item"></ecosis-isotope>
+        </div>
       </div>
     </template>
 
@@ -106,6 +108,8 @@
     },
 
     update : function() {
+      this.setAttribute('data-name', this.resource.name);
+
       if( this.resource.isZip ) {
         this.ele = this.$.zipResource.stamp();
       } else {
@@ -132,15 +136,19 @@
       }
 
       if( this.resource.childResources ) {
-        var panel = this.querySelector('#zipResources');
-        panel.innerHTML = '';
+        this.isotope = this.querySelector('#zipResources');
+        this.isotope.clear();
 
         for( var i = 0; i < this.resource.childResources.length; i++ ) {
           var ele = document.createElement('ecosis-resource-panel');
+          ele.style.width = '100%';
+          ele.className = 'zip-item';
           ele.resource = this.resource.childResources[i]; // manually set
-          panel.appendChild(ele);
+          this.isotope.append(ele);
           ele.update();
         }
+
+        this.isotope.init();
       }
 
       var url = ecosis.ckan.host+'/dataset/'+this.resource.package_id+'/resource/'+this.resource.id+'/download/'+this.resource.name;
@@ -148,6 +156,15 @@
       this.querySelector('#downloadBtn').setAttribute('href', url);
     },
 
+    sort : function(sortBy) {
+      if( !this.isotope ) return;
+      this.isotope.sort(sortBy);
+    },
+
+    filter : function(filter) {
+      if( !this.isotope ) return;
+      this.isotope.filter(filter);
+    },
 
     setClass : function() {
       var type = this.getResourceType();
@@ -162,10 +179,14 @@
       }
 
       // update css class
-      if( this.resource.isZip ) return;
+      if( this.resource.isZip ) {
+        this.setAttribute('data-type', 'zip');
+        return;
+      }
 
       var className = this.getPanelClass(type);
       this.querySelector('#root').className = 'style-scope ecosis-resource-panel alert alert-'+className;
+      this.setAttribute('data-type', className);
     },
 
     getPanelClass : function(type) {
