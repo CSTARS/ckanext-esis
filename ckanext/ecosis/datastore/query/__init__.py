@@ -106,7 +106,7 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
                     'resourceId': r.get('resourceId'),
                     'sheetId': r.get('sheetId')
                 },
-                {"layout": 1})
+                {"layout": 1,"name": 1})
 
 
             if joinedInfo is None: # Badness

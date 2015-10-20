@@ -48,6 +48,13 @@ def resource(package_id, resource_id):
     })
 
     # if zip, remove child references
+    childResources = collections.get('resource').find({"zip.resourceId": resource_id})
+
+    for childResource in childResources:
+        collections.get('spectra').remove({
+            "resourceId": childResource.get('resourceId'),
+        })
+
     collections.get('resource').remove({
         "zip.resourceId": resource_id,
     })
