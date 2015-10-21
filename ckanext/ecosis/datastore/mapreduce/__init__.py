@@ -1,5 +1,5 @@
 import os, json, re
-from datetime import datetime
+import datetime
 from bson.code import Code
 from bson.son import SON
 from pylons import config
@@ -54,7 +54,7 @@ def updateEcosisNs(pkg, spectra_count):
         sort = {}
 
     ecosis = {
-        "pushed" : datetime.utcnow(),
+        "pushed" : datetime.datetime.utcnow(),
         "organization" : "",
         "organization_id" : "",
         "organization_image_url" : "",

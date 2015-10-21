@@ -132,6 +132,14 @@ def _processSeperatorFile(separator, sheetConfig):
         reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
         data = []
         for row in reader:
+            # stip no unicode characters: http://stackoverflow.com/questions/26541968/delete-every-non-utf-8-symbols-froms-string
+            # TODO: is there a better way todo this?
+            for i in range(0, len(row)):
+                try:
+                    row[i] = row[i].encode("ascii", "ignore")
+                except Exception as e:
+                    row[i] = '__invalid_utf-8_characters__'
+
             data.append(row)
         csvfile.close()
 
