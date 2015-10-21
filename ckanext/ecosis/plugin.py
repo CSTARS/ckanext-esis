@@ -47,12 +47,16 @@ class EcosisPlugin(plugins.SingletonPlugin,
         controller = 'ckanext.ecosis.controller:EcosisController'
 
         # Standard CKAN overrides
+        map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
+        map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
         map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+
         # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
         map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
+
         # route all resource edit screens to main ecosis dataset editor
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
         # TODO: can we get fancy and point at specific action or resource?

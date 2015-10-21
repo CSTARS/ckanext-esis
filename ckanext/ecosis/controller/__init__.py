@@ -42,6 +42,12 @@ datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), 
 
 class EcosisController(PackageController):
 
+    def createPackage(self):
+        try:
+            return package.create()
+        except Exception as e:
+            return handleError(e)
+
     def deletePackage(self):
         try:
             return package.delete()

@@ -272,8 +272,9 @@ module.exports = function(config) {
 
   this.createPackage = function(pkg, callback) {
     postRaw(this.host+'/api/3/action/package_create', pkg, function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
-      callback(resp.body.result);
+      if( err ) return callback({error:true, message:'Request Error'});
+      if( resp.body.error ) return callback(resp.body);
+      callback(resp.body);
     });
   }
 

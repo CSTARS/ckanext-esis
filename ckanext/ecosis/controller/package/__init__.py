@@ -7,6 +7,8 @@ import ckanext.ecosis.datastore.workspace as workspace
 from ckan.common import request, response
 from ckan.lib.base import c, model
 import ckan.logic as logic
+from ckan.lib.email_notifications import send_notification
+from pylons import config
 
 
 def delete():
@@ -29,6 +31,36 @@ def delete():
     deleteUtil.package(params['id'])
 
     return json.dumps({'success': True})
+
+def create():
+    response.headers["Content-Type"] = "application/json"
+
+    params = json.loads(request.body)
+
+    context = {'model': model, 'user': c.user}
+    package_create = logic.get_action('package_create')
+    ckanPackage = package_create(context, params)
+
+    
+    url = config.get('ckan.site_url')
+
+    if url != "" or url is not None:
+        send_notification(
+            {
+                "email" : "admins@ecospectra.org",
+                "display_name" : "EcoSIS Admins"
+            },
+            {
+                "subject" : "EcoSIS Dataset Created",
+                "body" : ("The dataset '%s' has been created by %s/user/%s.  "
+                            "You can view the dataset here:  %s/dataset/%s"
+                            "\n\n-EcoSIS Server") %
+                         (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
+            }
+        )
+
+    return json.dumps(ckanPackage)
+
 
 def setPrivate():
     response.headers["Content-Type"] = "application/json"
