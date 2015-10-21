@@ -53,7 +53,7 @@ def create():
                     "display_name" : "EcoSIS Admins"
                 },
                 {
-                    "subject" : "EcoSIS Dataset Created",
+                    "subject" : "EcoSIS Dataset Created - %s" % ckanPackage.get('title'),
                     "body" : ("The dataset '%s' has been created by %s/user/%s.  "
                                 "You can view the dataset here:  %s/dataset/%s"
                                 "\n\n-EcoSIS Server") %
