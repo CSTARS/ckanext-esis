@@ -3,6 +3,7 @@ import datetime
 from bson.code import Code
 from bson.son import SON
 from pylons import config
+import lookup
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,6 +36,7 @@ def init(mongoCollections, jsonSchema):
 
     collections = mongoCollections
     schema = jsonSchema
+    lookup.init(collections)
 
 
 # pkg should be a ckan pkg

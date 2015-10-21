@@ -9,6 +9,7 @@ from ckanext.ecosis.datastore import delete as deleteUtils
 # grrrrr
 from ckan.lib.email_notifications import send_notification
 from pylons import config
+from ckanext.ecosis.datastore.mapreduce.lookup import update as updateLookup
 
 def init(collections):
     insert.init(collections)
@@ -40,6 +41,7 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
         mapreduce.mapreducePackage(ckanPackage)
 
         if not emailOnComplete:
+            updateLookup()
             return
 
         send_notification(
@@ -55,6 +57,8 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
                          (ckanPackage.get('title'), config.get('ecosis.search_url'), ckanPackage.get("id"))
             }
         )
+
+        updateLookup()
 
     except Exception as e:
         try:

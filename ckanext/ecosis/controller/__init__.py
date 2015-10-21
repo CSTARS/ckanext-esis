@@ -31,7 +31,8 @@ collections = {
     "package" : db[config.get("ecosis.mongo.workspace_package_collection")],
     "usda" : db[config.get("ecosis.mongo.usda_collection")],
     "search_package" : db[config.get("ecosis.mongo.search_collection")],
-    "search_spectra" : db[config.get("ecosis.mongo.spectra_collection")]
+    "search_spectra" : db[config.get("ecosis.mongo.spectra_collection")],
+    "lookup" : db["lookup"]
 }
 
 upload = uploader.ResourceUpload({})
