@@ -243,7 +243,7 @@ def _processSheetArray(data, sheetConfig):
             # add global data
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']):
-                    sp[_getName(data[i][0])] = data[i][1]
+                    sp[_getName(nameMap, data[i][0])] = data[i][1]
 
             index += 1
             _insertSpectra(sp, sheetConfig, index)
