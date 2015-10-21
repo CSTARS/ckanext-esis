@@ -41,23 +41,25 @@ def create():
     package_create = logic.get_action('package_create')
     ckanPackage = package_create(context, params)
 
-    
-    url = config.get('ckan.site_url')
 
-    if url != "" or url is not None:
-        send_notification(
-            {
-                "email" : "admins@ecospectra.org",
-                "display_name" : "EcoSIS Admins"
-            },
-            {
-                "subject" : "EcoSIS Dataset Created",
-                "body" : ("The dataset '%s' has been created by %s/user/%s.  "
-                            "You can view the dataset here:  %s/dataset/%s"
-                            "\n\n-EcoSIS Server") %
-                         (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
-            }
-        )
+    url = config.get('ckan.site_url')
+    admin_email = config.get('ecosis.admin_email')
+
+    if url != "" and url is not None:
+        if admin_email != "" and admin_email is not None:
+            send_notification(
+                {
+                    "email" : admin_email,
+                    "display_name" : "EcoSIS Admins"
+                },
+                {
+                    "subject" : "EcoSIS Dataset Created",
+                    "body" : ("The dataset '%s' has been created by %s/user/%s.  "
+                                "You can view the dataset here:  %s/dataset/%s"
+                                "\n\n-EcoSIS Server") %
+                             (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
+                }
+            )
 
     return json.dumps(ckanPackage)
 
