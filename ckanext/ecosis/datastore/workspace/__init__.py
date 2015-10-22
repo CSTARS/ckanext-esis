@@ -231,22 +231,30 @@ def extractZip(package_id, resource_id, zipPath, zipName, options={}):
             #extract individual file
             z.extract(info, workspacePath)
 
-            resource = {
-                "packageId" : package_id,
-                "resourceId" : id,
-                "name" : name,
-                "file" : os.path.join(workspacePath, info.filename),
-                "zip" : {
-                    "name" : zipName,
-                    "resourceId" : resource_id
-                },
-                "fromZip" : True
-            }
-
-            collections.get("resource").update({
+            # check for existing config
+            resource = collections.get("resource").find_one({
                 "packageId" : package_id,
                 "resourceId" : id
-            }, resource, upsert=True)
+            })
+
+            # create new config if one doesn't exist
+            if resource is None:
+                resource = {
+                    "packageId" : package_id,
+                    "resourceId" : id,
+                    "name" : name,
+                    "file" : os.path.join(workspacePath, info.filename),
+                    "zip" : {
+                        "name" : zipName,
+                        "resourceId" : resource_id
+                    },
+                    "fromZip" : True
+                }
+
+                collections.get("resource").update({
+                    "packageId" : package_id,
+                    "resourceId" : id
+                }, resource, upsert=True)
 
             zipPackageIds.append(id)
 

@@ -47,19 +47,22 @@ def create():
 
     if url != "" and url is not None:
         if admin_email != "" and admin_email is not None:
-            send_notification(
-                {
-                    "email" : admin_email,
-                    "display_name" : "EcoSIS Admins"
-                },
-                {
-                    "subject" : "EcoSIS Dataset Created - %s" % ckanPackage.get('title'),
-                    "body" : ("The dataset '%s' has been created by %s/user/%s.  "
-                                "You can view the dataset here:  %s/dataset/%s"
-                                "\n\n-EcoSIS Server") %
-                             (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
-                }
-            )
+            try:
+                send_notification(
+                    {
+                        "email" : admin_email,
+                        "display_name" : "EcoSIS Admins"
+                    },
+                    {
+                        "subject" : "EcoSIS Dataset Created - %s" % ckanPackage.get('title'),
+                        "body" : ("The dataset '%s' has been created by %s/user/%s.  "
+                                    "You can view the dataset here:  %s/dataset/%s"
+                                    "\n\n-EcoSIS Server") %
+                                 (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
+                    }
+                )
+            except:
+                print "Failed to send admin email"
 
     return json.dumps(ckanPackage)
 

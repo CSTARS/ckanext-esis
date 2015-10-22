@@ -30,7 +30,6 @@ def prepare():
     if clean == "true":
         workspace.cleanPackage(ckanPackage.get("id"))
 
-
     result = workspace.prepare(ckanPackage.get("id"), force)
 
     if clean == "true":

@@ -35,7 +35,11 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
         total = query.total(ckanPackage.get('id')).get('total')
 
         for i in range(0, total):
-            spectra = query.get(ckanPackage.get('id'), index=i)
+            spectra = query.get(ckanPackage.get('id'), index=i, must_be_valid=True)
+            if not 'datapoints' in spectra:
+                continue
+            if len(spectra['datapoints']) == 0:
+                continue
             insert.insert(spectra)
 
         mapreduce.mapreducePackage(ckanPackage)

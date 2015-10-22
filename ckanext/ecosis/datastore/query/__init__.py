@@ -18,7 +18,7 @@ def init(co, hostUrl):
     host = hostUrl
     workspace.init(co, getResource)
 
-def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False):
+def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False, must_be_valid=False):
     # build out query
     query = {
         "type" : "data",
@@ -36,6 +36,14 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
 
     spectra = main.get('spectra')
 
+    moveWavelengths(spectra)  # this also replaces , with .
+
+    if must_be_valid:
+        if 'datapoints' not in spectra:
+            return {}
+        if len(spectra['datapoints']) == 0:
+            return {}
+
     sheetInfo = collections.get('resource').find_one({
         "packageId": packageId,
         "resourceId": main.get("resourceId"),
@@ -46,7 +54,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
 
     attributeProcessInfo = []
     join(packageId, spectra, attributeProcessInfo)
-    moveWavelengths(spectra)  # this also replaces , with .
+
 
     config = collections.get('package').find_one({"packageId": packageId})
     if config == None:
@@ -215,6 +223,17 @@ def setLocation(spectra):
                 "coordinates": [
                     float(spectra.get('Longitude')),
                     float(spectra.get('Latitude'))
+                ]
+            }
+        except:
+            pass
+    elif spectra.get('latitude') != None and spectra.get('longitude') != None:
+        try:
+            spectra['ecosis']['geojson'] = {
+                "type" : "Point",
+                "coordinates": [
+                    float(spectra.get('longitude')),
+                    float(spectra.get('latitude'))
                 ]
             }
         except:
