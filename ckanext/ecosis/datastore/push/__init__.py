@@ -34,6 +34,14 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
     try:
         total = query.total(ckanPackage.get('id')).get('total')
 
+        bbox = {
+            "maxlat" : -9999,
+            "minlat" : 9999,
+            "maxlng" : -9999,
+            "minlng" : 9999,
+            "use" : False
+        }
+
         for i in range(0, total):
             spectra = query.get(ckanPackage.get('id'), index=i, must_be_valid=True)
             if not 'datapoints' in spectra:
@@ -41,8 +49,12 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             if len(spectra['datapoints']) == 0:
                 continue
             insert.insert(spectra)
+            updateBbox(spectra, bbox)
 
-        mapreduce.mapreducePackage(ckanPackage)
+        if bbox["maxlat"] != -9999 and bbox["maxlng"] != -9999 and bbox["minlng"] != 9999 and bbox["minlng"] != -9999:
+            bbox["use"] = True
+
+        mapreduce.mapreducePackage(ckanPackage, bbox)
 
         if not emailOnComplete:
             updateLookup()
@@ -89,3 +101,28 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             )
         except:
             pass
+
+def updateBbox(spectra, bbox):
+    if 'ecosis' not in spectra:
+        return
+    if 'geojson' not in spectra['ecosis']:
+        return
+
+    geojson = spectra['ecosis']['geojson']
+
+    if geojson.get('type') != 'Point':
+        return
+    if 'coordinates' not in geojson:
+        return
+    if len(geojson['coordinates']) < 2:
+        return
+
+    if bbox['maxlat'] < geojson['coordinates'][1]:
+        bbox['maxlat'] = geojson['coordinates'][1]
+    if bbox['minlat'] > geojson['coordinates'][1]:
+        bbox['minlat'] = geojson['coordinates'][1]
+
+    if bbox['maxlng'] < geojson['coordinates'][0]:
+        bbox['maxlng'] = geojson['coordinates'][0]
+    if bbox['minlng'] > geojson['coordinates'][0]:
+        bbox['minlng'] = geojson['coordinates'][0]
