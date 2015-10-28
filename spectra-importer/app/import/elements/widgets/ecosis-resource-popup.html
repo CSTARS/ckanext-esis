@@ -137,6 +137,13 @@
     },
 
     selectDatasheet : function(index, edit) {
+      // required for datasheet display
+      if( this.resource.name.match(/\.csv$/i) || this.resource.name.match(/\.spectra$/i) ) {
+        this.resource.datasheets[index].isCSV = true;
+      } else {
+        this.resource.datasheets[index].isCSV = false;
+      }
+
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
       this.$.datasheetUI.edit();

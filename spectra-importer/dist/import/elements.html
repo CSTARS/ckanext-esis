@@ -7199,7 +7199,9 @@ this.fire('dom-change');
   <template>
     <div class="well">
       <div id="map" style="height: 400px"></div>
-      <div class="help-block">Draw bounding box for dataset</div>
+      <div class="help-block">Draw bounding box for dataset.  If you provide latitude and
+      longitude or geojson field(s) in your spectra, a bounding box for your dataset will
+      be automatically calculated for search.</div>
     </div>
   </template>
 </dom-module>
@@ -7239,6 +7241,7 @@ this.fire('dom-change');
       try {
         this.polygon = L.geoJson(geojsonFeature);
         this.polygon.addTo(this.map);
+        this.polygon.on('click', this.onFeatureClick.bind(this));
       } catch(e) {}
     },
 
@@ -7259,6 +7262,22 @@ this.fire('dom-change');
 
       this.drawing = true;
       this.p1 = e.latlng;
+    },
+
+    onFeatureClick : function(e) {
+      if( this.drawing ) {
+        return this.onClick(e);
+      }
+
+      // else clear
+      if( this.polygon ) {
+        this.map.removeLayer(this.polygon);
+      }
+      ecosis.ds.setDatasetExtra('geojson', null);
+      this.fire('update', {
+        attribute : 'geojson',
+        value : null
+      });
     },
 
     onMouseMove : function(e) {
@@ -7287,7 +7306,7 @@ this.fire('dom-change');
       };
 
       this.polygon = L.geoJson(geojsonFeature);
-      this.polygon.on('click', this.onClick.bind(this));
+      this.polygon.on('click', this.onFeatureClick.bind(this));
       this.polygon.addTo(this.map);
     },
 
@@ -8242,6 +8261,44 @@ this.fire('dom-change');
         </div>
       </div>
 
+      <!-- Datasheet Seperator -->
+      <div class="form-horizontal" id="seperatorPanel" style="display:none">
+        <div class="form-group">
+
+            <label class="col-md-2 control-label">File Seperator</label>
+            <div class="col-md-10">
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="commaInput" value="," checked="" on-click="onSeperatorChange">
+                  Comma
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="tabInput" value="tab" on-click="onSeperatorChange">
+                  Tab
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="semicolonInput" value=";" on-click="onSeperatorChange">
+                  Semicolon
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="otherInput" value="other" on-click="onSeperatorChange">
+                  Other
+                  <input type="text" id="otherSeperatorInput" on-blur="onSeperatorChange">
+                </label>
+              </div>
+            </div>
+
+            <a on-click="toggleHelp" style="cursor:pointer">Format Help.</a>
+            <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeIn"></ecosis-dataformat-help>
+          </div>
+        </div>
+
       <div id="updatingPanel" class="alert alert-warning" style="display:none">
         <h6 style="color:white"><i class="fa fa-spinner fa-spin"></i> Updating...</h6>
       </div>
@@ -8271,6 +8328,10 @@ this.fire('dom-change');
         metadata : this.sheet.metadata,
         ignore : this.sheet.ignore,
         joinOn : this.sheet.joinOn
+      }
+
+      if( this.sheet.seperator ) {
+        options.seperator = this.sheet.seperator;
       }
 
       ecosis.ckan.processResource(
@@ -8348,6 +8409,7 @@ this.fire('dom-change');
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
+      this.updateSeperatorUi();
 
       if( callback ) callback();
     },
@@ -8381,6 +8443,31 @@ this.fire('dom-change');
       }
     },
 
+    updateSeperatorUi : function() {
+      if( !this.sheet.isCSV ) {
+        this.$.seperatorPanel.style.display = 'none';
+        return;
+      }
+
+      this.$.seperatorPanel.style.display = 'block';
+      $(this).find('.orientation-radio').prop('checked', false);
+      this.$.otherSeperatorInput.value = '';
+
+      if( !this.sheet.seperator ) {
+        this.$.commaInput.checked = true;
+        return;
+      }
+
+      var options = [',', 'tab', ';'];
+      if( options.indexOf(this.sheet.seperator) > -1 ) {
+        $(this).find('[value="'+this.sheet.seperator+'"]').prop('checked', true);
+        return;
+      }
+
+      this.$.otherInput.checked = true;
+      this.$.otherSeperatorInput.value = this.sheet.seperator;
+    },
+
     onOrientationChange : function(e) {
       this.sheet.layout = e.currentTarget.value;
       if( this.sheet.layout == 'column' ) {
@@ -8389,6 +8476,25 @@ this.fire('dom-change');
         $(this.$.columnInput).prop('checked', false);
       }
 
+      this.save();
+    },
+
+    onSeperatorChange : function(e) {
+      var ele = e.currentTarget;
+
+      if( ele.getAttribute('type') == 'radio' ) {
+        $(this).find('.orientation-radio').prop('checked', false);
+        $(ele).prop('checked', true);
+      }
+
+      var val = e.currentTarget.value;
+      if( val === 'other' ) {
+        val = this.$.otherSeperatorInput.value;
+      }
+
+      if( !val ) return;
+
+      this.sheet.seperator = val;
       this.save();
     },
 
@@ -9180,6 +9286,13 @@ this.fire('dom-change');
     },
 
     selectDatasheet : function(index, edit) {
+      // required for datasheet display
+      if( this.resource.name.match(/\.csv$/i) || this.resource.name.match(/\.spectra$/i) ) {
+        this.resource.datasheets[index].isCSV = true;
+      } else {
+        this.resource.datasheets[index].isCSV = false;
+      }
+
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
       this.$.datasheetUI.edit();

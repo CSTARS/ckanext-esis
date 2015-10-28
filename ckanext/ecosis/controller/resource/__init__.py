@@ -13,7 +13,7 @@ import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.datastore.workspace as workspace
 from ckanext.ecosis.lib.utils import jsonStringify
 
-parseOptions = ["ignore", "layout", "metadata", "joinOn"]
+parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 
 def delete():
     response.headers["Content-Type"] = "application/json"

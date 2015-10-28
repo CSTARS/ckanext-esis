@@ -1,6 +1,7 @@
-import csv, utils, excel, hashlib, datetime
+import utils, excel, hashlib, datetime
 
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
+from ckanext.ecosis.datastore.parser import csvReader
 
 collections = None
 
@@ -93,11 +94,11 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     sheetConfig['processed'] = datetime.datetime.utcnow()
 
     response = None
-    if ext == "csv":
+    if ext == "csv" or ext == "spectra":
         sheetConfig['hash'] = hash
         response = _processCsv(sheetConfig)
         response['name'] = resource.get('name')
-    elif ext == "tsv" or ext == "spectra":
+    elif ext == "tsv":
         sheetConfig['hash'] = hash
         response = _processTsv(sheetConfig)
         response['name'] = resource.get('name')
@@ -121,29 +122,21 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     return response
 
 def _processCsv(sheetConfig):
-    return _processSeperatorFile(",", sheetConfig)
+    seperator = ","
+    if sheetConfig.get("seperator") is not None:
+        seperator = str(sheetConfig.get("seperator"))
+        if seperator == "tab":
+            seperator = "\t"
+
+    return _processSeperatorFile(seperator, sheetConfig)
 
 def _processTsv(sheetConfig):
     return _processSeperatorFile("\t", sheetConfig)
 
 # parse a csv or tsv file location into array
 def _processSeperatorFile(separator, sheetConfig):
-    with open(sheetConfig.get('file'), 'rU') as csvfile:
-        reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
-        data = []
-        for row in reader:
-            # stip no unicode characters: http://stackoverflow.com/questions/26541968/delete-every-non-utf-8-symbols-froms-string
-            # TODO: is there a better way todo this?
-            for i in range(0, len(row)):
-                try:
-                    row[i] = row[i].encode("ascii", "ignore")
-                except Exception as e:
-                    row[i] = '__invalid_utf-8_characters__'
-
-            data.append(row)
-        csvfile.close()
-
-        return _processSheetArray(data, sheetConfig)
+    data = csvReader.read(sheetConfig.get('file'), separator)
+    return _processSheetArray(data, sheetConfig)
 
 def _processSheetArray(data, sheetConfig):
     # for local scope are we parsing a metadata file or a normal datasheet
