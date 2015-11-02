@@ -9027,7 +9027,7 @@ this.fire('dom-change');
       });
 
       data.splice(0, 0, ['Wavelength', '']);
-      this.$[layout+'ChartRoot'].firstChild.setHeight(300);
+      this.$[layout+'ChartRoot'].firstChild.setHeight(layout === 'row' ? 200 : 300);
       this.$[layout+'ChartRoot'].firstChild.options = {
         animation:{
           duration: 700,
