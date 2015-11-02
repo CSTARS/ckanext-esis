@@ -43,7 +43,7 @@ def get(package_id):
     # tags
     package['tags'] = []
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("select t.name from tag t, package_tag pt where t.id = pt.tag_id and pt.package_id = %s", (package_id,))
+    cur.execute("select t.name from tag t, package_tag pt where t.id = pt.tag_id and pt.package_id = %s and pt.state = 'active'", (package_id,))
     rows = cur.fetchall()
     cur.close()
     conn.close()

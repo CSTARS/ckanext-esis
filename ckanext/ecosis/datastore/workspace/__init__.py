@@ -27,7 +27,10 @@ def clean(current_package_id=None):
 
     packages = collections.get("package").find({
         '$and' : [
-            {'lastTouched': {'$lt' : expired } },
+            {'$or' :[
+                {'lastTouched': {'$exists' : False} },
+                {'lastTouched': {'$lt' : expired } },
+            ]},
             {'packageId' : {'$ne' : current_package_id}}
         ]
     })

@@ -5,6 +5,7 @@ import ckan.lib.uploader as uploader
 import json, subprocess, os, urllib2, re
 
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
+from ckanext.ecosis.lib.utils import jsonStringify
 
 # rebuild entire search index
 def rebuildIndex(collections):
@@ -93,11 +94,18 @@ def verifyWorkspace(collections):
     if not isAdmin():
         raise Exception('Nope.')
 
-    packages = collections.get('package').find({},{"packageId":1})
+    packages = collections.get('package').find({},{"packageId":1,"prepared":1,"lastTouched":1})
+    packageInfo = {}
     ids = []
     repeatPackages = []
     pCount = 0
     for package in packages:
+        packageInfo[package.get("packageId")] = {
+            "prepared" : package.get("prepared"),
+            "lastTouched" : package.get("lastTouched"),
+            "workspaceSpectra" : collections.get('spectra').count({"packageId": package.get("packageId")})
+        }
+
         if package.get("packageId") in ids:
             repeatPackages.append(package.get("packageId"))
         else:
@@ -116,7 +124,7 @@ def verifyWorkspace(collections):
             rCount += 1
             ids.append(id)
 
-    return json.dumps({
+    return jsonStringify({
         "packageCount" : pCount,
         "resourceCount" : rCount,
         "spectraCount" : collections.get('spectra').count({"type": "data"}),
@@ -124,7 +132,8 @@ def verifyWorkspace(collections):
         "repeats" : {
             "resources" : repeatResources,
             "packages" : repeatPackages
-        }
+        },
+        "packageInfo" : packageInfo
     })
 
 def isAdmin():

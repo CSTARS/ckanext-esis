@@ -20,7 +20,10 @@
         <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Keywords</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="keywordInput" on-keyup="onInputChange" placeholder="Search Keywords">
-
+          <div class="help-block">
+            Search for EcoSIS keywords or create new keywords.  Comma separate to add more than one keyword at a time.  Use
+            the 'enter' key to create new keyword(s).
+          </div>
           <span id="searchingPanel" class="label label-primary" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Searching...
           </span>
@@ -72,18 +75,21 @@
     },
 
     createToken : function() {
-        var value = this.clean(this.$.keywordInput.value)
+      var parts = this.$.keywordInput.value.split(',');
+      for( var i = 0; i < parts.length; i++ ) {
+        var value = this.clean(parts[i]);
 
-        if( value.length == 0 ) return;
+        if( value.length == 0 ) continue;
 
         var t = {
             label : value,
             value : value
         }
         this.addToken(t, true);
+      }
 
-        this.$.keywordInput.value = '';
-        this.$.resultRoot.innerHTML = '';
+      this.$.keywordInput.value = '';
+      this.$.resultRoot.innerHTML = '';
     },
 
     addResult : function(e) {
@@ -118,7 +124,7 @@
       for( var i = 0; i < this.results.length; i++ ) {
         btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
       }
-      this.$.resultRoot.innerHTML = btns;
+      this.$.resultRoot.innerHTML = btns.length > 0 ? '<div class="well">Suggestions:<br />'+btns+'</div>' : '';
 
       $(this.$.resultRoot).find('a').on('click', this.addResult.bind(this));
     },
