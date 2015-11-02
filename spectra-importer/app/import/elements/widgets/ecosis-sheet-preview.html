@@ -20,17 +20,24 @@
       <div class="layout horizontal center">
           <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
 
-          <div class="flex">
+          <div class="flex" id="columnPreview">
             <div class="row">
               <div class="col-sm-6">
-                <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
+                <div id="columnTableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
               </div>
-              <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
+              <div class="col-sm-6" id="columnChartRoot" style="height: 300px"></div>
             </div>
+          </div>
+
+          <div class="flex" id="rowPreview">
+            <div id="rowTableRoot" style="overflow:auto; margin-bottom: 35px"></div>
+            <div id="rowChartRoot" style="height: 200px; margin: 25px 0 15px 0"></div>
           </div>
 
           <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
       </div>
+
+
 
       <div id="sliderRoot" style="margin-top: 15px"></div>
     </div>
@@ -99,6 +106,7 @@
 
 
       this.renderTable(resp.metadata);
+      var layout = this.sheet.layout || 'row';
 
       if( resp.joinKey && resp.metadata[resp.joinKey] ) {
         var joined = 'None';
@@ -111,13 +119,13 @@
           }
         }
 
-        this.$.chartRoot.innerHTML =
+        this.$[layout+'ChartRoot'].innerHTML =
           '<h4 style="text-align:center">Joined On:</h4> '+
           '<h5 style="text-align:center">'+resp.joinKey+' = <span style="color:#888">'+resp.metadata[resp.joinKey]+'</span></h5>'+
           '<h4 style="text-align:center">Matches:</h4>'+
           '<h6 style="text-align:center; color:#888">'+joined+'</h6>';
       } else {
-        this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
+        this.$[layout+'ChartRoot'].innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
       }
 
       this.$.info.innerHTML =
@@ -134,9 +142,10 @@
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);
+      var layout = this.sheet.layout || 'row';
 
-      if( !(this.$.chartRoot.firstChild && this.$.chartRoot.firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
-        this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+      if( !(this.$[layout+'ChartRoot'].firstChild && this.$[layout+'ChartRoot'].firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
+        this.$[layout+'ChartRoot'].innerHTML = '<ecosis-chart></ecosis-chart>';
       }
 
       this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small> <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
@@ -156,14 +165,14 @@
       });
 
       data.splice(0, 0, ['Wavelength', '']);
-      this.$.chartRoot.firstChild.setHeight(300);
-      this.$.chartRoot.firstChild.options = {
+      this.$[layout+'ChartRoot'].firstChild.setHeight(300);
+      this.$[layout+'ChartRoot'].firstChild.options = {
         animation:{
           duration: 700,
           easing: 'out',
         }
       }
-      this.$.chartRoot.firstChild.setData(data);
+      this.$[layout+'ChartRoot'].firstChild.setData(data);
     },
 
     initSlider : function() {
@@ -188,21 +197,45 @@
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
 
+      var layout = this.sheet.layout || 'row';
+
       var table = '<h5>Metadata</h5><table class="table">';
-      var c = 0;
-      for( var key in metadata ) {
-        if( ignorelist.indexOf(key) > -1 ) continue;
-        table += '<tr><td>'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
 
-        c++;
-        if( c == 100 ) {
-          table += '<tr><td>...</td><td>...</td></tr>';
-          break;
+      if( this.sheet.layout === 'column' ) {
+        var c = 0;
+        for( var key in metadata ) {
+          if( ignorelist.indexOf(key) > -1 ) continue;
+          table += '<tr><td style="font-weight:bold">'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
+
+          c++;
+          if( c == 100 ) {
+            table += '<tr><td>...</td><td>...</td></tr>';
+            break;
+          }
         }
-      }
-      this.$.tableRoot.innerHTML = table+'</table>';
+      } else {
+        var c = 0;
+        var header = '<tr>';
+        var data = '<tr>';
+        for( var key in metadata ) {
+          if( ignorelist.indexOf(key) > -1 ) continue;
+          header += '<th style="white-space:nowrap">'+key+'</th>';
+          data += '<td style="white-space:nowrap; max-width: 250px; overflow:auto">'+metadata[key]+this.getProcessInfo(key, metadata)+'</td>';
 
-      $(this.$.tableRoot).find('[data-toggle="tooltip"]').tooltip()
+          c++;
+          if( c == 100 ) {
+            header += '<td>...</td>';
+            data += '<td>...</td>';
+            break;
+          }
+        }
+        table += header+'</tr>'+data+'</tr>';
+      }
+
+
+      this.$[layout+'TableRoot'].innerHTML = table+'</table>';
+
+      $(this.$[layout+'TableRoot']).find('[data-toggle="tooltip"]').tooltip()
     },
 
     getProcessInfo : function(key, metadata) {
@@ -252,6 +285,18 @@
       }
 
       if( this.sheet.ignore ) return;
+
+      if( this.sheet.layout === 'column' ) {
+        this.$.columnPreview.style.display = 'block';
+        this.$.rowPreview.style.display = 'none';
+        this.$.leftArrow.querySelector('i').className = 'fa fa-arrow-left';
+        this.$.rightArrow.querySelector('i').className = 'fa fa-arrow-right';
+      } else {
+        this.$.columnPreview.style.display = 'none';
+        this.$.rowPreview.style.display = 'block';
+        this.$.leftArrow.querySelector('i').className = 'fa fa-arrow-up';
+        this.$.rightArrow.querySelector('i').className = 'fa fa-arrow-down';
+      }
 
       if( this.sheet.metadata ) {
         this.updateMetadata();
