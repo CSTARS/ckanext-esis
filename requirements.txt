@@ -1,5 +1,3 @@
-csv
 pymongo
-json
 psycopg2
 xlrd
