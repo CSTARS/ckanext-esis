@@ -26,7 +26,7 @@ def getDataRanges(data):
     for i in range(0, len(data)):
         if _isEmptyRow(data[i]):
             if started:
-                r['stop'] = i
+                r['stop'] = i-1
                 ranges.append(r)
                 started = False
                 if len(ranges) == 2:

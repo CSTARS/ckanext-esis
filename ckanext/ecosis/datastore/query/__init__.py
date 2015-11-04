@@ -16,7 +16,7 @@ def init(co, hostUrl):
 
     collections = co
     host = hostUrl
-    workspace.init(co, getResource)
+    workspace.init(co, getResource, isPushed)
 
 def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False, must_be_valid=False):
     # build out query
@@ -396,3 +396,15 @@ def getResource(resource_id, sheet_id=None):
         response.append(sheet)
 
     return response
+
+def isPushed(package_id):
+    result = collections.get("search_package").find_one({"value.ecosis.package_id": package_id},{"value.ecosis.pushed": 1})
+
+    if result is None:
+        return result
+
+    ecosis = result.get("value").get("ecosis")
+    if ecosis is None:
+        return ecosis
+
+    return ecosis.get("pushed")

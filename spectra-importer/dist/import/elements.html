@@ -7363,7 +7363,7 @@ this.fire('dom-change');
       <div class="form-group">
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
-          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-keyup="onTitleInputChange">
+          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
 
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
@@ -7377,11 +7377,15 @@ this.fire('dom-change');
             URL: <span id="urlLabelInput"></span>
           </span>
 
+          <div id="message2"></div>
+
           <div id="message" class="help-block">
             Please note: your dataset title is <i class="text text-warning">PERMANENT</i>.  Please think about the title you choose.
             Finally, please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
+
+
         </div>
       </div>
     </div>
@@ -7414,7 +7418,7 @@ this.fire('dom-change');
     },
 
     onTitleInputChange : function() {
-      ecosis.ds.data.title = this.$.titleInput.value;
+      ecosis.ds.data.title = this.$.titleInput.value.replace(/_/g, ' ');
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
@@ -7444,6 +7448,25 @@ this.fire('dom-change');
 
       }.bind(this), 500);
     }
+
+    /*onBlur : function() {
+      var parts = ecosis.ds.data.title.split(' ');
+
+      var wordsOverFour = 0;
+      var wordsOverFourNoNum = 0;
+      for( var i = 0; i < parts.length; i++ ) {
+        if( parts[i].length > 4 ) {
+          wordsOverFour++;
+          if( !words.match(/\d/) ) {
+            wordsOverFourNoNum++;
+          }
+        }
+      }
+
+      if( wordsOverFour < 3 ) {
+          var message = '<'
+      }
+    }*/
   });
 </script>
 
@@ -7658,7 +7681,7 @@ this.fire('dom-change');
             </li>
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o"></i> Publish</a></li>
             <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
@@ -8899,8 +8922,6 @@ this.fire('dom-change');
           <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
       </div>
 
-
-
       <div id="sliderRoot" style="margin-top: 15px"></div>
     </div>
 
@@ -9779,11 +9800,6 @@ this.fire('dom-change');
       </div>
 
       <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
-      <!-- TODO
-      <div class="form-wrap">
-        <ecosis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></ecosis-ui-token-input>
-      </div>
-      -->
 
       <div class="form-group">
         <label for="licenseInput" class="col-md-2 control-label">License: </label>
@@ -9912,7 +9928,47 @@ this.fire('dom-change');
       </div>
     </div>
 
-  </template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title">Welcome to the EcoSIS Data Importer!</h4>
+          </div>
+          <div class="modal-body" style="padding: 25px">
+            <p>A quick note before you continue.</p>
+
+
+            <p style="padding:30px 0" class="text text-success">
+              Through EcoSIS you will be <b>publishing</b> your data to the world. In
+              order to make datasets presentable and <b>searchable</b>, please give them clear
+              <b>human-readable</b> titles and descriptions, and include as much
+              dataset-level metadata as possible.  Include enough information so
+              so a complete outsider can understand what the dataset is and is not.
+            </p>
+
+            <h5>tl;dr</h5>
+
+            <ul>
+              <li>Publish for others.</li>
+              <li>Human-readable titles and descriptions.</li>
+              <li>Fill out as much as you can.</li>
+            </ul>
+
+            <div class="help-block">
+              Remember EcoSIS is what the <b>community</b> makes it to be.
+            </div>
+
+            <div style="text-align:center">
+              <a class="btn btn-success btn-lg" data-dismiss="modal">Continue</a><a>
+            </a></div><a>
+
+          </a></div><a>
+        </a></div><!-- /.modal-content --><a>
+      </a></div><!-- /.modal-dialog --><a>
+    </a></div><!-- /.modal --><a>
+
+  </a></template>
 </dom-module>
 
 <script>
@@ -9931,6 +9987,7 @@ this.fire('dom-change');
         else ecosis.ds.on('load', this.onDataLoad.bind(this));
       } else {
         this.setMode('create');
+        this.showCreatePopup();
       }
 
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
@@ -9949,6 +10006,12 @@ this.fire('dom-change');
           this.$.gitCommitLabel.innerHTML = this.git.commit;
         }
       }.bind(this));
+    },
+
+    showCreatePopup : function() {
+      this.popup = $(this.$.popup).remove();
+      $('body').append(this.popup);
+      this.popup.modal({show:true});
     },
 
     setMode : function(mode) {
@@ -9995,7 +10058,7 @@ this.fire('dom-change');
         this.$.createBtn.removeAttribute('disabled');
         this.$.helpCreatePanel.style.display = 'none';
       } else {
-        this.$.createBtn.setAttribute('disabled', '');
+        this.$.createBtn.setAttribute('disabled', 'disabled');
         this.$.helpCreatePanel.style.display = 'block';
       }
     },
@@ -10060,8 +10123,10 @@ this.fire('dom-change');
     },
 
     create : function() {
+      if( this.$.createBtn.hasAttribute('disabled') ) return;
+
       this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
-      this.$.createDatasetBtn.setAttribute('disabled', '');
+      this.$.createDatasetBtn.setAttribute('disabled', 'disabled');
 
       ecosis.ckan.createPackage(ecosis.ds.data,
           function(resp) {
@@ -11459,17 +11524,18 @@ this.fire('dom-change');
   </style>
 
   <template>
-    <h4 class="page-header">Push to Search</h4>
+    <h4 class="page-header">Publish to Search</h4>
 
 
 		<div class="alert alert-danger" style="display:none" id="privateAlertPanel">
-			You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+			You have marked this dataset as private. Your results cannot be published to PUBLIC search.
 		</div>
 
 		<div id="main">
 			<div class="help-block">
-				Please verify all information looks correct.  Once everything looks correct, click 'Push'
-        below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+				Please verify all information looks correct.  Once everything looks correct, click 'Publish'
+        below and your changes will be represented at
+        <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
          Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
 			</div>
 
@@ -11481,17 +11547,14 @@ this.fire('dom-change');
 					<tr><td>Description</td><td id="notes"></td></tr>
 					<tr><td>Organization</td><td id="owner_org_name"></td></tr>
 					<tr><td>Visibility</td><td>Public</td></tr>
+          <tr><td>Search Status</td><td id="available"></td></tr>
 				</tbody></table>
 			</div>
 
-			<div class="well">
-				<h4>Resource Information</h4>
-				<table class="table">
-					<tbody><tr><td>Total Resources</td><td id="tResources"></td></tr>
-					<tr><td>Metadata Sheets</td><td id="tMeta"></td></tr>
-					<tr><td>Spectra Sheets</td><td id="tData"></td></tr>
-					<tr><td># Parsed Spectra</td><td id="tSpectra"></td></tr>
-				</tbody></table>
+			<div style="margin-bottom: 35px">
+				<h4 class="page-header">Spectra Preview</h4>
+
+        <ecosis-sheet-preview id="preview"></ecosis-sheet-preview>
 			</div>
 
 			<div class="well">
@@ -11503,8 +11566,8 @@ this.fire('dom-change');
 			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
       </div>
 
-      <div>
-        <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      <div style="padding: 15px 0">
+        <a class="btn btn-primary btn-lg" id="pushBtn" on-click="push"><i class="fa fa-check-circle-o"></i> Publish</a>
       </div>
 
       <div style="padding: 15px 0">
@@ -11550,6 +11613,10 @@ this.fire('dom-change');
 
         this.updateLabels();
         this.updateCounts();
+        this.$.preview.update({
+          packageId: ecosis.ds.package_id,
+          layout : 'column'
+        })
       }
     },
 
@@ -11566,40 +11633,22 @@ this.fire('dom-change');
         } else if( this.$[key] ) {
           this.$[key].innerHTML = ecosis.ds.data[key];
         }
+      }
 
+      if( ecosis.ds.result.pushed ) {
+        var last = '';
+        try {
+          var date = new Date(ecosis.ds.result.pushed);
+          last = '<br />Last published: '+date.toLocaleString();
+        } catch(e) {}
 
+        this.$.available.innerHTML = '<span class="label label-success">Published to Search</span> '+last;
+      } else {
+        this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
       }
     },
 
     updateCounts : function() {
-			this.counts = {
-				metadataResources : 0,
-				measurementResources : 0,
-				measurements : 0
-			}
-
-			for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-				var resource = ecosis.ds.resources[i];
-				if( !resource.datasheets || resource.ignore ) continue;
-
-				for( var j = 0; j < resource.datasheets.length; j++ ) {
-					var datasheet = resource.datasheets[j];
-					if( datasheet.ignore ) continue;
-
-					if( datasheet.metadata ) {
-						this.counts.metadataResources++;
-					} else if ( datasheet.spectra_count ) {
-						this.counts.measurementResources++;
-						this.counts.measurements += datasheet.spectra_count;
-					}
-				}
-			}
-
-      this.$.tResources.innerHTML = ecosis.ds.resources.length;
-      this.$.tMeta.innerHTML = this.counts.metadataResources;
-      this.$.tData.innerHTML = this.counts.measurementResources;
-      this.$.tSpectra.innerHTML = this.counts.measurements;
-
 			this.updatePushStatus();
 		},
 
@@ -11611,7 +11660,7 @@ this.fire('dom-change');
 				this.$.ecosisInfo.innerHTML =
 					'<span class="label label-danger" style="font-size:14px">' +
 						'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
-						this.requireEcosisAttrs + ' are required to push to search.' +
+						this.requireEcosisAttrs + ' are required to publish to search.' +
 					'</span>';
 				return;
 			}
@@ -11643,13 +11692,13 @@ this.fire('dom-change');
       ecosis.ckan.pushToSearch(ecosis.ds.package_id, includeEmail,
           function(resp){
             this.$.pushBtn.removeAttribute('disabled');
-            this.$.pushBtn.innerHTML = 'Push';
+            this.$.pushBtn.innerHTML = '<i class="fa fa-check-circle-o"></i> Publish';
             this.$.pushMessage.style.display = 'none';
 
             if( resp.error ) {
               // ERROR 12
               resp.code = 12;
-              resp.message += '. Error pushing dataset to search.';
+              resp.message += '. Error publishing dataset.';
               return ecosis.errorPopup.show(resp);
             }
 

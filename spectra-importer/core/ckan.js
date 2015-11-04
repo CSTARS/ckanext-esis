@@ -159,10 +159,10 @@ module.exports = function(config) {
   }
 
   this.getSpectra = function(pkgid, rid, sid, index, callback) {
-    var params = '?package_id=' + pkgid +
-      '&resource_id=' + rid +
-      '&index='+index;
+    var params = '?package_id=' + pkgid;
+    if( rid ) params += '&resource_id=' + rid;
     if( sid ) params += '&sheet_id='+sid;
+    params += '&index='+index;
 
     get(this.host+'/ecosis/spectra/get'+params, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
@@ -171,8 +171,8 @@ module.exports = function(config) {
   }
 
   this.getSpectraCount = function(pkgid, rid, sid, callback) {
-    var params = '?package_id=' + pkgid +
-      '&resource_id=' + rid;
+    var params = '?package_id=' + pkgid;
+    if( rid ) params += '&resource_id=' + rid;
     if( sid ) params += '&sheet_id='+sid;
 
     get(this.host+'/ecosis/resource/getSpectraCount'+params, function(err, resp) {
