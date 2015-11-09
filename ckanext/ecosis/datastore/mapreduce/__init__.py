@@ -255,6 +255,7 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     # join if we do
     if mrValue.get(name) != None:
         spValues = mrValue.get(name)
+
         for v in val:
             if not v in spValues:
                 spValues.append(v)
