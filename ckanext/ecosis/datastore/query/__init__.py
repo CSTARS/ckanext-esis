@@ -314,11 +314,13 @@ def mapNames(spectra, config, processInfo):
 
 def moveWavelengths(spectra):
     wavelengths = {}
+    toRemove = []
     for name in spectra:
         if re.match(r"^-?\d+\,?\d*", name) or re.match(r"^-?\d*\,\d+", name):
-            wavelengths[uncleanKey(name)] = spectra[name]
+            wavelengths[uncleanKey(name)] = spectra[name].strip()
+            toRemove.append(name)
 
-    for name in wavelengths:
+    for name in toRemove:
         del spectra[name]
 
     spectra['datapoints'] = wavelengths

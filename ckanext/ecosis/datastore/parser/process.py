@@ -262,7 +262,11 @@ def _insertSpectra(sp, sheetConfig, index):
         "index" : index,
         "type" : type
     }
-    collections.get('spectra').insert(data)
+
+    try:
+        collections.get('spectra').insert(data)
+    except Exception as e:
+        pass
 
 def hashfile(file):
     f = open(file, 'rb')
