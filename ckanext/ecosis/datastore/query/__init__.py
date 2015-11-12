@@ -18,7 +18,7 @@ def init(co, hostUrl):
     host = hostUrl
     workspace.init(co, getResource, isPushed)
 
-def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False, must_be_valid=False):
+def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False, must_be_valid=False, clean_wavelengths=True):
     # build out query
     query = {
         "type" : "data",
@@ -36,7 +36,8 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
 
     spectra = main.get('spectra')
 
-    moveWavelengths(spectra)  # this also replaces , with .
+
+    moveWavelengths(spectra, clean_wavelengths)  # this also replaces , with .
 
     if must_be_valid:
         if 'datapoints' not in spectra:
@@ -312,12 +313,15 @@ def mapNames(spectra, config, processInfo):
                     "from" : value
                 })
 
-def moveWavelengths(spectra):
+def moveWavelengths(spectra, clean):
     wavelengths = {}
     toRemove = []
     for name in spectra:
         if re.match(r"^-?\d+\,?\d*", name) or re.match(r"^-?\d*\,\d+", name):
-            wavelengths[uncleanKey(name)] = spectra[name].strip()
+            if clean:
+                wavelengths[uncleanKey(name)] = spectra[name].strip()
+            else:
+                wavelengths[name] = spectra[name].strip()
             toRemove.append(name)
 
     for name in toRemove:

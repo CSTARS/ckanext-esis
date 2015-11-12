@@ -43,7 +43,7 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
         }
 
         for i in range(0, total):
-            spectra = query.get(ckanPackage.get('id'), index=i, must_be_valid=True)
+            spectra = query.get(ckanPackage.get('id'), index=i, must_be_valid=True, clean_wavelengths=False)
             if not 'datapoints' in spectra:
                 continue
             if len(spectra['datapoints']) == 0:
