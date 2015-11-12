@@ -21,6 +21,7 @@ def getDataRanges(data):
         "stop" : 0
     }
     started = False
+    couldBeGlobal = False
 
     i = 0
     for i in range(0, len(data)):
@@ -35,7 +36,21 @@ def getDataRanges(data):
                     r = {"start":0, "stop":0}
             continue
 
+        elif couldBeGlobal and len(data[i]) != 2:
+            r['stop'] = i-1
+            ranges.append(r)
+            started = False
+            couldBeGlobal = False
+            if len(ranges) == 2:
+                break
+            else:
+                r = {"start":0, "stop":0}
+
         if not started:
+            # if we are on the first range and there are two columns
+            # we may be looking at global data
+            if len(data[i]) == 2 and len(ranges) == 0:
+                couldBeGlobal = True
             r['start'] = i
             started = True
 
