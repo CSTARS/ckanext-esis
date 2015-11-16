@@ -4,9 +4,9 @@ import sys, os
 version = '0.1'
 
 setup(
-        name='ckanext-esis',
+        name='ckanext-ecosis',
         version=version,
-        description="Esis extension adding additional fields and controls for spectral data",
+        description="EcoSIS extension adding additional fields and controls for spectral data",
         long_description="""\
         """,
         classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -16,7 +16,7 @@ setup(
         url='http://www.ucdavis.edu',
         license='',
         packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
-        namespace_packages=['ckanext', 'ckanext.esis'],
+        namespace_packages=['ckanext', 'ckanext.ecosis'],
         include_package_data=True,
         zip_safe=False,
         install_requires=[
@@ -26,6 +26,6 @@ setup(
         """
         [ckan.plugins]
         # Add plugins here, eg
-        esis=ckanext.esis.plugin:EsisPlugin
+        ecosis=ckanext.ecosis.plugin:EcosisPlugin
         """,
 )

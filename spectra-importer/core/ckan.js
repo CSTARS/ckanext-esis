@@ -7,16 +7,20 @@ var isBrowser = request.agent ? false : true;
 module.exports = function(config) {
   this.host = config.host || '/';
 
-  this.processWorkspace = function(pkgid, callback) {
-    get(this.host+'/workspace/process?package_id='+pkgid, function(err, resp){
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+  this.prepareWorkspace = function(pkgid, callback) {
+    get(this.host+'/ecosis/workspace/prepare?force=true&package_id='+pkgid, function(err, resp){
+      callback(resp.body);
+    });
+  }
+
+  this.getWorkspace = function(pkgid, callback) {
+    get(this.host+'/ecosis/workspace/get?package_id='+pkgid, function(err, resp){
       callback(resp.body);
     });
   }
 
   this.getActiveUser = function(callback) {
-    get(this.host+'/ecosis/userInfo', function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+    get(this.host+'/ecosis/user/get', function(err, resp) {
       callback(resp.body)
     });
   }
@@ -96,7 +100,7 @@ module.exports = function(config) {
     return xhr;
   }
 
-  this.getLayoutOverview = function(pkgid, rid, sid, callback) {
+  /*this.getLayoutOverview = function(pkgid, rid, sid, callback) {
     var params = '?package_id=' + pkgid +
       '&resource_id=' + rid +
       '&datasheet_id=' + sid;
@@ -105,9 +109,9 @@ module.exports = function(config) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body)
     });
-  }
+  }*/
 
-  this.setDefaultLayout = function(pkgid, resourceList, layout, callback) {
+  /*this.setDefaultLayout = function(pkgid, resourceList, layout, callback) {
     var data = {
       package_id : pkgid,
       resources : JSON.stringify(resourceList),
@@ -118,43 +122,81 @@ module.exports = function(config) {
       if( isError(err, resp) ) return callback({error:true, message: 'Request Error'});
       callback(resp.body);
     });
-  }
+  }*/
 
   this.getDatasheet = function(pkgid, rid, sid, callback) {
     var params = '?package_id=' + pkgid +
     '&resource_id=' + rid +
     '&datasheet_id=' + sid;
 
-    get(this.host+'/workspace/getDatasheet'+params, function(err, resp) {
+    get(this.host+'/ecosis/resource/get'+params, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body);
     });
   }
 
-  this.updateJoin = function(pkgid, rid, metadata, callback) {
-    post(this.host+'/workspace/updateJoin',{
-      package_id : pkgid,
-      resource_id : rid,
-      metadata : JSON.stringify(metadata)
-    },function(err, resp){
+  this.getMetadataInfo = function(package_id, resource_id, sheet_id, callback) {
+      var params = '?package_id=' + package_id +
+      '&resource_id=' + resource_id;
+      if( sheet_id ) params += '&sheet_id='+sheet_id;
+
+      get(this.host+'/ecosis/resource/getMetadataInfo'+params, function(err, resp) {
+        if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+        callback(resp.body);
+      });
+  }
+
+  this.getMetadataChunk = function(package_id, resource_id, sheet_id, index, callback) {
+      var params = '?package_id=' + package_id +
+      '&resource_id=' + resource_id +
+      '&index='+index;
+      if( sheet_id ) params += '&sheet_id='+sheet_id;
+
+      get(this.host+'/ecosis/resource/getMetadataChunk'+params, function(err, resp) {
+        if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+        callback(resp.body);
+      });
+  }
+
+  this.getSpectra = function(pkgid, rid, sid, index, callback) {
+    var params = '?package_id=' + pkgid +
+      '&resource_id=' + rid +
+      '&index='+index;
+    if( sid ) params += '&sheet_id='+sid;
+
+    get(this.host+'/ecosis/spectra/get'+params, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body);
     });
   }
 
-  this.setParseInfo = function(pkgid, resource, datasheet_id,  callback) {
+  this.getSpectraCount = function(pkgid, rid, sid, callback) {
+    var params = '?package_id=' + pkgid +
+      '&resource_id=' + rid;
+    if( sid ) params += '&sheet_id='+sid;
+
+    get(this.host+'/ecosis/resource/getSpectraCount'+params, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  }
+
+
+  this.processResource = function(pkgid, resource_id, sheet_id, options, callback) {
     var data = {
-         package_id : pkgid,
-        resource : JSON.stringify(resource)
+        package_id : pkgid,
+        options : JSON.stringify(options)
     }
 
-    if( typeof datasheet_id == 'function' ) {
-      callback = datasheet_id;
+    // apply to multiple resources, helper for first upload
+    if( Array.isArray(resource_id) ) {
+      data.resource_ids = JSON.stringify(resource_id)
     } else {
-      data['datasheet_id'] = datasheet_id
+      data.resource_id = resource_id;
+      data.sheet_id = sheet_id;
     }
 
-    post(this.host+'/workspace/setParseInfo', data, function(err, resp) {
+    post(this.host+'/ecosis/resource/process', data, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
 
       // update info in the datastore if we have one
@@ -170,18 +212,6 @@ module.exports = function(config) {
         }
       }
 
-      callback(resp.body);
-    });
-  }
-
-  this.getSpectra = function(pkgid, rid, sid, index, callback) {
-    var params = '?package_id=' + pkgid +
-      '&resource_id=' + rid +
-      '&datasheet_id=' + sid +
-      '&index='+index;
-
-    get(this.host+'/workspace/getSpectra'+params, function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
       callback(resp.body);
     });
   }
@@ -227,7 +257,7 @@ module.exports = function(config) {
   }
 
   this.verifyPrivate = function(id, callback) {
-    get(this.host+'/ecosis/verifyPrivate?id='+id, function(err, resp) {
+    get(this.host+'/ecosis/package/setPrivate?id='+id, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
       callback(resp.body);
     });
@@ -247,26 +277,14 @@ module.exports = function(config) {
     });
   }
 
-  this.setAttributeMap = function(pkgid, map, callback) {
+  this.setPackageOptions = function(pkgid, options, callback) {
     var data = {
       package_id : pkgid,
-      map : JSON.stringify(map)
+      options : JSON.stringify(options)
     };
 
-    post(this.host+'/workspace/setAttributeMap', data, function(err, resp) {
+    post(this.host+'/ecosis/package/setOptions', data, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
-      callback(resp.body);
-    });
-  }
-
-  this.setDatasetAttributes = function(pkgid, attrs, callback) {
-    var data = {
-      package_id : pkgid,
-      datasetAttributes : JSON.stringify(attrs)
-    };
-
-    post(this.host+'/workspace/setDatasetAttributes', data, function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message: 'Request Error'});
       callback(resp.body);
     });
   }
@@ -278,9 +296,23 @@ module.exports = function(config) {
     });
   }
 
+  this.deleteResources = function(resourceIds, callback) {
+    postRaw(this.host+'/ecosis/resource/deleteMany', JSON.stringify({ids : resourceIds }), function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp);
+    });
+  }
+
   this.pushToSearch = function(pkgid, includeEmail, callback) {
     includeEmail = includeEmail ? 'true' : 'false';
-    get(this.host+'/workspace/push?package_id='+pkgid+'&email='+includeEmail, function(err, resp) {
+    get(this.host+'/ecosis/workspace/push?package_id='+pkgid+'&email='+includeEmail, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
+      callback(resp.body);
+    });
+  }
+
+  this.gitInfo = function(callback) {
+    get(this.host+'/ecosis/gitInfo', function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
       callback(resp.body);
     });

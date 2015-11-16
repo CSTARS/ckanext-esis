@@ -22,13 +22,21 @@
       <span class="label label-primary"><i></i> Saving...</span>
     </div>
 
-    <h4 class="page-header">Basic Information</h4>
+
 
     <div class="well" style="font-size: 14px; color: #888">
-      <div style="color:#333; font-weight: bold; padding-bottom: 15px">Welcome <span id="usernameLabel"></span>.</div>
+      <h5>Welcome <span id="usernameLabel"></span></h5>
       Fill out the basic information for your dataset.  Then you can add resource files such as metadata or spectra.<br />
-      First time adding data?  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
+      <b>First time adding data?</b>  Checkout the <a href="http://tutorial.ecospectra.org/" target="_blank">screencast and tutorial.</a>
+      <br /><br />
+      <div>
+        <i class="fa fa-star" style="color:#2196f3"></i> = Recommented Input.  If you can't fill out everything, please try
+        and at least fill out any starred field.
+      </div>
     </div>
+
+    <h4 class="page-header">Basic Information</h4>
+
 
     <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
 
@@ -45,7 +53,7 @@
       <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
       <!-- TODO
       <div class="form-wrap">
-        <esis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></esis-ui-token-input>
+        <ecosis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></ecosis-ui-token-input>
       </div>
       -->
 
@@ -155,7 +163,7 @@
 
         <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
 
-        <div id="helpCreatePanel" class="help-block" style="display:none">
+        <div id="helpCreatePanel" class="text text-warning" style="display:none">
           You must provide a valid dataset title to create.
         </div>
       </div>
@@ -164,16 +172,9 @@
       </div>
     </div>
 
-
-
-    <div class="well">
-      <div>
-        <i class="fa fa-star" style="color:#2196f3"></i> Recommented Input.  If you can't fill out everything, please try
-        and at least fill out any starred field.
-      </div>
-
+    <div class="well" style="margin-top: 30px">
       <div class="bugs" style="margin-top:20px">
-          Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-esis/issues" target="_blank">here!</a>
+        <i class="fa fa-bug"></i>  Found a bug?  Have an issue?  Let us know <a href="https://github.com/CSTARS/ckanext-ecosis/issues" target="_blank">here!</a>
       </div>
 
       <div class="gitInfo" id="gitInfo" style="display:none">
@@ -206,8 +207,13 @@
 
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
 
-      $.get(ecosis.ckan.host+'/spectra/gitInfo', function(resp){
+      ecosis.ckan.gitInfo(function(resp){
         this.git = resp;
+        
+        if( !resp.error ) {
+          ecosis.git = resp;
+        }
+
         if( this.git.branch != 'master' ) {
           this.$.gitInfo.style.display = 'block';
           this.$.gitBranchLabel.innerHTML = this.git.branch;
@@ -310,7 +316,13 @@
       if( confirm('Are you sure your want to remove this dataset?') ) {
         if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
           ecosis.ckan.deletePackage(ecosis.ds.package_id,
-            function(err, resp) {
+            function(resp) {
+              if( resp.error ) {
+                // ERROR 5
+                resp.code = 5;
+                return ecosis.errorPopup.show(resp);
+              }
+
               alert('dataset deleted.');
               window.location = '/dataset';
             }
@@ -328,8 +340,18 @@
             this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
             this.$.createDatasetBtn.removeAttribute('disabled');
 
-            if( resp.error ) return alert('Failed to create dataset :(');
-            if( !resp.id ) return alert('Failed to create dataset :(');
+            if( resp.error ) {
+              // ERROR 6
+              resp.code = 6;
+              return ecosis.errorPopup.show(resp);
+            }
+            if( !resp.id ) {
+              // ERROR 7
+              return ecosis.errorPopup.show({
+                message : 'Failed to create dataset',
+                code : 7
+              });
+            }
 
             // set the page
             window.location = '/import/?id='+resp.name+'#add-resources';
@@ -338,6 +360,7 @@
     },
 
     save : function() {
+      this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
@@ -357,7 +380,11 @@
         function(resp) {
           if( resp.error ) {
             this.$.saveLabel.style.display = 'none';
-            return alert('Failed to fetch for dataset update :(');
+
+            // ERROR 8
+            resp.code = 8;
+            resp.message += '. Failed to fetch package for update.'
+            return ecosis.errorPopup.show(resp);
           }
 
           var metadata = resp.result;
@@ -369,13 +396,28 @@
             function(resp) {
               this.$.saveLabel.style.display = 'none';
 
-              if( resp.error ) return alert('Failed to update dataset :(');
-              if( !resp.result.id ) return alert('Failed to update dataset :(');
+              if( resp.error ) {
+                // ERROR 9
+                resp.code = 9;
+                resp.message += '. Failed to update dataset.'
+                return ecosis.errorPopup.show(resp);
+              }
+              if( !resp.result.id )  {
+                // ERROR 10
+                return ecosis.errorPopup.show({
+                  message : 'Failed to update dataset',
+                  code : 10
+                });
+              }
 
             }.bind(this)
           );
         }.bind(this)
       );
+    },
+
+    fireScoreUpdate : function() {
+      this.fire('score-update');
     },
 
     /* change handlers */

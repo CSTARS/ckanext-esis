@@ -1,0 +1,68 @@
+<dom-module id="ecosis-isotope">
+  <template>
+    <style>
+      :host {
+        display : block
+      }
+    </style>
+
+    <div id="grid">
+      <content></content>
+    </div>
+  </template>
+
+
+  <script>
+    Polymer({
+      is : 'ecosis-isotope',
+
+      properties : {
+        selector : {
+          type : String,
+          value : ''
+        }
+      },
+
+      clear : function() {
+        this.$.grid.innerHTML = '';
+      },
+
+      append : function(child) {
+        this.$.grid.appendChild(child);
+      },
+
+      init : function() {
+        if( this.grid ) this.grid.isotope('destroy');
+
+        this.grid = $(this.$.grid).isotope({
+          // options
+          itemSelector: this.selector,
+          layoutMode: 'vertical',
+          getSortData: {
+            name: '[data-name]', // value of attribute
+            type: '[data-type]'
+          },
+          sortAscending: true,
+          sortBy : 'name'
+        });
+
+        setTimeout(function(){
+          this.grid.isotope('updateSortData').isotope();
+        }.bind(this), 500)
+      },
+
+      html : function(html) {
+        this.$.grid.innerHTML = html;
+        this.init();
+      },
+
+      sort : function(sortBy) {
+        this.grid.isotope({sortBy : sortBy});
+      },
+
+      filter : function(filter) {
+        this.grid.isotope({filter : filter});
+      }
+    });
+  </script>
+</dom-module>

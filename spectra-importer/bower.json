@@ -17,9 +17,12 @@
   ],
   "dependencies": {
     "bootswatch-dist": "paper",
-    "polymer": "Polymer/polymer#^0.9.0-rc.2",
+    "polymer": "Polymer/polymer#~1.1.4",
     "animate-css": "~3.2.6",
     "font-awesome": "~4.3.0",
-    "leaflet": "~0.7.3"
+    "leaflet": "~0.7.3",
+    "bower-bootstrap-slider": "~1.0.0",
+    "seiyria-bootstrap-slider": "~5.1.1",
+    "isotope": "~2.2.2"
   }
 }

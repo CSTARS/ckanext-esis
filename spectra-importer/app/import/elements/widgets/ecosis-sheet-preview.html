@@ -1,0 +1,297 @@
+<dom-module id="ecosis-sheet-preview">
+  <style>
+    :host {
+      display: block
+    }
+    .info {
+      margin-top: 10px !important;
+    }
+  </style>
+
+  <template>
+    <span class="pull-right label label-warning" id="loading" style="display:none"><i class="fa fa-spin fa-circle-o-notch"></i> Loading...</span>
+    <h4 class="info page-header" id="info"></h4>
+
+    <div id="nodata" style="display:none" class="text text-warning">
+      No data in this sheet.
+    </div>
+
+    <div id="data">
+      <div class="layout horizontal center">
+          <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
+
+          <div class="flex">
+            <div class="row">
+              <div class="col-sm-6">
+                <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
+              </div>
+              <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
+            </div>
+          </div>
+
+          <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
+      </div>
+
+      <div id="sliderRoot" style="margin-top: 15px"></div>
+    </div>
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : "ecosis-sheet-preview",
+
+    ready : function() {
+      this.index = 0;
+    },
+
+    load : function(index) {
+      if( index !== undefined ) this.index = index;
+
+      if( this.index >= this.info.total ) {
+        this.index = this.info.total-1;
+      }
+      if ( this.index < 0 ) {
+        this.index = 0;
+      }
+
+      this.slider.slider('setValue', this.index+1);
+
+      if( this.info.total == 0 ) {
+        this.$.nodata.style.display = 'block';
+        this.$.data.style.display = 'none';
+        return;
+      } else {
+        this.$.nodata.style.display = 'none';
+        this.$.data.style.display = 'block';
+      }
+
+      // this.$.info.innerHTML = '<i class="fa fa-spin fa-circle-o-notch"></i> Loading index: '+this.index;
+      this.loading(true);
+
+      if( this.sheet.metadata ) {
+        ecosis.ckan.getMetadataChunk(
+          this.sheet.packageId,
+          this.sheet.resourceId,
+          this.sheet.sheetId,
+          this.index,
+          this.renderMetadataResp.bind(this)
+        );
+      } else {
+        ecosis.ckan.getSpectra(
+          this.sheet.packageId,
+          this.sheet.resourceId,
+          this.sheet.sheetId,
+          this.index,
+          this.renderSpectraResp.bind(this)
+        );
+      }
+    },
+
+    renderMetadataResp : function(resp) {
+      this.loading(false);
+      if( resp.error ) {
+        // ERROR 18
+        resp.code = 18;
+        return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
+      }
+
+
+      this.renderTable(resp.metadata);
+
+      if( resp.joinKey && resp.metadata[resp.joinKey] ) {
+        var joined = 'None';
+        if( resp.joinedResources.length > 0 ) {
+          joined = '';
+          for( var i = 0; i < resp.joinedResources.length; i++ ) {
+            joined += resp.joinedResources[i].name + (resp.joinedResources[i].sheetId ? ' - '+resp.joinedResources[i].sheetId.split('-')[1]+'' : '')+
+              ' on '+(resp.joinedResources[i].layout || 'row')+' '+resp.joinedResources[i].index;
+            if( i < resp.joinedResources.length-1 ) joined += ', ';
+          }
+        }
+
+        this.$.chartRoot.innerHTML =
+          '<h4 style="text-align:center">Joined On:</h4> '+
+          '<h5 style="text-align:center">'+resp.joinKey+' = <span style="color:#888">'+resp.metadata[resp.joinKey]+'</span></h5>'+
+          '<h4 style="text-align:center">Matches:</h4>'+
+          '<h6 style="text-align:center; color:#888">'+joined+'</h6>';
+      } else {
+        this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
+      }
+
+      this.$.info.innerHTML =
+        '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small><b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small> '+
+        '<small class="pull-right">Join Count: '+this.info.joinCount+'</small>';
+    },
+
+    renderSpectraResp : function(resp) {
+      this.loading(false);
+      if( resp.error ) {
+        // ERROR 18
+        resp.code = 18;
+        ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
+      }
+
+      this.renderTable(resp, ['ecosis', 'datapoints']);
+
+      if( !(this.$.chartRoot.firstChild && this.$.chartRoot.firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
+        this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+      }
+
+      this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small> <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
+
+      var data = [];
+      for( var key in resp.datapoints ) {
+          data.push([
+              parseFloat(key),
+              parseFloat(resp.datapoints[key])
+          ])
+      }
+
+      data.sort(function(a, b){
+          if( a[0] > b[0] ) return 1;
+          if( a[0] < b[0] ) return -1;
+          return 0;
+      });
+
+      data.splice(0, 0, ['Wavelength', '']);
+      this.$.chartRoot.firstChild.setHeight(300);
+      this.$.chartRoot.firstChild.options = {
+        animation:{
+          duration: 700,
+          easing: 'out',
+        }
+      }
+      this.$.chartRoot.firstChild.setData(data);
+    },
+
+    initSlider : function() {
+      this.$.sliderRoot.innerHTML = '<input id="slider" style="width:100%" data-slider-id="ex1Slider" type="text"'+
+        ' data-slider-min="1" data-slider-max="'+this.info.total+'" data-slider-step="1" data-slider-value="'+this.index+'"/>';
+
+      this.$.slider = this.querySelector('#slider');
+      this.slider = $(this.$.sliderRoot.firstChild).slider({});
+      $(this.$.slider).parent().width('100%');
+
+      var updateTimer = -1;
+
+      this.slider.on('slideStop', function(e){
+        if( updateTimer != -1 ) clearTimeout(updateTimer);
+        updateTimer = setTimeout(function(){
+          updateTimer = -1;
+          this.load(e.value-1);
+        }.bind(this), 100);
+      }.bind(this));
+    },
+
+    renderTable : function(metadata, ignorelist) {
+      if( ignorelist === undefined ) ignorelist = [];
+
+      var table = '<h5>Metadata</h5><table class="table">';
+      var c = 0;
+      for( var key in metadata ) {
+        if( ignorelist.indexOf(key) > -1 ) continue;
+        table += '<tr><td>'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
+
+        c++;
+        if( c == 100 ) {
+          table += '<tr><td>...</td><td>...</td></tr>';
+          break;
+        }
+      }
+      this.$.tableRoot.innerHTML = table+'</table>';
+
+      $(this.$.tableRoot).find('[data-toggle="tooltip"]').tooltip()
+    },
+
+    getProcessInfo : function(key, metadata) {
+      if( !metadata.ecosis ) return '';
+      if( !metadata.ecosis.processInfo ) return '';
+
+      var matches = [];
+      for( var i = 0; i < metadata.ecosis.processInfo.length; i++ ) {
+        if( metadata.ecosis.processInfo[i].key == key ) {
+          matches.push(metadata.ecosis.processInfo[i]);
+        }
+      }
+
+      if( matches.length == 0 ) return '';
+
+      var resp = '';
+      for( var i = 0; i < matches.length; i++ ) {
+          resp += this.getProcessMessage(matches[i]);
+      }
+      return resp;
+    },
+
+    getProcessMessage : function(info) {
+      var header = '<div style="font-size:11px;color:#999;font-style:italic">';
+      var footer = '</div>';
+
+      header = '<a style="cursor:pointer" data-toggle="tooltip" data-placement="bottom" data-original-title="';
+      footer = '">*</a>';
+
+      if( info.type == 'join' ) {
+        try {
+          var name = ecosis.ds.resourceLookup[info.resourceId].name;
+          return header+'Joined from '+name+(info.sheetId ? ' ('+info.sheetId.split('-')[1]+')' : '')+footer;
+        } catch(e) {}
+      } else if ( info.type == 'usda lookup') {
+        return header+'Appended from USDA Symbol'+footer;
+      } else if ( info.type == 'mapped') {
+        return header+'Mapped from '+info.from+footer;
+      }
+
+      return '';
+    },
+
+    update : function(sheet) {
+      if( sheet ) {
+        this.sheet = sheet;
+      }
+
+      if( this.sheet.ignore ) return;
+
+      if( this.sheet.metadata ) {
+        this.updateMetadata();
+      } else {
+        this.updateSpectra();
+      }
+    },
+
+    updateMetadata : function() {
+      ecosis.ckan.getMetadataInfo(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.loading(false);
+        this.info = resp;
+        this.initSlider();
+        this.load();
+      }.bind(this));
+    },
+
+    updateSpectra : function() {
+      ecosis.ckan.getSpectraCount(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.loading(false);
+        this.info = resp;
+        this.initSlider();
+        this.load();
+      }.bind(this));
+    },
+
+    loading : function(loading) {
+      if( loading ) this.$.loading.style.display = 'inline-block';
+      else this.$.loading.style.display = 'none';
+    },
+
+    moveLeft : function() {
+      this.index--;
+      this.load();
+    },
+
+    moveRight : function() {
+      this.index++;
+      this.load();
+    }
+
+  })
+</script>

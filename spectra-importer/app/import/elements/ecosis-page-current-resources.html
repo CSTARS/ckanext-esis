@@ -7,13 +7,77 @@
     #legend {
       padding: 20px 0;
     }
+    #filterPopup {
+      display : none;
+      position: absolute;
+      right : 25px;
+      margin: 10px 15px 15px 15px;
+      padding: 15px;
+      background-color: white;
+      box-shadow: 0 0 5px #ccc;
+      z-index: 100;
+      font-size: 16px;
+    }
   </style>
 
   <template>
 
-    <h4 class="page-header">Current Resources</h4>
+    <h4 class="page-header">
+      <span>Current Resources</span>
 
-    <div id="resourceRoot"></div>
+      <div class="pull-right" style="margin-top: -10px">
+        <div class="btn-group">
+          <a class="btn btn-default active" on-click="toggleSortName" id="sortName">Sort by Name</a>
+          <a class="btn btn-default" on-click="toggleSortType" id="sortType">Sort by Type</a>
+        </div>
+
+        <div class="btn btn-default" on-click="toggleFilter">Filter</div>
+        <div id="filterPopup">
+          <button type="button" class="close"  aria-label="Close" on-click="toggleFilter"><span aria-hidden="true">&times;</span></button>
+          <h5 class="page-header" style="margin-top:5px">Show</h5>
+
+
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked class="filter" on-click="filter" data-type="success"/>
+              <span class="text text-success">Data Sheet</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked class="filter" on-click="filter" data-type="primary"/>
+              <span class="text text-primary">Metadata Sheet</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked class="filter" on-click="filter" data-type="zip"/>
+              <span class="text text-warning">Zip Package</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked class="filter" on-click="filter" data-type="info"/>
+              <span class="text text-info">Multi-Sheet File</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked class="filter" on-click="filter" data-type="default"/>
+              <span class="text text-default">Ignored</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </h4>
+
+    <div id="removeAll" style="margin-bottom: 20px">
+      <a class="btn btn-link" on-click="selectAll">Select All</a>
+      <a class="btn btn-link" on-click="unselectAll">Unselect All</a>
+
+      <a class="btn btn-danger pull-right" id="deleteAll" on-click="deleteAll" style="display:none">Delete All Selected</a>
+    </div>
+    <ecosis-isotope id="resourceRoot" selector=".data-item"></ecosis-isotope>
 
     <div id="noResources" id="alert alert-warning" style="display:none">
       Your dataset does not contain any resource files.  Click <a id="addLink">here</a> to upload resources.
@@ -25,10 +89,11 @@
       </div>
 
       <h6 style="margin-bottom:0">Resource List Legend</h6>
-      <span class="label label-success">Spectral Data File</span>
-      <span class="label label-primary">Metadata File</span>
-      <span class="label label-info">Zip Package</span>
-      <span class="label label-default">Auxiliary File (Ignored)</span>
+      <span class="label label-success">Data Sheet</span>
+      <span class="label label-primary">Metadata Sheet</span>
+      <span class="label label-warning">Zip Package</span>
+      <span class="label label-info">Multi-Sheet File</span>
+      <span class="label label-default">Ignored</span>
     </div>
   </template>
 </dom-module>
@@ -52,25 +117,164 @@
       if( ecosis.ds.resources.length == 0 ) {
         this.$.noResources.style.display = 'block';
         this.$.legend.style.display = 'none';
+        this.$.removeAll.style.display = 'none';
         return;
       } else {
         this.$.noResources.style.display = 'none';
         this.$.legend.style.display = 'block';
+        this.$.removeAll.style.display = 'block';
       }
 
       var html = '';
 
+
       for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
         var resource = ecosis.ds.resources[i];
-        html += '<ecosis-resource-panel resourceid="'+resource.id+'"></ecosis-resource-panel>';
+        if( resource.fromZip ) continue;
+
+        html += '<ecosis-resource-panel resourceid="'+resource.id+'" style="width:100%" class="data-item"></ecosis-resource-panel>';
       }
 
-      this.$.resourceRoot.innerHTML = html;
+      this.$.resourceRoot.html(html);
 
       // listen for all update events
       $(this.$.resourceRoot)
         .find('ecosis-resource-panel')
-        .on('update', this.onResourceUpdate.bind(this));
+        .on('update', this.onResourceUpdate.bind(this))
+        .on('resource-select', this.onResourceSelect.bind(this));
+
+
+      this.$.resourceRoot.init();
+    },
+
+    toggleFilter : function() {
+      $(this.$.filterPopup).toggle();
+    },
+
+    toggleSortName : function() {
+      $(this.$.sortName).addClass('active');
+      $(this.$.sortType).removeClass('active');
+      this.sort('name');
+    },
+
+    toggleSortType : function() {
+      $(this.$.sortName).removeClass('active');
+      $(this.$.sortType).addClass('active');
+      this.sort(['type','name']);
+    },
+
+    sort : function(sortValue) {
+      this.$.resourceRoot.sort(sortValue);
+      var zips = this.querySelectorAll('ecosis-resource-panel.data-item[data-type="zip"]');
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].sort(sortValue);
+      }
+    },
+
+    filter : function() {
+      var filters = this.querySelectorAll('.filter');
+      var filter = [];
+      for( var i = 0; i < filters.length; i++ ) {
+        if( !$(filters[i]).prop('checked') ) continue;
+        filter.push('[data-type="'+filters[i].getAttribute('data-type')+'"]');
+      }
+
+      filter = filter.join(', ');
+
+      // empty filter breaks isotope
+      if( filter == '' ) filter = '*';
+
+      var zips = this.querySelectorAll('ecosis-resource-panel.data-item[data-type="zip"]');
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].filter(filter);
+      }
+
+      this.$.resourceRoot.filter(filter);
+
+      // make sure everything is correct
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].filter(filter);
+      }
+
+      this.$.resourceRoot.filter(filter);
+    },
+
+    // make sure all resource panel css classes are correct
+    verifyPanelCss : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) {
+        eles[i].setClass();
+      }
+    },
+
+    onResourceSelect : function() {
+      this.updateSelectState();
+    },
+
+    deleteAll : function() {
+      if( !confirm('Are you sure you want to delete all selected resources?') ) return;
+
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      var ids = [], usedEles = [];
+      for( var i = 0; i < eles.length; i++ ) {
+        if( !eles[i].isSelected() || eles[i].resource.fromZip ) continue;
+        eles[i].querySelector('#deletePanel').style.display = 'inline-block';
+        ids.push(eles[i].resource.id);
+        usedEles.push(eles[i]);
+      }
+
+      ecosis.ckan.deleteResources(ids, function(resp){
+        if( resp.error ) {
+          // ERROR 11
+          resp.code = 11;
+          return ecosis.errorPopup.show(resp);
+        }
+
+        for( var i = 0; i < usedEles.length; i++ ) {
+          $(usedEles[i]).remove();
+        }
+
+        for( var i = ecosis.ds.resources.length - 1; i >= 0; i-- ) {
+          if( ids.indexOf(ecosis.ds.resources[i].id) > -1 ) {
+            ecosis.ds.resources.splice(i, 1);
+          }
+        }
+
+        ecosis.ds.fireUpdate();
+
+        if( ecosis.ds.resources.length == 0 ) {
+          this.$.noResources.style.display = 'block';
+          this.$.legend.style.display = 'none';
+          this.$.removeAll.style.display = 'none';
+        }
+
+      }.bind(this));
+    },
+
+    selectAll : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) {
+        if( eles[i].style.display === 'none' ) continue;
+        eles[i].select(true);
+      }
+      this.updateSelectState();
+    },
+
+    unselectAll : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) eles[i].select(false);
+      this.updateSelectState();
+    },
+
+    updateSelectState : function() {
+      var eles = this.querySelectorAll('ecosis-resource-panel');
+      for( var i = 0; i < eles.length; i++ ) {
+        if( eles[i].isSelected() ) {
+          this.$.deleteAll.style.display = 'block';
+          return;
+        }
+      }
+      this.$.deleteAll.style.display = 'none';
     },
 
     onResourceUpdate : function(e) {
@@ -86,6 +290,13 @@
           panel.$.datasheetUI.datasheet = null;
         }
       }
+
+      if( ecosis.ds.resources.length == 0 ) {
+        this.$.noResources.style.display = 'block';
+        this.$.legend.style.display = 'none';
+        this.$.removeAll.style.display = 'none';
+      }
+
     }
 
 

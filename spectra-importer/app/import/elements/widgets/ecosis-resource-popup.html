@@ -1,0 +1,149 @@
+<dom-module id="ecosis-resource-popup">
+  <template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="title"></h4>
+          </div>
+          <div class="modal-body" style="padding: 25px">
+            <ecosis-datasheet-select-panel
+              style="display:none"
+              id="datasheetSelector"
+              on-select="onDatasheetSelected">
+            </ecosis-datasheet-select-panel>
+
+            <ecosis-datasheet-panel
+              id="datasheetUI"
+              on-sheet-update="onDatasheetUpdate">
+            </ecosis-datasheet-panel>
+          </div>
+          <div class="modal-footer">
+            <div class="singleMode">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+            <div class="wizardMode">
+              <div class="layout horizontal">
+                <div>
+                  <button type="button" id="prev" class="btn btn-default" on-click="prev">Previous</button>
+                </div>
+                <div class="flex" style="text-align:center">
+                  <button type="button" class="btn btn-primary" data-dismiss="modal">Finished</button>
+                </div>
+                <div>
+                  <button type="button" id="next" class="btn btn-default" on-click="next">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-resource-popup',
+
+    ready : function() {
+      this.popup = $(this.$.popup);
+      this.popup.remove();
+      $('body').append(this.popup);
+
+      this.popup.modal({
+        show: false,
+        backdrop : 'static'
+      });
+    },
+
+    next : function() {
+      this.index++;
+      if( this.index > this.resources.length-1 ) {
+        this.index = this.resources.length - 1;
+        return;
+      }
+      this.updateNav();
+      this.show(this.resources[this.index]);
+    },
+
+    prev : function() {
+      this.index--;
+      if( this.index < 0 ) {
+        this.index = 0;
+        return;
+      }
+      this.updateNav();
+      this.show(this.resources[this.index]);
+    },
+
+    updateNav : function() {
+      if( this.index == 0 ) this.$.prev.setAttribute('disabled','disabled');
+      else this.$.prev.removeAttribute('disabled');
+
+      if( this.index >= this.resources.length-1 ) this.$.next.setAttribute('disabled','disabled');
+      else this.$.next.removeAttribute('disabled');
+    },
+
+    setMode : function(mode) {
+      if( mode === 'single' ) {
+        $(this.$.popup).find('.singleMode').show();
+        $(this.$.popup).find('.wizardMode').hide();
+      } else {
+        $(this.$.popup).find('.singleMode').hide();
+        $(this.$.popup).find('.wizardMode').show();
+      }
+    },
+
+    uploadWizard : function(resources, handlers ) {
+      this.setMode('wizard');
+      this.resources = resources;
+      this.index = 0;
+      this.updateNav();
+      this.handlers = handlers;
+      this.show(resources[0]);
+    },
+
+    edit : function(resource, handlers) {
+      this.setMode('single');
+      this.handlers = handlers;
+      this.show(resource);
+    },
+
+    show : function(resource) {
+      this.resource = resource;
+
+      this.$.title.innerHTML = this.resource.name;
+
+      if( !this.resource.datasheets ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else if( this.resource.datasheets.length <= 1 ) {
+        this.$.datasheetSelector.style.display = 'none';
+      } else {
+        this.$.datasheetSelector.style.display = 'block';
+        this.$.datasheetSelector.update(this.resource);
+      }
+
+      this.selectDatasheet(0);
+
+      this.popup.modal('show');
+    },
+
+    onDatasheetUpdate : function() {
+      this.$.datasheetSelector.updateClass();
+      if( this.handlers ) this.handlers.onDatasheetUpdate();
+    },
+
+    selectDatasheet : function(index, edit) {
+      // set the resource and sheet we are going to render
+      this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
+      this.$.datasheetUI.edit();
+    },
+
+    onDatasheetSelected : function(e) {
+      this.selectDatasheet(e.detail, true);
+    }
+  })
+</script>

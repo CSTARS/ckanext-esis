@@ -86,61 +86,163 @@ module.exports = function(config) {
   };
 
   this.load = function() {
-    this.ckan.processWorkspace(this.package_id, function(result){
+    this.ckan.prepareWorkspace(this.package_id, function(result){
 
       if( result.error ) {
-        this.loadingError = true;
-        ee.emit('error', {message : result});
-        return callback();
+        this.loadingError = result;
+        ee.emit('load-error', result);
+        return
       }
 
-      this.result = result;
-      this._setData();
+      this.ckan.getWorkspace(this.package_id, function(result){
+        if( result.error ) {
+          this.loadingError = result;
+          ee.emit('load-error', result);
+          return
+        }
 
+        this.result = result;
+        this._setData();
 
-      this.loaded = true;
-      ee.emit('load');
+        this.loaded = true;
+        ee.emit('load');
+
+      }.bind(this));
     }.bind(this));
   };
 
   // helper for when data loads
   this._setData = function() {
     this.editMode = true;
-    this.package_id = this.result.package.id;
+
+    var ckanPackage = this.result.ckan.package;
+    this.package_id = ckanPackage.id;
 
     // set the default attirbutes for this dataset
     for( var key in this.data ) {
-      if( this.result.package[key] ) this.data[key] = this.result.package[key];
+      if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
     }
 
-    this.schema = [];
-    for( var attrName in this.result.attributes ) {
-      var attr = this.result.attributes[attrName];
-      attr.name = attrName;
-      this.schema.push(attr);
+    if( this.data.extras && !Array.isArray(this.data.extras) ) {
+      var arr = [];
+      for( var key in this.data.extras) {
+        arr.push({
+          key : key,
+          value : this.data.extras[key]
+        });
+      }
+      this.data.extras = arr;
     }
 
-    this.wavelengths = this.result.wavelengths;
-
-    if( this.result.datasetAttributes ) {
-      this.datasetAttributes = this.result.datasetAttributes;
+    if( this.data.tags ) {
+      var arr = [];
+      for( var i = 0; i < this.data.tags.length; i++ ) {
+        arr.push({
+          name : this.data.tags[i],
+          display_name : this.data.tags[i]
+        });
+      }
+      this.data.tags = arr;
     }
 
-    if( this.result.attributeMap ) {
-      this.attributeMap = this.result.attributeMap;
-      for( var key in this.result.attributeMap ) {
-        this.inverseAttributeMap[this.result.attributeMap[key]] = key;
+    this.datasheets = this.result.resources;
+
+    this.attributeMap = {};
+    this.inverseAttributeMap = {};
+    if( this.result.package.map ) {
+      this.attributeMap = this.result.package.map;
+      for( var key in this.result.package.map ) {
+        this.inverseAttributeMap[this.result.package.map[key]] = key;
       }
     }
 
-    this.result.resources.sort(function(a, b){
+    this.sort = {};
+    if( this.result.package.sort ) {
+      this.sort = this.result.package.sort;
+    }
+
+    this.resources = this.result.ckan.resources;
+
+    var zips = {}; // used to quickly add resource stubs
+    for( var i = 0; i < this.resources.length; i++ ) {
+      if( this.resources[i].format.toLowerCase() === 'zip' ) {
+        zips[this.resources[i].id] = this.resources[i];
+        this.resources[i].childResources = [];
+        this.resources[i].isZip = true;
+      }
+    }
+
+
+    this.resources.sort(function(a, b){
       if( a.name > b.name ) return 1;
       if( a.name < b.name ) return -1;
       return 0;
     });
-    this.resources = this.result.resources;
+
+
+    this.resourceLookup = {};
+
+    // create fake stubs for zip file resources
+    var alreadyAdded = {};
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      if( !this.datasheets[i].fromZip ) continue;
+      if( alreadyAdded[this.datasheets[i].resourceId] ) continue;
+
+      var r = this.datasheets[i];
+
+      var stub = {
+        id : r.resourceId,
+        package_id : r.packageId,
+        fromZip : true,
+        zip : r.zip,
+        name : r.name
+      }
+
+      zips[r.zip.resourceId].childResources.push(stub);
+      this.resources.push(stub);
+
+      alreadyAdded[r.resourceId] = 1; // why?
+    }
+
+    // map resources to datasheets for daster lookup
+    for( var i = 0; i < this.resources.length; i++ ) {
+      var datasheets = [];
+      for( var j = 0; j < this.datasheets.length; j++ ) {
+        if( this.datasheets[j].resourceId == this.resources[i].id ) {
+          datasheets.push(this.datasheets[j]);
+        }
+      }
+
+      this.resourceLookup[this.resources[i].id] = this.resources[i];
+      this.resources[i].datasheets = datasheets;
+    }
 
     this.fireUpdate();
+  }
+
+  this.setSheet = function(sheet) {
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      if( this.datasheets[i].resourceId == sheet.resourceId &&
+          this.datasheets[i].sheetId == sheet.sheetId ) {
+
+          this.datasheets[i] = sheet;
+          break;
+      }
+    }
+
+    var resource = this.resourceLookup[sheet.resourceId];
+    if( !resource ) {
+      console.log('Attempting to set sheet with a resourceId that does not exist');
+      console.log(sheet);
+      return;
+    }
+
+    for( var i = 0; i < resource.datasheets.length; i++ ) {
+      if( resource.datasheets[i].sheetId == sheet.sheetId ) {
+          resource.datasheets[i] = sheet;
+          break;
+      }
+    }
   }
 
   this.fireUpdate = function() {
@@ -178,11 +280,67 @@ module.exports = function(config) {
     });
   }
 
+  // get all attirbutes from sheets marked as data
+  this.getDatasheetAttributes = function() {
+    var attrs = {}, sheet, attr;
+
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      sheet = this.datasheets[i];
+      if( sheet.metadata ) continue;
+
+      for( var j = 0; j < sheet.attributes.length; j++ ) {
+        attr = sheet.attributes[j];
+        attrs[attr] = 1;
+      }
+    }
+
+    return Object.keys(attrs);
+  }
+
   this.isEcosisMetadata = function(name) {
     name = name.replace(/\s/g, '').toLowerCase();
     for( var key in this.metadataLookup ) {
       if( this.metadataLookup[key].flat == name ) return true;
     }
     return false;
+  }
+
+  this.getScore = function() {
+    var count = 0;
+
+    // check for spectra level ecosis metadata
+    // TODO
+    /*this.schema.forEach(function(item){
+      if( this.isEcosisMetadata(item.name) ) {
+        count++;
+      } else if( this.inverseAttributeMap[item.name] &&
+                this.isEcosisMetadata(this.inverseAttributeMap[item.name]) ) {
+
+        count++;
+      }
+    }.bind(this));*/
+
+    var map = {
+      'Keywords' : 'tags',
+      'Author' : 'author',
+      'Author Email' : 'author_email',
+      'Maintainer' : 'maintainer',
+      'Maintainer Email' : 'maintainer_email'
+    }
+
+    // check dataset level ecosis metadata
+    for( var key in this.metadataLookup ) {
+      if( map[key] && this.data[map[key]] ) {
+        count++;
+      } else if( this.getDatasetExtra(key).value ) {
+        count++;
+      }
+    }
+
+    if( this.data.notes ) count++;
+    if( this.data.owner_org ) count++;
+
+
+    return count;
   }
 }

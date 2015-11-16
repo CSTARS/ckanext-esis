@@ -13,15 +13,23 @@
       box-shadow: 0 0 5px white;
       border: 1px solid white;
     }
+    input[type="checkbox"]:after {
+      border: 2px solid white !important;
+    }
+    .alert-primary {
+      background-color: #2196f3;
+    }
+    .alert-default {
+      background-color: #888;
+    }
   </style>
 
   <template>
-    <div class="panel panel-default" id="root">
-      <div class="panel-heading">
-        <h3 class="panel-title" >
-
+    <template id="singleResource" is="dom-template">
+      <div class="alert alert-default" id="root">
           <div class="layout horizontal">
             <div class="flex">
+              <input type="checkbox" id="select" on-click="fireSelectEvent"/>
               <span id="titleLabel"></span>
               <a class="btn btn-link" style="color:white" on-click="delete" id="trashBtn"><i class="fa fa-trash"></i></a>
               <span class="label label-danger" id="deletePanel" style="display:none">
@@ -29,27 +37,43 @@
               </span>
             </div>
             <div>
+              <a class="btn btn-link" style="color:white" id="downloadBtn" target="_blank"><i class="fa fa-download"></i></a>
+
               <a class="btn btn-link" style="color:white" id="editLink" on-click="toggleEdit">
                 <i class="fa fa-pencil" id="editLinkIcon"></i>
               </a>
             </div>
           </div>
-
-        </h3>
       </div>
-      <div class="panel-body" style="display:none; overflow:hidden" id="body">
-        <ecosis-datasheet-select-panel
-          style="display:none"
-          id="datasheetSelector"
-          on-select="onDatasheetSelected">
-        </ecosis-datasheet-select-panel>
+    </template>
 
-        <ecosis-datasheet-panel
-          id="datasheetUI"
-          on-type-change="onDatasheetTypeChange">
-        </ecosis-datasheet-panel>
+    <template id="zipResource" is="dom-template">
+      <div class="panel panel-warning" id="root">
+        <div class="panel-heading">
+          <div class="layout horizontal">
+            <div class="flex">
+              <input type="checkbox" id="select" on-click="fireSelectEvent"/>
+
+              <span id="titleLabel"></span>
+
+              <a class="btn btn-link" style="color:white" on-click="delete" id="trashBtn"><i class="fa fa-trash"></i></a>
+
+              <span class="label label-danger" id="deletePanel" style="display:none">
+                <i class="fa fa-spinner fa-spin"></i> Deleting Resource...
+              </span>
+            </div>
+            <div>
+              <a class="btn btn-link" style="color:white" id="downloadBtn" target="_blank"><i class="fa fa-download"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <ecosis-isotope id="zipResources" selector=".zip-item"></ecosis-isotope>
+        </div>
       </div>
-    </div>
+    </template>
+
+    <div id="templateRoot"></div>
   </template>
 </dom-module>
 
@@ -64,11 +88,13 @@
     },
 
     ready : function() {
+      this.datatypes = ['xls','xlsx','csv','tsv','spectra'];
       this.edit = false;
+      this.resource = null;
     },
 
     attached : function() {
-      this.resource = null;
+      if( !this.resourceid ) return;
 
       for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
         var resource = ecosis.ds.resources[i];
@@ -82,110 +108,153 @@
     },
 
     update : function() {
-      this.$.titleLabel.innerHTML = this.resource.name;
+      this.setAttribute('data-name', this.resource.name);
+
+      if( this.resource.isZip ) {
+        this.ele = this.$.zipResource.stamp();
+      } else {
+        this.ele = this.$.singleResource.stamp();
+      }
+      this.$.templateRoot.innerHTML = '';
+      this.$.templateRoot.appendChild(this.ele.root);
+
+
+      this.querySelector('#titleLabel').innerHTML = this.resource.name;
       this.setClass();
 
       if( !this.resource.datasheets ) {
-        this.$.datasheetSelector.style.display = 'none';
-      } else if( this.resource.datasheets.length <= 1 ) {
-        this.$.datasheetSelector.style.display = 'none';
-      } else {
-        this.$.datasheetSelector.style.display = 'block';
-        this.$.datasheetSelector.update(this.resource);
+        this.querySelector('#trashBtn').style.color = '#333';
       }
 
-      if( this.resource.datasheets ) {
-        this.selectDatasheet(0);
+      // hide edit button if invalid file type
+      if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'none';
       } else {
-        this.$.trashBtn.style.color = '#333';
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'inline-block';
       }
+
+      if( this.resource.childResources ) {
+        this.isotope = this.querySelector('#zipResources');
+        this.isotope.clear();
+
+        for( var i = 0; i < this.resource.childResources.length; i++ ) {
+          var ele = document.createElement('ecosis-resource-panel');
+          ele.style.width = '100%';
+          ele.className = 'zip-item';
+          ele.resource = this.resource.childResources[i]; // manually set
+          this.isotope.append(ele);
+          ele.update();
+        }
+
+        this.isotope.init();
+      }
+
+      var url = ecosis.ckan.host+'/dataset/'+this.resource.package_id+'/resource/'+this.resource.id+'/download/'+this.resource.name;
+
+      this.querySelector('#downloadBtn').setAttribute('href', url);
     },
 
-    onDatasheetTypeChange : function(e) {
-      if( e.detail.type == 'metadata' ) {
-        this.resource.datasheets[this.selectedIndex].metadata = true;
-      } else {
-        this.resource.datasheets[this.selectedIndex].metadata = false;
-      }
-      this.setClass();
+    sort : function(sortBy) {
+      if( !this.isotope ) return;
+      this.isotope.sort(sortBy);
+    },
+
+    filter : function(filter) {
+      if( !this.isotope ) return;
+      this.isotope.filter(filter);
     },
 
     setClass : function() {
-      var className = this.getPanelClass(this.getResourceType());
-      this.$.root.className = 'panel panel-'+className;
-    },
+      var type = this.getResourceType();
 
-    selectDatasheet : function(index, edit) {
-      // set the resource and sheet we are going to render
-      this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
-
-      // if the edit flag is passed, actually load the detailed datasheet and render
-      if( edit ) {
-        this.$.datasheetSelector.setDisabled(true);
-        this.$.datasheetUI.edit(function(){
-          this.$.datasheetSelector.setDisabled(false);
-        }.bind(this));
+      // update icons as well;
+      if( this.resource.fromZip ) {
+        this.querySelector('#trashBtn').style.display = 'none';
+        this.querySelector('#downloadBtn').style.display = 'none';
+      } else {
+        this.querySelector('#trashBtn').style.display = 'inline-block';
+        this.querySelector('#downloadBtn').style.display = 'inline-block';
       }
 
-      this.selectedIndex = index;
-    },
+      // update css class
+      if( this.resource.isZip ) {
+        this.setAttribute('data-type', 'zip');
+        return;
+      }
 
-    onDatasheetSelected : function(e) {
-      this.selectDatasheet(e.detail, true);
+      var className = this.getPanelClass(type);
+      this.querySelector('#root').className = 'style-scope ecosis-resource-panel alert alert-'+className;
+      this.setAttribute('data-type', className);
     },
 
     getPanelClass : function(type) {
       if( type == 'data' ) return 'success';
       if( type == 'metadata' ) return 'primary';
-      if( type == 'zip' ) return 'info';
+      if( type == 'multi' ) return 'info';
       return 'default';
     },
 
     getResourceType : function() {
-      if( this.resource.datasheets && this.resource.datasheets.length == 1 && this.resource.datasheets[0].metadata ) {
-        return 'metadata';
+      if( this.resource.datasheets && this.resource.datasheets.length == 1 ) {
+        if( this.resource.datasheets[0].ignore ) {
+          return 'ignored';
+        } else if( this.resource.datasheets[0].metadata ) {
+          return 'metadata';
+        } else {
+          return 'data';
+        }
+      } else if( this.resource.datasheets && this.resource.datasheets.length > 1 ) {
+        return 'multi';
       }
-      if( this.resource.type == 'zip' ) {
-        return 'zip';
-      }
-      if( this.resource.type == 'datafile' ) {
-        return 'data';
-      }
+
       return 'ignored';
     },
 
     toggleEdit : function() {
+      var resourcePopup = document.querySelector('#resourcePopup');
+
+      resourcePopup.edit(this.resource,{
+        onDatasheetUpdate : this.setClass.bind(this)
+      });
+
       this.edit = !this.edit;
 
-      if( this.edit ) {
-        this.$.body.style.display = 'block';
+      this.fire('editing', this.resourceid);
+    },
 
-        this.$.editLink.className = 'btn btn-default';
-        this.$.editLinkIcon.className = 'fa fa-check';
-        this.$.editLinkIcon.style.color = 'black';
+    fireSelectEvent : function() {
+      this.fire('resource-select');
+    },
 
-        this.$.datasheetUI.edit();
+    select : function(select) {
+      if( select ) $(this).find('#select').prop('checked', true);
+      else $(this).find('#select').prop('checked', false);
+    },
 
-        this.fire('editing', this.resourceid);
-      } else {
-        this.$.body.style.display = 'none';
-
-        this.$.editLink.className = 'btn btn-link';
-        this.$.editLinkIcon.className = 'fa fa-pencil';
-        this.$.editLinkIcon.style.color = 'white';
-      }
+    isSelected : function() {
+      return $(this).find('#select').is(':checked');
     },
 
     delete : function() {
       if( !confirm("Are you sure you want to remove: "+this.resource.name+"?") ) return;
+      this.forceDelete();
+    },
 
-      this.$.deletePanel.style.display = 'inline-block';
+    forceDelete : function() {
+      this.querySelector('#deletePanel').style.display = 'inline-block';
 
       ecosis.ckan.removeResource(this.resource.id,
         function(resp){
-          this.$.deletePanel.style.display = 'block';
+          this.querySelector('#deletePanel').style.display = 'block';
 
-          if( resp.error ) return alert("Server error deleting resource");
+          if( resp.error ) {
+            // ERROR 17
+            resp.code = 17;
+            resp.message += '. Server error deleting resource.';
+            return ecosis.errorPopup.show(resp);
+          }
 
           for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
             if( ecosis.ds.resources[i] == this.resource ) {
@@ -202,6 +271,6 @@
           this.fire('update', this.resourceid);
         }.bind(this)
       );
-    },
+    }
   });
 </script>

@@ -38,13 +38,13 @@
             <div class="radio">
               <label>
                 <input type="radio" name="optionsRadios" id="columnInput" value="column" checked="" on-click="onRadioChange">
-                My data is laid out by column
+                My observations are by column.
               </label>
             </div>
             <div class="radio">
               <label>
                 <input type="radio" name="optionsRadios" id="rowInput" value="row" on-click="onRadioChange">
-                My data is laid out by row
+                My observations are by row.
               </label>
             </div>
           </div>
@@ -57,7 +57,10 @@
     <!-- end well -->
 
     <div id="processing" style="display: none">
-        <h4 class="alert alert-success">Uploading & Processing Files...</h4>
+        <h4 class="alert alert-success">
+          <div><i class="fa fa-spin fa-circle-o-notch"></i> Uploading & Processing Files...</div>
+          <div style="font-size:12px">This may take a couple minutes, depending on the size of your upload.</div>
+        </h4>
         <div id="uploadStatusTable"></div>
     </div>
 
@@ -72,8 +75,8 @@
         </div>
     </div>
 
-    <div id="completePanel" style="display:none; margin-top:20px">
-      <a id="completePanelLink" class="btn btn-default"><i class="fa fa-list"></i> Open resource list</a>
+    <div id="completePanel" style="display:none; margin-top:20px;">
+      <a id="completePanelLink" class="btn btn-primary animated fadeInDownBig"><i class="fa fa-list"></i> Open resource list</a>
     </div>
 
     <div style="margin-top: 40px">
@@ -179,24 +182,74 @@
     },
 
     onUploadComplete : function() {
-        // set default layout and parse workspace
-        ecosis.ckan.setDefaultLayout(
-            ecosis.ds.package_id, this.newResourceIds, this.defaultType,
-            function(resp) {
-                if( resp.error ) return console.log('Error setting default resource layout :(');
+      if( this.newResourceIds.length == 0 ) {
+        this.onProcessingComplete();
+        return;
+      }
 
-                this.$.file.value = '';
-                ecosis.ds.runAfterResourceAdd(resp);
+      ecosis.ckan.processResource(
+          ecosis.ds.package_id, this.newResourceIds, null, {layout: this.defaultType},
+          function(resp) {
+              if( resp.error ) {
+                // ERROR 3
+                resp.code = 3;
+                return ecosis.errorPopup.show(resp);
+              }
+
+              // proly a smarter way to do things, but for now, reload entire workspace
+              ecosis.ckan.getWorkspace(ecosis.ds.package_id, function(result){
+                if( result.error ) {
+                  // ERROR 4
+                  result.code = 4;
+                  return ecosis.errorPopup.show(result);
+                }
+
+                ecosis.ds.runAfterResourceAdd(result);
+                this.onProcessingComplete();
                 this.fire('resource-add');
-                this.setProcessing(false);
+                this.showUploadWizard();
+              }.bind(this));
+          }.bind(this)
+      )
+    },
 
-                this.$.completePanel.style.display = 'block';
-            }.bind(this)
-        )
+    showUploadWizard : function() {
+      var resources = [];
+      for( var i = 0; i < this.newResourceIds.length; i++ ) {
+        var resource = ecosis.ds.resourceLookup[this.newResourceIds[i]];
+        if( !resource.datasheets ) continue;
+
+        if( resource.childResources ) {
+          for( var j = 0; j < resource.childResources.length; j++ ) {
+            if( !resource.childResources[j].datasheets ) continue;
+            if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
+            
+            resources.push(resource.childResources[j]);
+          }
+        } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
+          continue;
+        } else {
+          resources.push(resource);
+        }
+      }
+
+      document.querySelector('ecosis-upload-splash').show(resources,{
+        onDatasheetUpdate : function(){
+          // make sure all panels have correct css after update
+          document.querySelector('ecosis-page-current-resources').verifyPanelCss();
+        }
+      });
+    },
+
+    onProcessingComplete : function() {
+      this.$.file.value = '';
+      this.setProcessing(false);
+
+      this.$.completePanel.style.display = 'block';
     },
 
     uploadFiles : function(type, index) {
-        if( this.staggedFiles.length == index ) {
+        if( this.staggedFiles.length <= index ) {
             // now tell server to parse resources with given type
             this.onUploadComplete();
             return;
@@ -278,14 +331,15 @@
 
       for( var i = 0; i < this.staggedFiles.length; i++ ) {
         var file = this.staggedFiles[i];
+        var status = this.getFileStatus(file);
 
         table +=
           '<tr>'+
             '<td><b>'+file.name+'</b></td>'+
-            '<td style="color:#888" index="'+i+'">'+this.getFileStatusText(file)+'</td>'+
+            '<td style="color:#888" index="'+i+'">'+status.message+'</td>'+
             '<td>'+
-              '<a class="btn btn-default" index="'+i+'">Abort</a>'+
-            '</td>'
+              '<a class="btn btn-default" index="'+i+'" '+(status.code == 2 ? 'style="display:none"' : '')+'>Abort</a>'+
+            '</td>'+
           '</tr>'
       }
       table += '</table>';
@@ -297,13 +351,13 @@
         .on('click', this.abort.bind(this));
     },
 
-    getFileStatusText : function(file) {
+    getFileStatus : function(file) {
       if( file.progress != 100 && !file.aborted ) {
-        return 'Uploading: '+file.progress+'% @ '+file.speed;
+        return {code: 1, message: 'Uploading: '+file.progress+'% @ '+file.speed};
       } else if ( file.progress == 100 && !file.aborted ) {
-        return 'Upload Complete. Processing...';
+        return {code: 2, message : 'Upload Complete. Processing...'};
       } else if( file.aborted ) {
-        return '<span class="label label-danger">Aborted</span>';
+        return {code: -1, message: '<span class="label label-danger">Aborted</span>'};
       }
 
       return '';
@@ -311,7 +365,14 @@
 
     updateStatusText : function(index) {
       var td = this.$.uploadStatusTable.querySelector('td[index="'+index+'"]');
-      if( td ) td.innerHTML = this.getFileStatusText(this.staggedFiles[index]);
+      if( td ) {
+        var status = this.getFileStatus(this.staggedFiles[index]);
+        td.innerHTML = status.message;
+        if( status.code == 2 ) {
+          var btn = this.$.uploadStatusTable.querySelector('a[index="'+index+'"]');
+          btn.style.display = 'none';
+        }
+      }
     }
 
 

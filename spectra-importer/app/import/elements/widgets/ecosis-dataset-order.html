@@ -19,8 +19,8 @@
       <span class="label label-primary"><i></i> Saving...</span>
     </div>
 
-    <div class="well">
-      <div>
+    <div>
+      <div class="well">
           Is this a time series dataset or a dataset that has any other form of ordering?
           If so, select the attribute to order by as well as the type of sort that should
           be performed.  You can also provide a textual description of what this ordering is.
@@ -75,27 +75,37 @@
     update : function() {
       this.attributeArray = [];
 
-      for( var i = 0; i < ecosis.ds.schema.length; i++ ) {
-          var attr = ecosis.ds.schema[i];
-          if( attr.type == 'metadata' ) this.attributeArray.push(attr);
+      var attrs = {}, sheet;
+      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+        sheet = ecosis.ds.datasheets[i];
+        for( var j = 0; j < sheet.attributes.length; j++ ) {
+          attrs[sheet.attributes[j]] = 1;
+        }
+      }
+
+      attrs = Object.keys(attrs);
+
+      for( var i = 0; i < attrs.length; i++ ) {
+          if( ecosis.ds.attributeMap[attrs[i]] ) continue;
+          this.attributeArray.push(attrs[i]);
       }
 
       this.attributeArray.sort(function(a, b){
-          if( a.name > b.name ) return 1;
-          if( a.name < b.name ) return -1;
+          if( a > b ) return 1;
+          if( a < b ) return -1;
           return 0;
       });
 
       var options = '<option></option>';
       for( var i = 0; i < this.attributeArray.length; i++ ) {
-        options += '<option value="'+this.attributeArray[i].name+'">'+this.attributeArray[i].name+'</option>';
+        options += '<option value="'+this.attributeArray[i]+'">'+this.attributeArray[i]+'</option>';
       }
 
       this.$.orderByInput.innerHTML = options;
 
-      var sort_description = ecosis.ds.getDatasetExtra('sort_description').value || '';
-      var sort_type = ecosis.ds.getDatasetExtra('sort_type').value || '';
-      var sort_on = ecosis.ds.getDatasetExtra('sort_on').value || '';
+      var sort_description = ecosis.ds.sort.description || '';
+      var sort_type = ecosis.ds.sort.type || '';
+      var sort_on = ecosis.ds.sort.on || '';
 
       this.$.orderByInput.value = sort_on;
       this.$.orderTypeInput.value = sort_type;
@@ -118,9 +128,11 @@
       var sort_on = this.$.orderByInput.value;
       var sort_type = this.$.orderTypeInput.value;
 
-      ecosis.ds.setDatasetExtra('sort_description', this.$.descriptionInput.value);
-      ecosis.ds.setDatasetExtra('sort_type', sort_type);
-      ecosis.ds.setDatasetExtra('sort_on', sort_on);
+      ecosis.ds.sort = {
+        on : sort_on,
+        type : sort_type,
+        description : this.$.descriptionInput.value || ''
+      }
 
 
       if( sort_on && sort_on != '' ) {
@@ -146,29 +158,20 @@
     save : function() {
         this.$.saveLabel.style.display = 'block';
 
-        // make sure we have the correct package state
-        // all resources need to be included when you make a updatePackage call
-        ecosis.ckan.getPackage(ecosis.ds.package_id,
+        var options = {
+          sort : ecosis.ds.sort
+        }
+
+        ecosis.ckan.setPackageOptions(ecosis.ds.package_id, options,
           function(resp) {
+            this.$.saveLabel.style.display = 'none';
+
             if( resp.error ) {
-              this.$.saveLabel.style.display = 'none';
-              return alert('Failed to fetch for dataset update :(');
+              // ERROR 14
+              resp.code = 14;
+              resp.message += '. Failed to set dataset sort order.';
+              ecosis.errorPopup.show(resp);
             }
-
-            var metadata = resp.result;
-            for( var key in ecosis.ds.data ) {
-              metadata[key] = ecosis.ds.data[key];
-            }
-
-            ecosis.ckan.updatePackage(metadata,
-              function(resp) {
-                this.$.saveLabel.style.display = 'none';
-
-                if( resp.error ) return alert('Failed to update dataset :(');
-                if( !resp.result.id ) return alert('Failed to update dataset :(');
-
-              }.bind(this)
-            );
           }.bind(this)
         );
     }

@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: ckanext-ecosis
+Version: 0.1
+Summary: EcoSIS extension adding additional fields and controls for spectral data
+Home-page: http://www.ucdavis.edu
+Author: Justin Merz
+Author-email: jrmerz@ucdavis.edu
+License: UNKNOWN
+Description:         
+Platform: UNKNOWN
