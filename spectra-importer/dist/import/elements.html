@@ -568,7 +568,7 @@ debouncer.stop();
 }
 }
 });
-Polymer.version = '1.1.5';
+Polymer.version = '1.1.4';
 Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
@@ -2451,15 +2451,7 @@ this.listen(node, name, listeners[key]);
 }
 },
 listen: function (node, eventName, methodName) {
-var handler = this._recallEventHandler(this, eventName, node, methodName);
-if (!handler) {
-handler = this._createEventHandler(node, eventName, methodName);
-}
-if (handler._listening) {
-return;
-}
-this._listen(node, eventName, handler);
-handler._listening = true;
+this._listen(node, eventName, this._createEventHandler(node, eventName, methodName));
 },
 _boundListenerKey: function (eventName, methodName) {
 return eventName + ':' + methodName;
@@ -2498,7 +2490,6 @@ host[methodName](e, e.detail);
 host._warn(host._logf('_createEventHandler', 'listener method `' + methodName + '` not defined'));
 }
 };
-handler._listening = false;
 this._recordEventHandler(host, eventName, node, methodName, handler);
 return handler;
 },
@@ -2506,7 +2497,6 @@ unlisten: function (node, eventName, methodName) {
 var handler = this._recallEventHandler(this, eventName, node, methodName);
 if (handler) {
 this._unlisten(node, eventName, handler);
-handler._listening = false;
 }
 },
 _listen: function (node, eventName, handler) {
@@ -3354,12 +3344,6 @@ elt[n] = props[n];
 }
 }
 return elt;
-},
-isLightDescendant: function (node) {
-return this.contains(node) && Polymer.dom(this).getOwnerRoot() === Polymer.dom(node).getOwnerRoot();
-},
-isLocalDescendant: function (node) {
-return this.root === Polymer.dom(node).getOwnerRoot();
 }
 });
 Polymer.Bind = {
@@ -4161,22 +4145,6 @@ if (args.length) {
 this._notifySplice(array, path, 0, args.length, []);
 }
 return ret;
-},
-prepareModelNotifyPath: function (model) {
-this.mixin(model, {
-fire: Polymer.Base.fire,
-notifyPath: Polymer.Base.notifyPath,
-_EVENT_CHANGED: Polymer.Base._EVENT_CHANGED,
-_notifyPath: Polymer.Base._notifyPath,
-_pathEffector: Polymer.Base._pathEffector,
-_annotationPathEffect: Polymer.Base._annotationPathEffect,
-_complexObserverPathEffect: Polymer.Base._complexObserverPathEffect,
-_annotatedComputationPathEffect: Polymer.Base._annotatedComputationPathEffect,
-_computePathEffect: Polymer.Base._computePathEffect,
-_modelForPath: Polymer.Base._modelForPath,
-_pathMatchesEffect: Polymer.Base._pathMatchesEffect,
-_notifyBoundPaths: Polymer.Base._notifyBoundPaths
-});
 }
 });
 }());
@@ -5384,7 +5352,6 @@ properties: { __hideTemplateChildren__: { observer: '_showHideChildren' } },
 _instanceProps: Polymer.nob,
 _parentPropPrefix: '_parent_',
 templatize: function (template) {
-this._templatized = template;
 if (!template._content) {
 template._content = template.content;
 }
@@ -5395,11 +5362,11 @@ return;
 }
 var archetype = Object.create(Polymer.Base);
 this._customPrepAnnotations(archetype, template);
-this._prepParentProperties(archetype, template);
 archetype._prepEffects();
 this._customPrepEffects(archetype);
 archetype._prepBehaviors();
 archetype._prepBindings();
+this._prepParentProperties(archetype, template);
 archetype._notifyPath = this._notifyPathImpl;
 archetype._scopeElementClass = this._scopeElementClassImpl;
 archetype.listen = this._listenImpl;
@@ -5482,7 +5449,6 @@ delete parentProps[prop];
 proto = archetype._parentPropProto = Object.create(null);
 if (template != this) {
 Polymer.Bind.prepareModel(proto);
-Polymer.Base.prepareModelNotifyPath(proto);
 }
 for (prop in parentProps) {
 var parentProp = this._parentPropPrefix + prop;
@@ -5501,7 +5467,6 @@ Polymer.Bind.prepareInstance(template);
 template._forwardParentProp = this._forwardParentProp.bind(this);
 }
 this._extendTemplate(template, proto);
-template._pathEffector = this._pathEffectorImpl.bind(this);
 }
 },
 _createForwardPropEffector: function (prop) {
@@ -5512,7 +5477,7 @@ this._forwardParentProp(prop, value);
 _createHostPropEffector: function (prop) {
 var prefix = this._parentPropPrefix;
 return function (source, value) {
-this.dataHost._templatized[prefix + prop] = value;
+this.dataHost[prefix + prop] = value;
 };
 },
 _createInstancePropEffector: function (prop) {
@@ -5544,17 +5509,16 @@ var dot = path.indexOf('.');
 var root = dot < 0 ? path : path.slice(0, dot);
 dataHost._forwardInstancePath.call(dataHost, this, path, value);
 if (root in dataHost._parentProps) {
-dataHost._templatized.notifyPath(dataHost._parentPropPrefix + path, value);
+dataHost.notifyPath(dataHost._parentPropPrefix + path, value);
 }
 },
-_pathEffectorImpl: function (path, value, fromAbove) {
+_pathEffector: function (path, value, fromAbove) {
 if (this._forwardParentPath) {
 if (path.indexOf(this._parentPropPrefix) === 0) {
-var subPath = path.substring(this._parentPropPrefix.length);
-this._forwardParentPath(subPath, value);
+this._forwardParentPath(path.substring(8), value);
 }
 }
-Polymer.Base._pathEffector.call(this._templatized, path, value, fromAbove);
+Polymer.Base._pathEffector.apply(this, arguments);
 },
 _constructorImpl: function (model, host) {
 this._rootDataHost = host._getRootDataHost();
@@ -5597,9 +5561,8 @@ return host._scopeElementClass(node, value);
 stamp: function (model) {
 model = model || {};
 if (this._parentProps) {
-var templatized = this._templatized;
 for (var prop in this._parentProps) {
-model[prop] = templatized[this._parentPropPrefix + prop];
+model[prop] = this[this._parentPropPrefix + prop];
 }
 }
 return new this.ctor(model, this);
@@ -6207,7 +6170,7 @@ this.deselect(item);
 }
 } else {
 this.push('selected', item);
-var skey = this._selectedColl.getKey(item);
+skey = this._selectedColl.getKey(item);
 this.linkPaths('selected.' + skey, 'items.' + key);
 }
 } else {
@@ -7236,7 +7199,9 @@ this.fire('dom-change');
   <template>
     <div class="well">
       <div id="map" style="height: 400px"></div>
-      <div class="help-block">Draw bounding box for dataset</div>
+      <div class="help-block">Draw bounding box for dataset.  If you provide latitude and
+      longitude or geojson field(s) in your spectra, a bounding box for your dataset will
+      be automatically calculated for search.</div>
     </div>
   </template>
 </dom-module>
@@ -7276,6 +7241,7 @@ this.fire('dom-change');
       try {
         this.polygon = L.geoJson(geojsonFeature);
         this.polygon.addTo(this.map);
+        this.polygon.on('click', this.onFeatureClick.bind(this));
       } catch(e) {}
     },
 
@@ -7296,6 +7262,22 @@ this.fire('dom-change');
 
       this.drawing = true;
       this.p1 = e.latlng;
+    },
+
+    onFeatureClick : function(e) {
+      if( this.drawing ) {
+        return this.onClick(e);
+      }
+
+      // else clear
+      if( this.polygon ) {
+        this.map.removeLayer(this.polygon);
+      }
+      ecosis.ds.setDatasetExtra('geojson', null);
+      this.fire('update', {
+        attribute : 'geojson',
+        value : null
+      });
     },
 
     onMouseMove : function(e) {
@@ -7324,7 +7306,7 @@ this.fire('dom-change');
       };
 
       this.polygon = L.geoJson(geojsonFeature);
-      this.polygon.on('click', this.onClick.bind(this));
+      this.polygon.on('click', this.onFeatureClick.bind(this));
       this.polygon.addTo(this.map);
     },
 
@@ -7381,7 +7363,7 @@ this.fire('dom-change');
       <div class="form-group">
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
-          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-keyup="onTitleInputChange">
+          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
 
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
@@ -7395,11 +7377,15 @@ this.fire('dom-change');
             URL: <span id="urlLabelInput"></span>
           </span>
 
+          <div id="message2"></div>
+
           <div id="message" class="help-block">
             Please note: your dataset title is <i class="text text-warning">PERMANENT</i>.  Please think about the title you choose.
             Finally, please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
+
+
         </div>
       </div>
     </div>
@@ -7432,7 +7418,7 @@ this.fire('dom-change');
     },
 
     onTitleInputChange : function() {
-      ecosis.ds.data.title = this.$.titleInput.value;
+      ecosis.ds.data.title = this.$.titleInput.value.replace(/_/g, ' ');
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
@@ -7462,6 +7448,25 @@ this.fire('dom-change');
 
       }.bind(this), 500);
     }
+
+    /*onBlur : function() {
+      var parts = ecosis.ds.data.title.split(' ');
+
+      var wordsOverFour = 0;
+      var wordsOverFourNoNum = 0;
+      for( var i = 0; i < parts.length; i++ ) {
+        if( parts[i].length > 4 ) {
+          wordsOverFour++;
+          if( !words.match(/\d/) ) {
+            wordsOverFourNoNum++;
+          }
+        }
+      }
+
+      if( wordsOverFour < 3 ) {
+          var message = '<'
+      }
+    }*/
   });
 </script>
 
@@ -7487,7 +7492,10 @@ this.fire('dom-change');
         <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Keywords</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="keywordInput" on-keyup="onInputChange" placeholder="Search Keywords">
-
+          <div class="help-block">
+            Search for EcoSIS keywords or create new keywords.  Comma separate to add more than one keyword at a time.  Use
+            the 'enter' key to create new keyword(s).
+          </div>
           <span id="searchingPanel" class="label label-primary" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Searching...
           </span>
@@ -7539,18 +7547,21 @@ this.fire('dom-change');
     },
 
     createToken : function() {
-        var value = this.clean(this.$.keywordInput.value)
+      var parts = this.$.keywordInput.value.split(',');
+      for( var i = 0; i < parts.length; i++ ) {
+        var value = this.clean(parts[i]);
 
-        if( value.length == 0 ) return;
+        if( value.length == 0 ) continue;
 
         var t = {
             label : value,
             value : value
         }
         this.addToken(t, true);
+      }
 
-        this.$.keywordInput.value = '';
-        this.$.resultRoot.innerHTML = '';
+      this.$.keywordInput.value = '';
+      this.$.resultRoot.innerHTML = '';
     },
 
     addResult : function(e) {
@@ -7585,7 +7596,7 @@ this.fire('dom-change');
       for( var i = 0; i < this.results.length; i++ ) {
         btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
       }
-      this.$.resultRoot.innerHTML = btns;
+      this.$.resultRoot.innerHTML = btns.length > 0 ? '<div class="well">Suggestions:<br />'+btns+'</div>' : '';
 
       $(this.$.resultRoot).find('a').on('click', this.addResult.bind(this));
     },
@@ -7630,7 +7641,7 @@ this.fire('dom-change');
     },
 
     clean : function(txt) {
-      return txt.replace(/[^A-Za-z0-9-_\s]/g, '');
+      return txt.replace(/[^A-Za-z0-9-_]/g, '').trim();
     }
   });
 </script>
@@ -7670,7 +7681,7 @@ this.fire('dom-change');
             </li>
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o"></i> Publish</a></li>
             <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
@@ -8279,6 +8290,44 @@ this.fire('dom-change');
         </div>
       </div>
 
+      <!-- Datasheet Seperator -->
+      <div class="form-horizontal" id="seperatorPanel" style="display:none">
+        <div class="form-group">
+
+            <label class="col-md-2 control-label">File Seperator</label>
+            <div class="col-md-10">
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="commaInput" value="," checked="" on-click="onSeperatorChange">
+                  Comma
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="tabInput" value="tab" on-click="onSeperatorChange">
+                  Tab
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="semicolonInput" value=";" on-click="onSeperatorChange">
+                  Semicolon
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="otherInput" value="other" on-click="onSeperatorChange">
+                  Other
+                  <input type="text" id="otherSeperatorInput" on-blur="onSeperatorChange">
+                </label>
+              </div>
+            </div>
+
+            <a on-click="toggleHelp" style="cursor:pointer">Format Help.</a>
+            <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeIn"></ecosis-dataformat-help>
+          </div>
+        </div>
+
       <div id="updatingPanel" class="alert alert-warning" style="display:none">
         <h6 style="color:white"><i class="fa fa-spinner fa-spin"></i> Updating...</h6>
       </div>
@@ -8308,6 +8357,10 @@ this.fire('dom-change');
         metadata : this.sheet.metadata,
         ignore : this.sheet.ignore,
         joinOn : this.sheet.joinOn
+      }
+
+      if( this.sheet.seperator ) {
+        options.seperator = this.sheet.seperator;
       }
 
       ecosis.ckan.processResource(
@@ -8385,6 +8438,7 @@ this.fire('dom-change');
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
+      this.updateSeperatorUi();
 
       if( callback ) callback();
     },
@@ -8418,6 +8472,31 @@ this.fire('dom-change');
       }
     },
 
+    updateSeperatorUi : function() {
+      if( !this.sheet.isCSV ) {
+        this.$.seperatorPanel.style.display = 'none';
+        return;
+      }
+
+      this.$.seperatorPanel.style.display = 'block';
+      $(this).find('.orientation-radio').prop('checked', false);
+      this.$.otherSeperatorInput.value = '';
+
+      if( !this.sheet.seperator ) {
+        this.$.commaInput.checked = true;
+        return;
+      }
+
+      var options = [',', 'tab', ';'];
+      if( options.indexOf(this.sheet.seperator) > -1 ) {
+        $(this).find('[value="'+this.sheet.seperator+'"]').prop('checked', true);
+        return;
+      }
+
+      this.$.otherInput.checked = true;
+      this.$.otherSeperatorInput.value = this.sheet.seperator;
+    },
+
     onOrientationChange : function(e) {
       this.sheet.layout = e.currentTarget.value;
       if( this.sheet.layout == 'column' ) {
@@ -8426,6 +8505,25 @@ this.fire('dom-change');
         $(this.$.columnInput).prop('checked', false);
       }
 
+      this.save();
+    },
+
+    onSeperatorChange : function(e) {
+      var ele = e.currentTarget;
+
+      if( ele.getAttribute('type') == 'radio' ) {
+        $(this).find('.orientation-radio').prop('checked', false);
+        $(ele).prop('checked', true);
+      }
+
+      var val = e.currentTarget.value;
+      if( val === 'other' ) {
+        val = this.$.otherSeperatorInput.value;
+      }
+
+      if( !val ) return;
+
+      this.sheet.seperator = val;
       this.save();
     },
 
@@ -8760,19 +8858,24 @@ this.fire('dom-change');
             return ecosis.errorPopup.show(resp);
           }
 
-          for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-            if( ecosis.ds.resources[i] == this.resource ) {
+          for( var i = ecosis.ds.resources.length-1; i >= 0; i-- ) {
+            var r = ecosis.ds.resources[i];
+
+            if( r.id == this.resourceid ) {
               ecosis.ds.resources.splice(i, 1);
-              ecosis.ds.fireUpdate();
-              break;
+            } else if ( r.zip && r.zip.resourceId == this.resourceid  ) {
+              ecosis.ds.resources.splice(i, 1);
             }
           }
+          ecosis.ds.fireUpdate();
 
+          var ele = this;
           $(this).hide('slow', function(){
-            $(this).remove();
+            $(this).detach();
+            ele.fire('update', ele.resourceid);
           });
 
-          this.fire('update', this.resourceid);
+
         }.bind(this)
       );
     }
@@ -8802,13 +8905,18 @@ this.fire('dom-change');
       <div class="layout horizontal center">
           <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
 
-          <div class="flex">
+          <div class="flex" id="columnPreview">
             <div class="row">
               <div class="col-sm-6">
-                <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
+                <div id="columnTableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
               </div>
-              <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
+              <div class="col-sm-6" id="columnChartRoot" style="height: 300px"></div>
             </div>
+          </div>
+
+          <div class="flex" id="rowPreview">
+            <div id="rowTableRoot" style="overflow:auto; margin-bottom: 35px"></div>
+            <div id="rowChartRoot" style="height: 200px; margin: 25px 0 15px 0"></div>
           </div>
 
           <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
@@ -8881,6 +8989,7 @@ this.fire('dom-change');
 
 
       this.renderTable(resp.metadata);
+      var layout = this.sheet.layout || 'row';
 
       if( resp.joinKey && resp.metadata[resp.joinKey] ) {
         var joined = 'None';
@@ -8893,13 +9002,13 @@ this.fire('dom-change');
           }
         }
 
-        this.$.chartRoot.innerHTML =
+        this.$[layout+'ChartRoot'].innerHTML =
           '<h4 style="text-align:center">Joined On:</h4> '+
           '<h5 style="text-align:center">'+resp.joinKey+' = <span style="color:#888">'+resp.metadata[resp.joinKey]+'</span></h5>'+
           '<h4 style="text-align:center">Matches:</h4>'+
           '<h6 style="text-align:center; color:#888">'+joined+'</h6>';
       } else {
-        this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
+        this.$[layout+'ChartRoot'].innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
       }
 
       this.$.info.innerHTML =
@@ -8910,15 +9019,16 @@ this.fire('dom-change');
     renderSpectraResp : function(resp) {
       this.loading(false);
       if( resp.error ) {
-        // ERROR 18
-        resp.code = 18;
+        // ERROR 19
+        resp.code = 19;
         ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);
+      var layout = this.sheet.layout || 'row';
 
-      if( !(this.$.chartRoot.firstChild && this.$.chartRoot.firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
-        this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+      if( !(this.$[layout+'ChartRoot'].firstChild && this.$[layout+'ChartRoot'].firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
+        this.$[layout+'ChartRoot'].innerHTML = '<ecosis-chart></ecosis-chart>';
       }
 
       this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small> <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
@@ -8938,14 +9048,14 @@ this.fire('dom-change');
       });
 
       data.splice(0, 0, ['Wavelength', '']);
-      this.$.chartRoot.firstChild.setHeight(300);
-      this.$.chartRoot.firstChild.options = {
+      this.$[layout+'ChartRoot'].firstChild.setHeight(layout === 'row' ? 200 : 300);
+      this.$[layout+'ChartRoot'].firstChild.options = {
         animation:{
           duration: 700,
           easing: 'out',
         }
       }
-      this.$.chartRoot.firstChild.setData(data);
+      this.$[layout+'ChartRoot'].firstChild.setData(data);
     },
 
     initSlider : function() {
@@ -8970,21 +9080,45 @@ this.fire('dom-change');
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
 
+      var layout = this.sheet.layout || 'row';
+
       var table = '<h5>Metadata</h5><table class="table">';
-      var c = 0;
-      for( var key in metadata ) {
-        if( ignorelist.indexOf(key) > -1 ) continue;
-        table += '<tr><td>'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
 
-        c++;
-        if( c == 100 ) {
-          table += '<tr><td>...</td><td>...</td></tr>';
-          break;
+      if( this.sheet.layout === 'column' ) {
+        var c = 0;
+        for( var key in metadata ) {
+          if( ignorelist.indexOf(key) > -1 ) continue;
+          table += '<tr><td style="font-weight:bold">'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
+
+          c++;
+          if( c == 100 ) {
+            table += '<tr><td>...</td><td>...</td></tr>';
+            break;
+          }
         }
-      }
-      this.$.tableRoot.innerHTML = table+'</table>';
+      } else {
+        var c = 0;
+        var header = '<tr>';
+        var data = '<tr>';
+        for( var key in metadata ) {
+          if( ignorelist.indexOf(key) > -1 ) continue;
+          header += '<th style="white-space:nowrap">'+key+'</th>';
+          data += '<td style="white-space:nowrap; max-width: 250px; overflow:auto">'+metadata[key]+this.getProcessInfo(key, metadata)+'</td>';
 
-      $(this.$.tableRoot).find('[data-toggle="tooltip"]').tooltip()
+          c++;
+          if( c == 100 ) {
+            header += '<td>...</td>';
+            data += '<td>...</td>';
+            break;
+          }
+        }
+        table += header+'</tr>'+data+'</tr>';
+      }
+
+
+      this.$[layout+'TableRoot'].innerHTML = table+'</table>';
+
+      $(this.$[layout+'TableRoot']).find('[data-toggle="tooltip"]').tooltip()
     },
 
     getProcessInfo : function(key, metadata) {
@@ -9034,6 +9168,18 @@ this.fire('dom-change');
       }
 
       if( this.sheet.ignore ) return;
+
+      if( this.sheet.layout === 'column' ) {
+        this.$.columnPreview.style.display = 'block';
+        this.$.rowPreview.style.display = 'none';
+        this.$.leftArrow.querySelector('i').className = 'fa fa-arrow-left';
+        this.$.rightArrow.querySelector('i').className = 'fa fa-arrow-right';
+      } else {
+        this.$.columnPreview.style.display = 'none';
+        this.$.rowPreview.style.display = 'block';
+        this.$.leftArrow.querySelector('i').className = 'fa fa-arrow-up';
+        this.$.rightArrow.querySelector('i').className = 'fa fa-arrow-down';
+      }
 
       if( this.sheet.metadata ) {
         this.updateMetadata();
@@ -9212,6 +9358,13 @@ this.fire('dom-change');
     },
 
     selectDatasheet : function(index, edit) {
+      // required for datasheet display
+      if( this.resource.name.match(/\.csv$/i) || this.resource.name.match(/\.spectra$/i) ) {
+        this.resource.datasheets[index].isCSV = true;
+      } else {
+        this.resource.datasheets[index].isCSV = false;
+      }
+
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
       this.$.datasheetUI.edit();
@@ -9238,8 +9391,8 @@ this.fire('dom-change');
 
             <div id="report" style="margin: 50px 15px 20px 15px">
               Please help us fix bugs by reporting them
-              <a href="https://github.com/CSTARS/ckanext-ecosis/issues/new" target="_blank">here on GitHub</a>.
-              <br>It's quick, easy and we will even help with the message:
+              <a href="https://github.com/CSTARS/ckanext-ecosis/issues/new" target="_blank">here on GitHub</a>!
+              <br><b>Copy and paste</b> message below into GitHub Issue:
             </div>
             <div class="well">
               <div> - <b>Package ID:</b> <span id="project"></span></div>
@@ -9647,11 +9800,6 @@ this.fire('dom-change');
       </div>
 
       <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
-      <!-- TODO
-      <div class="form-wrap">
-        <ecosis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></ecosis-ui-token-input>
-      </div>
-      -->
 
       <div class="form-group">
         <label for="licenseInput" class="col-md-2 control-label">License: </label>
@@ -9780,7 +9928,47 @@ this.fire('dom-change');
       </div>
     </div>
 
-  </template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title">Welcome to the EcoSIS Data Importer!</h4>
+          </div>
+          <div class="modal-body" style="padding: 25px">
+            <p>A quick note before you continue.</p>
+
+
+            <p style="padding:30px 0" class="text text-success">
+              Through EcoSIS you will be <b>publishing</b> your data to the world. In
+              order to make datasets presentable and <b>searchable</b>, please give them clear
+              <b>human-readable</b> titles and descriptions, and include as much
+              dataset-level metadata as possible.  Include enough information so
+              so a complete outsider can understand what the dataset is and is not.
+            </p>
+
+            <h5>tl;dr</h5>
+
+            <ul>
+              <li>Publish for others.</li>
+              <li>Human-readable titles and descriptions.</li>
+              <li>Fill out as much as you can.</li>
+            </ul>
+
+            <div class="help-block">
+              Remember EcoSIS is what the <b>community</b> makes it to be.
+            </div>
+
+            <div style="text-align:center">
+              <a class="btn btn-success btn-lg" data-dismiss="modal">Continue</a><a>
+            </a></div><a>
+
+          </a></div><a>
+        </a></div><!-- /.modal-content --><a>
+      </a></div><!-- /.modal-dialog --><a>
+    </a></div><!-- /.modal --><a>
+
+  </a></template>
 </dom-module>
 
 <script>
@@ -9799,13 +9987,14 @@ this.fire('dom-change');
         else ecosis.ds.on('load', this.onDataLoad.bind(this));
       } else {
         this.setMode('create');
+        this.showCreatePopup();
       }
 
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
 
       ecosis.ckan.gitInfo(function(resp){
         this.git = resp;
-        
+
         if( !resp.error ) {
           ecosis.git = resp;
         }
@@ -9817,6 +10006,12 @@ this.fire('dom-change');
           this.$.gitCommitLabel.innerHTML = this.git.commit;
         }
       }.bind(this));
+    },
+
+    showCreatePopup : function() {
+      this.popup = $(this.$.popup).remove();
+      $('body').append(this.popup);
+      this.popup.modal({show:true});
     },
 
     setMode : function(mode) {
@@ -9863,7 +10058,7 @@ this.fire('dom-change');
         this.$.createBtn.removeAttribute('disabled');
         this.$.helpCreatePanel.style.display = 'none';
       } else {
-        this.$.createBtn.setAttribute('disabled', '');
+        this.$.createBtn.setAttribute('disabled', 'disabled');
         this.$.helpCreatePanel.style.display = 'block';
       }
     },
@@ -9928,8 +10123,10 @@ this.fire('dom-change');
     },
 
     create : function() {
+      if( this.$.createBtn.hasAttribute('disabled') ) return;
+
       this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
-      this.$.createDatasetBtn.setAttribute('disabled', '');
+      this.$.createDatasetBtn.setAttribute('disabled', 'disabled');
 
       ecosis.ckan.createPackage(ecosis.ds.data,
           function(resp) {
@@ -10382,7 +10579,9 @@ this.fire('dom-change');
           // hide resource
           panel.toggleEdit();
           // clear cached 'full' datasheet
-          panel.$.datasheetUI.datasheet = null;
+          if( panel.$.datasheetUI ) {
+            panel.$.datasheetUI.datasheet = null;
+          }
         }
       }
 
@@ -11325,17 +11524,18 @@ this.fire('dom-change');
   </style>
 
   <template>
-    <h4 class="page-header">Push to Search</h4>
+    <h4 class="page-header">Publish to Search</h4>
 
 
 		<div class="alert alert-danger" style="display:none" id="privateAlertPanel">
-			You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+			You have marked this dataset as private. Your results cannot be published to PUBLIC search.
 		</div>
 
 		<div id="main">
 			<div class="help-block">
-				Please verify all information looks correct.  Once everything looks correct, click 'Push'
-        below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+				Please verify all information looks correct.  Once everything looks correct, click 'Publish'
+        below and your changes will be represented at
+        <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
          Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
 			</div>
 
@@ -11347,17 +11547,14 @@ this.fire('dom-change');
 					<tr><td>Description</td><td id="notes"></td></tr>
 					<tr><td>Organization</td><td id="owner_org_name"></td></tr>
 					<tr><td>Visibility</td><td>Public</td></tr>
+          <tr><td>Search Status</td><td id="available"></td></tr>
 				</tbody></table>
 			</div>
 
-			<div class="well">
-				<h4>Resource Information</h4>
-				<table class="table">
-					<tbody><tr><td>Total Resources</td><td id="tResources"></td></tr>
-					<tr><td>Metadata Sheets</td><td id="tMeta"></td></tr>
-					<tr><td>Spectra Sheets</td><td id="tData"></td></tr>
-					<tr><td># Parsed Spectra</td><td id="tSpectra"></td></tr>
-				</tbody></table>
+			<div style="margin-bottom: 35px">
+				<h4 class="page-header">Spectra Preview</h4>
+
+        <ecosis-sheet-preview id="preview"></ecosis-sheet-preview>
 			</div>
 
 			<div class="well">
@@ -11369,8 +11566,8 @@ this.fire('dom-change');
 			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
       </div>
 
-      <div>
-        <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      <div style="padding: 15px 0">
+        <a class="btn btn-primary btn-lg" id="pushBtn" on-click="push"><i class="fa fa-check-circle-o"></i> Publish</a>
       </div>
 
       <div style="padding: 15px 0">
@@ -11416,6 +11613,10 @@ this.fire('dom-change');
 
         this.updateLabels();
         this.updateCounts();
+        this.$.preview.update({
+          packageId: ecosis.ds.package_id,
+          layout : 'column'
+        })
       }
     },
 
@@ -11432,40 +11633,22 @@ this.fire('dom-change');
         } else if( this.$[key] ) {
           this.$[key].innerHTML = ecosis.ds.data[key];
         }
+      }
 
+      if( ecosis.ds.result.pushed ) {
+        var last = '';
+        try {
+          var date = new Date(ecosis.ds.result.pushed);
+          last = '<br />Last published: '+date.toLocaleString();
+        } catch(e) {}
 
+        this.$.available.innerHTML = '<span class="label label-success">Published to Search</span> '+last;
+      } else {
+        this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
       }
     },
 
     updateCounts : function() {
-			this.counts = {
-				metadataResources : 0,
-				measurementResources : 0,
-				measurements : 0
-			}
-
-			for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-				var resource = ecosis.ds.resources[i];
-				if( !resource.datasheets || resource.ignore ) continue;
-
-				for( var j = 0; j < resource.datasheets.length; j++ ) {
-					var datasheet = resource.datasheets[j];
-					if( datasheet.ignore ) continue;
-
-					if( datasheet.metadata ) {
-						this.counts.metadataResources++;
-					} else if ( datasheet.spectra_count ) {
-						this.counts.measurementResources++;
-						this.counts.measurements += datasheet.spectra_count;
-					}
-				}
-			}
-
-      this.$.tResources.innerHTML = ecosis.ds.resources.length;
-      this.$.tMeta.innerHTML = this.counts.metadataResources;
-      this.$.tData.innerHTML = this.counts.measurementResources;
-      this.$.tSpectra.innerHTML = this.counts.measurements;
-
 			this.updatePushStatus();
 		},
 
@@ -11477,7 +11660,7 @@ this.fire('dom-change');
 				this.$.ecosisInfo.innerHTML =
 					'<span class="label label-danger" style="font-size:14px">' +
 						'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
-						this.requireEcosisAttrs + ' are required to push to search.' +
+						this.requireEcosisAttrs + ' are required to publish to search.' +
 					'</span>';
 				return;
 			}
@@ -11509,13 +11692,13 @@ this.fire('dom-change');
       ecosis.ckan.pushToSearch(ecosis.ds.package_id, includeEmail,
           function(resp){
             this.$.pushBtn.removeAttribute('disabled');
-            this.$.pushBtn.innerHTML = 'Push';
+            this.$.pushBtn.innerHTML = '<i class="fa fa-check-circle-o"></i> Publish';
             this.$.pushMessage.style.display = 'none';
 
             if( resp.error ) {
               // ERROR 12
               resp.code = 12;
-              resp.message += '. Error pushing dataset to search.';
+              resp.message += '. Error publishing dataset.';
               return ecosis.errorPopup.show(resp);
             }
 

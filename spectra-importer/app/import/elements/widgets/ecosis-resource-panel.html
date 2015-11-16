@@ -256,19 +256,24 @@
             return ecosis.errorPopup.show(resp);
           }
 
-          for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-            if( ecosis.ds.resources[i] == this.resource ) {
+          for( var i = ecosis.ds.resources.length-1; i >= 0; i-- ) {
+            var r = ecosis.ds.resources[i];
+
+            if( r.id == this.resourceid ) {
               ecosis.ds.resources.splice(i, 1);
-              ecosis.ds.fireUpdate();
-              break;
+            } else if ( r.zip && r.zip.resourceId == this.resourceid  ) {
+              ecosis.ds.resources.splice(i, 1);
             }
           }
+          ecosis.ds.fireUpdate();
 
+          var ele = this;
           $(this).hide('slow', function(){
-            $(this).remove();
+            $(this).detach();
+            ele.fire('update', ele.resourceid);
           });
 
-          this.fire('update', this.resourceid);
+
         }.bind(this)
       );
     }

@@ -10,6 +10,9 @@ function(key, spectra){
             return key.replace(/\./g, '_');
         }
 
+        var regNum = /^-?\d*\.?\d*$/;
+        var regDate = /^\d\d\d\d-\d\d-\d\d/;
+
         function setValue(measurement, key) {
             var value = measurement[key];
 
@@ -28,8 +31,21 @@ function(key, spectra){
                 if( value === null ) return;
                 if( value === '' ) return;
 
-                // don't include values that have over 100 characters.  Assume not good filter
-                if( typeof value == 'string' && value.length > 100 ) return;
+                // don't include values
+                if( typeof value == 'string' ) {
+                    if( value.length > 50 ) {
+                        return
+                    } else if( regNum.test(value) ) {
+                        return
+                    } else if( regDate.test(value) ) {
+                        return
+                    } else {
+                        parts = key.toLowerCase().replace(/_/g, ' ').split(' ');
+                        if( parts.indexOf('id') > -1 ) return
+                        if( parts.indexOf('geometry') > -1 ) return
+                    }
+                }
+
 
                 key = cleanKey(key);
 

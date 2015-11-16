@@ -159,10 +159,10 @@ module.exports = function(config) {
   }
 
   this.getSpectra = function(pkgid, rid, sid, index, callback) {
-    var params = '?package_id=' + pkgid +
-      '&resource_id=' + rid +
-      '&index='+index;
+    var params = '?package_id=' + pkgid;
+    if( rid ) params += '&resource_id=' + rid;
     if( sid ) params += '&sheet_id='+sid;
+    params += '&index='+index;
 
     get(this.host+'/ecosis/spectra/get'+params, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
@@ -171,8 +171,8 @@ module.exports = function(config) {
   }
 
   this.getSpectraCount = function(pkgid, rid, sid, callback) {
-    var params = '?package_id=' + pkgid +
-      '&resource_id=' + rid;
+    var params = '?package_id=' + pkgid;
+    if( rid ) params += '&resource_id=' + rid;
     if( sid ) params += '&sheet_id='+sid;
 
     get(this.host+'/ecosis/resource/getSpectraCount'+params, function(err, resp) {
@@ -231,7 +231,10 @@ module.exports = function(config) {
   }
 
   this.tagSearch = function(query, limit, callback) {
-    get(this.host+'/api/3/action/tag_search?limit='+(limit || 10)+'&query='+query, function(err, resp) {
+    // supporting multiple versions of ckan.  why they changed this parameter... who knows...
+    var query = encodeURIComponent(query);
+    query = '&query='+query+'&ckan='+query;
+    get(this.host+'/api/3/action/tag_search?limit='+(limit || 10)+query, function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
       callback(resp.body);
     });
@@ -272,8 +275,9 @@ module.exports = function(config) {
 
   this.createPackage = function(pkg, callback) {
     postRaw(this.host+'/api/3/action/package_create', pkg, function(err, resp) {
-      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
-      callback(resp.body.result);
+      if( err ) return callback({error:true, message:'Request Error'});
+      if( resp.body.error ) return callback(resp.body);
+      callback(resp.body);
     });
   }
 

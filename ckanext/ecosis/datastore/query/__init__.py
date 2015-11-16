@@ -16,9 +16,9 @@ def init(co, hostUrl):
 
     collections = co
     host = hostUrl
-    workspace.init(co, getResource)
+    workspace.init(co, getResource, isPushed)
 
-def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False):
+def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False, must_be_valid=False, clean_wavelengths=True):
     # build out query
     query = {
         "type" : "data",
@@ -36,6 +36,15 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
 
     spectra = main.get('spectra')
 
+
+    moveWavelengths(spectra, clean_wavelengths)  # this also replaces , with .
+
+    if must_be_valid:
+        if 'datapoints' not in spectra:
+            return {}
+        if len(spectra['datapoints']) == 0:
+            return {}
+
     sheetInfo = collections.get('resource').find_one({
         "packageId": packageId,
         "resourceId": main.get("resourceId"),
@@ -46,7 +55,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
 
     attributeProcessInfo = []
     join(packageId, spectra, attributeProcessInfo)
-    moveWavelengths(spectra)  # this also replaces , with .
+
 
     config = collections.get('package').find_one({"packageId": packageId})
     if config == None:
@@ -106,7 +115,7 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
                     'resourceId': r.get('resourceId'),
                     'sheetId': r.get('sheetId')
                 },
-                {"layout": 1})
+                {"layout": 1,"name": 1})
 
 
             if joinedInfo is None: # Badness
@@ -219,6 +228,17 @@ def setLocation(spectra):
             }
         except:
             pass
+    elif spectra.get('latitude') != None and spectra.get('longitude') != None:
+        try:
+            spectra['ecosis']['geojson'] = {
+                "type" : "Point",
+                "coordinates": [
+                    float(spectra.get('longitude')),
+                    float(spectra.get('latitude'))
+                ]
+            }
+        except:
+            pass
 
 def setSort(spectra, config):
     if 'sort' not in config:
@@ -293,13 +313,18 @@ def mapNames(spectra, config, processInfo):
                     "from" : value
                 })
 
-def moveWavelengths(spectra):
+def moveWavelengths(spectra, clean):
     wavelengths = {}
+    toRemove = []
     for name in spectra:
         if re.match(r"^-?\d+\,?\d*", name) or re.match(r"^-?\d*\,\d+", name):
-            wavelengths[uncleanKey(name)] = spectra[name]
+            if clean:
+                wavelengths[uncleanKey(name)] = spectra[name].strip()
+            else:
+                wavelengths[name] = spectra[name].strip()
+            toRemove.append(name)
 
-    for name in wavelengths:
+    for name in toRemove:
         del spectra[name]
 
     spectra['datapoints'] = wavelengths
@@ -377,3 +402,15 @@ def getResource(resource_id, sheet_id=None):
         response.append(sheet)
 
     return response
+
+def isPushed(package_id):
+    result = collections.get("search_package").find_one({"value.ecosis.package_id": package_id},{"value.ecosis.pushed": 1})
+
+    if result is None:
+        return result
+
+    ecosis = result.get("value").get("ecosis")
+    if ecosis is None:
+        return ecosis
+
+    return ecosis.get("pushed")

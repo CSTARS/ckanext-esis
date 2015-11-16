@@ -7,6 +7,8 @@ import ckanext.ecosis.datastore.workspace as workspace
 from ckan.common import request, response
 from ckan.lib.base import c, model
 import ckan.logic as logic
+from ckan.lib.email_notifications import send_notification
+from pylons import config
 
 
 def delete():
@@ -29,6 +31,41 @@ def delete():
     deleteUtil.package(params['id'])
 
     return json.dumps({'success': True})
+
+def create():
+    response.headers["Content-Type"] = "application/json"
+
+    params = json.loads(request.body)
+
+    context = {'model': model, 'user': c.user}
+    package_create = logic.get_action('package_create')
+    ckanPackage = package_create(context, params)
+
+
+    url = config.get('ckan.site_url')
+    admin_email = config.get('ecosis.admin_email')
+
+    if url != "" and url is not None:
+        if admin_email != "" and admin_email is not None:
+            try:
+                send_notification(
+                    {
+                        "email" : admin_email,
+                        "display_name" : "EcoSIS Admins"
+                    },
+                    {
+                        "subject" : "EcoSIS Dataset Created - %s" % ckanPackage.get('title'),
+                        "body" : ("The dataset '%s' has been created by %s/user/%s.  "
+                                    "You can view the dataset here:  %s/dataset/%s"
+                                    "\n\n-EcoSIS Server") %
+                                 (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
+                    }
+                )
+            except:
+                print "Failed to send admin email"
+
+    return json.dumps(ckanPackage)
+
 
 def setPrivate():
     response.headers["Content-Type"] = "application/json"

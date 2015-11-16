@@ -31,10 +31,17 @@ def handleError(e):
     response.headers["Content-Type"] = "application/json"
 
     if hasattr(e, 'message'):
-        return json.dumps({
-            "error": True,
-            "message": "%s:%s" % (type(e).__name__, e.message)
-        })
+        if e.message is not None:
+            return json.dumps({
+                "error": True,
+                "message": "%s:%s" % (type(e).__name__, e.message)
+            })
+    if hasattr(e, 'error_summary'):
+        if e.error_summary is not None:
+            return json.dumps({
+                "error": True,
+                "message": "%s:%s" % (type(e).__name__, e.error_summary)
+            })
 
     return json.dumps({
         "error": True,

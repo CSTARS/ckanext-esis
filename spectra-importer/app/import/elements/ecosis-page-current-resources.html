@@ -287,7 +287,9 @@
           // hide resource
           panel.toggleEdit();
           // clear cached 'full' datasheet
-          panel.$.datasheetUI.datasheet = null;
+          if( panel.$.datasheetUI ) {
+            panel.$.datasheetUI.datasheet = null;
+          }
         }
       }
 

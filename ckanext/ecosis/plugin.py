@@ -2,6 +2,9 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import pylons.config as config
 
+import ckanext.ecosis.controller as controller
+import ckanext.ecosis.datastore.query as query
+
 class EcosisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
     '''An example IDatasetForm CKAN plugin.
@@ -24,8 +27,29 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # Example:
         #return { 'to_json' : 'self.to_json' }
         return {
-            'get_google_analytics_code' : self.get_google_analytics_code
+            'get_google_analytics_code' : self.get_google_analytics_code,
+            'get_search_url' : self.get_search_url,
+            'get_last_pushed_str' : self.get_last_pushed_str,
+            'pushed_to_search' :  self.pushed_to_search
         }
+
+    def pushed_to_search(self, package_id):
+        result = query.isPushed(package_id)
+        if result is None:
+            return False
+        return True
+
+    def get_last_pushed_str(self, package_id):
+        result = query.isPushed(package_id)
+        if result is None:
+            return None
+        try:
+            return result.strftime("%Y-%m-%d %H:%M")
+        except:
+            return result
+
+    def get_search_url(self):
+        return config.get('ecosis.search_url','')
 
     def get_google_analytics_code(self):
         return config.get('ckan.google_analytics_code', '')
@@ -47,12 +71,16 @@ class EcosisPlugin(plugins.SingletonPlugin,
         controller = 'ckanext.ecosis.controller:EcosisController'
 
         # Standard CKAN overrides
+        map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
+        map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
         map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+
         # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
         map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
+
         # route all resource edit screens to main ecosis dataset editor
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
         # TODO: can we get fancy and point at specific action or resource?

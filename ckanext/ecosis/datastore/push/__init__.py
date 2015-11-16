@@ -9,6 +9,7 @@ from ckanext.ecosis.datastore import delete as deleteUtils
 # grrrrr
 from ckan.lib.email_notifications import send_notification
 from pylons import config
+from ckanext.ecosis.datastore.mapreduce.lookup import update as updateLookup
 
 def init(collections):
     insert.init(collections)
@@ -33,13 +34,30 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
     try:
         total = query.total(ckanPackage.get('id')).get('total')
 
-        for i in range(0, total):
-            spectra = query.get(ckanPackage.get('id'), index=i)
-            insert.insert(spectra)
+        bbox = {
+            "maxlat" : -9999,
+            "minlat" : 9999,
+            "maxlng" : -9999,
+            "minlng" : 9999,
+            "use" : False
+        }
 
-        mapreduce.mapreducePackage(ckanPackage)
+        for i in range(0, total):
+            spectra = query.get(ckanPackage.get('id'), index=i, must_be_valid=True, clean_wavelengths=False)
+            if not 'datapoints' in spectra:
+                continue
+            if len(spectra['datapoints']) == 0:
+                continue
+            insert.insert(spectra)
+            updateBbox(spectra, bbox)
+
+        if bbox["maxlat"] != -9999 and bbox["maxlng"] != -9999 and bbox["minlng"] != 9999 and bbox["minlng"] != -9999:
+            bbox["use"] = True
+
+        mapreduce.mapreducePackage(ckanPackage, bbox)
 
         if not emailOnComplete:
+            updateLookup()
             return
 
         send_notification(
@@ -55,6 +73,8 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
                          (ckanPackage.get('title'), config.get('ecosis.search_url'), ckanPackage.get("id"))
             }
         )
+
+        updateLookup()
 
     except Exception as e:
         try:
@@ -81,3 +101,28 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             )
         except:
             pass
+
+def updateBbox(spectra, bbox):
+    if 'ecosis' not in spectra:
+        return
+    if 'geojson' not in spectra['ecosis']:
+        return
+
+    geojson = spectra['ecosis']['geojson']
+
+    if geojson.get('type') != 'Point':
+        return
+    if 'coordinates' not in geojson:
+        return
+    if len(geojson['coordinates']) < 2:
+        return
+
+    if bbox['maxlat'] < geojson['coordinates'][1]:
+        bbox['maxlat'] = geojson['coordinates'][1]
+    if bbox['minlat'] > geojson['coordinates'][1]:
+        bbox['minlat'] = geojson['coordinates'][1]
+
+    if bbox['maxlng'] < geojson['coordinates'][0]:
+        bbox['maxlng'] = geojson['coordinates'][0]
+    if bbox['minlng'] > geojson['coordinates'][0]:
+        bbox['minlng'] = geojson['coordinates'][0]

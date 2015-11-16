@@ -1,8 +1,9 @@
 import os, json, re
-from datetime import datetime
+import datetime
 from bson.code import Code
 from bson.son import SON
 from pylons import config
+import lookup
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,17 +36,18 @@ def init(mongoCollections, jsonSchema):
 
     collections = mongoCollections
     schema = jsonSchema
+    lookup.init(collections)
 
 
 # pkg should be a ckan pkg
 # collection should be the search collection
-def mapreducePackage(ckanPackage):
+def mapreducePackage(ckanPackage, bboxInfo):
     collections.get("search_spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, out=SON([("merge", config.get("ecosis.mongo.search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
     spectra_count = collections.get("search_spectra").find({"ecosis.package_id": ckanPackage['id']}).count()
 
-    updateEcosisNs(ckanPackage, spectra_count)
+    updateEcosisNs(ckanPackage, spectra_count, bboxInfo)
 
-def updateEcosisNs(pkg, spectra_count):
+def updateEcosisNs(pkg, spectra_count, bboxInfo):
     config = collections.get("package").find_one({"packageId": pkg.get("id")})
     collection = collections.get('search_package')
 
@@ -54,7 +56,7 @@ def updateEcosisNs(pkg, spectra_count):
         sort = {}
 
     ecosis = {
-        "pushed" : datetime.utcnow(),
+        "pushed" : datetime.datetime.utcnow(),
         "organization" : "",
         "organization_id" : "",
         "organization_image_url" : "",
@@ -75,6 +77,7 @@ def updateEcosisNs(pkg, spectra_count):
         },
         "resources" : [],
         "geojson" : None,
+        "spectra_bbox_geojson" : None,
         "sort_on" : sort.get("on"),
         "sort_description" : sort.get("description")
     }
@@ -123,6 +126,19 @@ def updateEcosisNs(pkg, spectra_count):
     # make sure the map reduce did not create a null collection, if so, remove
     # This means there is no spectra
     item = collection.find_one({'_id': pkg['id'], 'value': None})
+
+    # if we found bbox info in the spectra, add it
+    if bboxInfo['use']:
+        ecosis['spectra_bbox_geojson'] = {
+            "type": "Polygon",
+            "coordinates" : [[
+                [bboxInfo["maxlng"], bboxInfo["maxlat"]],
+                [bboxInfo["minlng"], bboxInfo["maxlat"]],
+                [bboxInfo["minlng"], bboxInfo["minlat"]],
+                [bboxInfo["maxlng"], bboxInfo["minlat"]],
+                [bboxInfo["maxlng"], bboxInfo["maxlat"]]
+            ]]
+        }
 
     # now see if we have a group by attribute...
     if item != None:
@@ -239,6 +255,7 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     # join if we do
     if mrValue.get(name) != None:
         spValues = mrValue.get(name)
+
         for v in val:
             if not v in spValues:
                 spValues.append(v)
