@@ -106,6 +106,15 @@ module.exports = function (grunt) {
                 {
                     expand: true,
                     dot: true,
+                    cwd: '<%= yeoman.app %>/assets',
+                    dest: '<%= yeoman.dist %>/assets',
+                    src: [
+                        '{,*/}*'
+                    ]
+                },
+                {
+                    expand: true,
+                    dot: true,
                     src: ['metadata_map'],
                     dest: '<%= yeoman.dist %>',
                     cwd: '<%= yeoman.app %>'
