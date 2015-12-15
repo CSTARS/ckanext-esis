@@ -45,8 +45,7 @@
           <div id="message2"></div>
 
           <div id="message" class="help-block" >
-            Please note: your dataset title is <i class="text text-warning">PERMANENT</i>.  Please think about the title you choose.
-            Finally, please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
+            Please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
 
@@ -70,11 +69,18 @@
     },
 
     onDataReady : function() {
-      if( ecosis.ds.editMode ) {
+      /*if( ecosis.ds.editMode ) {
         this.$.editMode.style.display = 'block';
         this.$.inputMode.style.display = 'none';
 
         this.$.titleLabel.innerHTML = ecosis.ds.data.title;
+        this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+        return;
+      }*/
+
+      if( ecosis.ds.editMode ) {
+
+        this.$.titleInput.value = ecosis.ds.data.title;
         this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
         return;
       }
