@@ -35,9 +35,18 @@
       </div>
     </div>
 
+    <div id="createFromTemplate" style="display:none; text-align:right">
+      <div>
+        <a class="btn btn-link" on-click="toggleCreateFromTemplate"><i class="fa fa-magic"></i> Create From Template</a>
+        <div class="help-block">Use template file from prior dataset to get started.</div>
+      </div>
+      <div id="createFromTemplatePanel" style="display:none">
+        Select File: <input type="file" on-change="createFromTemplateInput" style="display:inline-block" id="createFromTemplateInput"/>
+      </div>
+      <div id="createTemplateSuccess" style="display:none"><span class="label label-success">Success!</span></div>
+    </div>
+
     <h4 class="page-header">Basic Information</h4>
-
-
     <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
 
     <div class="form-horizontal">
@@ -269,10 +278,12 @@
       this.mode = mode;
       if( mode == 'create' ) {
         this.$.createBtn.style.display = 'inline-block';
+        this.$.createFromTemplate.style.display = 'block';
         this.updateCreateBtnState();
       } else {
         this.$.goToBtn.style.display = 'inline-block';
         this.$.goToListBtn.style.display = 'inline-block';
+        this.$.createFromTemplate.style.display = 'none';
         this.$.deleteBtn.style.display = 'inline-block';
       }
     },
@@ -539,6 +550,43 @@
       } else {
         e.currentTarget.querySelector('i').className = 'fa fa-arrow-right';
         this.$[id].style.display = 'none';
+      }
+    },
+
+    toggleCreateFromTemplate : function() {
+      $(this.$.createFromTemplatePanel).toggle('slow');
+    },
+
+    createFromTemplateInput : function(e) {
+      try {
+        var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+        if( files.length == 0 ) return;
+
+        var reader = new FileReader();
+        var contents, parts;
+
+        reader.onload = function(e) {
+          try {
+            var data = JSON.parse(e.target.result);
+            ecosis.ds.loadFromTemplate(data);
+            this.onDataLoad();
+            this.$.createTemplateSuccess.style.display = 'block';
+            this.toggleCreateFromTemplate();
+            this.$.createFromTemplateInput.value = '';
+
+            setTimeout(function(){
+              this.$.createTemplateSuccess.style.display = 'none';
+            }.bind(this), 5000);
+          } catch(e) {
+            this.$.createFromTemplateInput.value = '';
+            alert('Error reading template file');
+          }
+        }.bind(this);
+        reader.readAsText(files[0]);
+
+      } catch(e) {
+        this.$.createFromTemplateInput.value = '';
+        alert('Error reading template file');
       }
     }
 
