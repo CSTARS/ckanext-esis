@@ -48,8 +48,10 @@ def handleError(e):
         "message": "%s:%s" % (type(e).__name__, str(e))
     })
 
-def jsonStringify(obj):
-    return json.dumps(obj, default=jsondefault)
+def jsonStringify(obj, formatted=False):
+    if not formatted:
+        return json.dumps(obj, default=jsondefault)
+    return json.dumps(obj, default=jsondefault, indent=4, separators=(',', ': '))
 
 def jsondefault(obj):
     if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):

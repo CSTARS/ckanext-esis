@@ -98,6 +98,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
+        map.connect('getTemplate', '/ecosis/package/getTemplate', controller=controller, action='getTemplate')
         map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setPackageOptions')
 
         # ecosis - root
@@ -105,15 +106,12 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('userInfo', '/ecosis/user/get', controller=controller, action='userInfo')
 
         # ecosis - resource
-        # TODO: you can have a race condition if delete_resource is called too fast.  This is VERY POOR fix...
-        # still the case? - JM
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
         map.connect('process_resource', '/ecosis/resource/process', controller=controller, action='processResource')
         map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
         map.connect('get_spectra_metadata', '/ecosis/resource/getMetadataChunk', controller=controller, action='getMetadataChunk')
         map.connect('getMetadataInfo', '/ecosis/resource/getMetadataInfo', controller=controller, action='getMetadataInfo')
         map.connect('get_spectra_count', '/ecosis/resource/getSpectraCount', controller=controller, action='getSpectraCount')
-
 
         # ecosis - spectra
         map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')

@@ -38,7 +38,7 @@ collections = {
 upload = uploader.ResourceUpload({})
 
 datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
-
+package.init(collections)
 
 class EcosisController(PackageController):
 
@@ -61,6 +61,12 @@ class EcosisController(PackageController):
     def setPrivate(self):
         try:
             return package.setPrivate()
+        except Exception as e:
+            return handleError(e)
+
+    def getTemplate(self):
+        try:
+            return package.getTemplate()
         except Exception as e:
             return handleError(e)
 
