@@ -61,7 +61,7 @@ var ecosis = (function(){
           ecosis.ds.loadingError.code = 1;
           ecosis.errorPopup.show(ecosis.ds.loadingError);
         } else {
-          onLoad()
+          onLoad();
         }
       } else {
         $('#splash').modal();

@@ -398,7 +398,7 @@
             }
 
             // set the page
-            window.location = '/import/?id='+resp.name+'#add-resources';
+            window.location = '/import/?id='+resp.id+'#add-resources';
           }.bind(this)
       );
     },
@@ -466,7 +466,11 @@
 
     /* change handlers */
     onTitleInputChange : function() {
-      this.updateCreateBtnState();
+      if( ecosis.ds.editMode ) {
+        this.save();
+      } else {
+        this.updateCreateBtnState();
+      }
     },
 
     onOrganizationInputChange : function() {
