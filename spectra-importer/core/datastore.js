@@ -112,10 +112,6 @@ module.exports = function(config) {
   };
 
   this.loadFromTemplate = function(ckanPackage) {
-    if( ckanPackage.id ) {
-      this.package_id = ckanPackage.id;
-    }
-
     // set the default attirbutes for this dataset
     for( var key in this.data ) {
       if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
