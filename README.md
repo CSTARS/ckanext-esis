@@ -3,6 +3,10 @@ ckanext-ecosis
 
 EcoSIS extension for CKAN adding resource controls for spectra
 
+## EcoSIS Tutorials
+
+[tutorial.ecospectra.org](http://tutorial.ecospectra.org)
+
 ## CKAN 'IDE'
 
 info on pycharm package install can be found [here](http://ubuntuhandbook.org/index.php/2015/07/install-pycharm-ubuntu-1404/http://ubuntuhandbook.org/index.php/2015/07/install-pycharm-ubuntu-1404/)
