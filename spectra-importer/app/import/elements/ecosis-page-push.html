@@ -121,7 +121,7 @@
         }
       }
 
-      if( ecosis.ds.result.pushed ) {
+      if( ecosis.ds.result && ecosis.ds.result.pushed ) {
         var last = '';
         try {
           var date = new Date(ecosis.ds.result.pushed);

@@ -63,23 +63,12 @@
 
     ready : function() {
       this.verifyNameTime = -1;
-
-      if( ecosis.ds.loaded ) this.onDataReady();
-      else ecosis.ds.on('load', this.onDataReady.bind(this));
+      this.currentName = null;
+      ecosis.ds.on('load', this.onDataReady.bind(this));
     },
 
     onDataReady : function() {
-      /*if( ecosis.ds.editMode ) {
-        this.$.editMode.style.display = 'block';
-        this.$.inputMode.style.display = 'none';
-
-        this.$.titleLabel.innerHTML = ecosis.ds.data.title;
-        this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
-        return;
-      }*/
-
       if( ecosis.ds.editMode ) {
-
         this.$.titleInput.value = ecosis.ds.data.title;
         this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
         return;
@@ -89,10 +78,22 @@
     },
 
     onTitleInputChange : function() {
+      if( ecosis.ds.editMode && ecosis.ds.data.name && this.currentName === null ) {
+        this.currentName = ecosis.ds.data.name;
+      }
+
       ecosis.ds.data.title = this.$.titleInput.value.replace(/_/g, ' ');
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
+
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+
+      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
+      // then there is nothing to check, they are just updating the title.  This will throw
+      // a false positive if we check for name in use (cause it is, by this dataset);
+      if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
+        return;
+      }
 
       this.$.verifyingTitleLabel.style.display = 'inline-block';
       this.$.invalid.style.display = 'none';
