@@ -12,7 +12,7 @@ def get_request_data(request):
         if keys and request.POST[keys[0]] in [u'1', u'']:
             request_data = keys[0]
         else:
-            request_data = urllib2.unquote_plus(request.body)
+            request_data = urllib2.unquote(request.body)
     except Exception, inst:
         msg = "Could not find the POST data: %r : %s" % \
               (request.POST, inst)
