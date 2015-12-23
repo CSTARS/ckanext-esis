@@ -293,6 +293,24 @@ module.exports = function(config) {
     });
   }
 
+  this.suggestOverview = function(list, callback) {
+    var data = {
+      names : JSON.stringify(list),
+    };
+
+    post(this.host+'/ecosis/spectra/suggestOverview', data, function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message:'Request Error'});
+      callback(resp.body);
+    });
+  };
+
+  this.suggest = function(name, callback) {
+    get(this.host+'/ecosis/spectra/suggest?name='+encodeURIComponent(name), function(err, resp) {
+      if( isError(err, resp) ) return callback({error:true, message: 'Request Error', body: resp.body});
+      callback(resp.body);
+    });
+  };
+
   this.removeResource = function(resourceId, callback) {
     postRaw(this.host+'/api/3/action/resource_delete', JSON.stringify({id : resourceId }), function(err, resp) {
       if( isError(err, resp) ) return callback({error:true, message:'Request Error'});

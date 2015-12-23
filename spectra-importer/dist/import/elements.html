@@ -7011,6 +7011,7 @@ this.fire('dom-change');
 
 
 
+
 </head><body><div hidden="">
 
 <dom-module id="ecosis-schema-input">
@@ -11183,6 +11184,10 @@ this.fire('dom-change');
       this.$.mapTemplate.setAttribute('href', ecosis.ckan.host+'/ecosis/package/getTemplate?mapOnly=true&id='+ecosis.ds.package_id);
     },
 
+    setTopMapping : function(panel) {
+      this.topPanel = panel;
+    },
+
     processMap : function(e) {
       try {
         e.stopPropagation();
@@ -11219,6 +11224,13 @@ this.fire('dom-change');
         this.$.map.value = '';
         alert('Error loading attribute map');
       }
+    },
+
+    addFromSuggest : function(custom, trait) {
+      ecosis.ds.attributeMap[trait] = custom;
+      ecosis.ds.inverseAttributeMap[custom] = trait;
+
+      this.save(ecosis.ds.attributeMap);
     },
 
     updateMap : function() {
@@ -11296,6 +11308,10 @@ this.fire('dom-change');
         html += '<option value="'+this.customList[i]+'">'+this.customList[i]+'</option>'
       }
       this.$.newCustom.innerHTML = html;
+
+      if( this.topPanel ) {
+        this.topPanel.update(this.customList);
+      }
     },
 
     renderCurrentList : function() {
@@ -11404,6 +11420,162 @@ this.fire('dom-change');
 
   })
 </script>
+
+<dom-module id="ecosis-top-mapping">
+  <template>
+    <style>
+      :host {
+        display: none;
+      }
+      .card {
+        margin: 15px 10px;
+        padding: 10px;
+        box-shadow: 0 0 5px #ccc;
+      }
+    </style>
+
+    <div style="padding: 15px">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Standardize Your Plant Trait Names</h3>
+        </div>
+        <div class="panel-body">
+          <div class="help-block">Use standard names when providing plant trait information.  Below,
+            <span id="countLabel"></span> of your spectra metadata attribute names have suggested standard trait names.
+            Now many of your spectra metadata attributes may not be traits, but for those that are, please
+            try and map to an appropriate, standardized name.
+        </div>
+
+        <div class="layout horizontal center">
+          <div>
+            <a class="btn btn-default" style="margin-right: 30px"><i class="fa fa-arrow-left"></i></a>
+          </div>
+          <div class="flex">
+            <select class="form-control" id="selector" on-change="suggest"></select>
+          </div>
+          <div>
+            <a class="btn btn-default" style="margin-left: 30px"><i class="fa fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <h5 id="suggestLabel" style="display:none; margin-top: 30px">Suggestions</h5>
+
+        <template is="dom-repeat" items="{{suggestions}}">
+          <div class="card">
+            <h4 class="page-header" style="margin:0">
+              <span>{{item.preferredLabel}}</span>
+              <small>{{item.subClassOfClean}}</small>
+              <a class="btn btn-primary pull-right" on-click="onSelect" index$="{{index}}">Select</a>
+            </h4>
+
+            <div style="margin-bottom: 20px">{{item.definition.value}}</div>
+            <div class="help-block"><b>Reference</b>: <span>{{item.definition.reference.value}}</span></div>
+
+            <div hidden$="{{!item.prefUnit.value}}"><b>Units:</b> <span>{{item.prefUnit.value}}</span></div>
+            <div hidden$="{{!item.alternativeLabel}}"><b>Alt Label:</b> <span>{{item.alternativeLabel}}</span></div>
+            <div hidden$="{{!item.relatedTermClean}}"><b>Related:</b> <span>{{item.relatedTermClean}}</span></div>
+            <div hidden$="{{!item.abbrivation}}"><b>Abbrivation:</b> <span>{{item.abbrivation}}</span></div>
+            <div><b>TOP Link:</b> <a href$="{{item.link}}" target="_blank">More Info</a></div>
+          </div>
+        </template>
+
+        <div style="text-align: right; margin-top: 30px">
+          Powered By: <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>
+        </div>
+      </div>
+    </div>
+
+  </div></template>
+  <script>
+    Polymer({
+      is: 'ecosis-top-mapping',
+
+      attached : function() {
+        this.suggestions = [];
+        document.querySelector('ecosis-attribute-mapping').setTopMapping(this);
+      },
+
+      update : function(list) {
+        for( var i = list.length-1; i > 0; i-- ) {
+          if( ecosis.ds.inverseAttributeMap[list[i]] ) {
+            list.splice(i, 1);
+          }
+        }
+
+        var str = list.join('');
+        if( this.current === str ) return;
+
+        this.current = str;
+
+        ecosis.ckan.suggestOverview(list, function(resp){
+          this.badList = [];
+          for( var key in resp ) {
+            if( resp[key].type !== 'match' && resp[key].type !== 'nomatch' ) {
+              this.badList.push(key);
+            }
+          }
+
+          if( this.badList.length === 0 ) {
+            this.style.display = 'none';
+            return;
+          }
+          this.style.display = 'block';
+
+          this.render();
+        }.bind(this));
+      },
+
+      render : function() {
+        this.$.countLabel.innerHTML = this.badList.length;
+
+        var html = '<option></option>';
+        for( var i = 0; i < this.badList.length; i++ ) {
+          html += '<option value="'+this.badList[i]+'">'+this.badList[i]+'</option>';
+        }
+
+        this.$.selector.innerHTML = html;
+        this.suggest();
+      },
+
+      suggest : function() {
+        this.selected = this.$.selector.value;
+
+        if( this.selected === '' ) {
+          this.suggestions = [];
+          this.$.suggestLabel.style.display = 'none';
+          return;
+        }
+
+        this.$.suggestLabel.style.display = 'block';
+
+        ecosis.ckan.suggest(this.selected.replace(/(-|_)/g, ' '), function(resp){
+          for( var i = 0; i < resp.result.length; i++ ) {
+            var item = resp.result[i];
+            item.subClassOfClean = item.subClassOf ? item.subClassOf.replace(/_/g, ' ') : '';
+
+            item.relatedTermClean = '';
+            if( item.relatedTerm ) {
+              for( var j = 0; j < item.relatedTerm.length; j++ ) {
+                item.relatedTerm[j] = item.relatedTerm[j].strip();
+              }
+              item.relatedTermClean = item.relatedTerm.join(', ');
+            }
+
+            item.link = 'http://top-thesaurus.org/annotationInfo?viz=1&&trait='+item.label;
+          }
+
+          this.suggestions = resp.result;
+        }.bind(this));
+      },
+
+      onSelect : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        document.querySelector('ecosis-attribute-mapping').addFromSuggest(this.selected, this.suggestions[index].preferredLabel);
+        this.suggestions = [];
+      }
+    });
+  </script>
+</dom-module>
 
 <dom-module id="ecosis-dataset-order">
   <style>
@@ -11600,6 +11772,8 @@ this.fire('dom-change');
 
     <h3 class="page-header">Map Dataset Attribute Names</h3>
     <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
+
+    <ecosis-top-mapping></ecosis-top-mapping>
 
     <h3 class="page-header">Dataset Template</h3>
     <div class="well well-sm">Download a dataset template file for this dataset.  You can use this

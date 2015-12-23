@@ -108,6 +108,10 @@
       this.$.mapTemplate.setAttribute('href', ecosis.ckan.host+'/ecosis/package/getTemplate?mapOnly=true&id='+ecosis.ds.package_id);
     },
 
+    setTopMapping : function(panel) {
+      this.topPanel = panel;
+    },
+
     processMap : function(e) {
       try {
         e.stopPropagation();
@@ -144,6 +148,13 @@
         this.$.map.value = '';
         alert('Error loading attribute map');
       }
+    },
+
+    addFromSuggest : function(custom, trait) {
+      ecosis.ds.attributeMap[trait] = custom;
+      ecosis.ds.inverseAttributeMap[custom] = trait;
+
+      this.save(ecosis.ds.attributeMap);
     },
 
     updateMap : function() {
@@ -221,6 +232,10 @@
         html += '<option value="'+this.customList[i]+'">'+this.customList[i]+'</option>'
       }
       this.$.newCustom.innerHTML = html;
+
+      if( this.topPanel ) {
+        this.topPanel.update(this.customList);
+      }
     },
 
     renderCurrentList : function() {
