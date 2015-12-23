@@ -11556,7 +11556,7 @@ this.fire('dom-change');
             item.relatedTermClean = '';
             if( item.relatedTerm ) {
               for( var j = 0; j < item.relatedTerm.length; j++ ) {
-                item.relatedTerm[j] = item.relatedTerm[j].strip();
+                item.relatedTerm[j] = item.relatedTerm[j].trim();
               }
               item.relatedTermClean = item.relatedTerm.join(', ');
             }
