@@ -76,6 +76,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
             "units" : {}
         },
         "resources" : [],
+        "linked_data" : [],
         "geojson" : None,
         "spectra_bbox_geojson" : None,
         "sort_on" : sort.get("on"),
@@ -88,6 +89,11 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         units = json.loads(units)
         for name, unit in units.iteritems():
             ecosis["package_schema"]["units"][re.sub(r'\.', '_', name)] = unit
+
+    # append the linked data
+    linkeddata = getPackageExtra('LinkedData', pkg)
+    if linkeddata != None:
+        ecosis["linked_data"] = json.loads(linkeddata)
 
     # append the list of resources
     for item in pkg['resources']:
