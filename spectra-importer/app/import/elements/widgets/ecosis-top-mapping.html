@@ -132,10 +132,15 @@
 
             item.relatedTermClean = '';
             if( item.relatedTerm ) {
-              for( var j = 0; j < item.relatedTerm.length; j++ ) {
-                item.relatedTerm[j] = item.relatedTerm[j].strip();
+              if( Array.isArray(item.relatedTerm) ) {
+                for( var j = 0; j < item.relatedTerm.length; j++ ) {
+                  item.relatedTerm[j] = item.relatedTerm[j].trim();
+                }
+                item.relatedTermClean = item.relatedTerm.join(', ');
+              } else {
+                item.relatedTerm = item.relatedTerm.trim();
               }
-              item.relatedTermClean = item.relatedTerm.join(', ');
+
             }
 
             item.link = 'http://top-thesaurus.org/annotationInfo?viz=1&&trait='+item.label;

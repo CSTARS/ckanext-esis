@@ -145,6 +145,11 @@
       <ecosis-location-input on-update="save" id="locationInput" style="display:none"></ecosis-location-input>
 
       <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput"><i class="fa fa-arrow-right"></i></a> Linked Data
+      </h4>
+      <ecosis-linked-data-input on-update="save" id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
+
+      <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
       </h4>
       <ecosis-citation-input on-update="save" id="citationInput" style="display:none"></ecosis-citation-input>
@@ -298,6 +303,7 @@
       this.$.visibilityInput.value = data.private ? 'true' : 'false';
       this.$.versionInput.value = data.version;
       this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
+      this.$.linkedDataInput.setData(ecosis.ds.getDatasetExtra('LinkedData').value);
 
       this.updateVisibilityControl();
     },
@@ -538,6 +544,10 @@
       this.save();
     },
 
+    onLinkedDataChange : function() {
+      ecosis.ds.setDatasetExtra('LinkedData', this.$.linkedDataInput.getData());
+      this.save();
+    },
 
     toggleCat : function(e) {
       var id = e.currentTarget.getAttribute('cat');
