@@ -11,7 +11,7 @@ Measurement,,,,,,,,,
 ,Target Status,,controlled,TRUE,TRUE,,,"Live, Green, Fresh, Dried, Ground, Liquid, Standard, Panel, Other",State of the measurement target.
 ,Light Source,,controlled,TRUE,TRUE,,,"Sun, Lamp, Laser, Other",Description of the light source used for your spectral measurements
 ,,Light Source Specifications,text,,TRUE,,,,
-,Foreoptic Type,,controlled,TRUE,TRUE,,,"None, Bare Fiber, Leaf Clip, Gershon Tube, Foreoptic, Integrating Sphere, Cosine Diffuser, Other",Description of the foreoptic used to make your spectral measurement
+,Foreoptic Type,,controlled,TRUE,TRUE,,,"None, Bare Fiber, Contact Probe, Leaf Clip, Gershon Tube, Foreoptic, Integrating Sphere, Cosine Diffuser, Other",Description of the foreoptic used to make your spectral measurement
 ,,Foreoptic Field of View,text,,TRUE,integer degrees,"e.g. 4, 8, 12",,
 ,,Foreoptic Specifications,text,,TRUE,,"e.g., ""Labsphere 8"" integrating sphere""",,
 ,,,,,,,,,
