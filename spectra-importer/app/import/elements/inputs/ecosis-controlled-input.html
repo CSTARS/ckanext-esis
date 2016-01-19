@@ -102,7 +102,12 @@
     onChange : function() {
       if( this.$.input.value == '' ) return;
 
-      this.selected.push(this.$.input.value);
+      if( this.schema.input === 'controlled-single' ) {
+        this.selected = [this.$.input.value];
+      } else {
+        this.selected.push(this.$.input.value);
+      }
+
 
       this.fire('update', {
         attribute : this.schema.name,

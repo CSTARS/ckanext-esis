@@ -1,0 +1,61 @@
+ ,L1 Specific Metadata Field,Level 2 Metadata,Input Type,Allow Other,Spectra Level,Units,Comment or Dependency,Controlled Vocabulary,Description (help text for applications)
+Measurement,,,,,,,,,
+,Acquisition Method,,controlled,TRUE,TRUE,,This is the description of the type of sampling acquisition approach,"Contact, Proximal, Pixel, Other","Minimum measurement unit for your spectra (i.e. contact probe, proximal with X-degree foreoptic, pixel, other)."
+,,Sample Platform,text,,TRUE,,what was the sample collected from?,"Boom, Tower, UAV, Airplane, Satellite","Platform from which the spectral measurements were made (e.g. handheld, boom, tram, UAV)."
+,,Measurement Venue,controlled,TRUE,TRUE,,,"Greenhouse, Outdoor, Laboratory, Other",Setting in which the spectral measurements were made.
+,Target Type,,controlled,TRUE,TRUE,,* NEED TO FILL OUT SPECIES IF VEGETATED MATERIAL* this triggers if/then for species below,"Leaf, Flower, Canopy, Branch, Bark, NPV, Animal, Soil, Rock, Mineral, Water, Reference, Other",Describes the target that was measured.
+,Measurement Quantity,,controlled,TRUE,TRUE,,,"Reflectance, Transmittance, Absorptance, Radiance, DN, Index, Transflectance, Other",
+,,Index Name,text,,TRUE,,"name the index, e.g. NDVI, required if MQ = ""index""",,"Measurement quantity's index name.  Please provide if Measurement Quantity = ""Index"""
+,,Measurement Units,text,,TRUE,,Units of measurement for spectral measurement,,"Scale for spectral instensity (e.g. DN, radiance, irradiance, reflectance)"
+,,Wavelength Units,controlled-single,TRUE,TRUE,,"e.g., microns, nm DONT CARE ABOUT FOR SEARCH","nm, um, Unitless, Other","Wavelength units (e.g. nm, um, Hz)"
+,Target Status,,controlled,TRUE,TRUE,,,"Live, Green, Fresh, Dried, Ground, Liquid, Standard, Panel, Other",State of the measurement target.
+,Light Source,,controlled,TRUE,TRUE,,,"Sun, Lamp, Laser, Other",Description of the light source used for your spectral measurements
+,,Light Source Specifications,text,,TRUE,,,,
+,Foreoptic Type,,controlled,TRUE,TRUE,,,"None, Bare Fiber, Leaf Clip, Gershon Tube, Foreoptic, Integrating Sphere, Cosine Diffuser, Other",Description of the foreoptic used to make your spectral measurement
+,,Foreoptic Field of View,text,,TRUE,integer degrees,"e.g. 4, 8, 12",,
+,,Foreoptic Specifications,text,,TRUE,,"e.g., ""Labsphere 8"" integrating sphere""",,
+,,,,,,,,,
+Processing Information,,,,,,,"There are no level 1 METADATA here, but added this because it is important",,
+,,Processing Averaged,controlled,,TRUE,,Is the measurement an average of other measurements?,"Yes, No",Is the measurement an average of multiple measurements?
+,,Processing Interpolated,controlled,,TRUE,,Is the measurement interpolated?,"Yes, No",Is the measurement interpolated?
+,,Processing Resampled,controlled,,TRUE,,Is the measurement resampled?,"Yes, No",Is the measurement resampled? (e.g. are multiple wavelengths averaged?)
+,,Processing Information Details,text,,,,More information about processing can be provided here,,Other details about processing are provided here.
+,,,,,,,,,
+Instrument,,,,,,,,,
+,Instrument Manufacturer,,text,,TRUE,,,,Spectrometer manufacturer.
+,Instrument Model,,text,,TRUE,,,,Spectrometer model.
+,,Instrument Serial Number,text,,TRUE,,,NA,
+,,,,,,,,,
+Theme,,,,,,,,,
+,Theme,,controlled,TRUE,TRUE,,,"Forest, Agriculture, Ecology, Phenology, Biochemistry, Physiology, Water Quality, Land Cover, Urban, Global Change, Other",Research context for the the spectral measurements.
+,,Keywords,text,,,,user supplied text that may benefit search,,
+,,Ecosystem Type,controlled,,TRUE,,these may need to be rethought,"Forest, Crops, Grassland, Wetland, Aquatic, Coastal",
+,,,,,,,,,
+Location,,,,,,,,,
+,Latitude,,latlng,,TRUE,decimal degree,,,
+,Longitude,,latlng,,TRUE,decimal degree,,,
+,geojson,,geojson,,TRUE,,,,
+,,Location Name,text,,,,SHOULD THIS BE REQUIRED?,,
+,,,,,,,,,
+Date,,,,,,,,,
+,Sample Collection Date,,date,,TRUE,ISO Date ,date sample was collected,,
+,,Measurement Date,date,,TRUE,ISO Date ,e.g. if sample was not measured at same time of collection,,
+,,Phenological Status,text,,TRUE,,"this is useful information, but likely cannot be required",,
+,,,,,,,,,
+Species,,,,,,,"ONLY NEEDS TO BE FILLED IF BIOLOGICAL, see notes",,
+,Common Name,,text,,TRUE,,"note that ""common name"" is vague",,Common name of the target that was measured.
+,Latin Genus,,text,,TRUE,,,,Latin genus of the target that was measured.
+,Latin Species,,text,,TRUE,,,,Latin species of the target that was measured.
+,USDA Symbol,,text,,TRUE,,"called ""symbol"" on plants.usda.gov",,USDA code of the target that was measured.
+,Vegetation Type,,text,,TRUE,,"e.g., chapparal, northern hardwood, citrus plantation, prairie",,
+,,,,,,,,,
+Citation,,,,,,,All of these fields there should be one and only one per dataset,,
+,,Citation,text,,,,journal citation,,
+,,Citation DOI,text,,,,URI,,
+,,Website,text,,,,website URL for author/contact,,
+,,Author,text,,,,,,
+,,Author Email,text,,,,,,
+,,Maintainer,text,,,,,,
+,,Maintainer Email,text,,,,,,
+,,Funding Source,text,,,,,,
+,,Funding Source Grant Number,text,,,,,,

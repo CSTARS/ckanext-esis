@@ -25,8 +25,12 @@
 
       this.schema = ecosis.ds.metadataLookup[this.metadata];
 
-      if( this.schema.input == 'controlled' ) {
-        this.innerHTML = '<ecosis-controlled-input metadata="'+this.metadata+'"></ecosis-controlled-input>';
+      if( this.schema.input == 'controlled' || this.schema.input == 'controlled-single' ) {
+        if( this.isYesNo(this.schema) ) {
+          this.innerHTML = '<ecosis-radio-input metadata="'+this.metadata+'"></ecosis-radio-input>';
+        } else {
+          this.innerHTML = '<ecosis-controlled-input metadata="'+this.metadata+'"></ecosis-controlled-input>';
+        }
       } else {
         var html =
           '<div class="form-group">'+
@@ -47,9 +51,27 @@
       }
     },
 
+    isYesNo : function(schema) {
+      if( !schema.vocabulary ) return false;
+      if( schema.vocabulary.length != 2 ) return false;
+
+      var c = 0;
+      schema.vocabulary.forEach(function(vocab){
+        if( vocab.toLowerCase() === 'yes' || vocab.toLowerCase() === 'no' ) {
+          c++;
+        }
+      });
+      if( c === 2 ) return true;
+      return false;
+    },
+
     setValue : function(value, otherValue) {
-      if( this.schema.input == 'controlled' ) {
-        this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
+      if( this.schema.input == 'controlled' || this.schema.input == 'controlled-single' ) {
+        if( this.isYesNo(this.schema) ) {
+          this.querySelector('ecosis-radio-input').setValue(value);
+        } else {
+          this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
+        }
       } else {
         this.querySelector('input').value = value;
       }

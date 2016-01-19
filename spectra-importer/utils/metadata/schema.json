@@ -112,7 +112,7 @@
     {
       "name": "Wavelength Units",
       "level": 2,
-      "input": "controlled",
+      "input": "controlled-single",
       "units": "",
       "spectraLevel": true,
       "vocabulary": [
@@ -122,7 +122,7 @@
         "um"
       ],
       "description": "Wavelength units (e.g. nm, um, Hz)",
-      "allowOther": false
+      "allowOther": true
     },
     {
       "name": "Target Status",
@@ -220,7 +220,7 @@
         "No",
         "Yes"
       ],
-      "description": "Is the measurement an average of other measurements?",
+      "description": "Is the measurement an average of multiple measurements?",
       "allowOther": false
     },
     {
@@ -246,7 +246,7 @@
         "No",
         "Yes"
       ],
-      "description": "Is the measurement resampled?",
+      "description": "Is the measurement resampled? (e.g. are multiple wavelengths averaged?)",
       "allowOther": false
     },
     {

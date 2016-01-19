@@ -1,3 +1,7 @@
-The schema.json generator is located here: https://github.com/CSTARS/ecosis-data-tool/blob/master/app/schema.json
-with the generator script from here: https://github.com/CSTARS/ecosis-data-tool/tree/master/schema
-The data/schema.csv is from a google spreadsheet.
+To update the schema.
+
+- First apply changes to google doc here: https://docs.google.com/spreadsheets/d/1jpKJ-P5X7q6UtPuKELxz4Eu8nJ3pAPf9NuYiygDzVss/edit
+- Export as csv to /utils/metadata/schema/data (you can use get.sh script)
+- run node /utils/metadata/schema/create.js to generate the /utils/metadata/schema/schema.json file
+- run node /utils/metadata/create.js to update the /app/metadata_map file
+- run /bundle.sh to generate new client side library w/ new schema

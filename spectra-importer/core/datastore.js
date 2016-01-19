@@ -56,7 +56,7 @@ module.exports = function(config) {
   // inverse list of above map w/ key / value switched
   this.inverseAttributeMap = {};
 
-  this.metadataDefinitions = require('./schema.json');
+  this.metadataDefinitions = require('../utils/metadata/schema.json');
   this.metadataLookup = {};
   for( var cat in this.metadataDefinitions ) {
     var defs = this.metadataDefinitions[cat];
