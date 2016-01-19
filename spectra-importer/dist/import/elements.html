@@ -7715,11 +7715,11 @@ this.fire('dom-change');
       <div class="form-inline">
         <div class="form-group">
           <label for="">Label</label>
-          <input type="text" class="form-control" placeholder="Fluxnet" value="{{item.label::input}}" on-input="checkFilled" on-blur="fireUpdate">
+          <input type="text" class="form-control" placeholder="Ex: Fluxnet" value="{{item.label::input}}" on-input="checkFilled" on-blur="fireUpdate">
         </div>
         <div class="form-group">
           <label for="">URL</label>
-          <input type="text" class="form-control" style="min-width: 300px" placeholder="http://fluxnet.ornl.gov/site/646" value="{{item.url::input}}" on-input="checkFilled" on-blur="fireUpdate">
+          <input type="text" class="form-control" style="min-width: 300px" placeholder="Ex: http://fluxnet.ornl.gov/site/646" value="{{item.url::input}}" on-input="checkFilled" on-blur="fireUpdate">
         </div>
         <a class="btn btn-default" index$="{{index}}" on-click="remove" hide$="{{item.last}}"><i class="fa fa-trash"></i></a>
       </div>
