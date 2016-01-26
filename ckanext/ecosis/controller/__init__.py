@@ -14,7 +14,7 @@ from ckanext.ecosis import datastore
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
 path = os.path.dirname(__file__)
-schema = os.path.join(path, "../../../spectra-importer/core/schema.json")
+schema = os.path.join(path, "../../../spectra-importer/utils/metadata/schema.json")
 
 pgConnStr = config.get("sqlalchemy.url")
 
