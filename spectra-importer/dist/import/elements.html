@@ -7867,6 +7867,9 @@ this.fire('dom-change');
       },
 
       checkFilled : function() {
+        if( !this.list ) return;
+        if( this.list.length === 0 ) return;
+
         var item = this.list[this.list.length-1];
         if( item.label.length > 0 && item.url.length > 0 ) {
           this.push('list',{
