@@ -9154,7 +9154,7 @@ this.fire('dom-change');
       <div class="layout horizontal center">
           <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
 
-          <div class="flex" id="columnPreview">
+          <div class="flex" id="columnPreview" style="overflow:auto;">
             <div class="row">
               <div class="col-sm-6">
                 <div id="columnTableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
@@ -9163,7 +9163,7 @@ this.fire('dom-change');
             </div>
           </div>
 
-          <div class="flex" id="rowPreview">
+          <div class="flex" id="rowPreview" style="overflow:auto;">
             <div id="rowTableRoot" style="overflow:auto; margin-bottom: 35px"></div>
             <div id="rowChartRoot" style="height: 200px; margin: 25px 0 15px 0"></div>
           </div>
