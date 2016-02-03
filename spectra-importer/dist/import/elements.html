@@ -7498,6 +7498,10 @@ this.fire('dom-change');
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
           </span>
 
+          <span class="label label-danger" style="display:none" id="tooLong">
+            Invalid name.  Title can have at most 100 characters.
+          </span>
+
           <span class="label label-danger" style="display:none" id="invalid">
             Invalid name.  A dataset with the name '<span id="nameLabel"></span>' already exists.
           </span>
@@ -7546,7 +7550,17 @@ this.fire('dom-change');
         this.currentName = ecosis.ds.data.name;
       }
 
-      ecosis.ds.data.title = this.$.titleInput.value.replace(/_/g, ' ');
+      // TODO: check for 100 characters
+      // TODO: update back button on update
+      var title = this.$.titleInput.value.replace(/_/g, ' ');
+      if( title.length >= 100 ) {
+        this.validName = false;
+        this.$.tooLong.style.display = 'inline-block';
+        return;
+      }
+      this.$.tooLong.style.display = 'none';
+
+      ecosis.ds.data.title = title;
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
 
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
@@ -7968,7 +7982,7 @@ this.fire('dom-change');
 
       if( ecosis.ds.editMode ) {
         ecosis.ds.on('load', function(){
-          if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.data.name);
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
@@ -7981,6 +7995,10 @@ this.fire('dom-change');
         this.$.advanced.style.display = 'block';
         this.$.push.style.display = 'block';
       }
+    },
+
+    setBackBtn : function(name) {
+      this.$.exit.setAttribute('href', '/dataset/'+name);
     },
 
     updateActiveTab : function() {
@@ -10004,7 +10022,7 @@ this.fire('dom-change');
     }
     .save-label {
         position: fixed;
-        top: 0;
+        top: 65px;
         left: 0;
         right: 0;
         text-align: center;
@@ -10422,6 +10440,7 @@ this.fire('dom-change');
       this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
+      this.$.saveLabel.style.display = 'block';
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
 
       this.updateTimer = setTimeout(function(){
@@ -10431,8 +10450,6 @@ this.fire('dom-change');
     },
 
     _save : function() {
-      this.$.saveLabel.style.display = 'block';
-
       // make sure we have the correct package state
       // all resources need to be included when you make a updatePackage call
       ecosis.ckan.getPackage(ecosis.ds.package_id,
@@ -10468,6 +10485,9 @@ this.fire('dom-change');
                   code : 10
                 });
               }
+
+              // update back btn as well
+              document.querySelector('ecosis-header').setBackBtn(resp.result.name);
 
             }.bind(this)
           );

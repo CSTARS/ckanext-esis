@@ -6,7 +6,7 @@
     }
     .save-label {
         position: fixed;
-        top: 0;
+        top: 65px;
         left: 0;
         right: 0;
         text-align: center;
@@ -424,6 +424,7 @@
       this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
+      this.$.saveLabel.style.display = 'block';
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
 
       this.updateTimer = setTimeout(function(){
@@ -433,8 +434,6 @@
     },
 
     _save : function() {
-      this.$.saveLabel.style.display = 'block';
-
       // make sure we have the correct package state
       // all resources need to be included when you make a updatePackage call
       ecosis.ckan.getPackage(ecosis.ds.package_id,
@@ -470,6 +469,9 @@
                   code : 10
                 });
               }
+
+              // update back btn as well
+              document.querySelector('ecosis-header').setBackBtn(resp.result.name);
 
             }.bind(this)
           );

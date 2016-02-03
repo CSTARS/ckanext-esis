@@ -34,6 +34,10 @@
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
           </span>
 
+          <span class="label label-danger" style="display:none" id="tooLong">
+            Invalid name.  Title can have at most 100 characters.
+          </span>
+
           <span class="label label-danger" style="display:none" id="invalid">
             Invalid name.  A dataset with the name '<span id="nameLabel"></span>' already exists.
           </span>
@@ -82,7 +86,17 @@
         this.currentName = ecosis.ds.data.name;
       }
 
-      ecosis.ds.data.title = this.$.titleInput.value.replace(/_/g, ' ');
+      // TODO: check for 100 characters
+      // TODO: update back button on update
+      var title = this.$.titleInput.value.replace(/_/g, ' ');
+      if( title.length >= 100 ) {
+        this.validName = false;
+        this.$.tooLong.style.display = 'inline-block';
+        return;
+      }
+      this.$.tooLong.style.display = 'none';
+
+      ecosis.ds.data.title = title;
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
 
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
