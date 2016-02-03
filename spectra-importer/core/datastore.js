@@ -206,7 +206,7 @@ module.exports = function(config) {
 
     var zips = {}; // used to quickly add resource stubs
     for( var i = 0; i < this.resources.length; i++ ) {
-      if( this.resources[i].format.toLowerCase() === 'zip' ) {
+      if( this.resources[i].format.toLowerCase() === 'zip' || this.resources[i].name.toLowerCase().match(/\.zip$/) ) {
         zips[this.resources[i].id] = this.resources[i];
         this.resources[i].childResources = [];
         this.resources[i].isZip = true;
