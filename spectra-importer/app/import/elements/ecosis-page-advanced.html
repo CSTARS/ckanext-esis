@@ -6,33 +6,67 @@
   <style>
     :host {
       display: block;
+      margin-top: 20px;
       padding: 0 5%;
     }
   </style>
 
   <template>
 
-    <h3 class="page-header">Map Dataset Attribute Names</h3>
-    <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
+    <ul id="tabs" class="nav nav-tabs nav-justified">
+      <li class="active">
+        <a href="#alias" data-toggle="tab">Aliases</a>
+      </li>
+      <li>
+        <a href="#traits" data-toggle="tab">Plant Traits</a>
+      </li>
+      <li>
+        <a href="#template" data-toggle="tab">Template</a>
+      </li>
+      <li>
+        <a href="#ordering" data-toggle="tab">Ordering</a>
+      </li>
+    </ul>
 
-    <ecosis-top-mapping></ecosis-top-mapping>
+    <div id="tabContent" class="tab-content">
+      <div class="tab-pane fade active in" id="alias">
+        <h4 class="page-header">Dataset Attribute Alias Names</h4>
+        <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
+      </div>
 
-    <h3 class="page-header">Dataset Template</h3>
-    <div class="well well-sm">Download a dataset template file for this dataset.  You can use this
-      JSON formatted template file to help speed up the creation of new datasets like this one.
+      <div class="tab-pane fade" id="traits">
+        <ecosis-top-mapping></ecosis-top-mapping>
+      </div>
+
+      <div class="tab-pane fade" id="template">
+        <h4 class="page-header">Dataset Template</h4>
+        <div>Download a dataset template file for this dataset.  You can use this
+          JSON formatted template file to help speed up the creation of new datasets like this one.
+        </div>
+        <div style="padding: 15px">
+          <a class="btn btn-primary" id="datasetTemplate" target="_blank">Download Dataset Template</a>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="ordering">
+        <h4 class="page-header">Dataset Ordering</h4>
+        <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
+      </div>
     </div>
-    <div style="padding: 15px">
-      <a class="btn btn-primary" id="datasetTemplate" target="_blank">Download Dataset Template</a>
-    </div>
 
-    <h3 class="page-header">Dataset Ordering</h3>
-    <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
   </template>
 </dom-module>
 
 <script>
   Polymer({
     is : 'ecosis-page-advanced',
+
+    ready : function() {
+      $(this.$.tabs).find('a').click(function (e) {
+        e.preventDefault()
+        $(this).tab('show')
+      });
+    },
 
     onShow : function() {
       this.$.mapping.onShow();

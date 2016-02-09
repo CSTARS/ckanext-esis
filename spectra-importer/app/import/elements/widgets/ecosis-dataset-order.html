@@ -20,7 +20,7 @@
     </div>
 
     <div>
-      <div class="well">
+      <div>
           Is this a time series dataset or a dataset that has any other form of ordering?
           If so, select the attribute to order by as well as the type of sort that should
           be performed.  You can also provide a textual description of what this ordering is.
@@ -28,7 +28,7 @@
 
       <div class="form-horizontal">
         <div class="form-group">
-          <label for="orderByInput" class="col-md-2 control-label">Order By</label>
+          <label for="orderByInput" class="col-md-2 control-label"><b>Order By:</b></label>
           <div class="col-md-10">
             <select id="orderByInput" class="form-control" on-change="onChange"></select>
           </div>
@@ -106,7 +106,7 @@
       this.$.orderByInput.innerHTML = options;
 
       if( !ecosis.ds.sort ) return;
-      
+
       var sort_description = ecosis.ds.sort.description || '';
       var sort_type = ecosis.ds.sort.type || '';
       var sort_on = ecosis.ds.sort.on || '';

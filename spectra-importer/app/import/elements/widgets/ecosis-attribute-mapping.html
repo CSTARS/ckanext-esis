@@ -25,29 +25,29 @@
     <div style="padding: 15px">
       <div class="panel panel-primary">
         <div class="panel-heading">
-          <h3 class="panel-title">Map your attribute names to EcoSIS names</h3>
+          <h3 class="panel-title">Map your spectra metadata names to EcoSIS names</h3>
         </div>
         <div class="panel-body">
           <h5 class="page-header" style="margin-top:0">By File</h5>
 
           <div class="horizontal layout">
               <div class="flex">
-                  <a class="btn btn-default" target="_blank" id="mapTemplate">Download Map Template</a>
+                  <a class="btn btn-default" target="_blank" id="mapTemplate">Download Alias Template</a>
               </div>
               <div class="flex">
-                  Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
+                  Upload Template: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
 
                   <span class="label label-success" id="mapSuccessLabel" style="display:none">Success!</span>
               </div>
           </div>
           <div class="help-block">
-            Use this to bulk upload and set the attribute name mapping.  This is map file can be
-            reused across your datasets.  NOTE:  This will overwrite all current attribute mappings.
+            Use this to bulk upload and set the attribute name aliases.  This is aliases template file can be
+            reused across your datasets.  NOTE:  This will overwrite all current aliases.
           </div>
 
           <h5 class="page-header">Individually</h5>
           <div class="help-block">
-            Use this to add individual spectra attribute mappings.
+            Use this to add individual spectra metadata aliases.
           </div>
 
           <table class="table">
@@ -81,7 +81,7 @@
 
       <div class="panel panel-primary" id="currentPanel">
         <div class="panel-heading">
-          <h3 class="panel-title">Current Map</h3>
+          <h3 class="panel-title">Current Aliases</h3>
         </div>
         <div class="panel-body" id="currentMapRoot"></div>
       </div>

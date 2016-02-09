@@ -20,45 +20,50 @@
           <div class="help-block">Use standard names when providing plant trait information.  Below,
             <span id="countLabel"></span> of your spectra metadata attribute names have suggested standard trait names.
             Now many of your spectra metadata attributes may not be traits, but for those that are, please
-            try and map to an appropriate, standardized name.
+            try and set aliases to an appropriate, standardized name.
+          </div>
+
+          <div class="layout horizontal center">
+            <div>
+              <a class="btn btn-default" style="margin-right: 30px"><i class="fa fa-arrow-left"></i></a>
+            </div>
+            <div class="flex">
+              <select class="form-control" id="selector" on-change="suggest"></select>
+            </div>
+            <div>
+              <a class="btn btn-default" style="margin-left: 30px"><i class="fa fa-arrow-right"></i></a>
+            </div>
+          </div>
+
+          <h5 id="suggestLabel" style="display:none; margin-top: 30px">Suggestions</h5>
+
+          <template is="dom-repeat" items="{{suggestions}}">
+            <div class="card">
+              <h4 class="page-header" style="margin:0">
+                <span>{{item.preferredLabel}}</span>
+                <small>{{item.subClassOfClean}}</small>
+                <a class="btn btn-primary pull-right" on-click="onSelect" index$="{{index}}">Select</a>
+              </h4>
+
+              <div style="margin-bottom: 20px">{{item.definition.value}}</div>
+              <div class="help-block"><b>Reference</b>: <span>{{item.definition.reference.value}}</span></div>
+
+              <div hidden$="{{!item.prefUnit.value}}"><b>Units:</b> <span>{{item.prefUnit.value}}</span></div>
+              <div hidden$="{{!item.alternativeLabel}}"><b>Alt Label:</b> <span>{{item.alternativeLabel}}</span></div>
+              <div hidden$="{{!item.relatedTermClean}}"><b>Related:</b> <span>{{item.relatedTermClean}}</span></div>
+              <div hidden$="{{!item.abbrivation}}"><b>Abbrivation:</b> <span>{{item.abbrivation}}</span></div>
+              <div><b>TOP Link:</b> <a href$="{{item.link}}" target="_blank">More Info</a></div>
+            </div>
+          </template>
+
+          <div style="text-align: right; margin-top: 30px">
+            Powered By: <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>
+          </div>
         </div>
+      </div>
 
-        <div class="layout horizontal center">
-          <div>
-            <a class="btn btn-default" style="margin-right: 30px"><i class="fa fa-arrow-left"></i></a>
-          </div>
-          <div class="flex">
-            <select class="form-control" id="selector" on-change="suggest"></select>
-          </div>
-          <div>
-            <a class="btn btn-default" style="margin-left: 30px"><i class="fa fa-arrow-right"></i></a>
-          </div>
-        </div>
-
-        <h5 id="suggestLabel" style="display:none; margin-top: 30px">Suggestions</h5>
-
-        <template is="dom-repeat" items="{{suggestions}}">
-          <div class="card">
-            <h4 class="page-header" style="margin:0">
-              <span>{{item.preferredLabel}}</span>
-              <small>{{item.subClassOfClean}}</small>
-              <a class="btn btn-primary pull-right" on-click="onSelect" index$="{{index}}">Select</a>
-            </h4>
-
-            <div style="margin-bottom: 20px">{{item.definition.value}}</div>
-            <div class="help-block"><b>Reference</b>: <span>{{item.definition.reference.value}}</span></div>
-
-            <div hidden$="{{!item.prefUnit.value}}"><b>Units:</b> <span>{{item.prefUnit.value}}</span></div>
-            <div hidden$="{{!item.alternativeLabel}}"><b>Alt Label:</b> <span>{{item.alternativeLabel}}</span></div>
-            <div hidden$="{{!item.relatedTermClean}}"><b>Related:</b> <span>{{item.relatedTermClean}}</span></div>
-            <div hidden$="{{!item.abbrivation}}"><b>Abbrivation:</b> <span>{{item.abbrivation}}</span></div>
-            <div><b>TOP Link:</b> <a href$="{{item.link}}" target="_blank">More Info</a></div>
-          </div>
-        </template>
-
-        <div style="text-align: right; margin-top: 30px">
-          Powered By: <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>
-        </div>
+      <div style="text-align:center">
+        Looking for the complete list of standard plant trait names?  Please visit the <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>.
       </div>
     </div>
 
