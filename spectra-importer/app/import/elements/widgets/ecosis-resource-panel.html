@@ -107,6 +107,15 @@
       this.update();
     },
 
+    updateNameLabel : function() {
+      var parseInfo = '';
+      if( this.resource.datasheets && this.resource.datasheets.length == 1 ) {
+        parseInfo = ' ('+(this.resource.datasheets[0].layout || 'row')+'/'+(this.resource.datasheets[0].seperator || 'comma')+')';
+      }
+
+      this.querySelector('#titleLabel').innerHTML = this.resource.name+parseInfo;
+    },
+
     update : function() {
       this.setAttribute('data-name', this.resource.name);
 
@@ -119,12 +128,13 @@
       this.$.templateRoot.appendChild(this.ele.root);
 
 
-      this.querySelector('#titleLabel').innerHTML = this.resource.name;
       this.setClass();
 
       if( !this.resource.datasheets ) {
         this.querySelector('#trashBtn').style.color = '#333';
       }
+
+
 
       // hide edit button if invalid file type
       if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
@@ -134,6 +144,8 @@
         var link = this.querySelector('#editLink');
         if( link ) link.style.display = 'inline-block';
       }
+
+      this.updateNameLabel();
 
       if( this.resource.childResources ) {
         this.isotope = this.querySelector('#zipResources');
@@ -215,8 +227,11 @@
     toggleEdit : function() {
       var resourcePopup = document.querySelector('#resourcePopup');
 
-      resourcePopup.edit(this.resource,{
-        onDatasheetUpdate : this.setClass.bind(this)
+      resourcePopup.edit(this.resource, {
+        onDatasheetUpdate : function() {
+          this.setClass();
+          this.updateNameLabel();
+        }.bind(this)
       });
 
       this.edit = !this.edit;

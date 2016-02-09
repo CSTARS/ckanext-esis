@@ -8976,6 +8976,15 @@ this.fire('dom-change');
       this.update();
     },
 
+    updateNameLabel : function() {
+      var parseInfo = '';
+      if( this.resource.datasheets && this.resource.datasheets.length == 1 ) {
+        parseInfo = ' ('+(this.resource.datasheets[0].layout || 'row')+'/'+(this.resource.datasheets[0].seperator || 'comma')+')';
+      }
+
+      this.querySelector('#titleLabel').innerHTML = this.resource.name+parseInfo;
+    },
+
     update : function() {
       this.setAttribute('data-name', this.resource.name);
 
@@ -8988,12 +8997,13 @@ this.fire('dom-change');
       this.$.templateRoot.appendChild(this.ele.root);
 
 
-      this.querySelector('#titleLabel').innerHTML = this.resource.name;
       this.setClass();
 
       if( !this.resource.datasheets ) {
         this.querySelector('#trashBtn').style.color = '#333';
       }
+
+
 
       // hide edit button if invalid file type
       if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
@@ -9003,6 +9013,8 @@ this.fire('dom-change');
         var link = this.querySelector('#editLink');
         if( link ) link.style.display = 'inline-block';
       }
+
+      this.updateNameLabel();
 
       if( this.resource.childResources ) {
         this.isotope = this.querySelector('#zipResources');
@@ -9084,8 +9096,11 @@ this.fire('dom-change');
     toggleEdit : function() {
       var resourcePopup = document.querySelector('#resourcePopup');
 
-      resourcePopup.edit(this.resource,{
-        onDatasheetUpdate : this.setClass.bind(this)
+      resourcePopup.edit(this.resource, {
+        onDatasheetUpdate : function() {
+          this.setClass();
+          this.updateNameLabel();
+        }.bind(this)
       });
 
       this.edit = !this.edit;
@@ -11335,29 +11350,29 @@ this.fire('dom-change');
     <div style="padding: 15px">
       <div class="panel panel-primary">
         <div class="panel-heading">
-          <h3 class="panel-title">Map your attribute names to EcoSIS names</h3>
+          <h3 class="panel-title">Map your spectra metadata names to EcoSIS names</h3>
         </div>
         <div class="panel-body">
           <h5 class="page-header" style="margin-top:0">By File</h5>
 
           <div class="horizontal layout">
               <div class="flex">
-                  <a class="btn btn-default" target="_blank" id="mapTemplate">Download Map Template</a>
+                  <a class="btn btn-default" target="_blank" id="mapTemplate">Download Alias Template</a>
               </div>
               <div class="flex">
-                  Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
+                  Upload Template: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
 
                   <span class="label label-success" id="mapSuccessLabel" style="display:none">Success!</span>
               </div>
           </div>
           <div class="help-block">
-            Use this to bulk upload and set the attribute name mapping.  This is map file can be
-            reused across your datasets.  NOTE:  This will overwrite all current attribute mappings.
+            Use this to bulk upload and set the attribute name aliases.  This is aliases template file can be
+            reused across your datasets.  NOTE:  This will overwrite all current aliases.
           </div>
 
           <h5 class="page-header">Individually</h5>
           <div class="help-block">
-            Use this to add individual spectra attribute mappings.
+            Use this to add individual spectra metadata aliases.
           </div>
 
           <table class="table">
@@ -11391,7 +11406,7 @@ this.fire('dom-change');
 
       <div class="panel panel-primary" id="currentPanel">
         <div class="panel-heading">
-          <h3 class="panel-title">Current Map</h3>
+          <h3 class="panel-title">Current Aliases</h3>
         </div>
         <div class="panel-body" id="currentMapRoot"></div>
       </div>
@@ -11677,49 +11692,54 @@ this.fire('dom-change');
           <div class="help-block">Use standard names when providing plant trait information.  Below,
             <span id="countLabel"></span> of your spectra metadata attribute names have suggested standard trait names.
             Now many of your spectra metadata attributes may not be traits, but for those that are, please
-            try and map to an appropriate, standardized name.
+            try and set aliases to an appropriate, standardized name.
+          </div>
+
+          <div class="layout horizontal center">
+            <div>
+              <a class="btn btn-default" style="margin-right: 30px"><i class="fa fa-arrow-left"></i></a>
+            </div>
+            <div class="flex">
+              <select class="form-control" id="selector" on-change="suggest"></select>
+            </div>
+            <div>
+              <a class="btn btn-default" style="margin-left: 30px"><i class="fa fa-arrow-right"></i></a>
+            </div>
+          </div>
+
+          <h5 id="suggestLabel" style="display:none; margin-top: 30px">Suggestions</h5>
+
+          <template is="dom-repeat" items="{{suggestions}}">
+            <div class="card">
+              <h4 class="page-header" style="margin:0">
+                <span>{{item.preferredLabel}}</span>
+                <small>{{item.subClassOfClean}}</small>
+                <a class="btn btn-primary pull-right" on-click="onSelect" index$="{{index}}">Select</a>
+              </h4>
+
+              <div style="margin-bottom: 20px">{{item.definition.value}}</div>
+              <div class="help-block"><b>Reference</b>: <span>{{item.definition.reference.value}}</span></div>
+
+              <div hidden$="{{!item.prefUnit.value}}"><b>Units:</b> <span>{{item.prefUnit.value}}</span></div>
+              <div hidden$="{{!item.alternativeLabel}}"><b>Alt Label:</b> <span>{{item.alternativeLabel}}</span></div>
+              <div hidden$="{{!item.relatedTermClean}}"><b>Related:</b> <span>{{item.relatedTermClean}}</span></div>
+              <div hidden$="{{!item.abbrivation}}"><b>Abbrivation:</b> <span>{{item.abbrivation}}</span></div>
+              <div><b>TOP Link:</b> <a href$="{{item.link}}" target="_blank">More Info</a></div>
+            </div>
+          </template>
+
+          <div style="text-align: right; margin-top: 30px">
+            Powered By: <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>
+          </div>
         </div>
+      </div>
 
-        <div class="layout horizontal center">
-          <div>
-            <a class="btn btn-default" style="margin-right: 30px"><i class="fa fa-arrow-left"></i></a>
-          </div>
-          <div class="flex">
-            <select class="form-control" id="selector" on-change="suggest"></select>
-          </div>
-          <div>
-            <a class="btn btn-default" style="margin-left: 30px"><i class="fa fa-arrow-right"></i></a>
-          </div>
-        </div>
-
-        <h5 id="suggestLabel" style="display:none; margin-top: 30px">Suggestions</h5>
-
-        <template is="dom-repeat" items="{{suggestions}}">
-          <div class="card">
-            <h4 class="page-header" style="margin:0">
-              <span>{{item.preferredLabel}}</span>
-              <small>{{item.subClassOfClean}}</small>
-              <a class="btn btn-primary pull-right" on-click="onSelect" index$="{{index}}">Select</a>
-            </h4>
-
-            <div style="margin-bottom: 20px">{{item.definition.value}}</div>
-            <div class="help-block"><b>Reference</b>: <span>{{item.definition.reference.value}}</span></div>
-
-            <div hidden$="{{!item.prefUnit.value}}"><b>Units:</b> <span>{{item.prefUnit.value}}</span></div>
-            <div hidden$="{{!item.alternativeLabel}}"><b>Alt Label:</b> <span>{{item.alternativeLabel}}</span></div>
-            <div hidden$="{{!item.relatedTermClean}}"><b>Related:</b> <span>{{item.relatedTermClean}}</span></div>
-            <div hidden$="{{!item.abbrivation}}"><b>Abbrivation:</b> <span>{{item.abbrivation}}</span></div>
-            <div><b>TOP Link:</b> <a href$="{{item.link}}" target="_blank">More Info</a></div>
-          </div>
-        </template>
-
-        <div style="text-align: right; margin-top: 30px">
-          Powered By: <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>
-        </div>
+      <div style="text-align:center">
+        Looking for the complete list of standard plant trait names?  Please visit the <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>.
       </div>
     </div>
 
-  </div></template>
+  </template>
   <script>
     Polymer({
       is: 'ecosis-top-mapping',
@@ -11838,7 +11858,7 @@ this.fire('dom-change');
     </div>
 
     <div>
-      <div class="well">
+      <div>
           Is this a time series dataset or a dataset that has any other form of ordering?
           If so, select the attribute to order by as well as the type of sort that should
           be performed.  You can also provide a textual description of what this ordering is.
@@ -11846,7 +11866,7 @@ this.fire('dom-change');
 
       <div class="form-horizontal">
         <div class="form-group">
-          <label for="orderByInput" class="col-md-2 control-label">Order By</label>
+          <label for="orderByInput" class="col-md-2 control-label"><b>Order By:</b></label>
           <div class="col-md-10">
             <select id="orderByInput" class="form-control" on-change="onChange"></select>
           </div>
@@ -11924,7 +11944,7 @@ this.fire('dom-change');
       this.$.orderByInput.innerHTML = options;
 
       if( !ecosis.ds.sort ) return;
-      
+
       var sort_description = ecosis.ds.sort.description || '';
       var sort_type = ecosis.ds.sort.type || '';
       var sort_on = ecosis.ds.sort.on || '';
@@ -12003,33 +12023,67 @@ this.fire('dom-change');
   <style>
     :host {
       display: block;
+      margin-top: 20px;
       padding: 0 5%;
     }
   </style>
 
   <template>
 
-    <h3 class="page-header">Map Dataset Attribute Names</h3>
-    <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
+    <ul id="tabs" class="nav nav-tabs nav-justified">
+      <li class="active">
+        <a href="#alias" data-toggle="tab">Aliases</a>
+      </li>
+      <li>
+        <a href="#traits" data-toggle="tab">Plant Traits</a>
+      </li>
+      <li>
+        <a href="#template" data-toggle="tab">Template</a>
+      </li>
+      <li>
+        <a href="#ordering" data-toggle="tab">Ordering</a>
+      </li>
+    </ul>
 
-    <ecosis-top-mapping></ecosis-top-mapping>
+    <div id="tabContent" class="tab-content">
+      <div class="tab-pane fade active in" id="alias">
+        <h4 class="page-header">Dataset Attribute Alias Names</h4>
+        <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
+      </div>
 
-    <h3 class="page-header">Dataset Template</h3>
-    <div class="well well-sm">Download a dataset template file for this dataset.  You can use this
-      JSON formatted template file to help speed up the creation of new datasets like this one.
+      <div class="tab-pane fade" id="traits">
+        <ecosis-top-mapping></ecosis-top-mapping>
+      </div>
+
+      <div class="tab-pane fade" id="template">
+        <h4 class="page-header">Dataset Template</h4>
+        <div>Download a dataset template file for this dataset.  You can use this
+          JSON formatted template file to help speed up the creation of new datasets like this one.
+        </div>
+        <div style="padding: 15px">
+          <a class="btn btn-primary" id="datasetTemplate" target="_blank">Download Dataset Template</a>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="ordering">
+        <h4 class="page-header">Dataset Ordering</h4>
+        <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
+      </div>
     </div>
-    <div style="padding: 15px">
-      <a class="btn btn-primary" id="datasetTemplate" target="_blank">Download Dataset Template</a>
-    </div>
 
-    <h3 class="page-header">Dataset Ordering</h3>
-    <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
   </template>
 </dom-module>
 
 <script>
   Polymer({
     is : 'ecosis-page-advanced',
+
+    ready : function() {
+      $(this.$.tabs).find('a').click(function (e) {
+        e.preventDefault()
+        $(this).tab('show')
+      });
+    },
 
     onShow : function() {
       this.$.mapping.onShow();
