@@ -40,7 +40,11 @@ def init(mongoCollections, jsonSchema):
 # pkg should be a ckan pkg
 # collection should be the search collection
 def mapreducePackage(ckanPackage):
-    collections.get("search_spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, out=SON([("merge", config.get("ecosis.mongo.search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
+    scope = {
+        "schema" : schema
+    }
+
+    collections.get("search_spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, scope=scope, out=SON([("merge", config.get("ecosis.mongo.search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
     spectra_count = collections.get("search_spectra").find({"ecosis.package_id": ckanPackage['id']}).count()
 
     updateEcosisNs(ckanPackage, spectra_count)

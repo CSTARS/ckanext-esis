@@ -2,6 +2,10 @@ function(key, spectra){
         var searchObj = {
             'data_keys__' : {}
         };
+
+        if( typeof scope !== 'undefined' ) {
+            searchObj.scope = Object.keys(scope.schema)
+        }
         
         var ignoreList = ['_id','datapoints', 'ecosis'];
 
@@ -53,7 +57,7 @@ function(key, spectra){
                 for( var key in measurement.data_keys__ ) {
                     searchObj['data_keys__'][key] = 1;
                 }
-            }else if ( measurement.datapoints ) {
+            } else if ( measurement.datapoints ) {
                 for( key in measurement.datapoints ) {
                     searchObj['data_keys__'][key] = 1;
                 }
