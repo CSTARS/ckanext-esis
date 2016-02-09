@@ -44,6 +44,8 @@ def init(mongoCollections, jsonSchema):
     # loop schema and lookup mapreduce attributes
     for cat, arr in schema.iteritems():
         for item in arr:
+            if item.get('name') == 'Latitude' or item.get('name') == 'geojson' or item.get('name') == 'Longitude':
+                continue
             mapReduceAttribute.append(item.get('name'))
 
 # pkg should be a ckan pkg
@@ -297,7 +299,8 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
                 spValues.append(v)
         val = spValues
 
-    val = map(lambda it: cleanValue(it), val)
+    if name != 'geojson':
+        val = map(lambda it: cleanValue(it), val)
 
     setValues['$set']['value.'+name] = val
 

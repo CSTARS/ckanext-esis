@@ -6,7 +6,7 @@ function(key, spectra){
             }
         };
         
-        var ignoreList = ['_id','datapoints', 'ecosis'];
+        var ignoreList = ['_id','datapoints', 'ecosis', 'tmp__schema__'];
 
         // this is only for non-datapoints.  datapoint keys were already cleaned in push
         function cleanValue(val) {
@@ -30,7 +30,11 @@ function(key, spectra){
                 // is this new or are we pushing to an array?
                 if( value === null ) return;
 
-                value = cleanValue(value);
+                if( key !== 'geojson' ) {
+                    value = cleanValue(value);
+                }
+
+
                 if( value === '' ) return;
 
                 if( !searchObj[key] ) searchObj[key] = {};
