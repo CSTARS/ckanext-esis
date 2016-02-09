@@ -1,17 +1,16 @@
 function(key, spectra){
         var searchObj = {
-            'data_keys__' : {}
+            tmp__schema__ : {
+                wavelengths : {},
+                metadata : {}
+            }
         };
-
-        if( typeof scope !== 'undefined' ) {
-            searchObj.scope = Object.keys(scope.schema)
-        }
         
         var ignoreList = ['_id','datapoints', 'ecosis'];
 
         // this is only for non-datapoints.  datapoint keys were already cleaned in push
-        function cleanKey(key) {
-            return key.replace(/\./g, '_');
+        function cleanValue(val) {
+            return val.replace(/\./g, '_').trim().toLowerCase();
         }
 
         function setValue(measurement, key) {
@@ -30,12 +29,9 @@ function(key, spectra){
             } else {
                 // is this new or are we pushing to an array?
                 if( value === null ) return;
+
+                value = cleanValue(value);
                 if( value === '' ) return;
-
-                // don't include values that have over 100 characters.  Assume not good filter
-                if( typeof value == 'string' && value.length > 100 ) return;
-
-                key = cleanKey(key);
 
                 if( !searchObj[key] ) searchObj[key] = {};
 
@@ -48,23 +44,32 @@ function(key, spectra){
         for( i = 0; i < spectra.length; i++ ) {
             measurement = spectra[i];
 
-            // TODO: figure out bubbling of geojson
-            //if( measurement.ecosis && measurement.ecosis.geojson ) {
-            //    setValue(measurement.ecosis, 'geojson');
-            //}
+            // key track of all metadata attribute and wavelengths
+            if( measurement.tmp__schema__ ) {
 
-            if( measurement.data_keys__ ) {
-                for( var key in measurement.data_keys__ ) {
-                    searchObj['data_keys__'][key] = 1;
+                for( var key in measurement.tmp__schema__.wavelengths ) {
+                    measurement.tmp__schema__.wavelengths[key] = 1;
                 }
+                for( var key in measurement.tmp__schema__.metadata ) {
+                    measurement.tmp__schema__.metadata[key] = 1;
+                }
+
             } else if ( measurement.datapoints ) {
+
                 for( key in measurement.datapoints ) {
-                    searchObj['data_keys__'][key] = 1;
+                    searchObj.tmp__schema__.wavelengths[key] = 1;
                 }
+
             }
 
             for( key in measurement ) {
                 if( ignoreList.indexOf(key) != -1 ) continue;
+
+                searchObj.tmp__schema__.metadata[key] = 1;
+
+                if( mapReduceAttribute.indexOf(key) == -1 ) {
+                    continue;
+                }
 
                 // it's a re-reduce
                 setValue(measurement, key);

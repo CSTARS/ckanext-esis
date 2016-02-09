@@ -7,7 +7,9 @@
   <template>
     <div class="well">
       <div id="map" style="height: 400px"></div>
-      <div class="help-block">Draw bounding box for dataset</div>
+      <div class="help-block">Draw bounding box for dataset.  If you provide latitude and
+      longitude or geojson field(s) in your spectra, a bounding box for your dataset will
+      be automatically calculated for search.</div>
     </div>
   </template>
 </dom-module>
@@ -47,6 +49,7 @@
       try {
         this.polygon = L.geoJson(geojsonFeature);
         this.polygon.addTo(this.map);
+        this.polygon.on('click', this.onFeatureClick.bind(this));
       } catch(e) {}
     },
 
@@ -67,6 +70,22 @@
 
       this.drawing = true;
       this.p1 = e.latlng;
+    },
+
+    onFeatureClick : function(e) {
+      if( this.drawing ) {
+        return this.onClick(e);
+      }
+
+      // else clear
+      if( this.polygon ) {
+        this.map.removeLayer(this.polygon);
+      }
+      ecosis.ds.setDatasetExtra('geojson', null);
+      this.fire('update', {
+        attribute : 'geojson',
+        value : null
+      });
     },
 
     onMouseMove : function(e) {
@@ -95,7 +114,7 @@
       };
 
       this.polygon = L.geoJson(geojsonFeature);
-      this.polygon.on('click', this.onClick.bind(this));
+      this.polygon.on('click', this.onFeatureClick.bind(this));
       this.polygon.addTo(this.map);
     },
 

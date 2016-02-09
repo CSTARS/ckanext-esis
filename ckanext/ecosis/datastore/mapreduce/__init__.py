@@ -1,8 +1,10 @@
 import os, json, re
-from datetime import datetime
+import datetime
 from bson.code import Code
 from bson.son import SON
 from pylons import config
+import lookup
+import dateutil.parser as dateparser
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,35 +32,57 @@ schemaMap = {
     'Maintainer Email' : 'maintainer_email'
 }
 
+mapReduceAttribute = []
+
 def init(mongoCollections, jsonSchema):
-    global collections, schema
+    global collections, schema, mapReduceAttribute
 
     collections = mongoCollections
     schema = jsonSchema
+    lookup.init(collections)
 
+    # loop schema and lookup mapreduce attributes
+    for cat, arr in schema.iteritems():
+        for item in arr:
+            mapReduceAttribute.append(item.get('name'))
 
 # pkg should be a ckan pkg
 # collection should be the search collection
-def mapreducePackage(ckanPackage):
+
+def mapreducePackage(ckanPackage, bboxInfo):
+
+    # pass along attribute to mapreduce
     scope = {
-        "schema" : schema
+        "mapReduceAttribute" : mapReduceAttribute
     }
 
     collections.get("search_spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, scope=scope, out=SON([("merge", config.get("ecosis.mongo.search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
     spectra_count = collections.get("search_spectra").find({"ecosis.package_id": ckanPackage['id']}).count()
 
-    updateEcosisNs(ckanPackage, spectra_count)
+    updateEcosisNs(ckanPackage, spectra_count, bboxInfo)
 
-def updateEcosisNs(pkg, spectra_count):
-    config = collections.get("package").find_one({"package_id": pkg.get("id")})
+def updateEcosisNs(pkg, spectra_count, bboxInfo):
+    config = collections.get("package").find_one({"packageId": pkg.get("id")})
     collection = collections.get('search_package')
 
     sort = config.get("sort")
     if sort is None:
         sort = {}
 
+    # store these as dates
+    created = None
+    modified = None
+    try:
+        created = dateparser.parse(pkg.get("metadata_created"))
+    except Exception as e:
+        pass
+    try:
+        modified = dateparser.parse(pkg.get("metadata_modified"))
+    except Exception as e:
+        pass
+
     ecosis = {
-        "pushed" : datetime.utcnow(),
+        "pushed" : datetime.datetime.utcnow(),
         "organization" : "",
         "organization_id" : "",
         "organization_image_url" : "",
@@ -67,8 +91,8 @@ def updateEcosisNs(pkg, spectra_count):
         "package_id" : pkg.get("id"),
         "package_name" : pkg.get("name"),
         "package_title" : pkg.get("title"),
-        "created" : pkg.get("metadata_created"),
-        "modified" : pkg.get("metadata_modified"),
+        "created" : created,
+        "modified" : modified,
         "version" : pkg.get("version"),
         "license" : pkg.get("license_title"),
         "spectra_count" : spectra_count,
@@ -78,7 +102,9 @@ def updateEcosisNs(pkg, spectra_count):
             "units" : {}
         },
         "resources" : [],
+        "linked_data" : [],
         "geojson" : None,
+        "spectra_bbox_geojson" : None,
         "sort_on" : sort.get("on"),
         "sort_description" : sort.get("description")
     }
@@ -89,6 +115,11 @@ def updateEcosisNs(pkg, spectra_count):
         units = json.loads(units)
         for name, unit in units.iteritems():
             ecosis["package_schema"]["units"][re.sub(r'\.', '_', name)] = unit
+
+    # append the linked data
+    linkeddata = getPackageExtra('LinkedData', pkg)
+    if linkeddata != None:
+        ecosis["linked_data"] = json.loads(linkeddata)
 
     # append the list of resources
     for item in pkg['resources']:
@@ -128,6 +159,19 @@ def updateEcosisNs(pkg, spectra_count):
     # This means there is no spectra
     item = collection.find_one({'_id': pkg['id'], 'value': None})
 
+    # if we found bbox info in the spectra, add it
+    if bboxInfo['use']:
+        ecosis['spectra_bbox_geojson'] = {
+            "type": "Polygon",
+            "coordinates" : [[
+                [bboxInfo["maxlng"], bboxInfo["maxlat"]],
+                [bboxInfo["minlng"], bboxInfo["maxlat"]],
+                [bboxInfo["minlng"], bboxInfo["minlat"]],
+                [bboxInfo["maxlng"], bboxInfo["minlat"]],
+                [bboxInfo["maxlng"], bboxInfo["maxlat"]]
+            ]]
+        }
+
     # now see if we have a group by attribute...
     if item != None:
         collection.remove({'_id': pkg['id']})
@@ -157,18 +201,19 @@ def updateEcosisNs(pkg, spectra_count):
                     names.append(name+" Other")
 
         # set the known data attributes
-        for key in mrValue['data_keys__']:
+        for key in mrValue['tmp__schema__']['wavelengths']:
             ecosis['package_schema']['wavelengths'].append(re.sub(r',', '.', key))
-        setValues['$unset']['value.data_keys__'] = ''
+        for key in mrValue['tmp__schema__']['metadata']:
+            ecosis['package_schema']['metadata'].append(re.sub(r',', '.', key))
+
+        setValues['$unset']['value.tmp__schema__'] = ''
 
         # now, lets remove any non-ecosis metadata that has more than 100 entries
         # also we will set the spectra 'schema' lets us know what wavelengths are dataset
         # as well as what fields are spectra level metadata
         for key, values in mrValue.iteritems():
-            if key == 'data_keys__':
+            if key == 'tmp__schema__':
                 continue
-
-            ecosis['package_schema']['metadata'].append(re.sub(r',', '.', key))
 
             if key in names or values == None:
                 continue
@@ -216,7 +261,11 @@ def processGeoJson(geojson, pkg):
 
     return result
 
+def cleanValue(value):
+    if value is None:
+        return ""
 
+    return value.lower().strip()
 
 def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     val = None
@@ -235,7 +284,6 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
         pass
     elif input == "controlled":
         val = val.split(",")
-        val = map(lambda it: it.strip(), val)
     else:
         val = [val]
 
@@ -243,10 +291,13 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     # join if we do
     if mrValue.get(name) != None:
         spValues = mrValue.get(name)
+
         for v in val:
             if not v in spValues:
                 spValues.append(v)
         val = spValues
+
+    val = map(lambda it: cleanValue(it), val)
 
     setValues['$set']['value.'+name] = val
 

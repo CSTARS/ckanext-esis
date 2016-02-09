@@ -48,6 +48,13 @@ def resource(package_id, resource_id):
     })
 
     # if zip, remove child references
+    childResources = collections.get('resource').find({"zip.resourceId": resource_id})
+
+    for childResource in childResources:
+        collections.get('spectra').remove({
+            "resourceId": childResource.get('resourceId'),
+        })
+
     collections.get('resource').remove({
         "zip.resourceId": resource_id,
     })
@@ -55,6 +62,26 @@ def resource(package_id, resource_id):
     path = os.path.join(workspaceDir, package_id, resource_id)
     if os.path.exists(path):
         shutil.rmtree(path)
+
+# when a excel sheet is processed, keep track of it's sheet id's
+# this will remove all spectra a sheets that are not in this list
+def removeDeletedExcelSheets(resource_id, current_sheet_id_list):
+    if None not in current_sheet_id_list:
+        current_sheet_id_list.append(None)
+
+    collections.get('resource').remove({
+        'resourceId' : resource_id,
+        'sheetId' : {
+            '$nin' : current_sheet_id_list
+        }
+    })
+
+    collections.get('spectra').remove({
+        'resourceId' : resource_id,
+        'sheetId' : {
+            '$nin' : current_sheet_id_list
+        }
+    })
 
 def resources(package_id, resources):
     for resource_id in resources:

@@ -28,10 +28,14 @@
       <div class="form-group">
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
-          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-keyup="onTitleInputChange">
+          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
 
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
+          </span>
+
+          <span class="label label-danger" style="display:none" id="tooLong">
+            Invalid name.  Title can have at most 100 characters.
           </span>
 
           <span class="label label-danger" style="display:none" id="invalid">
@@ -42,11 +46,14 @@
             URL: <span id="urlLabelInput"></span>
           </span>
 
+          <div id="message2"></div>
+
           <div id="message" class="help-block" >
-            Please note: your dataset title is <i class="text text-warning">PERMANENT</i>.  Please think about the title you choose.
-            Finally, please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
+            Please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
+
+
         </div>
       </div>
     </div>
@@ -60,17 +67,13 @@
 
     ready : function() {
       this.verifyNameTime = -1;
-
-      if( ecosis.ds.loaded ) this.onDataReady();
-      else ecosis.ds.on('load', this.onDataReady.bind(this));
+      this.currentName = null;
+      ecosis.ds.on('load', this.onDataReady.bind(this));
     },
 
     onDataReady : function() {
       if( ecosis.ds.editMode ) {
-        this.$.editMode.style.display = 'block';
-        this.$.inputMode.style.display = 'none';
-
-        this.$.titleLabel.innerHTML = ecosis.ds.data.title;
+        this.$.titleInput.value = ecosis.ds.data.title;
         this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
         return;
       }
@@ -79,10 +82,32 @@
     },
 
     onTitleInputChange : function() {
-      ecosis.ds.data.title = this.$.titleInput.value;
+      if( ecosis.ds.editMode && ecosis.ds.data.name && this.currentName === null ) {
+        this.currentName = ecosis.ds.data.name;
+      }
+
+      // TODO: check for 100 characters
+      // TODO: update back button on update
+      var title = this.$.titleInput.value.replace(/_/g, ' ');
+      if( title.length >= 100 ) {
+        this.validName = false;
+        this.$.tooLong.style.display = 'inline-block';
+        return;
+      }
+      this.$.tooLong.style.display = 'none';
+
+      ecosis.ds.data.title = title;
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
+
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+
+      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
+      // then there is nothing to check, they are just updating the title.  This will throw
+      // a false positive if we check for name in use (cause it is, by this dataset);
+      if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
+        return;
+      }
 
       this.$.verifyingTitleLabel.style.display = 'inline-block';
       this.$.invalid.style.display = 'none';
@@ -109,5 +134,24 @@
 
       }.bind(this), 500);
     }
+
+    /*onBlur : function() {
+      var parts = ecosis.ds.data.title.split(' ');
+
+      var wordsOverFour = 0;
+      var wordsOverFourNoNum = 0;
+      for( var i = 0; i < parts.length; i++ ) {
+        if( parts[i].length > 4 ) {
+          wordsOverFour++;
+          if( !words.match(/\d/) ) {
+            wordsOverFourNoNum++;
+          }
+        }
+      }
+
+      if( wordsOverFour < 3 ) {
+          var message = '<'
+      }
+    }*/
   });
 </script>

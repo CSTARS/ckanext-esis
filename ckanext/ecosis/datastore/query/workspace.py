@@ -1,16 +1,19 @@
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
+
 # WHY is this not working?
 # from . import getResource
 
 collections = None
 getResource = None
+isPushed = None
 
-def init(co, fn):
-    global collections, getResource
+def init(co, fn, q):
+    global collections, getResource, isPushed
 
     collections = co
     getResource = fn
+    isPushed = q
 
 def get(package_id):
     # get all package resources
@@ -24,7 +27,8 @@ def get(package_id):
         "ckan" : {
             "package" : ckanPackageQuery.get(package_id),
             "resources" : resources
-        }
+        },
+        "pushed" : isPushed(package_id)
     }
 
     if response['package'] is None:

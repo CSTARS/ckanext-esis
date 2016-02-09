@@ -1,12 +1,26 @@
 {% ckan_extends %}
 
+{% block content_action %}
+  {% if h.check_access('package_update', {'id':pkg.id }) %}
+    <a class="btn btn-success btn-large" style="margin-top:-8px" href="/import?id={{pkg.id}}"><i class="icon-wrench"></i> Manage Dataset</a>
+  {% endif %}
+{% endblock %}
+
 {% block package_notes %}
   {% if c.pkg_notes_formatted %}
     <div class="notes embedded-content">
       {{ c.pkg_notes_formatted }}
     </div>
   {% endif %}
-  {% if not pkg.private %}
-    <a href="{{ c.environ['pylons.pylons'].config['esis.search_url'] }}#result/{{ pkg.id }}" target="_blank">View in Ecosis Search</a>
-  {% endif %}
+
+    {% if h.pushed_to_search(pkg.id) %}
+      <div class="alert alert-success">
+      Published. <a href="{{ h.get_search_url() }}#result/{{ pkg.id }}" target="_blank">View in Search.</a><br />
+      Last pushed {{h.get_last_pushed_str(pkg.id)}}.
+    {% else %}
+      <div class="well">
+      Not available in <a href="{{ h.get_search_url() }}" target="_blank">search.</a><br />To publish to search, click 'Manage Dataset', fill out required information, then click
+      the 'Publish' tab and follow instructions.
+    {% endif %}
+  </div>
 {% endblock %}

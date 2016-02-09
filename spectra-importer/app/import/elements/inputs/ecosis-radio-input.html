@@ -1,0 +1,61 @@
+<dom-module id="ecosis-radio-input">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <div class="horizontal-form">
+      <div class="form-group">
+        <label id="label" for="input" class="col-md-3 control-label"></label>
+        <div class="col-md-7" style="padding-top:10px">
+          <label>
+            <input type="radio" id="yes" value="Yes" on-change="onChange"> Yes
+          </label>&nbsp;&nbsp;
+          <label>
+            <input type="radio" id="no" value="No" on-change="onChange"> No
+          </label>
+
+          <div class="help-block" id="help" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'ecosis-radio-input',
+
+      properties : {
+        metadata : {
+          type : String
+        }
+      },
+
+      attached : function() {
+        this.schema = ecosis.ds.metadataLookup[this.metadata];
+        this.$.yes.setAttribute('name', this.schema.flat+'-radio');
+        this.$.no.setAttribute('name', this.schema.flat+'-radio');
+        this.$.label.innerHTML = this.schema.name;
+      },
+
+      onChange : function(e) {
+        this.selected = [e.currentTarget.getAttribute('value')];
+
+        this.fire('update', {
+          attribute : this.schema.name,
+          value : e.currentTarget.getAttribute('value')
+        });
+      },
+
+      setValue: function(value) {
+        if( value.toLowerCase() === 'yes' ) {
+          this.$.yes.checked = true;
+        } else {
+          this.$.no.checked = true;
+        }
+      }
+    });
+  </script>
+</dom-module>

@@ -568,7 +568,7 @@ debouncer.stop();
 }
 }
 });
-Polymer.version = '1.1.4';
+Polymer.version = '1.1.5';
 Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
@@ -2451,7 +2451,15 @@ this.listen(node, name, listeners[key]);
 }
 },
 listen: function (node, eventName, methodName) {
-this._listen(node, eventName, this._createEventHandler(node, eventName, methodName));
+var handler = this._recallEventHandler(this, eventName, node, methodName);
+if (!handler) {
+handler = this._createEventHandler(node, eventName, methodName);
+}
+if (handler._listening) {
+return;
+}
+this._listen(node, eventName, handler);
+handler._listening = true;
 },
 _boundListenerKey: function (eventName, methodName) {
 return eventName + ':' + methodName;
@@ -2490,6 +2498,7 @@ host[methodName](e, e.detail);
 host._warn(host._logf('_createEventHandler', 'listener method `' + methodName + '` not defined'));
 }
 };
+handler._listening = false;
 this._recordEventHandler(host, eventName, node, methodName, handler);
 return handler;
 },
@@ -2497,6 +2506,7 @@ unlisten: function (node, eventName, methodName) {
 var handler = this._recallEventHandler(this, eventName, node, methodName);
 if (handler) {
 this._unlisten(node, eventName, handler);
+handler._listening = false;
 }
 },
 _listen: function (node, eventName, handler) {
@@ -3344,6 +3354,12 @@ elt[n] = props[n];
 }
 }
 return elt;
+},
+isLightDescendant: function (node) {
+return this.contains(node) && Polymer.dom(this).getOwnerRoot() === Polymer.dom(node).getOwnerRoot();
+},
+isLocalDescendant: function (node) {
+return this.root === Polymer.dom(node).getOwnerRoot();
 }
 });
 Polymer.Bind = {
@@ -4145,6 +4161,22 @@ if (args.length) {
 this._notifySplice(array, path, 0, args.length, []);
 }
 return ret;
+},
+prepareModelNotifyPath: function (model) {
+this.mixin(model, {
+fire: Polymer.Base.fire,
+notifyPath: Polymer.Base.notifyPath,
+_EVENT_CHANGED: Polymer.Base._EVENT_CHANGED,
+_notifyPath: Polymer.Base._notifyPath,
+_pathEffector: Polymer.Base._pathEffector,
+_annotationPathEffect: Polymer.Base._annotationPathEffect,
+_complexObserverPathEffect: Polymer.Base._complexObserverPathEffect,
+_annotatedComputationPathEffect: Polymer.Base._annotatedComputationPathEffect,
+_computePathEffect: Polymer.Base._computePathEffect,
+_modelForPath: Polymer.Base._modelForPath,
+_pathMatchesEffect: Polymer.Base._pathMatchesEffect,
+_notifyBoundPaths: Polymer.Base._notifyBoundPaths
+});
 }
 });
 }());
@@ -5352,6 +5384,7 @@ properties: { __hideTemplateChildren__: { observer: '_showHideChildren' } },
 _instanceProps: Polymer.nob,
 _parentPropPrefix: '_parent_',
 templatize: function (template) {
+this._templatized = template;
 if (!template._content) {
 template._content = template.content;
 }
@@ -5362,11 +5395,11 @@ return;
 }
 var archetype = Object.create(Polymer.Base);
 this._customPrepAnnotations(archetype, template);
+this._prepParentProperties(archetype, template);
 archetype._prepEffects();
 this._customPrepEffects(archetype);
 archetype._prepBehaviors();
 archetype._prepBindings();
-this._prepParentProperties(archetype, template);
 archetype._notifyPath = this._notifyPathImpl;
 archetype._scopeElementClass = this._scopeElementClassImpl;
 archetype.listen = this._listenImpl;
@@ -5449,6 +5482,7 @@ delete parentProps[prop];
 proto = archetype._parentPropProto = Object.create(null);
 if (template != this) {
 Polymer.Bind.prepareModel(proto);
+Polymer.Base.prepareModelNotifyPath(proto);
 }
 for (prop in parentProps) {
 var parentProp = this._parentPropPrefix + prop;
@@ -5467,6 +5501,7 @@ Polymer.Bind.prepareInstance(template);
 template._forwardParentProp = this._forwardParentProp.bind(this);
 }
 this._extendTemplate(template, proto);
+template._pathEffector = this._pathEffectorImpl.bind(this);
 }
 },
 _createForwardPropEffector: function (prop) {
@@ -5477,7 +5512,7 @@ this._forwardParentProp(prop, value);
 _createHostPropEffector: function (prop) {
 var prefix = this._parentPropPrefix;
 return function (source, value) {
-this.dataHost[prefix + prop] = value;
+this.dataHost._templatized[prefix + prop] = value;
 };
 },
 _createInstancePropEffector: function (prop) {
@@ -5509,16 +5544,17 @@ var dot = path.indexOf('.');
 var root = dot < 0 ? path : path.slice(0, dot);
 dataHost._forwardInstancePath.call(dataHost, this, path, value);
 if (root in dataHost._parentProps) {
-dataHost.notifyPath(dataHost._parentPropPrefix + path, value);
+dataHost._templatized.notifyPath(dataHost._parentPropPrefix + path, value);
 }
 },
-_pathEffector: function (path, value, fromAbove) {
+_pathEffectorImpl: function (path, value, fromAbove) {
 if (this._forwardParentPath) {
 if (path.indexOf(this._parentPropPrefix) === 0) {
-this._forwardParentPath(path.substring(8), value);
+var subPath = path.substring(this._parentPropPrefix.length);
+this._forwardParentPath(subPath, value);
 }
 }
-Polymer.Base._pathEffector.apply(this, arguments);
+Polymer.Base._pathEffector.call(this._templatized, path, value, fromAbove);
 },
 _constructorImpl: function (model, host) {
 this._rootDataHost = host._getRootDataHost();
@@ -5561,8 +5597,9 @@ return host._scopeElementClass(node, value);
 stamp: function (model) {
 model = model || {};
 if (this._parentProps) {
+var templatized = this._templatized;
 for (var prop in this._parentProps) {
-model[prop] = this[this._parentPropPrefix + prop];
+model[prop] = templatized[this._parentPropPrefix + prop];
 }
 }
 return new this.ctor(model, this);
@@ -6170,7 +6207,7 @@ this.deselect(item);
 }
 } else {
 this.push('selected', item);
-skey = this._selectedColl.getKey(item);
+var skey = this._selectedColl.getKey(item);
 this.linkPaths('selected.' + skey, 'items.' + key);
 }
 } else {
@@ -6588,6 +6625,7 @@ this.fire('dom-change');
 
 
 
+
 <script>
   Polymer({
     is : 'ecosis-theme-input',
@@ -6906,9 +6944,6 @@ this.fire('dom-change');
 
 
 
-
-
-
 <script>
   Polymer({
     is : 'ecosis-metadata-docs',
@@ -6974,6 +7009,11 @@ this.fire('dom-change');
 
 
 
+
+
+
+
+
 </head><body><div hidden="">
 
 <dom-module id="ecosis-schema-input">
@@ -7001,8 +7041,12 @@ this.fire('dom-change');
 
       this.schema = ecosis.ds.metadataLookup[this.metadata];
 
-      if( this.schema.input == 'controlled' ) {
-        this.innerHTML = '<ecosis-controlled-input metadata="'+this.metadata+'"></ecosis-controlled-input>';
+      if( this.schema.input == 'controlled' || this.schema.input == 'controlled-single' ) {
+        if( this.isYesNo(this.schema) ) {
+          this.innerHTML = '<ecosis-radio-input metadata="'+this.metadata+'"></ecosis-radio-input>';
+        } else {
+          this.innerHTML = '<ecosis-controlled-input metadata="'+this.metadata+'"></ecosis-controlled-input>';
+        }
       } else {
         var html =
           '<div class="form-group">'+
@@ -7023,9 +7067,27 @@ this.fire('dom-change');
       }
     },
 
+    isYesNo : function(schema) {
+      if( !schema.vocabulary ) return false;
+      if( schema.vocabulary.length != 2 ) return false;
+
+      var c = 0;
+      schema.vocabulary.forEach(function(vocab){
+        if( vocab.toLowerCase() === 'yes' || vocab.toLowerCase() === 'no' ) {
+          c++;
+        }
+      });
+      if( c === 2 ) return true;
+      return false;
+    },
+
     setValue : function(value, otherValue) {
-      if( this.schema.input == 'controlled' ) {
-        this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
+      if( this.schema.input == 'controlled' || this.schema.input == 'controlled-single' ) {
+        if( this.isYesNo(this.schema) ) {
+          this.querySelector('ecosis-radio-input').setValue(value);
+        } else {
+          this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
+        }
       } else {
         this.querySelector('input').value = value;
       }
@@ -7144,7 +7206,12 @@ this.fire('dom-change');
     onChange : function() {
       if( this.$.input.value == '' ) return;
 
-      this.selected.push(this.$.input.value);
+      if( this.schema.input === 'controlled-single' ) {
+        this.selected = [this.$.input.value];
+      } else {
+        this.selected.push(this.$.input.value);
+      }
+
 
       this.fire('update', {
         attribute : this.schema.name,
@@ -7185,6 +7252,68 @@ this.fire('dom-change');
   })
 </script>
 
+<dom-module id="ecosis-radio-input">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <div class="horizontal-form">
+      <div class="form-group">
+        <label id="label" for="input" class="col-md-3 control-label"></label>
+        <div class="col-md-7" style="padding-top:10px">
+          <label>
+            <input type="radio" id="yes" value="Yes" on-change="onChange"> Yes
+          </label>&nbsp;&nbsp;
+          <label>
+            <input type="radio" id="no" value="No" on-change="onChange"> No
+          </label>
+
+          <div class="help-block" id="help" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'ecosis-radio-input',
+
+      properties : {
+        metadata : {
+          type : String
+        }
+      },
+
+      attached : function() {
+        this.schema = ecosis.ds.metadataLookup[this.metadata];
+        this.$.yes.setAttribute('name', this.schema.flat+'-radio');
+        this.$.no.setAttribute('name', this.schema.flat+'-radio');
+        this.$.label.innerHTML = this.schema.name;
+      },
+
+      onChange : function(e) {
+        this.selected = [e.currentTarget.getAttribute('value')];
+
+        this.fire('update', {
+          attribute : this.schema.name,
+          value : e.currentTarget.getAttribute('value')
+        });
+      },
+
+      setValue: function(value) {
+        if( value.toLowerCase() === 'yes' ) {
+          this.$.yes.checked = true;
+        } else {
+          this.$.no.checked = true;
+        }
+      }
+    });
+  </script>
+</dom-module>
+
 
 
 
@@ -7199,7 +7328,9 @@ this.fire('dom-change');
   <template>
     <div class="well">
       <div id="map" style="height: 400px"></div>
-      <div class="help-block">Draw bounding box for dataset</div>
+      <div class="help-block">Draw bounding box for dataset.  If you provide latitude and
+      longitude or geojson field(s) in your spectra, a bounding box for your dataset will
+      be automatically calculated for search.</div>
     </div>
   </template>
 </dom-module>
@@ -7239,6 +7370,7 @@ this.fire('dom-change');
       try {
         this.polygon = L.geoJson(geojsonFeature);
         this.polygon.addTo(this.map);
+        this.polygon.on('click', this.onFeatureClick.bind(this));
       } catch(e) {}
     },
 
@@ -7259,6 +7391,22 @@ this.fire('dom-change');
 
       this.drawing = true;
       this.p1 = e.latlng;
+    },
+
+    onFeatureClick : function(e) {
+      if( this.drawing ) {
+        return this.onClick(e);
+      }
+
+      // else clear
+      if( this.polygon ) {
+        this.map.removeLayer(this.polygon);
+      }
+      ecosis.ds.setDatasetExtra('geojson', null);
+      this.fire('update', {
+        attribute : 'geojson',
+        value : null
+      });
     },
 
     onMouseMove : function(e) {
@@ -7287,7 +7435,7 @@ this.fire('dom-change');
       };
 
       this.polygon = L.geoJson(geojsonFeature);
-      this.polygon.on('click', this.onClick.bind(this));
+      this.polygon.on('click', this.onFeatureClick.bind(this));
       this.polygon.addTo(this.map);
     },
 
@@ -7344,10 +7492,14 @@ this.fire('dom-change');
       <div class="form-group">
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
-          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-keyup="onTitleInputChange">
+          <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
 
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
+          </span>
+
+          <span class="label label-danger" style="display:none" id="tooLong">
+            Invalid name.  Title can have at most 100 characters.
           </span>
 
           <span class="label label-danger" style="display:none" id="invalid">
@@ -7358,11 +7510,14 @@ this.fire('dom-change');
             URL: <span id="urlLabelInput"></span>
           </span>
 
+          <div id="message2"></div>
+
           <div id="message" class="help-block">
-            Please note: your dataset title is <i class="text text-warning">PERMANENT</i>.  Please think about the title you choose.
-            Finally, please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
+            Please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
+
+
         </div>
       </div>
     </div>
@@ -7376,17 +7531,13 @@ this.fire('dom-change');
 
     ready : function() {
       this.verifyNameTime = -1;
-
-      if( ecosis.ds.loaded ) this.onDataReady();
-      else ecosis.ds.on('load', this.onDataReady.bind(this));
+      this.currentName = null;
+      ecosis.ds.on('load', this.onDataReady.bind(this));
     },
 
     onDataReady : function() {
       if( ecosis.ds.editMode ) {
-        this.$.editMode.style.display = 'block';
-        this.$.inputMode.style.display = 'none';
-
-        this.$.titleLabel.innerHTML = ecosis.ds.data.title;
+        this.$.titleInput.value = ecosis.ds.data.title;
         this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
         return;
       }
@@ -7395,10 +7546,32 @@ this.fire('dom-change');
     },
 
     onTitleInputChange : function() {
-      ecosis.ds.data.title = this.$.titleInput.value;
+      if( ecosis.ds.editMode && ecosis.ds.data.name && this.currentName === null ) {
+        this.currentName = ecosis.ds.data.name;
+      }
+
+      // TODO: check for 100 characters
+      // TODO: update back button on update
+      var title = this.$.titleInput.value.replace(/_/g, ' ');
+      if( title.length >= 100 ) {
+        this.validName = false;
+        this.$.tooLong.style.display = 'inline-block';
+        return;
+      }
+      this.$.tooLong.style.display = 'none';
+
+      ecosis.ds.data.title = title;
       ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
+
       this.$.nameLabel.innerHTML = ecosis.ds.data.name;
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+
+      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
+      // then there is nothing to check, they are just updating the title.  This will throw
+      // a false positive if we check for name in use (cause it is, by this dataset);
+      if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
+        return;
+      }
 
       this.$.verifyingTitleLabel.style.display = 'inline-block';
       this.$.invalid.style.display = 'none';
@@ -7425,6 +7598,25 @@ this.fire('dom-change');
 
       }.bind(this), 500);
     }
+
+    /*onBlur : function() {
+      var parts = ecosis.ds.data.title.split(' ');
+
+      var wordsOverFour = 0;
+      var wordsOverFourNoNum = 0;
+      for( var i = 0; i < parts.length; i++ ) {
+        if( parts[i].length > 4 ) {
+          wordsOverFour++;
+          if( !words.match(/\d/) ) {
+            wordsOverFourNoNum++;
+          }
+        }
+      }
+
+      if( wordsOverFour < 3 ) {
+          var message = '<'
+      }
+    }*/
   });
 </script>
 
@@ -7450,7 +7642,10 @@ this.fire('dom-change');
         <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Keywords</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="keywordInput" on-keyup="onInputChange" placeholder="Search Keywords">
-
+          <div class="help-block">
+            Search for EcoSIS keywords or create new keywords.  Comma separate to add more than one keyword at a time.  Use
+            the 'enter' key to create new keyword(s).
+          </div>
           <span id="searchingPanel" class="label label-primary" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Searching...
           </span>
@@ -7502,18 +7697,21 @@ this.fire('dom-change');
     },
 
     createToken : function() {
-        var value = this.clean(this.$.keywordInput.value)
+      var parts = this.$.keywordInput.value.split(',');
+      for( var i = 0; i < parts.length; i++ ) {
+        var value = this.clean(parts[i]);
 
-        if( value.length == 0 ) return;
+        if( value.length == 0 ) continue;
 
         var t = {
             label : value,
             value : value
         }
         this.addToken(t, true);
+      }
 
-        this.$.keywordInput.value = '';
-        this.$.resultRoot.innerHTML = '';
+      this.$.keywordInput.value = '';
+      this.$.resultRoot.innerHTML = '';
     },
 
     addResult : function(e) {
@@ -7548,7 +7746,7 @@ this.fire('dom-change');
       for( var i = 0; i < this.results.length; i++ ) {
         btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].name+'</a>';
       }
-      this.$.resultRoot.innerHTML = btns;
+      this.$.resultRoot.innerHTML = btns.length > 0 ? '<div class="well">Suggestions:<br />'+btns+'</div>' : '';
 
       $(this.$.resultRoot).find('a').on('click', this.addResult.bind(this));
     },
@@ -7593,10 +7791,123 @@ this.fire('dom-change');
     },
 
     clean : function(txt) {
-      return txt.replace(/[^A-Za-z0-9-_\s]/g, '');
+      return txt.replace(/[^A-Za-z0-9-_]/g, '').trim();
     }
   });
 </script>
+
+<dom-module id="ecosis-linked-data-input">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      [hide="true"] {
+        display: none;
+      }
+      .form-inline .form-group {
+        padding: 0 30px;
+      }
+    </style>
+
+    <div class="help-block">
+      Links to additional site related information and data.  Here you link your spectral
+      data to external sites and datasets.  Example, flux data.
+    </div>
+
+    <template is="dom-repeat" items="{{list}}">
+      <div class="form-inline">
+        <div class="form-group">
+          <label for="">Label</label>
+          <input type="text" class="form-control" placeholder="Ex: Fluxnet" value="{{item.label::input}}" on-input="checkFilled" on-blur="fireUpdate">
+        </div>
+        <div class="form-group">
+          <label for="">URL</label>
+          <input type="text" class="form-control" style="min-width: 300px" placeholder="Ex: http://fluxnet.ornl.gov/site/646" value="{{item.url::input}}" on-input="checkFilled" on-blur="fireUpdate">
+        </div>
+        <a class="btn btn-default" index$="{{index}}" on-click="remove" hide$="{{item.last}}"><i class="fa fa-trash"></i></a>
+      </div>
+    </template>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'ecosis-linked-data-input',
+
+      properties : {
+        list : {
+          type : Array,
+          value : function() {
+            return [{
+              label : '',
+              url : '',
+              last : 'true'
+            }];
+          }
+        }
+      },
+
+      setData : function(data) {
+        if( !data ) {
+          data = JSON.stringify([{
+            label : '',
+            url : '',
+            last : 'true'
+          }]);
+        }
+
+        this.list = JSON.parse(data);
+        this.checkFilled();
+      },
+
+      getData : function() {
+        var arr = [];
+        for( var i = 0; i < this.list.length; i++ ) {
+          if( this.list[i].label.length > 0 && this.list[i].url.length > 0 ) {
+            arr.push({
+              label : this.list[i].label,
+              url : this.list[i].url
+            });
+          }
+        }
+
+        return JSON.stringify(arr);
+      },
+
+      remove : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        this.splice('list', index, 1);
+        this.fireUpdate();
+      },
+
+      checkFilled : function() {
+        if( !this.list ) return;
+        if( this.list.length === 0 ) return;
+
+        var item = this.list[this.list.length-1];
+        if( item.label.length > 0 && item.url.length > 0 ) {
+          this.push('list',{
+            label : '',
+            url : '',
+            last : 'true'
+          });
+        }
+
+        for( var i = 0; i < this.list.length-1; i++ ) {
+          if( this.list[i].last == 'true') {
+            this.set('list.'+i+'.last', 'false');
+          }
+        }
+      },
+
+      fireUpdate : function() {
+        ecosis.ds.setDatasetExtra('LinkedData', this.getData());
+        this.fire('update');
+      }
+
+    });
+  </script>
+</dom-module>
 
 <dom-module id="ecosis-header">
   <style>
@@ -7633,7 +7944,7 @@ this.fire('dom-change');
             </li>
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o"></i> Publish</a></li>
             <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
@@ -7671,7 +7982,7 @@ this.fire('dom-change');
 
       if( ecosis.ds.editMode ) {
         ecosis.ds.on('load', function(){
-          if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.data.name);
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
@@ -7684,6 +7995,10 @@ this.fire('dom-change');
         this.$.advanced.style.display = 'block';
         this.$.push.style.display = 'block';
       }
+    },
+
+    setBackBtn : function(name) {
+      this.$.exit.setAttribute('href', '/dataset/'+name);
     },
 
     updateActiveTab : function() {
@@ -7946,14 +8261,22 @@ this.fire('dom-change');
     :host {
       display: block;
     }
+    .alert-default {
+      background-color: #888;
+      color : white;
+    }
+    .alert-primary {
+      background-color: #2196f3;
+      color: white;
+    }
   </style>
 
   <template>
-    <div class="well well-sm">
+    <div id="well" class="">
       <div class="layout horizontal center">
         <div>
           <a class="btn btn-default" on-click="back" id="back">
-            <i class="fa fa-arrow-left"></i>
+            <i class="fa fa-arrow-left" style="color:#888"></i>
           </a>
         </div>
         <div style="padding:0 15px">Sheet:</div>
@@ -7962,7 +8285,7 @@ this.fire('dom-change');
         </div>
         <div>
           <a class="btn btn-default" on-click="forward" id="forward">
-            <i class="fa fa-arrow-right"></i>
+            <i class="fa fa-arrow-right" style="color:#888"></i>
           </a>
         </div>
     </div>
@@ -7985,10 +8308,12 @@ this.fire('dom-change');
         options += '<option value="'+i+'">'+name+'</option>';
       }
       this.$.select.innerHTML = options;
+      this.updateClass();
     },
 
     onSelect : function() {
       this.selected = parseInt(this.$.select.value);
+      this.updateClass();
       this.fire('select', this.selected);
     },
 
@@ -7999,6 +8324,7 @@ this.fire('dom-change');
         return;
       }
       this.$.select.value = this.selected+'';
+      this.updateClass();
       this.fire('select', this.selected);
     },
 
@@ -8009,7 +8335,27 @@ this.fire('dom-change');
         return;
       }
       this.$.select.value = this.selected+'';
+      this.updateClass();
       this.fire('select', this.selected);
+    },
+
+    updateClass : function() {
+      var css = 'style-scope ecosis-datasheet-select-panel alert ';
+
+      if( !this.resource ) return;
+      if( !this.resource.datasheets ) return;
+      if( this.resource.datasheets.length <= this.selected ) return;
+
+      var sheet = this.resource.datasheets[this.selected];
+      if( sheet.ignored ) {
+        css += 'alert-default';
+      } else if ( sheet.metadata ) {
+        css += 'alert-primary';
+      } else {
+        css += 'alert-success'
+      }
+
+      this.$.well.className = css;
     },
 
     setDisabled : function(disable) {
@@ -8026,317 +8372,10 @@ this.fire('dom-change');
   });
 </script>
 
-<dom-module id="ecosis-parser-overview">
-  <style>
-    :host {
-        display: block;
-    }
-    canvas {
-      border-radius: 6px;
-      margin: 5px;
-      border: 1px solid #888;
-    }
-  </style>
-
-  <template>
-    <div class="layout horizontal">
-        <div class="flex" id="canvasParent">
-            <div id="loadingPanel"><i class="fa fa-spinner fa-spin"></i> Loading...</div>
-
-            <canvas id="canvas" width="400" height="400" on-mousewheel="onMouseWheel" on-mousedown="onMouseDown" on-mousemove="onMouseMove" on-mouseup="onMouseUp" on-mouseout="onMouseOut">
-            </canvas>
-        </div>
-        <div>
-            <div class="layout vertical">
-                <div>
-                  <a class="btn btn-default" on-click="zoomIn">
-                    <i class="fa fa-plus"></i>
-                  </a>
-                </div>
-                <div>
-                  <a class="btn btn-default" on-click="zoomOut">
-                    <i class="fa fa-minus"></i>
-                  </a>
-                </div>
-                <div>
-                  <a class="btn btn-default" on-click="zoomStart">
-                    <i class="fa fa-compress"></i>
-                  </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div>
-        <span class="label label-success">Global Metadata</span> |
-        <span class="label label-warning">Schema Attribute Names</span> |
-        <span class="label label-primary">Spectra Data/Metadata</span>
-    </div>
-  </template>
-</dom-module>
-
-<script>
-  Polymer({
-    is : 'ecosis-parser-overview',
-
-    attached : function() {
-      this.top = 0;
-      this.left = 0;
-      this.data = null;
-
-      this.zoom = 5;
-
-      this.cell = {
-          width : 3,
-          height : 1
-      };
-
-      this.colors = {
-          blue : '#2196F3',
-          red : '#FF9800',
-          green : '#2f9b45',
-          grey : '#888888',
-          light_grey : '#cccccc'
-      };
-
-      this.type = 'row';
-      this.ranges = {
-          global : {
-              start : 0,
-              end : 1
-          },
-          local : {
-              start : 2,
-              end : 4,
-          }
-      };
-      this.width = 400;
-      this.height = 400;
-
-      this.dragging = false;
-      this.dragStart = [0, 0];
-      this.dragPos = [0, 0];
-
-      this.ctx = this.$.canvas.getContext('2d');
-      $(window).on('resize', this.resize.bind(this));
-    },
-
-    reset : function() {
-        this.clear();
-        this.data = null;
-        this.ranges = {
-            global : {
-                start : 0,
-                end : 0
-            },
-            local : {
-                start : 0,
-                end : 0,
-            }
-        },
-        this.top = 0;
-        this.left = 0;
-        this.zoom = 5;
-    },
-
-    update : function(resource, datasheet) {
-      this.resource = resource;
-      this.datasheet = datasheet;
-      this.load();
-    },
-
-    load : function() {
-        this.setLoading(true);
-        this.reset();
-
-        ecosis.ckan.getLayoutOverview(
-            ecosis.ds.package_id,
-            this.resource.id,
-            this.datasheet.id,
-            function(resp) {
-                this.setLoading(false);
-
-                if( resp.error ) return alert('Error loading layout overview :(');
-
-                this.type = resp.layout;
-                if( resp.localRange ) {
-                    this.ranges.local.start = resp.localRange.start;
-                    this.ranges.local.end = resp.localRange.stop;
-                }
-                if( resp.globalRange ) {
-                    this.ranges.global.start = resp.globalRange.start;
-                    this.ranges.global.end = resp.globalRange.stop;
-                }
-                this.data = resp.data;
-
-                this.resize();
-            }.bind(this)
-        );
-    },
-
-    resize : function() {
-        this.width = $(this.$.canvasParent).width()-30;
-        if( this.width < 250 ) this.width = 250;
-        this.$.canvas.width = this.width;
-
-        this.async(function(){
-            this.redraw();
-        });
-    },
-
-    onMouseDown : function(e) {
-        this.dragging = true;
-        this.dragStart = [e.x,e.y];
-        this.dragPos = [this.left,this.top];
-    },
-
-    onMouseUp : function(e) {
-        this.dragging = false;
-    },
-    onMouseOut : function(e) {
-        this.dragging = false;
-    },
-
-    onMouseMove : function(e) {
-        if( !this.dragging ) return;
-
-        this.left = this.dragPos[0] + (e.x - this.dragStart[0]);
-        this.top = this.dragPos[1] + (e.y - this.dragStart[1]);
-        this.redraw();
-    },
-
-    onMouseWheel : function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var delta = Math.max(-1, Math.min(1, e.wheelDelta));
-        this.adjustZoom(delta);
-    },
-
-    zoomStart : function() {
-        this.top = 0;
-        this.left = 0;
-        this.zoom = 5;
-        this.redraw();
-    },
-
-    zoomIn : function() {
-        this.adjustZoom(1);
-    },
-
-    zoomOut : function() {
-        this.adjustZoom(-1);
-    },
-
-    adjustZoom : function(delta) {
-        this.zoom += delta;
-
-        if( this.zoom < 1 ) this.zoom = 1;
-        if( this.zoom > 12 ) this.zoom = 12;
-        this.redraw();
-    },
-
-    redraw : function() {
-        if( !this.data ) return;
-
-
-        this.clear();
-
-        var w = this.cell.width * this.zoom * 10;
-        var h = this.cell.height * this.zoom * 10;
-        var t = this.top, l = this.left, row, i, j, color, half, fh, text;
-
-        this.ctx.lineWidth = "2";
-
-        this.ctx.fillStyle = '#000000';
-
-        for( i = 0; i < this.data.length; i++ ) {
-            row = this.data[i];
-
-            for( j = 0; j < row.length; j++ ) {
-
-                color = this.getColor(i, j);
-
-                if( color == this.colors.blue ) {
-                    this.ctx.beginPath();
-                    this.ctx.strokeStyle = this.colors.light_grey;
-
-                    if( this.type == 'row') {
-                        half = (h / 2) - 1;
-                        this.ctx.moveTo(l, t+half);
-                        this.ctx.lineTo(l+w-2, t+half);
-                    } else {
-                        half = (w / 2) - 1;
-                        this.ctx.moveTo(l+half, t);
-                        this.ctx.lineTo(l+half, t+h-2);
-                    }
-
-                    this.ctx.stroke();
-
-                    fh = Math.floor(h*.2);
-                    this.ctx.font = fh+"px Arial";
-                    this.ctx.fillStyle = this.colors.light_grey;
-
-                    if( this.type == 'row') {
-                        this.ctx.fillText(this.data[0][j], l+2, t+fh+3, w-2);
-                    } else {
-                        this.ctx.fillText(this.data[i][0], l+2, t+fh+3, w-2);
-                    }
-                }
-
-                this.ctx.strokeStyle = color;
-                this.ctx.fillStyle = color;
-
-                this.ctx.beginPath();
-                this.ctx.rect(l,t,w-2,h-2);
-                this.ctx.stroke();
-
-                this.ctx.font = Math.floor(h*.6)+"px Arial";
-                this.ctx.fillStyle = color;
-                this.ctx.fillText(row[j].substring(0, 10), l+2, t+h-7, w);
-
-                l += w;
-                if( l > this.width ) break;
-            }
-
-            l = this.left;
-            t += h;
-            if( t > this.height ) break;
-        }
-    },
-
-    getColor : function(i, j) {
-        if( i >= this.ranges.global.start && i < this.ranges.global.end && j < 2 ) {
-            return this.colors.green
-        } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' && j == 0 ) {
-            return this.colors.red;
-        } else if( i >= this.ranges.local.start && i <= this.ranges.local.end && this.type == 'column' ) {
-            return this.colors.blue;
-        } else if( i == this.ranges.local.start && this.type == 'row' ) {
-            return this.colors.red;
-        } else if( i > this.ranges.local.start && i <= this.ranges.local.end && this.type == 'row' ) {
-            return this.colors.blue;
-        } else {
-            return this.colors.light_grey;
-        }
-    },
-
-    clear : function() {
-        this.ctx.clearRect(0, 0, this.width, this.height);
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillRect(0, 0, this.width, this.height);
-    },
-
-    setLoading : function(loading) {
-      this.$.loadingPanel.style.display = loading ? 'block' : 'none';
-    }
-
-  });
-</script>
-
 <dom-module id="ecosis-metadata-join-panel">
   <template>
     <div id="hasMatches">
-      <select id="joinId" class="form-control" on-input="onJoinIdChange"></select>
+      <select id="joinId" class="form-control" on-change="onJoinIdChange"></select>
       <div id="msg"></div>
     </div>
     <div id="noMatches" class="text text-warning">
@@ -8431,309 +8470,6 @@ this.fire('dom-change');
 
   })
 </script>
-
-<dom-module id="ecosis-chart">
-  <style>
-    :host {
-        display: block;
-    }
-  </style>
-
-  <template>
-    <div id="root" style="height:400px"></div>
-
-    <div id="noData" style="color:#888">
-      No spectral data to chart.
-    </div>
-  </template>
-</dom-module>
-
-<script>
-  Polymer({
-    is : 'ecosis-chart',
-
-    properties : {
-      animate : {
-          type : Boolean,
-          value : false
-      },
-      type : {
-        type : String
-      }
-    },
-
-    ready : function() {
-      this.dt = null;
-      this.chart = null;
-      this.height = 400;
-
-      this.updateTimer = -1;
-
-      this.onLoadHandlerSet = false;
-
-      this.options = null;
-      this.cols = null;
-
-      $(window).on('resize', function(){
-          this.redraw();
-      }.bind(this));
-    },
-
-    setHeight : function(height) {
-      this.height = height;
-      this.$.root.style.height = height+'px';
-    },
-
-    setOnloadHandler : function() {
-        if( this.onLoadHandlerSet ) return;
-
-        // put in global scope by cwn-datastore
-        chartLoadHandlers.push(function(){
-            this.update();
-        }.bind(this));
-    },
-
-    setData : function(data) {
-      this.data = data;
-      this.update();
-    },
-
-    update : function() {
-        if( !window.google.visualization ) return this.setOnloadHandler();
-        if( !window.google.visualization.LineChart ) return this.setOnloadHandler();
-
-        if( this.isEmpty() ) {
-          this.$.root.style.display = 'none';
-          this.$.noData.style.display = 'block';
-          return;
-        }
-        this.$.root.style.display = 'block';
-        this.$.noData.style.display = 'none';
-
-        if( !this.chart ) {
-            if( this.type ) {
-                this.chart = new google.visualization[this.type](this.$.root);
-            } else {
-                this.chart = new google.visualization.LineChart(this.$.root);
-            }
-        }
-
-        if( this.updateTimer == -1 ) clearTimeout(this.updateTimer);
-        this.updateTimer = setTimeout(function() {
-            this.updateTimer = -1;
-            this._update();
-        }.bind(this), 500);
-    },
-
-    _update : function() {
-        if( this.cols ) {
-            this.dt = new google.visualization.DataTable();
-            for( var i = 0; i < this.cols.length; i++ ) {
-                this.dt.addColumn(this.cols[i]);
-            }
-            this.dt.addRows(this.data);
-        } else {
-            this.dt = google.visualization.arrayToDataTable(this.data);
-        }
-
-        this.redraw();
-    },
-
-    isEmpty : function() {
-        if( !this.data ) {
-            return true;
-        }
-        if( this.data.length < 2 ) {
-            return true;
-        }
-        if( this.data[0].length == 0 ) {
-            return true;
-        }
-
-        return false;
-    },
-
-    redraw : function() {
-        if( !this.chart || !this.dt ) return;
-
-        var options = {
-            legend : {
-                position : 'none'
-            }
-        };
-
-        if( this.options ) {
-            for( var key in this.options ) {
-                options[key] = this.options[key];
-            }
-        }
-
-        this.chart.draw(this.dt, options);
-    }
-  });
-</script>
-<dom-module id="ecosis-spectra-panel">
-  <style>
-    :host {
-      display: block;
-    }
-  </style>
-
-  <template>
-    <h6 id="loadingPanel">
-      <i class="fa fa-spinner fa-spin"></i> Loading Spectra #<span id="spectraIndexLabel"></span>...
-    </h6>
-
-    <div id="mainPanel" style="display:none">
-        <div style="text-align:right" id="spectraSelectPanel">
-            Spectra #
-            <select on-change="setIndex" class="form-control" style="width:100px; display:inline-block" id="select"></select>
-        </div>
-
-        <ecosis-chart id="chart"></ecosis-chart>
-        <!--
-        <ecosis-ui-chart data="{{data}}" options="{{chartOptions}}" height="500"></ecosis-ui-chart>
-      -->
-
-        <div id="tableRoot"></div>
-
-    </div>
-  </template>
-</dom-module>
-
-<script>
-  Polymer({
-    is : 'ecosis-spectra-panel',
-
-    ready : function() {
-      this.$.chart.options = {}
-    },
-
-    update : function(resource, datasheet) {
-      this.resource = resource;
-      this.datasheet = datasheet;
-
-      this.spectraCache = {};
-
-      this.index = 0;
-
-      var options = '';
-      for( var i = 0; i < this.datasheet.spectra_count; i++ ) {
-          options += '<option value="'+i+'">'+(i+1)+'</option>';
-      }
-      this.$.select.innerHTML = options;
-
-      if( this.datasheet.spectra_count <= 1 ) {
-        this.$.spectraSelectPanel.style.display = 'none';
-      } else {
-        this.$.spectraSelectPanel.style.display = 'block';
-      }
-
-      this.load();
-    },
-
-    clearCache : function() {
-        this.spectraCache = {};
-    },
-
-    load : function() {
-        this.$.spectraIndexLabel.innerHTML = this.index+1;
-
-        if( this.spectraCache[this.index] ) {
-            this.renderSpectra(this.spectraCache[this.index]);
-            return;
-        }
-
-        this.setLoading(true);
-
-        ecosis.ckan.getSpectra(
-            ecosis.ds.package_id,
-            this.resource.id,
-            this.datasheet.id,
-            this.index,
-            function(resp) {
-
-              this.setLoading(false);
-              if( resp.error ) return alert('Error loading spectra: '+this.index);
-
-              this.spectraCache[this.index] = resp;
-              this.renderSpectra(resp);
-            }.bind(this)
-        )
-    },
-
-    setLoading : function(loading) {
-      this.$.loadingPanel.style.display = loading ? 'block' : 'none';
-      this.$.mainPanel.style.display = !loading ? 'block' : 'none';
-    },
-
-    renderSpectra : function(spectra) {
-        this.currentSpectra = spectra;
-
-        var re1Wave = /^-?\d+\.?\d*/;
-        var re2Wave = /^-?\d*\.\d+/;
-
-        this.data = [];
-        for( var i = 0; i < spectra.datapoints.length; i++ ) {
-            if( re1Wave.test(spectra.datapoints[i].key) || re2Wave.test(spectra.datapoints[i].key) ) {
-                this.data.push([
-                    parseFloat(spectra.datapoints[i].key),
-                    parseFloat(spectra.datapoints[i].value)
-                ])
-            }
-        }
-
-        this.data.sort(function(a, b){
-            if( a[0] > b[0] ) return 1;
-            if( a[0] < b[0] ) return -1;
-            return 0;
-        });
-
-        this.data.splice(0, 0, ['Wavelength', '']);
-        this.$.chart.setData(this.data);
-
-        this.attrs = [];
-
-        for( var attrName in spectra ) {
-            if( attrName == 'datapoints') continue;
-            this.attrs.push({
-                name: attrName,
-                value: spectra[attrName],
-                isEcosis : ( ecosis.ds.isEcosisMetadata(attrName) ) ? true : false
-            });
-        }
-
-        this.attrs.sort(function(a, b){
-            if( a.name > b.name ) return 1;
-            if( a.name < b.name ) return -1;
-            return 0;
-        });
-
-        this.renderTable();
-    },
-
-    renderTable : function() {
-      var table = '<table class="table">';
-      for( var i = 0; i < this.attrs.length; i++ ) {
-        var attr = this.attrs[i];
-
-        table +=
-          '<tr class="'+(attr.isEcosis ? 'success' : '')+'" >'+
-            '<td>'+attr.name+'</td>'+
-            '<td>'+attr.value+'</td>'+
-          '</tr>'
-      }
-      table += '</table>';
-
-      this.$.tableRoot.innerHTML = table;
-    },
-
-    setIndex : function(e) {
-        this.index = parseInt(e.currentTarget.value);
-        this.load();
-    }
-  })
-</script>
 <dom-module id="ecosis-datasheet-panel">
   <style>
     :host {
@@ -8821,6 +8557,44 @@ this.fire('dom-change');
         </div>
       </div>
 
+      <!-- Datasheet Seperator -->
+      <div class="form-horizontal" id="seperatorPanel" style="display:none">
+        <div class="form-group">
+
+            <label class="col-md-2 control-label">File Seperator</label>
+            <div class="col-md-10">
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="commaInput" value="," checked="" on-click="onSeperatorChange">
+                  Comma
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="tabInput" value="tab" on-click="onSeperatorChange">
+                  Tab
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="semicolonInput" value=";" on-click="onSeperatorChange">
+                  Semicolon
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="otherInput" value="other" on-click="onSeperatorChange">
+                  Other
+                  <input type="text" id="otherSeperatorInput" on-blur="onSeperatorChange">
+                </label>
+              </div>
+            </div>
+
+            <a on-click="toggleHelp" style="cursor:pointer">Format Help.</a>
+            <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeIn"></ecosis-dataformat-help>
+          </div>
+        </div>
+
       <div id="updatingPanel" class="alert alert-warning" style="display:none">
         <h6 style="color:white"><i class="fa fa-spinner fa-spin"></i> Updating...</h6>
       </div>
@@ -8852,6 +8626,10 @@ this.fire('dom-change');
         joinOn : this.sheet.joinOn
       }
 
+      if( this.sheet.seperator ) {
+        options.seperator = this.sheet.seperator;
+      }
+
       ecosis.ckan.processResource(
           ecosis.ds.package_id,
           this.sheet.resourceId,
@@ -8866,7 +8644,12 @@ this.fire('dom-change');
 
             this.setSaving(false);
 
-            if( resp.error ) return alert("Error updating datasheet :(");
+            if( resp.error ) {
+              // ERROR 16
+              resp.code = 16;
+              resp.message += '.  Error updating datasheet.';
+              return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
+            }
 
             this.sheet = resp;
             ecosis.ds.setSheet(resp);
@@ -8922,6 +8705,7 @@ this.fire('dom-change');
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
+      this.updateSeperatorUi();
 
       if( callback ) callback();
     },
@@ -8955,6 +8739,31 @@ this.fire('dom-change');
       }
     },
 
+    updateSeperatorUi : function() {
+      if( !this.sheet.isCSV ) {
+        this.$.seperatorPanel.style.display = 'none';
+        return;
+      }
+
+      this.$.seperatorPanel.style.display = 'block';
+      $(this).find('.orientation-radio').prop('checked', false);
+      this.$.otherSeperatorInput.value = '';
+
+      if( !this.sheet.seperator ) {
+        this.$.commaInput.checked = true;
+        return;
+      }
+
+      var options = [',', 'tab', ';'];
+      if( options.indexOf(this.sheet.seperator) > -1 ) {
+        $(this).find('[value="'+this.sheet.seperator+'"]').prop('checked', true);
+        return;
+      }
+
+      this.$.otherInput.checked = true;
+      this.$.otherSeperatorInput.value = this.sheet.seperator;
+    },
+
     onOrientationChange : function(e) {
       this.sheet.layout = e.currentTarget.value;
       if( this.sheet.layout == 'column' ) {
@@ -8963,6 +8772,25 @@ this.fire('dom-change');
         $(this.$.columnInput).prop('checked', false);
       }
 
+      this.save();
+    },
+
+    onSeperatorChange : function(e) {
+      var ele = e.currentTarget;
+
+      if( ele.getAttribute('type') == 'radio' ) {
+        $(this).find('.orientation-radio').prop('checked', false);
+        $(ele).prop('checked', true);
+      }
+
+      var val = e.currentTarget.value;
+      if( val === 'other' ) {
+        val = this.$.otherSeperatorInput.value;
+      }
+
+      if( !val ) return;
+
+      this.sheet.seperator = val;
       this.save();
     },
 
@@ -9108,7 +8936,9 @@ this.fire('dom-change');
             </div>
           </div>
         </div>
-        <div class="panel-body" id="zipResources"></div>
+        <div class="panel-body">
+          <ecosis-isotope id="zipResources" selector=".zip-item"></ecosis-isotope>
+        </div>
       </div>
     </template>
 
@@ -9147,6 +8977,8 @@ this.fire('dom-change');
     },
 
     update : function() {
+      this.setAttribute('data-name', this.resource.name);
+
       if( this.resource.isZip ) {
         this.ele = this.$.zipResource.stamp();
       } else {
@@ -9163,16 +8995,29 @@ this.fire('dom-change');
         this.querySelector('#trashBtn').style.color = '#333';
       }
 
+      // hide edit button if invalid file type
+      if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'none';
+      } else {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'inline-block';
+      }
+
       if( this.resource.childResources ) {
-        var panel = this.querySelector('#zipResources');
-        panel.innerHTML = '';
+        this.isotope = this.querySelector('#zipResources');
+        this.isotope.clear();
 
         for( var i = 0; i < this.resource.childResources.length; i++ ) {
           var ele = document.createElement('ecosis-resource-panel');
+          ele.style.width = '100%';
+          ele.className = 'zip-item';
           ele.resource = this.resource.childResources[i]; // manually set
-          panel.appendChild(ele);
+          this.isotope.append(ele);
           ele.update();
         }
+
+        this.isotope.init();
       }
 
       var url = ecosis.ckan.host+'/dataset/'+this.resource.package_id+'/resource/'+this.resource.id+'/download/'+this.resource.name;
@@ -9180,6 +9025,15 @@ this.fire('dom-change');
       this.querySelector('#downloadBtn').setAttribute('href', url);
     },
 
+    sort : function(sortBy) {
+      if( !this.isotope ) return;
+      this.isotope.sort(sortBy);
+    },
+
+    filter : function(filter) {
+      if( !this.isotope ) return;
+      this.isotope.filter(filter);
+    },
 
     setClass : function() {
       var type = this.getResourceType();
@@ -9194,10 +9048,14 @@ this.fire('dom-change');
       }
 
       // update css class
-      if( this.resource.isZip ) return;
+      if( this.resource.isZip ) {
+        this.setAttribute('data-type', 'zip');
+        return;
+      }
 
       var className = this.getPanelClass(type);
       this.querySelector('#root').className = 'style-scope ecosis-resource-panel alert alert-'+className;
+      this.setAttribute('data-type', className);
     },
 
     getPanelClass : function(type) {
@@ -9260,21 +9118,31 @@ this.fire('dom-change');
         function(resp){
           this.querySelector('#deletePanel').style.display = 'block';
 
-          if( resp.error ) return alert("Server error deleting resource");
-
-          for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-            if( ecosis.ds.resources[i] == this.resource ) {
-              ecosis.ds.resources.splice(i, 1);
-              ecosis.ds.fireUpdate();
-              break;
-            }
+          if( resp.error ) {
+            // ERROR 17
+            resp.code = 17;
+            resp.message += '. Server error deleting resource.';
+            return ecosis.errorPopup.show(resp);
           }
 
+          for( var i = ecosis.ds.resources.length-1; i >= 0; i-- ) {
+            var r = ecosis.ds.resources[i];
+
+            if( r.id == this.resourceid ) {
+              ecosis.ds.resources.splice(i, 1);
+            } else if ( r.zip && r.zip.resourceId == this.resourceid  ) {
+              ecosis.ds.resources.splice(i, 1);
+            }
+          }
+          ecosis.ds.fireUpdate();
+
+          var ele = this;
           $(this).hide('slow', function(){
-            $(this).remove();
+            $(this).detach();
+            ele.fire('update', ele.resourceid);
           });
 
-          this.fire('update', this.resourceid);
+
         }.bind(this)
       );
     }
@@ -9293,25 +9161,36 @@ this.fire('dom-change');
   </style>
 
   <template>
-
+    <span class="pull-right label label-warning" id="loading" style="display:none"><i class="fa fa-spin fa-circle-o-notch"></i> Loading...</span>
     <h4 class="info page-header" id="info"></h4>
 
-    <div class="layout horizontal center">
-        <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
-
-        <div class="flex">
-          <div class="row">
-            <div class="col-sm-6">
-              <div id="tableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
-            </div>
-            <div class="col-sm-6" id="chartRoot" style="height: 300px"></div>
-          </div>
-        </div>
-
-        <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
+    <div id="nodata" style="display:none" class="text text-warning">
+      No data in this sheet.
     </div>
 
-    <div id="sliderRoot" style="margin-top: 15px"></div>
+    <div id="data">
+      <div class="layout horizontal center">
+          <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
+
+          <div class="flex" id="columnPreview" style="overflow:auto;">
+            <div class="row">
+              <div class="col-sm-6">
+                <div id="columnTableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
+              </div>
+              <div class="col-sm-6" id="columnChartRoot" style="height: 300px"></div>
+            </div>
+          </div>
+
+          <div class="flex" id="rowPreview" style="overflow:auto;">
+            <div id="rowTableRoot" style="overflow:auto; margin-bottom: 35px"></div>
+            <div id="rowChartRoot" style="height: 200px; margin: 25px 0 15px 0"></div>
+          </div>
+
+          <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
+      </div>
+
+      <div id="sliderRoot" style="margin-top: 15px"></div>
+    </div>
 
   </template>
 </dom-module>
@@ -9336,7 +9215,17 @@ this.fire('dom-change');
 
       this.slider.slider('setValue', this.index+1);
 
-      this.info.innerHTML = 'Loading index: '+this.index;
+      if( this.info.total == 0 ) {
+        this.$.nodata.style.display = 'block';
+        this.$.data.style.display = 'none';
+        return;
+      } else {
+        this.$.nodata.style.display = 'none';
+        this.$.data.style.display = 'block';
+      }
+
+      // this.$.info.innerHTML = '<i class="fa fa-spin fa-circle-o-notch"></i> Loading index: '+this.index;
+      this.loading(true);
 
       if( this.sheet.metadata ) {
         ecosis.ckan.getMetadataChunk(
@@ -9358,11 +9247,16 @@ this.fire('dom-change');
     },
 
     renderMetadataResp : function(resp) {
+      this.loading(false);
       if( resp.error ) {
-        return alert(resp.message);
+        // ERROR 18
+        resp.code = 18;
+        return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
+
       this.renderTable(resp.metadata);
+      var layout = this.sheet.layout || 'row';
 
       if( resp.joinKey && resp.metadata[resp.joinKey] ) {
         var joined = 'None';
@@ -9375,13 +9269,13 @@ this.fire('dom-change');
           }
         }
 
-        this.$.chartRoot.innerHTML =
+        this.$[layout+'ChartRoot'].innerHTML =
           '<h4 style="text-align:center">Joined On:</h4> '+
           '<h5 style="text-align:center">'+resp.joinKey+' = <span style="color:#888">'+resp.metadata[resp.joinKey]+'</span></h5>'+
           '<h4 style="text-align:center">Matches:</h4>'+
           '<h6 style="text-align:center; color:#888">'+joined+'</h6>';
       } else {
-        this.$.chartRoot.innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
+        this.$[layout+'ChartRoot'].innerHTML = '<div style="text-align:center" class="text text-warning"><i class="fa fa-warning"></i> No join key provided, please select one below</div>'
       }
 
       this.$.info.innerHTML =
@@ -9390,14 +9284,18 @@ this.fire('dom-change');
     },
 
     renderSpectraResp : function(resp) {
+      this.loading(false);
       if( resp.error ) {
-        return alert(resp.message);
+        // ERROR 19
+        resp.code = 19;
+        ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
       }
 
       this.renderTable(resp, ['ecosis', 'datapoints']);
+      var layout = this.sheet.layout || 'row';
 
-      if( !(this.$.chartRoot.firstChild && this.$.chartRoot.firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
-        this.$.chartRoot.innerHTML = '<ecosis-chart></ecosis-chart>';
+      if( !(this.$[layout+'ChartRoot'].firstChild && this.$[layout+'ChartRoot'].firstChild.nodeName.toLowerCase() == 'ecosis-chart') ) {
+        this.$[layout+'ChartRoot'].innerHTML = '<ecosis-chart></ecosis-chart>';
       }
 
       this.$.info.innerHTML = '<i class="fa fa-binoculars"></i> <span style="text-transform:capitalize">'+this.sheet.layout+'</span> Preview <small> <b>'+(this.index+1)+'</b> of <b>'+this.info.total+'</b></small>';
@@ -9417,14 +9315,14 @@ this.fire('dom-change');
       });
 
       data.splice(0, 0, ['Wavelength', '']);
-      this.$.chartRoot.firstChild.setHeight(300);
-      this.$.chartRoot.firstChild.options = {
+      this.$[layout+'ChartRoot'].firstChild.setHeight(layout === 'row' ? 200 : 300);
+      this.$[layout+'ChartRoot'].firstChild.options = {
         animation:{
           duration: 700,
           easing: 'out',
         }
       }
-      this.$.chartRoot.firstChild.setData(data);
+      this.$[layout+'ChartRoot'].firstChild.setData(data);
     },
 
     initSlider : function() {
@@ -9449,21 +9347,45 @@ this.fire('dom-change');
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
 
+      var layout = this.sheet.layout || 'row';
+
       var table = '<h5>Metadata</h5><table class="table">';
-      var c = 0;
-      for( var key in metadata ) {
-        if( ignorelist.indexOf(key) > -1 ) continue;
-        table += '<tr><td>'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
 
-        c++;
-        if( c == 100 ) {
-          table += '<tr><td>...</td><td>...</td></tr>';
-          break;
+      if( this.sheet.layout === 'column' ) {
+        var c = 0;
+        for( var key in metadata ) {
+          if( ignorelist.indexOf(key) > -1 ) continue;
+          table += '<tr><td style="font-weight:bold">'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
+
+          c++;
+          if( c == 100 ) {
+            table += '<tr><td>...</td><td>...</td></tr>';
+            break;
+          }
         }
-      }
-      this.$.tableRoot.innerHTML = table+'</table>';
+      } else {
+        var c = 0;
+        var header = '<tr>';
+        var data = '<tr>';
+        for( var key in metadata ) {
+          if( ignorelist.indexOf(key) > -1 ) continue;
+          header += '<th style="white-space:nowrap">'+key+'</th>';
+          data += '<td style="white-space:nowrap; max-width: 250px; overflow:auto">'+metadata[key]+this.getProcessInfo(key, metadata)+'</td>';
 
-      $(this.$.tableRoot).find('[data-toggle="tooltip"]').tooltip()
+          c++;
+          if( c == 100 ) {
+            header += '<td>...</td>';
+            data += '<td>...</td>';
+            break;
+          }
+        }
+        table += header+'</tr>'+data+'</tr>';
+      }
+
+
+      this.$[layout+'TableRoot'].innerHTML = table+'</table>';
+
+      $(this.$[layout+'TableRoot']).find('[data-toggle="tooltip"]').tooltip()
     },
 
     getProcessInfo : function(key, metadata) {
@@ -9514,6 +9436,18 @@ this.fire('dom-change');
 
       if( this.sheet.ignore ) return;
 
+      if( this.sheet.layout === 'column' ) {
+        this.$.columnPreview.style.display = 'block';
+        this.$.rowPreview.style.display = 'none';
+        this.$.leftArrow.querySelector('i').className = 'fa fa-arrow-left';
+        this.$.rightArrow.querySelector('i').className = 'fa fa-arrow-right';
+      } else {
+        this.$.columnPreview.style.display = 'none';
+        this.$.rowPreview.style.display = 'block';
+        this.$.leftArrow.querySelector('i').className = 'fa fa-arrow-up';
+        this.$.rightArrow.querySelector('i').className = 'fa fa-arrow-down';
+      }
+
       if( this.sheet.metadata ) {
         this.updateMetadata();
       } else {
@@ -9523,6 +9457,7 @@ this.fire('dom-change');
 
     updateMetadata : function() {
       ecosis.ckan.getMetadataInfo(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.loading(false);
         this.info = resp;
         this.initSlider();
         this.load();
@@ -9531,10 +9466,16 @@ this.fire('dom-change');
 
     updateSpectra : function() {
       ecosis.ckan.getSpectraCount(this.sheet.packageId, this.sheet.resourceId, this.sheet.sheetId, function(resp){
+        this.loading(false);
         this.info = resp;
         this.initSlider();
         this.load();
       }.bind(this));
+    },
+
+    loading : function(loading) {
+      if( loading ) this.$.loading.style.display = 'inline-block';
+      else this.$.loading.style.display = 'none';
     },
 
     moveLeft : function() {
@@ -9556,8 +9497,7 @@ this.fire('dom-change');
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-            <div class="alert alert-success wizardMode"><h5 style="color:white">Upload Complete!</h5>Configure Uploaded Sheets</div>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
             <h4 class="modal-title" id="title"></h4>
           </div>
           <div class="modal-body" style="padding: 25px">
@@ -9574,13 +9514,13 @@ this.fire('dom-change');
             <div class="wizardMode">
               <div class="layout horizontal">
                 <div>
-                  <button type="button" class="btn btn-default" on-click="prev">Previous</button>
+                  <button type="button" id="prev" class="btn btn-default" on-click="prev">Previous</button>
                 </div>
                 <div class="flex" style="text-align:center">
                   <button type="button" class="btn btn-primary" data-dismiss="modal">Finished</button>
                 </div>
                 <div>
-                  <button type="button" class="btn btn-default" on-click="next">Next</button>
+                  <button type="button" id="next" class="btn btn-default" on-click="next">Next</button>
                 </div>
               </div>
             </div>
@@ -9613,6 +9553,7 @@ this.fire('dom-change');
         this.index = this.resources.length - 1;
         return;
       }
+      this.updateNav();
       this.show(this.resources[this.index]);
     },
 
@@ -9622,7 +9563,16 @@ this.fire('dom-change');
         this.index = 0;
         return;
       }
+      this.updateNav();
       this.show(this.resources[this.index]);
+    },
+
+    updateNav : function() {
+      if( this.index == 0 ) this.$.prev.setAttribute('disabled','disabled');
+      else this.$.prev.removeAttribute('disabled');
+
+      if( this.index >= this.resources.length-1 ) this.$.next.setAttribute('disabled','disabled');
+      else this.$.next.removeAttribute('disabled');
     },
 
     setMode : function(mode) {
@@ -9639,6 +9589,7 @@ this.fire('dom-change');
       this.setMode('wizard');
       this.resources = resources;
       this.index = 0;
+      this.updateNav();
       this.handlers = handlers;
       this.show(resources[0]);
     },
@@ -9669,10 +9620,18 @@ this.fire('dom-change');
     },
 
     onDatasheetUpdate : function() {
+      this.$.datasheetSelector.updateClass();
       if( this.handlers ) this.handlers.onDatasheetUpdate();
     },
 
     selectDatasheet : function(index, edit) {
+      // required for datasheet display
+      if( this.resource.name.match(/\.csv$/i) || this.resource.name.match(/\.spectra$/i) ) {
+        this.resource.datasheets[index].isCSV = true;
+      } else {
+        this.resource.datasheets[index].isCSV = false;
+      }
+
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
       this.$.datasheetUI.edit();
@@ -9684,6 +9643,377 @@ this.fire('dom-change');
   })
 </script>
 
+<dom-module id="ecosis-error-popup">
+  <template>
+    <div class="modal fade" id="popup" style="z-index: 10000">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+            <h4 class="modal-title text text-danger">Oooh no, badness :(</h4>
+          </div>
+
+          <div class="modal-body" style="padding: 0 25px">
+            <h5 class="text text-danger">Error: <span id="message"></span></h5>
+
+            <div id="report" style="margin: 50px 15px 20px 15px">
+              Please help us fix bugs by reporting them
+              <a href="https://github.com/CSTARS/ckanext-ecosis/issues/new" target="_blank">here on GitHub</a>!
+              <br><b>Copy and paste</b> message below into GitHub Issue:
+            </div>
+            <div class="well">
+              <div> - <b>Package ID:</b> <span id="project"></span></div>
+              <div> - <b>Message:</b> <span id="message2"></span></div>
+              <div> - <b>Code:</b> <span id="code"></span></div>
+              <div> - <b>User Agent:</b> <span id="useragent"></span></div>
+              <div id="gitInfo"></div>
+              <div>[Any Additional Info Here]</div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+  </template>
+
+  <script>
+    Polymer({
+      is : "ecosis-error-popup",
+
+      ready : function() {
+        this.popup = $(this.$.popup);
+        this.popup.remove();
+        $('body').append(this.popup);
+
+        this.popup.on('hidden.bs.modal', function(){
+          if( this.priorPopup ) this.priorPopup.modal('show');
+        }.bind(this));
+
+        this.popup.modal({
+          show: false,
+          backdrop : 'static'
+        });
+      },
+
+      show : function(e, popup) {
+        this.priorPopup = popup;
+        if( popup ) {
+          popup.modal('hide');
+          setTimeout(function(){
+            this._show(e);
+          }.bind(this), 350);
+        } else {
+          this._show(e);
+        }
+      },
+
+      _show : function(e) {
+        this.$.message.innerHTML = e.message;
+        this.$.message2.innerHTML = e.message || '';
+        this.$.project.innerHTML = ecosis.ds.package_id;
+        this.$.code.innerHTML = e.code || -1;
+        this.$.useragent.innerHTML = navigator.userAgent;
+
+        var html = '';
+        if( ecosis.git ) {
+          for( var key in ecosis.git ) {
+            html += '<div> - <b>'+key+':</b> '+ecosis.git[key]+'</div>';
+          }
+          html += '<br />';
+        }
+        this.$.gitInfo.innerHTML = html;
+
+        this.popup.modal('show');
+      }
+    });
+  </script>
+</dom-module>
+
+<dom-module id="ecosis-upload-splash">
+  <template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body" style="padding: 25px">
+
+            <div class="alert alert-success"><h5 style="color:white">Upload Complete!</h5></div>
+
+            <div style="text-align:center" id="hasResources">
+              <h3><i class="fa fa-cogs"></i> Configure Resources</h3>
+
+              <div style="margin: 10px 0 30px 0">
+                You will now have a chance to configure your uploaded resources.
+              </div>
+            </div>
+
+            <div style="text-align:center">
+              <a class="btn btn-default btn-lg" on-click="hide">Continue</a><a>
+            </a></div><a>
+
+
+          </a></div><a>
+        </a></div><!-- /.modal-content --><a>
+      </a></div><!-- /.modal-dialog --><a>
+    </a></div><!-- /.modal --><a>
+
+  </a></template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-upload-splash',
+
+    ready : function() {
+      this.popup = $(this.$.popup);
+      this.popup.remove();
+      $('body').append(this.popup);
+
+      this.popup.modal({
+        show: false,
+        backdrop : 'static'
+      });
+
+      this.popup.on('hidden.bs.modal', function(){
+        if( this.resources.length == 0 ) return;
+        this.wizard.uploadWizard(this.resources, this.handlers);
+      }.bind(this));
+
+      this.wizard = document.querySelector('ecosis-resource-popup');
+    },
+
+    show : function(resources, handlers) {
+      this.resources = resources;
+      this.handlers = handlers;
+
+      if( resources.length == 0 ) {
+        this.$.hasResources.style.display = 'none';
+      } else {
+        this.$.hasResources.style.display = 'block';
+      }
+
+      this.popup.modal('show');
+    },
+
+    hide : function() {
+      this.popup.modal('hide');
+    }
+  });
+</script>
+
+<dom-module id="ecosis-chart">
+  <style>
+    :host {
+        display: block;
+    }
+  </style>
+
+  <template>
+    <div id="root" style="height:400px"></div>
+
+    <div id="noData" style="color:#888">
+      No spectral data to chart.
+    </div>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is : 'ecosis-chart',
+
+    properties : {
+      animate : {
+          type : Boolean,
+          value : false
+      },
+      type : {
+        type : String
+      }
+    },
+
+    ready : function() {
+      this.dt = null;
+      this.chart = null;
+      this.height = 400;
+
+      this.updateTimer = -1;
+
+      this.onLoadHandlerSet = false;
+
+      this.options = null;
+      this.cols = null;
+
+      $(window).on('resize', function(){
+          this.redraw();
+      }.bind(this));
+    },
+
+    setHeight : function(height) {
+      this.height = height;
+      this.$.root.style.height = height+'px';
+    },
+
+    setOnloadHandler : function() {
+        if( this.onLoadHandlerSet ) return;
+
+        // put in global scope by cwn-datastore
+        chartLoadHandlers.push(function(){
+            this.update();
+        }.bind(this));
+    },
+
+    setData : function(data) {
+      this.data = data;
+      this.update();
+    },
+
+    update : function() {
+        if( !window.google.visualization ) return this.setOnloadHandler();
+        if( !window.google.visualization.LineChart ) return this.setOnloadHandler();
+
+        if( this.isEmpty() ) {
+          this.$.root.style.display = 'none';
+          this.$.noData.style.display = 'block';
+          return;
+        }
+        this.$.root.style.display = 'block';
+        this.$.noData.style.display = 'none';
+
+        if( !this.chart ) {
+            if( this.type ) {
+                this.chart = new google.visualization[this.type](this.$.root);
+            } else {
+                this.chart = new google.visualization.LineChart(this.$.root);
+            }
+        }
+
+        if( this.updateTimer == -1 ) clearTimeout(this.updateTimer);
+        this.updateTimer = setTimeout(function() {
+            this.updateTimer = -1;
+            this._update();
+        }.bind(this), 500);
+    },
+
+    _update : function() {
+        if( this.cols ) {
+            this.dt = new google.visualization.DataTable();
+            for( var i = 0; i < this.cols.length; i++ ) {
+                this.dt.addColumn(this.cols[i]);
+            }
+            this.dt.addRows(this.data);
+        } else {
+            this.dt = google.visualization.arrayToDataTable(this.data);
+        }
+
+        this.redraw();
+    },
+
+    isEmpty : function() {
+        if( !this.data ) {
+            return true;
+        }
+        if( this.data.length < 2 ) {
+            return true;
+        }
+        if( this.data[0].length == 0 ) {
+            return true;
+        }
+
+        return false;
+    },
+
+    redraw : function() {
+        if( !this.chart || !this.dt ) return;
+
+        var options = {
+            legend : {
+                position : 'none'
+            }
+        };
+
+        if( this.options ) {
+            for( var key in this.options ) {
+                options[key] = this.options[key];
+            }
+        }
+
+        this.chart.draw(this.dt, options);
+    }
+  });
+</script>
+
+<dom-module id="ecosis-isotope">
+  <template>
+    <style>
+      :host {
+        display : block
+      }
+    </style>
+
+    <div id="grid">
+      <content></content>
+    </div>
+  </template>
+
+
+  <script>
+    Polymer({
+      is : 'ecosis-isotope',
+
+      properties : {
+        selector : {
+          type : String,
+          value : ''
+        }
+      },
+
+      clear : function() {
+        this.$.grid.innerHTML = '';
+      },
+
+      append : function(child) {
+        this.$.grid.appendChild(child);
+      },
+
+      init : function() {
+        if( this.grid ) this.grid.isotope('destroy');
+
+        this.grid = $(this.$.grid).isotope({
+          // options
+          itemSelector: this.selector,
+          layoutMode: 'vertical',
+          getSortData: {
+            name: '[data-name]', // value of attribute
+            type: '[data-type]'
+          },
+          sortAscending: true,
+          sortBy : 'name'
+        });
+
+        setTimeout(function(){
+          this.grid.isotope('updateSortData').isotope();
+        }.bind(this), 500)
+      },
+
+      html : function(html) {
+        this.$.grid.innerHTML = html;
+        this.init();
+      },
+
+      sort : function(sortBy) {
+        this.grid.isotope({sortBy : sortBy});
+      },
+
+      filter : function(filter) {
+        this.grid.isotope({filter : filter});
+      }
+    });
+  </script>
+</dom-module>
+
 <dom-module id="ecosis-page-basic-info">
   <style>
     :host {
@@ -9692,7 +10022,7 @@ this.fire('dom-change');
     }
     .save-label {
         position: fixed;
-        top: 0;
+        top: 65px;
         left: 0;
         right: 0;
         text-align: center;
@@ -9721,9 +10051,18 @@ this.fire('dom-change');
       </div>
     </div>
 
+    <div id="createFromTemplate" style="display:none; text-align:right">
+      <div>
+        <a class="btn btn-link" on-click="toggleCreateFromTemplate"><i class="fa fa-magic"></i> Create From Template</a>
+        <div class="help-block">Use template file from prior dataset to get started.</div>
+      </div>
+      <div id="createFromTemplatePanel" style="display:none">
+        Select File: <input type="file" on-change="createFromTemplateInput" style="display:inline-block" id="createFromTemplateInput">
+      </div>
+      <div id="createTemplateSuccess" style="display:none"><span class="label label-success">Success!</span></div>
+    </div>
+
     <h4 class="page-header">Basic Information</h4>
-
-
     <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
 
     <div class="form-horizontal">
@@ -9737,11 +10076,6 @@ this.fire('dom-change');
       </div>
 
       <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
-      <!-- TODO
-      <div class="form-wrap">
-        <ecosis-ui-token-input id="keywords" on-update="{{_setKeywords}}"></ecosis-ui-token-input>
-      </div>
-      -->
 
       <div class="form-group">
         <label for="licenseInput" class="col-md-2 control-label">License: </label>
@@ -9827,6 +10161,11 @@ this.fire('dom-change');
       <ecosis-location-input on-update="save" id="locationInput" style="display:none"></ecosis-location-input>
 
       <h4 class="page-header">
+        <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput"><i class="fa fa-arrow-right"></i></a> Linked Data
+      </h4>
+      <ecosis-linked-data-input on-update="save" id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
+
+      <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
       </h4>
       <ecosis-citation-input on-update="save" id="citationInput" style="display:none"></ecosis-citation-input>
@@ -9870,7 +10209,47 @@ this.fire('dom-change');
       </div>
     </div>
 
-  </template>
+    <div class="modal fade" id="popup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title">Welcome to the EcoSIS Data Importer!</h4>
+          </div>
+          <div class="modal-body" style="padding: 25px">
+            <p>A quick note before you continue.</p>
+
+
+            <p style="padding:30px 0" class="text text-success">
+              Through EcoSIS you will be <b>publishing</b> your data to the world. In
+              order to make datasets presentable and <b>searchable</b>, please give them clear
+              <b>human-readable</b> titles and descriptions, and include as much
+              dataset-level metadata as possible.  Include enough information so
+              so a complete outsider can understand what the dataset is and is not.
+            </p>
+
+            <h5>tl;dr</h5>
+
+            <ul>
+              <li>Publish for others.</li>
+              <li>Human-readable titles and descriptions.</li>
+              <li>Fill out as much as you can.</li>
+            </ul>
+
+            <div class="help-block">
+              Remember EcoSIS is what the <b>community</b> makes it to be.
+            </div>
+
+            <div style="text-align:center">
+              <a class="btn btn-success btn-lg" data-dismiss="modal">Continue</a><a>
+            </a></div><a>
+
+          </a></div><a>
+        </a></div><!-- /.modal-content --><a>
+      </a></div><!-- /.modal-dialog --><a>
+    </a></div><!-- /.modal --><a>
+
+  </a></template>
 </dom-module>
 
 <script>
@@ -9889,12 +10268,18 @@ this.fire('dom-change');
         else ecosis.ds.on('load', this.onDataLoad.bind(this));
       } else {
         this.setMode('create');
+        this.showCreatePopup();
       }
 
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
 
       ecosis.ckan.gitInfo(function(resp){
         this.git = resp;
+
+        if( !resp.error ) {
+          ecosis.git = resp;
+        }
+
         if( this.git.branch != 'master' ) {
           this.$.gitInfo.style.display = 'block';
           this.$.gitBranchLabel.innerHTML = this.git.branch;
@@ -9904,14 +10289,22 @@ this.fire('dom-change');
       }.bind(this));
     },
 
+    showCreatePopup : function() {
+      this.popup = $(this.$.popup).remove();
+      $('body').append(this.popup);
+      this.popup.modal({show:true});
+    },
+
     setMode : function(mode) {
       this.mode = mode;
       if( mode == 'create' ) {
         this.$.createBtn.style.display = 'inline-block';
+        this.$.createFromTemplate.style.display = 'block';
         this.updateCreateBtnState();
       } else {
         this.$.goToBtn.style.display = 'inline-block';
         this.$.goToListBtn.style.display = 'inline-block';
+        this.$.createFromTemplate.style.display = 'none';
         this.$.deleteBtn.style.display = 'inline-block';
       }
     },
@@ -9926,6 +10319,7 @@ this.fire('dom-change');
       this.$.visibilityInput.value = data.private ? 'true' : 'false';
       this.$.versionInput.value = data.version;
       this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
+      this.$.linkedDataInput.setData(ecosis.ds.getDatasetExtra('LinkedData').value);
 
       this.updateVisibilityControl();
     },
@@ -9948,7 +10342,7 @@ this.fire('dom-change');
         this.$.createBtn.removeAttribute('disabled');
         this.$.helpCreatePanel.style.display = 'none';
       } else {
-        this.$.createBtn.setAttribute('disabled', '');
+        this.$.createBtn.setAttribute('disabled', 'disabled');
         this.$.helpCreatePanel.style.display = 'block';
       }
     },
@@ -9997,7 +10391,13 @@ this.fire('dom-change');
       if( confirm('Are you sure your want to remove this dataset?') ) {
         if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
           ecosis.ckan.deletePackage(ecosis.ds.package_id,
-            function(err, resp) {
+            function(resp) {
+              if( resp.error ) {
+                // ERROR 5
+                resp.code = 5;
+                return ecosis.errorPopup.show(resp);
+              }
+
               alert('dataset deleted.');
               window.location = '/dataset';
             }
@@ -10007,19 +10407,31 @@ this.fire('dom-change');
     },
 
     create : function() {
+      if( this.$.createBtn.hasAttribute('disabled') ) return;
+
       this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
-      this.$.createDatasetBtn.setAttribute('disabled', '');
+      this.$.createDatasetBtn.setAttribute('disabled', 'disabled');
 
       ecosis.ckan.createPackage(ecosis.ds.data,
           function(resp) {
             this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
             this.$.createDatasetBtn.removeAttribute('disabled');
 
-            if( resp.error ) return alert('Failed to create dataset :(');
-            if( !resp.id ) return alert('Failed to create dataset :(');
+            if( resp.error ) {
+              // ERROR 6
+              resp.code = 6;
+              return ecosis.errorPopup.show(resp);
+            }
+            if( !resp.id ) {
+              // ERROR 7
+              return ecosis.errorPopup.show({
+                message : 'Failed to create dataset',
+                code : 7
+              });
+            }
 
             // set the page
-            window.location = '/import/?id='+resp.name+'#add-resources';
+            window.location = '/import/?id='+resp.id+'#add-resources';
           }.bind(this)
       );
     },
@@ -10028,6 +10440,7 @@ this.fire('dom-change');
       this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
+      this.$.saveLabel.style.display = 'block';
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
 
       this.updateTimer = setTimeout(function(){
@@ -10037,15 +10450,17 @@ this.fire('dom-change');
     },
 
     _save : function() {
-      this.$.saveLabel.style.display = 'block';
-
       // make sure we have the correct package state
       // all resources need to be included when you make a updatePackage call
       ecosis.ckan.getPackage(ecosis.ds.package_id,
         function(resp) {
           if( resp.error ) {
             this.$.saveLabel.style.display = 'none';
-            return alert('Failed to fetch for dataset update :(');
+
+            // ERROR 8
+            resp.code = 8;
+            resp.message += '. Failed to fetch package for update.'
+            return ecosis.errorPopup.show(resp);
           }
 
           var metadata = resp.result;
@@ -10057,8 +10472,22 @@ this.fire('dom-change');
             function(resp) {
               this.$.saveLabel.style.display = 'none';
 
-              if( resp.error ) return alert('Failed to update dataset :(');
-              if( !resp.result.id ) return alert('Failed to update dataset :(');
+              if( resp.error ) {
+                // ERROR 9
+                resp.code = 9;
+                resp.message += '. Failed to update dataset.'
+                return ecosis.errorPopup.show(resp);
+              }
+              if( !resp.result.id )  {
+                // ERROR 10
+                return ecosis.errorPopup.show({
+                  message : 'Failed to update dataset',
+                  code : 10
+                });
+              }
+
+              // update back btn as well
+              document.querySelector('ecosis-header').setBackBtn(resp.result.name);
 
             }.bind(this)
           );
@@ -10072,7 +10501,11 @@ this.fire('dom-change');
 
     /* change handlers */
     onTitleInputChange : function() {
-      this.updateCreateBtnState();
+      if( ecosis.ds.editMode ) {
+        this.save();
+      } else {
+        this.updateCreateBtnState();
+      }
     },
 
     onOrganizationInputChange : function() {
@@ -10129,6 +10562,10 @@ this.fire('dom-change');
       this.save();
     },
 
+    onLinkedDataChange : function() {
+      ecosis.ds.setDatasetExtra('LinkedData', this.$.linkedDataInput.getData());
+      this.save();
+    },
 
     toggleCat : function(e) {
       var id = e.currentTarget.getAttribute('cat');
@@ -10141,6 +10578,43 @@ this.fire('dom-change');
       } else {
         e.currentTarget.querySelector('i').className = 'fa fa-arrow-right';
         this.$[id].style.display = 'none';
+      }
+    },
+
+    toggleCreateFromTemplate : function() {
+      $(this.$.createFromTemplatePanel).toggle('slow');
+    },
+
+    createFromTemplateInput : function(e) {
+      try {
+        var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+        if( files.length == 0 ) return;
+
+        var reader = new FileReader();
+        var contents, parts;
+
+        reader.onload = function(e) {
+          try {
+            var data = JSON.parse(e.target.result);
+            ecosis.ds.loadFromTemplate(data);
+            this.onDataLoad();
+            this.$.createTemplateSuccess.style.display = 'block';
+            this.toggleCreateFromTemplate();
+            this.$.createFromTemplateInput.value = '';
+
+            setTimeout(function(){
+              this.$.createTemplateSuccess.style.display = 'none';
+            }.bind(this), 5000);
+          } catch(e) {
+            this.$.createFromTemplateInput.value = '';
+            alert('Error reading template file');
+          }
+        }.bind(this);
+        reader.readAsText(files[0]);
+
+      } catch(e) {
+        this.$.createFromTemplateInput.value = '';
+        alert('Error reading template file');
       }
     }
 
@@ -10156,11 +10630,69 @@ this.fire('dom-change');
     #legend {
       padding: 20px 0;
     }
+    #filterPopup {
+      display : none;
+      position: absolute;
+      right : 25px;
+      margin: 10px 15px 15px 15px;
+      padding: 15px;
+      background-color: white;
+      box-shadow: 0 0 5px #ccc;
+      z-index: 100;
+      font-size: 16px;
+    }
   </style>
 
   <template>
 
-    <h4 class="page-header">Current Resources</h4>
+    <h4 class="page-header">
+      <span>Current Resources</span>
+
+      <div class="pull-right" style="margin-top: -10px">
+        <div class="btn-group">
+          <a class="btn btn-default active" on-click="toggleSortName" id="sortName">Sort by Name</a>
+          <a class="btn btn-default" on-click="toggleSortType" id="sortType">Sort by Type</a>
+        </div>
+
+        <div class="btn btn-default" on-click="toggleFilter">Filter</div>
+        <div id="filterPopup">
+          <button type="button" class="close" aria-label="Close" on-click="toggleFilter"><span aria-hidden="true">×</span></button>
+          <h5 class="page-header" style="margin-top:5px">Show</h5>
+
+
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="success">
+              <span class="text text-success">Data Sheet</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="primary">
+              <span class="text text-primary">Metadata Sheet</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="zip">
+              <span class="text text-warning">Zip Package</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="info">
+              <span class="text text-info">Multi-Sheet File</span>
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" checked="" class="filter" on-click="filter" data-type="default">
+              <span class="text text-default">Ignored</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </h4>
 
     <div id="removeAll" style="margin-bottom: 20px">
       <a class="btn btn-link" on-click="selectAll">Select All</a>
@@ -10168,7 +10700,7 @@ this.fire('dom-change');
 
       <a class="btn btn-danger pull-right" id="deleteAll" on-click="deleteAll" style="display:none">Delete All Selected</a>
     </div>
-    <div id="resourceRoot"></div>
+    <ecosis-isotope id="resourceRoot" selector=".data-item"></ecosis-isotope>
 
     <div id="noResources" style="display:none">
       Your dataset does not contain any resource files.  Click <a id="addLink">here</a> to upload resources.
@@ -10223,23 +10755,78 @@ this.fire('dom-change');
         var resource = ecosis.ds.resources[i];
         if( resource.fromZip ) continue;
 
-        html += '<ecosis-resource-panel resourceid="'+resource.id+'"></ecosis-resource-panel>';
+        html += '<ecosis-resource-panel resourceid="'+resource.id+'" style="width:100%" class="data-item"></ecosis-resource-panel>';
       }
 
-      this.$.resourceRoot.innerHTML = html;
+      this.$.resourceRoot.html(html);
 
       // listen for all update events
       $(this.$.resourceRoot)
         .find('ecosis-resource-panel')
         .on('update', this.onResourceUpdate.bind(this))
         .on('resource-select', this.onResourceSelect.bind(this));
+
+
+      this.$.resourceRoot.init();
+    },
+
+    toggleFilter : function() {
+      $(this.$.filterPopup).toggle();
+    },
+
+    toggleSortName : function() {
+      $(this.$.sortName).addClass('active');
+      $(this.$.sortType).removeClass('active');
+      this.sort('name');
+    },
+
+    toggleSortType : function() {
+      $(this.$.sortName).removeClass('active');
+      $(this.$.sortType).addClass('active');
+      this.sort(['type','name']);
+    },
+
+    sort : function(sortValue) {
+      this.$.resourceRoot.sort(sortValue);
+      var zips = this.querySelectorAll('ecosis-resource-panel.data-item[data-type="zip"]');
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].sort(sortValue);
+      }
+    },
+
+    filter : function() {
+      var filters = this.querySelectorAll('.filter');
+      var filter = [];
+      for( var i = 0; i < filters.length; i++ ) {
+        if( !$(filters[i]).prop('checked') ) continue;
+        filter.push('[data-type="'+filters[i].getAttribute('data-type')+'"]');
+      }
+
+      filter = filter.join(', ');
+
+      // empty filter breaks isotope
+      if( filter == '' ) filter = '*';
+
+      var zips = this.querySelectorAll('ecosis-resource-panel.data-item[data-type="zip"]');
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].filter(filter);
+      }
+
+      this.$.resourceRoot.filter(filter);
+
+      // make sure everything is correct
+      for( var i = 0; i < zips.length; i++ ) {
+        zips[i].filter(filter);
+      }
+
+      this.$.resourceRoot.filter(filter);
     },
 
     // make sure all resource panel css classes are correct
     verifyPanelCss : function() {
       var eles = this.querySelectorAll('ecosis-resource-panel');
       for( var i = 0; i < eles.length; i++ ) {
-        this.setClass();
+        eles[i].setClass();
       }
     },
 
@@ -10260,7 +10847,11 @@ this.fire('dom-change');
       }
 
       ecosis.ckan.deleteResources(ids, function(resp){
-        if( resp.error ) return alert('Error: '+resp.message+' :(');
+        if( resp.error ) {
+          // ERROR 11
+          resp.code = 11;
+          return ecosis.errorPopup.show(resp);
+        }
 
         for( var i = 0; i < usedEles.length; i++ ) {
           $(usedEles[i]).remove();
@@ -10285,7 +10876,10 @@ this.fire('dom-change');
 
     selectAll : function() {
       var eles = this.querySelectorAll('ecosis-resource-panel');
-      for( var i = 0; i < eles.length; i++ ) eles[i].select(true);
+      for( var i = 0; i < eles.length; i++ ) {
+        if( eles[i].style.display === 'none' ) continue;
+        eles[i].select(true);
+      }
       this.updateSelectState();
     },
 
@@ -10316,7 +10910,9 @@ this.fire('dom-change');
           // hide resource
           panel.toggleEdit();
           // clear cached 'full' datasheet
-          panel.$.datasheetUI.datasheet = null;
+          if( panel.$.datasheetUI ) {
+            panel.$.datasheetUI.datasheet = null;
+          }
         }
       }
 
@@ -10523,12 +11119,18 @@ this.fire('dom-change');
       ecosis.ckan.processResource(
           ecosis.ds.package_id, this.newResourceIds, null, {layout: this.defaultType},
           function(resp) {
-              if( resp.error ) return alert(resp.message);
+              if( resp.error ) {
+                // ERROR 3
+                resp.code = 3;
+                return ecosis.errorPopup.show(resp);
+              }
 
               // proly a smarter way to do things, but for now, reload entire workspace
               ecosis.ckan.getWorkspace(ecosis.ds.package_id, function(result){
                 if( result.error ) {
-                  return alert(result.message);
+                  // ERROR 4
+                  result.code = 4;
+                  return ecosis.errorPopup.show(result);
                 }
 
                 ecosis.ds.runAfterResourceAdd(result);
@@ -10544,16 +11146,23 @@ this.fire('dom-change');
       var resources = [];
       for( var i = 0; i < this.newResourceIds.length; i++ ) {
         var resource = ecosis.ds.resourceLookup[this.newResourceIds[i]];
+        if( !resource.datasheets ) continue;
+
         if( resource.childResources ) {
           for( var j = 0; j < resource.childResources.length; j++ ) {
+            if( !resource.childResources[j].datasheets ) continue;
+            if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
+            
             resources.push(resource.childResources[j]);
           }
+        } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
+          continue;
         } else {
           resources.push(resource);
         }
       }
 
-      document.querySelector('ecosis-resource-popup').uploadWizard(resources,{
+      document.querySelector('ecosis-upload-splash').show(resources,{
         onDatasheetUpdate : function(){
           // make sure all panels have correct css after update
           document.querySelector('ecosis-page-current-resources').verifyPanelCss();
@@ -10723,29 +11332,22 @@ this.fire('dom-change');
       <span class="label label-primary"><i></i> Saving...</span>
     </div>
 
-    <div class="well">
-        If your spectra metadata attribute names do not match the EcoSIS metadata names, you can download
-        the attribute map file.  Fill out the file and then upload in the box to the right.  You can
-        reuse this file, so you only have to fill it out once for your data.  Just make sure to set
-        the attribute map for each dataset you add.
-    </div>
-
-    <div>
+    <div style="padding: 15px">
       <div class="panel panel-primary">
         <div class="panel-heading">
-          <h3 class="panel-title">Map your names to EcoSIS names</h3>
+          <h3 class="panel-title">Map your attribute names to EcoSIS names</h3>
         </div>
         <div class="panel-body">
           <h5 class="page-header" style="margin-top:0">By File</h5>
 
           <div class="horizontal layout">
               <div class="flex">
-                  <a class="btn btn-default" target="_blank" href="/metadata_map">Download Map Template</a>
+                  <a class="btn btn-default" target="_blank" id="mapTemplate">Download Map Template</a>
               </div>
               <div class="flex">
                   Upload Map: <input type="file" style="margin-top:5px" id="map" name="map" on-change="processMap">
 
-                  <input type="file" style="display:none" id="addAttrMap" name="addAttrMap">
+                  <span class="label label-success" id="mapSuccessLabel" style="display:none">Success!</span>
               </div>
           </div>
           <div class="help-block">
@@ -10813,35 +11415,56 @@ this.fire('dom-change');
     onShow : function() {
       this.updateSelectList();
       this.updateMap();
+      this.$.mapTemplate.setAttribute('href', ecosis.ckan.host+'/ecosis/package/getTemplate?mapOnly=true&id='+ecosis.ds.package_id);
+    },
+
+    setTopMapping : function(panel) {
+      this.topPanel = panel;
     },
 
     processMap : function(e) {
-      e.stopPropagation();
-      e.preventDefault();
+      try {
+        e.stopPropagation();
+        e.preventDefault();
 
-      var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
-      if( files.length == 0 ) return;
+        var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+        if( files.length == 0 ) return;
 
-      var reader = new FileReader();
-      var contents, parts;
+        var reader = new FileReader();
+        var contents, parts;
 
-      reader.onload = function(e) {
-          var newMap = {};
-          contents = e.target.result.split('\n');
+        reader.onload = function(e) {
+          try {
+            var data = JSON.parse(e.target.result);
+            // we only want to update map here
+            data = {
+              map : data.map
+            };
+            ecosis.ds.loadFromTemplate(data);
+            this.$.map.value = '';
 
-          for( var i = 0; i < contents.length; i++ ) {
-              if( contents[i].indexOf('=') > -1 ) {
-                  parts = contents[i].split('=');
-                  newMap[parts[0]] = parts[1];
-                  //if( parts[1].length > 0 ) inverseMap[parts[1]] = parts[0];
-              }
+            this.$.mapSuccessLabel.style.display = 'inline-block';
+            setTimeout(function(){
+              this.$.mapSuccessLabel.style.display = 'none';
+            }.bind(this), 5000);
+          } catch(e) {
+            this.$.map.value = '';
+            alert('Error loading attribute map');
           }
+        }.bind(this);
 
-          this.$.map.value = '';
-          this.updateAttrMapList(newMap);
-      }.bind(this);
+        reader.readAsText(files[0]);
+      } catch(e) {
+        this.$.map.value = '';
+        alert('Error loading attribute map');
+      }
+    },
 
-      reader.readAsText(files[0]);
+    addFromSuggest : function(custom, trait) {
+      ecosis.ds.attributeMap[trait] = custom;
+      ecosis.ds.inverseAttributeMap[custom] = trait;
+
+      this.save(ecosis.ds.attributeMap);
     },
 
     updateMap : function() {
@@ -10892,10 +11515,12 @@ this.fire('dom-change');
 
 
       var attrs = {}, sheet;
-      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
-        sheet = ecosis.ds.datasheets[i];
-        for( var j = 0; j < sheet.attributes.length; j++ ) {
-          attrs[sheet.attributes[j]] = 1;
+      if( ecosis.ds.datasheets ) {
+        for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+          sheet = ecosis.ds.datasheets[i];
+          for( var j = 0; j < sheet.attributes.length; j++ ) {
+            attrs[sheet.attributes[j]] = 1;
+          }
         }
       }
 
@@ -10917,6 +11542,10 @@ this.fire('dom-change');
         html += '<option value="'+this.customList[i]+'">'+this.customList[i]+'</option>'
       }
       this.$.newCustom.innerHTML = html;
+
+      if( this.topPanel ) {
+        this.topPanel.update(this.customList);
+      }
     },
 
     renderCurrentList : function() {
@@ -11009,7 +11638,12 @@ this.fire('dom-change');
 
           this.updateMap();
           this.updateSelectList();
-          if( resp.error ) alert('Error saving attribute name mapping');
+          if( resp.error ) {
+            // ERROR 13
+            resp.code = 13;
+            resp.message += '. Error saving attribute name mapping.';
+            ecosis.errorPopup.show(resp);
+          }
         }.bind(this)
       )
     },
@@ -11020,6 +11654,167 @@ this.fire('dom-change');
 
   })
 </script>
+
+<dom-module id="ecosis-top-mapping">
+  <template>
+    <style>
+      :host {
+        display: none;
+      }
+      .card {
+        margin: 15px 10px;
+        padding: 10px;
+        box-shadow: 0 0 5px #ccc;
+      }
+    </style>
+
+    <div style="padding: 15px">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Standardize Your Plant Trait Names</h3>
+        </div>
+        <div class="panel-body">
+          <div class="help-block">Use standard names when providing plant trait information.  Below,
+            <span id="countLabel"></span> of your spectra metadata attribute names have suggested standard trait names.
+            Now many of your spectra metadata attributes may not be traits, but for those that are, please
+            try and map to an appropriate, standardized name.
+        </div>
+
+        <div class="layout horizontal center">
+          <div>
+            <a class="btn btn-default" style="margin-right: 30px"><i class="fa fa-arrow-left"></i></a>
+          </div>
+          <div class="flex">
+            <select class="form-control" id="selector" on-change="suggest"></select>
+          </div>
+          <div>
+            <a class="btn btn-default" style="margin-left: 30px"><i class="fa fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <h5 id="suggestLabel" style="display:none; margin-top: 30px">Suggestions</h5>
+
+        <template is="dom-repeat" items="{{suggestions}}">
+          <div class="card">
+            <h4 class="page-header" style="margin:0">
+              <span>{{item.preferredLabel}}</span>
+              <small>{{item.subClassOfClean}}</small>
+              <a class="btn btn-primary pull-right" on-click="onSelect" index$="{{index}}">Select</a>
+            </h4>
+
+            <div style="margin-bottom: 20px">{{item.definition.value}}</div>
+            <div class="help-block"><b>Reference</b>: <span>{{item.definition.reference.value}}</span></div>
+
+            <div hidden$="{{!item.prefUnit.value}}"><b>Units:</b> <span>{{item.prefUnit.value}}</span></div>
+            <div hidden$="{{!item.alternativeLabel}}"><b>Alt Label:</b> <span>{{item.alternativeLabel}}</span></div>
+            <div hidden$="{{!item.relatedTermClean}}"><b>Related:</b> <span>{{item.relatedTermClean}}</span></div>
+            <div hidden$="{{!item.abbrivation}}"><b>Abbrivation:</b> <span>{{item.abbrivation}}</span></div>
+            <div><b>TOP Link:</b> <a href$="{{item.link}}" target="_blank">More Info</a></div>
+          </div>
+        </template>
+
+        <div style="text-align: right; margin-top: 30px">
+          Powered By: <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>
+        </div>
+      </div>
+    </div>
+
+  </div></template>
+  <script>
+    Polymer({
+      is: 'ecosis-top-mapping',
+
+      attached : function() {
+        this.suggestions = [];
+        document.querySelector('ecosis-attribute-mapping').setTopMapping(this);
+      },
+
+      update : function(list) {
+        for( var i = list.length-1; i > 0; i-- ) {
+          if( ecosis.ds.inverseAttributeMap[list[i]] ) {
+            list.splice(i, 1);
+          }
+        }
+
+        var str = list.join('');
+        if( this.current === str ) return;
+
+        this.current = str;
+
+        ecosis.ckan.suggestOverview(list, function(resp){
+          this.badList = [];
+          for( var key in resp ) {
+            if( resp[key].type !== 'match' && resp[key].type !== 'nomatch' ) {
+              this.badList.push(key);
+            }
+          }
+
+          if( this.badList.length === 0 ) {
+            this.style.display = 'none';
+            return;
+          }
+          this.style.display = 'block';
+
+          this.render();
+        }.bind(this));
+      },
+
+      render : function() {
+        this.$.countLabel.innerHTML = this.badList.length;
+
+        var html = '<option></option>';
+        for( var i = 0; i < this.badList.length; i++ ) {
+          html += '<option value="'+this.badList[i]+'">'+this.badList[i]+'</option>';
+        }
+
+        this.$.selector.innerHTML = html;
+        this.suggest();
+      },
+
+      suggest : function() {
+        this.selected = this.$.selector.value;
+
+        if( this.selected === '' ) {
+          this.suggestions = [];
+          this.$.suggestLabel.style.display = 'none';
+          return;
+        }
+
+        this.$.suggestLabel.style.display = 'block';
+
+        ecosis.ckan.suggest(this.selected.replace(/(-|_)/g, ' '), function(resp){
+          for( var i = 0; i < resp.result.length; i++ ) {
+            var item = resp.result[i];
+            item.subClassOfClean = item.subClassOf ? item.subClassOf.replace(/_/g, ' ') : '';
+
+            item.relatedTermClean = '';
+            if( item.relatedTerm ) {
+              if( Array.isArray(item.relatedTerm) ) {
+                for( var j = 0; j < item.relatedTerm.length; j++ ) {
+                  item.relatedTerm[j] = item.relatedTerm[j].trim();
+                }
+                item.relatedTermClean = item.relatedTerm.join(', ');
+              } else {
+                item.relatedTerm = item.relatedTerm.trim();
+              }
+
+            }
+
+            item.link = 'http://top-thesaurus.org/annotationInfo?viz=1&&trait='+item.label;
+          }
+
+          this.suggestions = resp.result;
+        }.bind(this));
+      },
+
+      onSelect : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        document.querySelector('ecosis-attribute-mapping').addFromSuggest(this.selected, this.suggestions[index].preferredLabel);
+        this.suggestions = [];
+      }
+    });
+  </script>
+</dom-module>
 
 <dom-module id="ecosis-dataset-order">
   <style>
@@ -11099,10 +11894,12 @@ this.fire('dom-change');
       this.attributeArray = [];
 
       var attrs = {}, sheet;
-      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
-        sheet = ecosis.ds.datasheets[i];
-        for( var j = 0; j < sheet.attributes.length; j++ ) {
-          attrs[sheet.attributes[j]] = 1;
+      if( ecosis.ds.datasheets ) {
+        for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+          sheet = ecosis.ds.datasheets[i];
+          for( var j = 0; j < sheet.attributes.length; j++ ) {
+            attrs[sheet.attributes[j]] = 1;
+          }
         }
       }
 
@@ -11126,6 +11923,8 @@ this.fire('dom-change');
 
       this.$.orderByInput.innerHTML = options;
 
+      if( !ecosis.ds.sort ) return;
+      
       var sort_description = ecosis.ds.sort.description || '';
       var sort_type = ecosis.ds.sort.type || '';
       var sort_on = ecosis.ds.sort.on || '';
@@ -11189,7 +11988,12 @@ this.fire('dom-change');
           function(resp) {
             this.$.saveLabel.style.display = 'none';
 
-            if( resp.error ) return alert('Failed to update dataset :(');
+            if( resp.error ) {
+              // ERROR 14
+              resp.code = 14;
+              resp.message += '. Failed to set dataset sort order.';
+              ecosis.errorPopup.show(resp);
+            }
           }.bind(this)
         );
     }
@@ -11205,10 +12009,20 @@ this.fire('dom-change');
 
   <template>
 
-    <h4 class="page-header">Map Dataset Attribute Names</h4>
+    <h3 class="page-header">Map Dataset Attribute Names</h3>
     <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
 
-    <h4 class="page-header">Dataset Ordering</h4>
+    <ecosis-top-mapping></ecosis-top-mapping>
+
+    <h3 class="page-header">Dataset Template</h3>
+    <div class="well well-sm">Download a dataset template file for this dataset.  You can use this
+      JSON formatted template file to help speed up the creation of new datasets like this one.
+    </div>
+    <div style="padding: 15px">
+      <a class="btn btn-primary" id="datasetTemplate" target="_blank">Download Dataset Template</a>
+    </div>
+
+    <h3 class="page-header">Dataset Ordering</h3>
     <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
   </template>
 </dom-module>
@@ -11220,6 +12034,7 @@ this.fire('dom-change');
     onShow : function() {
       this.$.mapping.onShow();
       this.$.order.onShow();
+      this.$.datasetTemplate.setAttribute('href', ecosis.ckan.host+'/ecosis/package/getTemplate?id='+ecosis.ds.package_id);
     }
   })
 </script>
@@ -11236,17 +12051,18 @@ this.fire('dom-change');
   </style>
 
   <template>
-    <h4 class="page-header">Push to Search</h4>
+    <h4 class="page-header">Publish to Search</h4>
 
 
 		<div class="alert alert-danger" style="display:none" id="privateAlertPanel">
-			You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+			You have marked this dataset as private. Your results cannot be published to PUBLIC search.
 		</div>
 
 		<div id="main">
 			<div class="help-block">
-				Please verify all information looks correct.  Once everything looks correct, click 'Push'
-        below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+				Please verify all information looks correct.  Once everything looks correct, click 'Publish'
+        below and your changes will be represented at
+        <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
          Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
 			</div>
 
@@ -11258,17 +12074,14 @@ this.fire('dom-change');
 					<tr><td>Description</td><td id="notes"></td></tr>
 					<tr><td>Organization</td><td id="owner_org_name"></td></tr>
 					<tr><td>Visibility</td><td>Public</td></tr>
+          <tr><td>Search Status</td><td id="available"></td></tr>
 				</tbody></table>
 			</div>
 
-			<div class="well">
-				<h4>Resource Information</h4>
-				<table class="table">
-					<tbody><tr><td>Total Resources</td><td id="tResources"></td></tr>
-					<tr><td>Metadata Sheets</td><td id="tMeta"></td></tr>
-					<tr><td>Spectra Sheets</td><td id="tData"></td></tr>
-					<tr><td># Parsed Spectra</td><td id="tSpectra"></td></tr>
-				</tbody></table>
+			<div style="margin-bottom: 35px">
+				<h4 class="page-header">Spectra Preview</h4>
+
+        <ecosis-sheet-preview id="preview"></ecosis-sheet-preview>
 			</div>
 
 			<div class="well">
@@ -11280,8 +12093,8 @@ this.fire('dom-change');
 			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
       </div>
 
-      <div>
-        <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      <div style="padding: 15px 0">
+        <a class="btn btn-primary btn-lg" id="pushBtn" on-click="push"><i class="fa fa-check-circle-o"></i> Publish</a>
       </div>
 
       <div style="padding: 15px 0">
@@ -11327,6 +12140,10 @@ this.fire('dom-change');
 
         this.updateLabels();
         this.updateCounts();
+        this.$.preview.update({
+          packageId: ecosis.ds.package_id,
+          layout : 'column'
+        })
       }
     },
 
@@ -11343,40 +12160,22 @@ this.fire('dom-change');
         } else if( this.$[key] ) {
           this.$[key].innerHTML = ecosis.ds.data[key];
         }
+      }
 
+      if( ecosis.ds.result && ecosis.ds.result.pushed ) {
+        var last = '';
+        try {
+          var date = new Date(ecosis.ds.result.pushed);
+          last = '<br />Last published: '+date.toLocaleString();
+        } catch(e) {}
 
+        this.$.available.innerHTML = '<span class="label label-success">Published to Search</span> '+last;
+      } else {
+        this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
       }
     },
 
     updateCounts : function() {
-			this.counts = {
-				metadataResources : 0,
-				measurementResources : 0,
-				measurements : 0
-			}
-
-			for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-				var resource = ecosis.ds.resources[i];
-				if( !resource.datasheets || resource.ignore ) continue;
-
-				for( var j = 0; j < resource.datasheets.length; j++ ) {
-					var datasheet = resource.datasheets[j];
-					if( datasheet.ignore ) continue;
-
-					if( datasheet.metadata ) {
-						this.counts.metadataResources++;
-					} else if ( datasheet.spectra_count ) {
-						this.counts.measurementResources++;
-						this.counts.measurements += datasheet.spectra_count;
-					}
-				}
-			}
-
-      this.$.tResources.innerHTML = ecosis.ds.resources.length;
-      this.$.tMeta.innerHTML = this.counts.metadataResources;
-      this.$.tData.innerHTML = this.counts.measurementResources;
-      this.$.tSpectra.innerHTML = this.counts.measurements;
-
 			this.updatePushStatus();
 		},
 
@@ -11388,7 +12187,7 @@ this.fire('dom-change');
 				this.$.ecosisInfo.innerHTML =
 					'<span class="label label-danger" style="font-size:14px">' +
 						'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
-						this.requireEcosisAttrs + ' are required to push to search.' +
+						this.requireEcosisAttrs + ' are required to publish to search.' +
 					'</span>';
 				return;
 			}
@@ -11420,22 +12219,25 @@ this.fire('dom-change');
       ecosis.ckan.pushToSearch(ecosis.ds.package_id, includeEmail,
           function(resp){
             this.$.pushBtn.removeAttribute('disabled');
-            this.$.pushBtn.innerHTML = 'Push';
+            this.$.pushBtn.innerHTML = '<i class="fa fa-check-circle-o"></i> Publish';
             this.$.pushMessage.style.display = 'none';
 
             if( resp.error ) {
-                alert('Error pushing dataset to search :(');
-            } else {
-                var msg = 'Success.  Your dataset is processing.';
-                if( resp.emailingResult && resp.email ) {
-                  msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
-                } else {
-                  msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
-                }
-
-                alert(msg);
-                window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
+              // ERROR 12
+              resp.code = 12;
+              resp.message += '. Error publishing dataset.';
+              return ecosis.errorPopup.show(resp);
             }
+
+            var msg = 'Success.  Your dataset is processing.';
+            if( resp.emailingResult && resp.email ) {
+              msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
+            } else {
+              msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
+            }
+
+            alert(msg);
+            window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
           }.bind(this)
       );
     },

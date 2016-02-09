@@ -76,10 +76,12 @@
       this.attributeArray = [];
 
       var attrs = {}, sheet;
-      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
-        sheet = ecosis.ds.datasheets[i];
-        for( var j = 0; j < sheet.attributes.length; j++ ) {
-          attrs[sheet.attributes[j]] = 1;
+      if( ecosis.ds.datasheets ) {
+        for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+          sheet = ecosis.ds.datasheets[i];
+          for( var j = 0; j < sheet.attributes.length; j++ ) {
+            attrs[sheet.attributes[j]] = 1;
+          }
         }
       }
 
@@ -103,6 +105,8 @@
 
       this.$.orderByInput.innerHTML = options;
 
+      if( !ecosis.ds.sort ) return;
+      
       var sort_description = ecosis.ds.sort.description || '';
       var sort_type = ecosis.ds.sort.type || '';
       var sort_on = ecosis.ds.sort.on || '';
@@ -166,7 +170,12 @@
           function(resp) {
             this.$.saveLabel.style.display = 'none';
 
-            if( resp.error ) return alert('Failed to update dataset :(');
+            if( resp.error ) {
+              // ERROR 14
+              resp.code = 14;
+              resp.message += '. Failed to set dataset sort order.';
+              ecosis.errorPopup.show(resp);
+            }
           }.bind(this)
         );
     }

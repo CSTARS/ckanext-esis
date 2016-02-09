@@ -1,0 +1,123 @@
+<dom-module id="ecosis-linked-data-input">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      [hide="true"] {
+        display: none;
+      }
+      .form-inline .form-group {
+        padding: 0 30px;
+      }
+    </style>
+
+    <div class="help-block">
+      Links to additional site related information and data.  Here you link your spectral
+      data to external sites and datasets.  Example, flux data.
+    </div>
+
+    <template is="dom-repeat" items="{{list}}">
+      <div class="form-inline">
+        <div class="form-group">
+          <label for="">Label</label>
+          <input type="text"
+            class="form-control"
+            placeholder="Ex: Fluxnet"
+            value="{{item.label::input}}"
+            on-input="checkFilled"
+            on-blur="fireUpdate" />
+        </div>
+        <div class="form-group">
+          <label for="">URL</label>
+          <input type="text"
+            class="form-control"
+            style="min-width: 300px"
+            placeholder="Ex: http://fluxnet.ornl.gov/site/646"
+            value="{{item.url::input}}"
+            on-input="checkFilled"
+            on-blur="fireUpdate" />
+        </div>
+        <a class="btn btn-default" index$="{{index}}" on-click="remove" hide$="{{item.last}}"><i class="fa fa-trash"></i></a>
+      </div>
+    </template>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'ecosis-linked-data-input',
+
+      properties : {
+        list : {
+          type : Array,
+          value : function() {
+            return [{
+              label : '',
+              url : '',
+              last : 'true'
+            }];
+          }
+        }
+      },
+
+      setData : function(data) {
+        if( !data ) {
+          data = JSON.stringify([{
+            label : '',
+            url : '',
+            last : 'true'
+          }]);
+        }
+
+        this.list = JSON.parse(data);
+        this.checkFilled();
+      },
+
+      getData : function() {
+        var arr = [];
+        for( var i = 0; i < this.list.length; i++ ) {
+          if( this.list[i].label.length > 0 && this.list[i].url.length > 0 ) {
+            arr.push({
+              label : this.list[i].label,
+              url : this.list[i].url
+            });
+          }
+        }
+
+        return JSON.stringify(arr);
+      },
+
+      remove : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        this.splice('list', index, 1);
+        this.fireUpdate();
+      },
+
+      checkFilled : function() {
+        if( !this.list ) return;
+        if( this.list.length === 0 ) return;
+
+        var item = this.list[this.list.length-1];
+        if( item.label.length > 0 && item.url.length > 0 ) {
+          this.push('list',{
+            label : '',
+            url : '',
+            last : 'true'
+          });
+        }
+
+        for( var i = 0; i < this.list.length-1; i++ ) {
+          if( this.list[i].last == 'true') {
+            this.set('list.'+i+'.last', 'false');
+          }
+        }
+      },
+
+      fireUpdate : function() {
+        ecosis.ds.setDatasetExtra('LinkedData', this.getData());
+        this.fire('update');
+      }
+
+    });
+  </script>
+</dom-module>

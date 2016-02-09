@@ -33,7 +33,7 @@
             </li>
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push" style="display:none"><i class="fa fa-cloud-upload"></i> Push to Search</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o"></i> Publish</a></li>
             <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
@@ -71,7 +71,7 @@
 
       if( ecosis.ds.editMode ) {
         ecosis.ds.on('load', function(){
-          if( ecosis.ds.editMode ) this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.data.name);
+          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.data.name);
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
@@ -84,6 +84,10 @@
         this.$.advanced.style.display = 'block';
         this.$.push.style.display = 'block';
       }
+    },
+
+    setBackBtn : function(name) {
+      this.$.exit.setAttribute('href', '/dataset/'+name);
     },
 
     updateActiveTab : function() {

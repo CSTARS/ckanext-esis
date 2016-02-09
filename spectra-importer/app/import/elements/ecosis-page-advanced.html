@@ -1,4 +1,5 @@
 <link rel="import" href="widgets/ecosis-attribute-mapping.html">
+<link rel="import" href="widgets/ecosis-top-mapping.html">
 <link rel="import" href="widgets/ecosis-dataset-order.html">
 
 <dom-module id="ecosis-page-advanced">
@@ -11,10 +12,20 @@
 
   <template>
 
-    <h4 class="page-header">Map Dataset Attribute Names</h4>
+    <h3 class="page-header">Map Dataset Attribute Names</h3>
     <ecosis-attribute-mapping id="mapping"></ecosis-attribute-mapping>
 
-    <h4 class="page-header">Dataset Ordering</h4>
+    <ecosis-top-mapping></ecosis-top-mapping>
+
+    <h3 class="page-header">Dataset Template</h3>
+    <div class="well well-sm">Download a dataset template file for this dataset.  You can use this
+      JSON formatted template file to help speed up the creation of new datasets like this one.
+    </div>
+    <div style="padding: 15px">
+      <a class="btn btn-primary" id="datasetTemplate" target="_blank">Download Dataset Template</a>
+    </div>
+
+    <h3 class="page-header">Dataset Ordering</h3>
     <ecosis-dataset-order style="margin-bottom: 50px" id="order"></ecosis-dataset-order>
   </template>
 </dom-module>
@@ -26,6 +37,7 @@
     onShow : function() {
       this.$.mapping.onShow();
       this.$.order.onShow();
+      this.$.datasetTemplate.setAttribute('href', ecosis.ckan.host+'/ecosis/package/getTemplate?id='+ecosis.ds.package_id);
     }
   })
 </script>

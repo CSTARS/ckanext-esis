@@ -1,5 +1,5 @@
 var ecosis = (function(){
-  var host = window.location.host.indexOf(':3000') > -1 ? 'http://localhost:5000' : window.location.protocol+'//'+window.location.host;
+  var host = window.location.host.indexOf(':3000') > -1 ? 'http://192.168.2.138:5000' : window.location.protocol+'//'+window.location.host;
   var pages = ['add-resources', 'current-resources', 'advanced', 'push', 'basic'];
 
   function getVar(variable) {
@@ -45,35 +45,42 @@ var ecosis = (function(){
 
   // show splash screen
   $(document).ready(function(){
-    $('.page').hide();
 
+    ecosis.errorPopup = document.querySelector('ecosis-error-popup');
+    $('.page').hide();
 
     if( !currentPkg ) {
       updatePage();
       return;
     }
 
-    if( ecosis.ds.loaded || ecosis.ds.loadingError ) {
-      if( ecosis.ds.loadingError ) {
-        alert('Error loading workspace: '+ecosis.ds.loadingError.message);
+    setTimeout(function(){
+      if( ecosis.ds.loaded || ecosis.ds.loadingError ) {
+        if( ecosis.ds.loadingError ) {
+          // ERROR 1
+          ecosis.ds.loadingError.code = 1;
+          ecosis.errorPopup.show(ecosis.ds.loadingError);
+        } else {
+          onLoad();
+        }
       } else {
-        onLoad()
+        $('#splash').modal();
+        ecosis.ds.on('load-error', function(e){
+          $('#splash').modal('hide');
+
+          // ERROR 2
+          e.code = 2;
+          ecosis.errorPopup.show(e);
+        });
+
+        ecosis.ds.on('load', onLoad);
       }
-    } else {
-      $('#splash').modal();
-      ecosis.ds.on('load-error', function(e){
-        alert('Error loading workspace: '+e.message);
-        $('#splash').modal('hide');
+
+      document.querySelector('#basic').addEventListener('score-update', function() {
+        document.querySelector('ecosis-header').onScoreUpdated();
       });
+    }, 1000);
 
-      ecosis.ds.on('load', onLoad);
-    }
-
-
-
-    document.querySelector('#basic').addEventListener('score-update', function() {
-      document.querySelector('ecosis-header').onScoreUpdated();
-    });
   });
 
 

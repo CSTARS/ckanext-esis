@@ -67,7 +67,9 @@
             </div>
           </div>
         </div>
-        <div class="panel-body" id="zipResources"></div>
+        <div class="panel-body">
+          <ecosis-isotope id="zipResources" selector=".zip-item"></ecosis-isotope>
+        </div>
       </div>
     </template>
 
@@ -106,6 +108,8 @@
     },
 
     update : function() {
+      this.setAttribute('data-name', this.resource.name);
+
       if( this.resource.isZip ) {
         this.ele = this.$.zipResource.stamp();
       } else {
@@ -122,16 +126,29 @@
         this.querySelector('#trashBtn').style.color = '#333';
       }
 
+      // hide edit button if invalid file type
+      if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'none';
+      } else {
+        var link = this.querySelector('#editLink');
+        if( link ) link.style.display = 'inline-block';
+      }
+
       if( this.resource.childResources ) {
-        var panel = this.querySelector('#zipResources');
-        panel.innerHTML = '';
+        this.isotope = this.querySelector('#zipResources');
+        this.isotope.clear();
 
         for( var i = 0; i < this.resource.childResources.length; i++ ) {
           var ele = document.createElement('ecosis-resource-panel');
+          ele.style.width = '100%';
+          ele.className = 'zip-item';
           ele.resource = this.resource.childResources[i]; // manually set
-          panel.appendChild(ele);
+          this.isotope.append(ele);
           ele.update();
         }
+
+        this.isotope.init();
       }
 
       var url = ecosis.ckan.host+'/dataset/'+this.resource.package_id+'/resource/'+this.resource.id+'/download/'+this.resource.name;
@@ -139,6 +156,15 @@
       this.querySelector('#downloadBtn').setAttribute('href', url);
     },
 
+    sort : function(sortBy) {
+      if( !this.isotope ) return;
+      this.isotope.sort(sortBy);
+    },
+
+    filter : function(filter) {
+      if( !this.isotope ) return;
+      this.isotope.filter(filter);
+    },
 
     setClass : function() {
       var type = this.getResourceType();
@@ -153,10 +179,14 @@
       }
 
       // update css class
-      if( this.resource.isZip ) return;
+      if( this.resource.isZip ) {
+        this.setAttribute('data-type', 'zip');
+        return;
+      }
 
       var className = this.getPanelClass(type);
       this.querySelector('#root').className = 'style-scope ecosis-resource-panel alert alert-'+className;
+      this.setAttribute('data-type', className);
     },
 
     getPanelClass : function(type) {
@@ -219,21 +249,31 @@
         function(resp){
           this.querySelector('#deletePanel').style.display = 'block';
 
-          if( resp.error ) return alert("Server error deleting resource");
-
-          for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-            if( ecosis.ds.resources[i] == this.resource ) {
-              ecosis.ds.resources.splice(i, 1);
-              ecosis.ds.fireUpdate();
-              break;
-            }
+          if( resp.error ) {
+            // ERROR 17
+            resp.code = 17;
+            resp.message += '. Server error deleting resource.';
+            return ecosis.errorPopup.show(resp);
           }
 
+          for( var i = ecosis.ds.resources.length-1; i >= 0; i-- ) {
+            var r = ecosis.ds.resources[i];
+
+            if( r.id == this.resourceid ) {
+              ecosis.ds.resources.splice(i, 1);
+            } else if ( r.zip && r.zip.resourceId == this.resourceid  ) {
+              ecosis.ds.resources.splice(i, 1);
+            }
+          }
+          ecosis.ds.fireUpdate();
+
+          var ele = this;
           $(this).hide('slow', function(){
-            $(this).remove();
+            $(this).detach();
+            ele.fire('update', ele.resourceid);
           });
 
-          this.fire('update', this.resourceid);
+
         }.bind(this)
       );
     }

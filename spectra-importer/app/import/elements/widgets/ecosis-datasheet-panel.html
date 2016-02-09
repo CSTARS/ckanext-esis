@@ -1,6 +1,4 @@
-<link rel="import" href="ecosis-parser-overview.html" >
 <link rel="import" href="ecosis-metadata-join-panel.html" >
-<link rel="import" href="ecosis-spectra-panel.html" >
 
 <dom-module id="ecosis-datasheet-panel">
   <style>
@@ -91,6 +89,44 @@
         </div>
       </div>
 
+      <!-- Datasheet Seperator -->
+      <div class="form-horizontal" id="seperatorPanel" style="display:none">
+        <div class="form-group">
+
+            <label class="col-md-2 control-label">File Seperator</label>
+            <div class="col-md-10">
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="commaInput" value="," checked="" on-click="onSeperatorChange">
+                  Comma
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="tabInput" value="tab" on-click="onSeperatorChange">
+                  Tab
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="semicolonInput" value=";" on-click="onSeperatorChange">
+                  Semicolon
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" class="orientation-radio" id="otherInput" value="other" on-click="onSeperatorChange">
+                  Other
+                  <input type="text" id="otherSeperatorInput" on-blur="onSeperatorChange" />
+                </label>
+              </div>
+            </div>
+
+            <a on-click="toggleHelp" style="cursor:pointer">Format Help.</a>
+            <ecosis-dataformat-help id="formatHelp" style="display:none" class="animated fadeIn"></ecosis-dataformat-help>
+          </div>
+        </div>
+
       <div id="updatingPanel" class="alert alert-warning" style="display:none">
         <h6 style="color:white"><i class="fa fa-spinner fa-spin"></i> Updating...</h6>
       </div>
@@ -122,6 +158,10 @@
         joinOn : this.sheet.joinOn
       }
 
+      if( this.sheet.seperator ) {
+        options.seperator = this.sheet.seperator;
+      }
+
       ecosis.ckan.processResource(
           ecosis.ds.package_id,
           this.sheet.resourceId,
@@ -136,7 +176,12 @@
 
             this.setSaving(false);
 
-            if( resp.error ) return alert("Error updating datasheet :(");
+            if( resp.error ) {
+              // ERROR 16
+              resp.code = 16;
+              resp.message += '.  Error updating datasheet.';
+              return ecosis.errorPopup.show(resp, document.querySelector('ecosis-resource-popup').popup);
+            }
 
             this.sheet = resp;
             ecosis.ds.setSheet(resp);
@@ -192,6 +237,7 @@
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
+      this.updateSeperatorUi();
 
       if( callback ) callback();
     },
@@ -225,6 +271,31 @@
       }
     },
 
+    updateSeperatorUi : function() {
+      if( !this.sheet.isCSV ) {
+        this.$.seperatorPanel.style.display = 'none';
+        return;
+      }
+
+      this.$.seperatorPanel.style.display = 'block';
+      $(this).find('.orientation-radio').prop('checked', false);
+      this.$.otherSeperatorInput.value = '';
+
+      if( !this.sheet.seperator ) {
+        this.$.commaInput.checked = true;
+        return;
+      }
+
+      var options = [',', 'tab', ';'];
+      if( options.indexOf(this.sheet.seperator) > -1 ) {
+        $(this).find('[value="'+this.sheet.seperator+'"]').prop('checked', true);
+        return;
+      }
+
+      this.$.otherInput.checked = true;
+      this.$.otherSeperatorInput.value = this.sheet.seperator;
+    },
+
     onOrientationChange : function(e) {
       this.sheet.layout = e.currentTarget.value;
       if( this.sheet.layout == 'column' ) {
@@ -233,6 +304,25 @@
         $(this.$.columnInput).prop('checked', false);
       }
 
+      this.save();
+    },
+
+    onSeperatorChange : function(e) {
+      var ele = e.currentTarget;
+
+      if( ele.getAttribute('type') == 'radio' ) {
+        $(this).find('.orientation-radio').prop('checked', false);
+        $(ele).prop('checked', true);
+      }
+
+      var val = e.currentTarget.value;
+      if( val === 'other' ) {
+        val = this.$.otherSeperatorInput.value;
+      }
+
+      if( !val ) return;
+
+      this.sheet.seperator = val;
       this.save();
     },
 

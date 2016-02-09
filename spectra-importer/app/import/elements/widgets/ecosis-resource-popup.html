@@ -4,8 +4,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <div class="alert alert-success wizardMode"><h5 style="color:white">Upload Complete!</h5>Configure Uploaded Sheets</div>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title" id="title"></h4>
           </div>
           <div class="modal-body" style="padding: 25px">
@@ -27,13 +26,13 @@
             <div class="wizardMode">
               <div class="layout horizontal">
                 <div>
-                  <button type="button" class="btn btn-default" on-click="prev">Previous</button>
+                  <button type="button" id="prev" class="btn btn-default" on-click="prev">Previous</button>
                 </div>
                 <div class="flex" style="text-align:center">
                   <button type="button" class="btn btn-primary" data-dismiss="modal">Finished</button>
                 </div>
                 <div>
-                  <button type="button" class="btn btn-default" on-click="next">Next</button>
+                  <button type="button" id="next" class="btn btn-default" on-click="next">Next</button>
                 </div>
               </div>
             </div>
@@ -66,6 +65,7 @@
         this.index = this.resources.length - 1;
         return;
       }
+      this.updateNav();
       this.show(this.resources[this.index]);
     },
 
@@ -75,7 +75,16 @@
         this.index = 0;
         return;
       }
+      this.updateNav();
       this.show(this.resources[this.index]);
+    },
+
+    updateNav : function() {
+      if( this.index == 0 ) this.$.prev.setAttribute('disabled','disabled');
+      else this.$.prev.removeAttribute('disabled');
+
+      if( this.index >= this.resources.length-1 ) this.$.next.setAttribute('disabled','disabled');
+      else this.$.next.removeAttribute('disabled');
     },
 
     setMode : function(mode) {
@@ -92,6 +101,7 @@
       this.setMode('wizard');
       this.resources = resources;
       this.index = 0;
+      this.updateNav();
       this.handlers = handlers;
       this.show(resources[0]);
     },
@@ -122,10 +132,18 @@
     },
 
     onDatasheetUpdate : function() {
+      this.$.datasheetSelector.updateClass();
       if( this.handlers ) this.handlers.onDatasheetUpdate();
     },
 
     selectDatasheet : function(index, edit) {
+      // required for datasheet display
+      if( this.resource.name.match(/\.csv$/i) || this.resource.name.match(/\.spectra$/i) ) {
+        this.resource.datasheets[index].isCSV = true;
+      } else {
+        this.resource.datasheets[index].isCSV = false;
+      }
+
       // set the resource and sheet we are going to render
       this.$.datasheetUI.update(this.resource, this.resource.datasheets[index]);
       this.$.datasheetUI.edit();

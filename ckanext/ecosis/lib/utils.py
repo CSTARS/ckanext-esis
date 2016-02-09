@@ -12,7 +12,7 @@ def get_request_data(request):
         if keys and request.POST[keys[0]] in [u'1', u'']:
             request_data = keys[0]
         else:
-            request_data = urllib2.unquote_plus(request.body)
+            request_data = urllib2.unquote(request.body)
     except Exception, inst:
         msg = "Could not find the POST data: %r : %s" % \
               (request.POST, inst)
@@ -31,18 +31,27 @@ def handleError(e):
     response.headers["Content-Type"] = "application/json"
 
     if hasattr(e, 'message'):
-        return json.dumps({
-            "error": True,
-            "message": "%s:%s" % (type(e).__name__, e.message)
-        })
+        if e.message is not None:
+            return json.dumps({
+                "error": True,
+                "message": "%s:%s" % (type(e).__name__, e.message)
+            })
+    if hasattr(e, 'error_summary'):
+        if e.error_summary is not None:
+            return json.dumps({
+                "error": True,
+                "message": "%s:%s" % (type(e).__name__, e.error_summary)
+            })
 
     return json.dumps({
         "error": True,
         "message": "%s:%s" % (type(e).__name__, str(e))
     })
 
-def jsonStringify(obj):
-    return json.dumps(obj, default=jsondefault)
+def jsonStringify(obj, formatted=False):
+    if not formatted:
+        return json.dumps(obj, default=jsondefault)
+    return json.dumps(obj, default=jsondefault, indent=4, separators=(',', ': '))
 
 def jsondefault(obj):
     if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):

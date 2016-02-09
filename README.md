@@ -3,6 +3,9 @@ ckanext-ecosis
 
 EcoSIS extension for CKAN adding resource controls for spectra
 
+## EcoSIS Tutorials
+
+[tutorial.ecospectra.org](http://tutorial.ecospectra.org)
 
 ## CKAN 'IDE'
 
@@ -12,6 +15,7 @@ info on pycharm package install can be found [here](http://ubuntuhandbook.org/in
 ```
 . /usr/lib/ckan/default/bin/activate
 # run ckan as root
+
 sudo pycharm-community
 ```
 
@@ -22,7 +26,6 @@ select virtual env python as interpreter, then
 script = /usr/lib/ckan/default/bin/paster
 script paramters = --plugin=ckan serve /etc/ckan/default/development.ini
 ```
-
 
 
 ## Allow local cross-site auth (dev only)
@@ -40,7 +43,7 @@ in ckan/lib/base.py
              "POST, PUT, GET, DELETE, OPTIONS"
          response.headers['Access-Control-Allow-Headers'] = \
              "X-CKAN-API-KEY, Authorization, Content-Type"
- 
+
 +        response.headers['Access-Control-Allow-Credentials'] = "true"
 
 ```

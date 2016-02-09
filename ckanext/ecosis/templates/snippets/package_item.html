@@ -1,0 +1,15 @@
+{% ckan_extends %}
+
+{% block notes %}
+  {% if notes %}
+    <div>{{ notes|urlize }}</div>
+  {% else %}
+    <p class="empty">{{ _("This dataset has no description") }}</p>
+  {% endif %}
+  {% if h.pushed_to_search(package.id) %}
+    <div class="alert alert-success">
+        Published. <a href="{{ h.get_search_url() }}#result/{{ package.id }}" target="_blank">View in Search.</a>
+    </div>
+  {% endif %}
+{% endblock %}
+

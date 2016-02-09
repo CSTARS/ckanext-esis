@@ -1,0 +1,21 @@
+{% ckan_extends %}
+
+{# Removing the follow button and follower info #}
+{% block package_info %}
+    {% if pkg %}
+    <section class="module module-narrow">
+      <div class="module context-info">
+        <div class="module-content">
+          {% block package_info_inner %}
+            {% block heading %}
+              <h1 class="heading">{{ pkg.title or pkg.name }}</h1>
+            {% endblock %}
+          {% endblock %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}
+
+{# Removing social info #}
+{% block package_social %}{% endblock %}

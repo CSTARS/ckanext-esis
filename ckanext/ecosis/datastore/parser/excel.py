@@ -1,4 +1,6 @@
-import xlrd, os, shutil, csv, datetime, json
+import xlrd, os, shutil, datetime, json, csv, re
+from ckanext.ecosis.datastore.delete import removeDeletedExcelSheets
+from ckanext.ecosis.datastore.parser import csvReader
 
 workspaceDir = None
 
@@ -36,8 +38,7 @@ def process(collection, sheetConfig, hash):
             # we are processing a single sheet
             config = sheetConfig
 
-            # update just these attributes
-
+        # update just these attributes
         elif configSheetId is None:
             # we are processing everything
             config = collection.find_one({
@@ -73,6 +74,9 @@ def process(collection, sheetConfig, hash):
                 "config" : config
             })
 
+    # This shouldn't be required.  To do this a resource has to be deleted and replaced
+    #removeDeletedExcelSheets(sheetConfig.get('resourceId'), sheetIds)
+
     return datasheets
 
 def getWorksheetData(sheet):
@@ -80,7 +84,16 @@ def getWorksheetData(sheet):
     for i in range(sheet.nrows):
         row = []
         for j in range(sheet.ncols):
-            row.append(str(sheet.cell_value(i, j)))
+            val = ""
+            try:
+                val = str(sheet.cell_value(i, j))
+            except Exception as e:
+                try:
+                    val = re.sub(r'[^\x00-\x7F]+',' ', sheet.cell_value(i, j))
+                except Exception as e:
+                    val = '__invalid_utf-8_characters__'
+            row.append(val)
+
         data.append(row)
     return data
 
@@ -90,14 +103,7 @@ def cacheRead(sheetConfig):
     filename = '%s.csv' % id
     workspacePath = os.path.join(workspaceDir, sheetConfig.get('packageId'), sheetConfig.get('resourceId'), filename)
 
-    with open(workspacePath) as csvfile:
-        reader = csv.reader(csvfile, delimiter=",", quotechar='"')
-        data = []
-        for row in reader:
-            data.append(row)
-        csvfile.close()
-        return data
-    return [[]]
+    return csvReader.read(workspacePath, ",")
 
 # write excel files to disk as csv for faster read time
 # excel read is unreal slow in python.

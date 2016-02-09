@@ -1,0 +1,15 @@
+{% ckan_extends %}
+
+{% block footer_nav %}
+  <div style="border:1px solid white; border-radius: 4px; padding: 3px; margin-bottom: 5px" class="foo">This site is
+      for <b>EcoSIS data administrators.</b>  The main EcoSIS search page can be found
+      <a href="{{ h.get_search_url() }}" style="font-weight:bold">here.</a></div>
+  <ul class="unstyled">
+    {% block footer_links_ckan %}
+      <li><a href="{{ h.get_search_url() }}">EcoSIS Search</a></li>
+      <li><a href="http://www.okfn.org/">{{ _('Open Knowledge Foundation') }}</a></li>
+      <li><a href="http://www.opendefinition.org/okd/"><img src="{{ h.url_for_static('/base/images/od_80x15_blue.png') }}"></a></li>
+    {% endblock %}
+  </ul>
+{% endblock %}
+

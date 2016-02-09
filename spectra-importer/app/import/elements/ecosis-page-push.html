@@ -10,17 +10,18 @@
   </style>
 
   <template>
-    <h4 class="page-header">Push to Search</h4>
+    <h4 class="page-header">Publish to Search</h4>
 
 
 		<div class="alert alert-danger" style="display:none" id="privateAlertPanel">
-			You have marked this dataset as private. Your results cannot be pushed to PUBLIC search.
+			You have marked this dataset as private. Your results cannot be published to PUBLIC search.
 		</div>
 
 		<div id="main">
 			<div class="help-block">
-				Please verify all information looks correct.  Once everything looks correct, click 'Push'
-        below and your changes will be represented at <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
+				Please verify all information looks correct.  Once everything looks correct, click 'Publish'
+        below and your changes will be represented at
+        <a href="http://ecospectra.org" target="_blank">ecospectra.org</a>.
          Please note, a minimum of 3 EcoSIS metadata attributes are required to push your dataset.
 			</div>
 
@@ -32,17 +33,14 @@
 					<tr><td>Description</td><td id="notes"></td></tr>
 					<tr><td>Organization</td><td id="owner_org_name"></td></tr>
 					<tr><td>Visibility</td><td>Public</td></tr>
+          <tr><td>Search Status</td><td id="available"></td></tr>
 				</table>
 			</div>
 
-			<div class="well">
-				<h4>Resource Information</h4>
-				<table class="table">
-					<tr><td>Total Resources</td><td id="tResources"></td></tr>
-					<tr><td>Metadata Sheets</td><td id="tMeta"></td></tr>
-					<tr><td>Spectra Sheets</td><td id="tData"></td></tr>
-					<tr><td># Parsed Spectra</td><td id="tSpectra"></td></tr>
-				</table>
+			<div style="margin-bottom: 35px">
+				<h4 class="page-header">Spectra Preview</h4>
+
+        <ecosis-sheet-preview id="preview"></ecosis-sheet-preview>
 			</div>
 
 			<div class="well">
@@ -54,8 +52,8 @@
 			  <ecosis-metadata-docs id="metadataDocs"></ecosis-metadata-docs>
       </div>
 
-      <div>
-        <a class="btn btn-primary" id="pushBtn" on-click="push">Push</a>
+      <div style="padding: 15px 0">
+        <a class="btn btn-primary btn-lg" id="pushBtn" on-click="push"><i class="fa fa-check-circle-o"></i> Publish</a>
       </div>
 
       <div style="padding: 15px 0">
@@ -101,6 +99,10 @@
 
         this.updateLabels();
         this.updateCounts();
+        this.$.preview.update({
+          packageId: ecosis.ds.package_id,
+          layout : 'column'
+        })
       }
     },
 
@@ -117,40 +119,22 @@
         } else if( this.$[key] ) {
           this.$[key].innerHTML = ecosis.ds.data[key];
         }
+      }
 
+      if( ecosis.ds.result && ecosis.ds.result.pushed ) {
+        var last = '';
+        try {
+          var date = new Date(ecosis.ds.result.pushed);
+          last = '<br />Last published: '+date.toLocaleString();
+        } catch(e) {}
 
+        this.$.available.innerHTML = '<span class="label label-success">Published to Search</span> '+last;
+      } else {
+        this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
       }
     },
 
     updateCounts : function() {
-			this.counts = {
-				metadataResources : 0,
-				measurementResources : 0,
-				measurements : 0
-			}
-
-			for( var i = 0; i < ecosis.ds.resources.length; i++ ) {
-				var resource = ecosis.ds.resources[i];
-				if( !resource.datasheets || resource.ignore ) continue;
-
-				for( var j = 0; j < resource.datasheets.length; j++ ) {
-					var datasheet = resource.datasheets[j];
-					if( datasheet.ignore ) continue;
-
-					if( datasheet.metadata ) {
-						this.counts.metadataResources++;
-					} else if ( datasheet.spectra_count ) {
-						this.counts.measurementResources++;
-						this.counts.measurements += datasheet.spectra_count;
-					}
-				}
-			}
-
-      this.$.tResources.innerHTML = ecosis.ds.resources.length;
-      this.$.tMeta.innerHTML = this.counts.metadataResources;
-      this.$.tData.innerHTML = this.counts.measurementResources;
-      this.$.tSpectra.innerHTML = this.counts.measurements;
-
 			this.updatePushStatus();
 		},
 
@@ -162,7 +146,7 @@
 				this.$.ecosisInfo.innerHTML =
 					'<span class="label label-danger" style="font-size:14px">' +
 						'You have '+count+' <i class="fa fa-star"></i> EcoSIS metadata attributes. ' +
-						this.requireEcosisAttrs + ' are required to push to search.' +
+						this.requireEcosisAttrs + ' are required to publish to search.' +
 					'</span>';
 				return;
 			}
@@ -194,22 +178,25 @@
       ecosis.ckan.pushToSearch(ecosis.ds.package_id, includeEmail,
           function(resp){
             this.$.pushBtn.removeAttribute('disabled');
-            this.$.pushBtn.innerHTML = 'Push';
+            this.$.pushBtn.innerHTML = '<i class="fa fa-check-circle-o"></i> Publish';
             this.$.pushMessage.style.display = 'none';
 
             if( resp.error ) {
-                alert('Error pushing dataset to search :(');
-            } else {
-                var msg = 'Success.  Your dataset is processing.';
-                if( resp.emailingResult && resp.email ) {
-                  msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
-                } else {
-                  msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
-                }
-
-                alert(msg);
-                window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
+              // ERROR 12
+              resp.code = 12;
+              resp.message += '. Error publishing dataset.';
+              return ecosis.errorPopup.show(resp);
             }
+
+            var msg = 'Success.  Your dataset is processing.';
+            if( resp.emailingResult && resp.email ) {
+              msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
+            } else {
+              msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
+            }
+
+            alert(msg);
+            window.location = ecosis.ckan.host + '/dataset/' + ecosis.ds.package_id;
           }.bind(this)
       );
     },

@@ -1,20 +1,24 @@
 function(key, item) {
     var data = [];
-    for( var key in item.data_keys__ ) {
-        data.push(key);
-    }
-    item.data_keys__ = data;
 
+    item.tmp__schema__.wavelengths = Object.keys(item.tmp__schema__.wavelengths);
+    item.tmp__schema__.metadata = Object.keys(item.tmp__schema__.metadata);
 
     for( var key in item ) {
-        var tmp = [];
-        if( key == 'data_keys__' ) continue;
+
+        if( key == 'tmp__schema__' ) continue;
 
         // if at any point we want to level counts, this hash actually has them
-        for( var k2 in item[key] ) {
-            tmp.push(k2)
+        if( typeof item[key] === 'object' ) {
+            var tmp = [];
+            for( var k2 in item[key] ) {
+                tmp.push(k2)
+            }
+            item[key] = tmp;
+        } else {
+            item[key] = [item[key]];
         }
-        item[key] = tmp;
+
     }
 
     return item;

@@ -1,6 +1,7 @@
-import csv, utils, excel, hashlib, datetime
+import utils, excel, hashlib, datetime
 
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
+from ckanext.ecosis.datastore.parser import csvReader
 
 collections = None
 
@@ -70,6 +71,10 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         ignore = True
     elif ext != "csv" and ext != "tsv" and ext != "spectra" and ext != "xlsx" and ext != "xls":
         ignore = True
+        sheetConfig['ignore'] = True
+        sheetConfig['invalidFileType'] = True
+        if 'layout' in sheetConfig:
+            del sheetConfig['layout']
 
     if ignore == True: # save and return
         collections.get('resource').update({
@@ -89,11 +94,11 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     sheetConfig['processed'] = datetime.datetime.utcnow()
 
     response = None
-    if ext == "csv":
+    if ext == "csv" or ext == "spectra":
         sheetConfig['hash'] = hash
         response = _processCsv(sheetConfig)
         response['name'] = resource.get('name')
-    elif ext == "tsv" or ext == "spectra":
+    elif ext == "tsv":
         sheetConfig['hash'] = hash
         response = _processTsv(sheetConfig)
         response['name'] = resource.get('name')
@@ -117,21 +122,21 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     return response
 
 def _processCsv(sheetConfig):
-    return _processSeperatorFile(",", sheetConfig)
+    seperator = ","
+    if sheetConfig.get("seperator") is not None:
+        seperator = str(sheetConfig.get("seperator"))
+        if seperator == "tab":
+            seperator = "\t"
+
+    return _processSeperatorFile(seperator, sheetConfig)
 
 def _processTsv(sheetConfig):
     return _processSeperatorFile("\t", sheetConfig)
 
 # parse a csv or tsv file location into array
 def _processSeperatorFile(separator, sheetConfig):
-    with open(sheetConfig.get('file'), 'rU') as csvfile:
-        reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
-        data = []
-        for row in reader:
-            data.append(row)
-        csvfile.close()
-
-        return _processSheetArray(data, sheetConfig)
+    data = csvReader.read(sheetConfig.get('file'), separator)
+    return _processSheetArray(data, sheetConfig)
 
 def _processSheetArray(data, sheetConfig):
     # for local scope are we parsing a metadata file or a normal datasheet
@@ -152,21 +157,27 @@ def _processSheetArray(data, sheetConfig):
 
     # no local data
     if localRange['start'] == localRange['stop']:
-        return
+        return {
+            "processed" : True,
+            "resourceId" : sheetConfig.get("resourceId"),
+            "fromZip" : sheetConfig.get("fromZip"),
+            "count" : 0
+        }
 
     # ckan all the attribute types based on layout
     attrTypes = []
     if layout == "row":
-        for i in range(0, len(data[localRange['start']])):
+        stop = len(data[localRange['start']])
+        for i in range(0, stop):
             info = utils.parseAttrType(data[localRange['start']][i], [localRange['start'], i])
             attrTypes.append(info)
     else:
-        for i in range(localRange['start'], localRange['stop']):
+        for i in range(localRange['start'], localRange['stop']+1):
             info = utils.parseAttrType(data[i][0], [i,0])
             attrTypes.append(info)
 
     if globalRange != None:
-        for i in range(globalRange['start'], globalRange['stop']):
+        for i in range(globalRange['start'], globalRange['stop']+1):
             info = utils.parseAttrType(data[i][0], [i,0])
             attrTypes.append(info)
 
@@ -195,7 +206,7 @@ def _processSheetArray(data, sheetConfig):
     index = 0
     if layout == 'row':
         start = localRange['start']
-        for j in range(start+1, localRange['stop']):
+        for j in range(start+1, localRange['stop']+1):
             sp = {}
             for i in range(len(data[start])):
                 try:
@@ -206,7 +217,7 @@ def _processSheetArray(data, sheetConfig):
 
             # add global data
             if globalRange != None:
-                for i in range(globalRange['start'], globalRange['stop']):
+                for i in range(globalRange['start'], globalRange['stop']+1):
                     sp[_getName(nameMap, data[i][0])] = data[i][1]
 
             index += 1
@@ -216,7 +227,7 @@ def _processSheetArray(data, sheetConfig):
         start = localRange['start']
         for j in range(1, len(data[start])):
             sp = {}
-            for i in range(start, localRange['stop']):
+            for i in range(start, localRange['stop']+1):
                 try:
                     if data[i][j]:
                         sp[_getName(nameMap, data[i][0])] = data[i][j]
@@ -225,8 +236,8 @@ def _processSheetArray(data, sheetConfig):
 
             # add global data
             if globalRange != None:
-                for i in range(globalRange['start'], globalRange['stop']):
-                    sp[_getName(data[i][0])] = data[i][1]
+                for i in range(globalRange['start'], globalRange['stop']+1):
+                    sp[_getName(nameMap, data[i][0])] = data[i][1]
 
             index += 1
             _insertSpectra(sp, sheetConfig, index)
@@ -251,7 +262,11 @@ def _insertSpectra(sp, sheetConfig, index):
         "index" : index,
         "type" : type
     }
-    collections.get('spectra').insert(data)
+
+    try:
+        collections.get('spectra').insert(data)
+    except Exception as e:
+        pass
 
 def hashfile(file):
     f = open(file, 'rb')

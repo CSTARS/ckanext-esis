@@ -190,12 +190,18 @@
       ecosis.ckan.processResource(
           ecosis.ds.package_id, this.newResourceIds, null, {layout: this.defaultType},
           function(resp) {
-              if( resp.error ) return alert(resp.message);
+              if( resp.error ) {
+                // ERROR 3
+                resp.code = 3;
+                return ecosis.errorPopup.show(resp);
+              }
 
               // proly a smarter way to do things, but for now, reload entire workspace
               ecosis.ckan.getWorkspace(ecosis.ds.package_id, function(result){
                 if( result.error ) {
-                  return alert(result.message);
+                  // ERROR 4
+                  result.code = 4;
+                  return ecosis.errorPopup.show(result);
                 }
 
                 ecosis.ds.runAfterResourceAdd(result);
@@ -211,16 +217,23 @@
       var resources = [];
       for( var i = 0; i < this.newResourceIds.length; i++ ) {
         var resource = ecosis.ds.resourceLookup[this.newResourceIds[i]];
+        if( !resource.datasheets ) continue;
+
         if( resource.childResources ) {
           for( var j = 0; j < resource.childResources.length; j++ ) {
+            if( !resource.childResources[j].datasheets ) continue;
+            if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
+            
             resources.push(resource.childResources[j]);
           }
+        } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
+          continue;
         } else {
           resources.push(resource);
         }
       }
 
-      document.querySelector('ecosis-resource-popup').uploadWizard(resources,{
+      document.querySelector('ecosis-upload-splash').show(resources,{
         onDatasheetUpdate : function(){
           // make sure all panels have correct css after update
           document.querySelector('ecosis-page-current-resources').verifyPanelCss();

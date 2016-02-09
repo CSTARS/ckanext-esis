@@ -14,7 +14,7 @@ from ckanext.ecosis import datastore
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
 path = os.path.dirname(__file__)
-schema = os.path.join(path, "../../../spectra-importer/core/schema.json")
+schema = os.path.join(path, "../../../spectra-importer/utils/metadata/schema.json")
 
 pgConnStr = config.get("sqlalchemy.url")
 
@@ -30,16 +30,24 @@ collections = {
     "resource" : db[config.get("ecosis.mongo.workspace_resource_collection")],
     "package" : db[config.get("ecosis.mongo.workspace_package_collection")],
     "usda" : db[config.get("ecosis.mongo.usda_collection")],
+    "top" : db[config.get("ecosis.mongo.top_collection")],
     "search_package" : db[config.get("ecosis.mongo.search_collection")],
-    "search_spectra" : db[config.get("ecosis.mongo.spectra_collection")]
+    "search_spectra" : db[config.get("ecosis.mongo.spectra_collection")],
+    "lookup" : db["lookup"]
 }
 
 upload = uploader.ResourceUpload({})
 
 datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
-
+package.init(collections)
 
 class EcosisController(PackageController):
+
+    def createPackage(self):
+        try:
+            return package.create()
+        except Exception as e:
+            return handleError(e)
 
     def deletePackage(self):
         try:
@@ -54,6 +62,12 @@ class EcosisController(PackageController):
     def setPrivate(self):
         try:
             return package.setPrivate()
+        except Exception as e:
+            return handleError(e)
+
+    def getTemplate(self):
+        try:
+            return package.getTemplate()
         except Exception as e:
             return handleError(e)
 
@@ -102,6 +116,18 @@ class EcosisController(PackageController):
     def rebuildUSDACollection(self):
         try:
             return admin.rebuildUSDACollection(collections, usdaApiUrl)
+        except Exception as e:
+            return handleError(e)
+
+    def topSuggest(self):
+        try:
+            return spectra.suggestAttributeName()
+        except Exception as e:
+            return handleError(e)
+
+    def topOverview(self):
+        try:
+            return spectra.suggestOverview()
         except Exception as e:
             return handleError(e)
 

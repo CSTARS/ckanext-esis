@@ -4,10 +4,21 @@ import ckanext.ecosis.lib.utils as utils
 import ckanext.ecosis.datastore.delete as deleteUtil
 from ckanext.ecosis.lib.auth import hasAccess
 import ckanext.ecosis.datastore.workspace as workspace
+import ckanext.ecosis.datastore.ckan.package as package
 from ckan.common import request, response
 from ckan.lib.base import c, model
 import ckan.logic as logic
+from ckanext.ecosis.lib.utils import jsonStringify
+from ckan.lib.email_notifications import send_notification
+from pylons import config
 
+collections = None
+ignoreTemplateVars = ["metadata_modified", "state", "creator_user_id", "revision_id", "type", "url","organization"]
+
+def init(co):
+    global collections
+
+    collections = co
 
 def delete():
     response.headers["Content-Type"] = "application/json"
@@ -30,6 +41,41 @@ def delete():
 
     return json.dumps({'success': True})
 
+def create():
+    response.headers["Content-Type"] = "application/json"
+
+    params = json.loads(request.body)
+
+    context = {'model': model, 'user': c.user}
+    package_create = logic.get_action('package_create')
+    ckanPackage = package_create(context, params)
+
+
+    url = config.get('ckan.site_url')
+    admin_email = config.get('ecosis.admin_email')
+
+    if url != "" and url is not None:
+        if admin_email != "" and admin_email is not None:
+            try:
+                send_notification(
+                    {
+                        "email" : admin_email,
+                        "display_name" : "EcoSIS Admins"
+                    },
+                    {
+                        "subject" : "EcoSIS Dataset Created - %s" % ckanPackage.get('title'),
+                        "body" : ("The dataset '%s' has been created by %s/user/%s.  "
+                                    "You can view the dataset here:  %s/dataset/%s"
+                                    "\n\n-EcoSIS Server") %
+                                 (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
+                    }
+                )
+            except:
+                print "Failed to send admin email"
+
+    return json.dumps(ckanPackage)
+
+
 def setPrivate():
     response.headers["Content-Type"] = "application/json"
     package_id = request.params.get('id')
@@ -38,6 +84,35 @@ def setPrivate():
     deleteUtil.cleanFromSearch(package_id)
 
     return json.dumps({'success': True})
+
+def getTemplate():
+    response.headers["Content-Type"] = "application/json"
+    package_id = request.params.get('id')
+    format = request.params.get('format')
+    mapOnly = request.params.get('mapOnly')
+
+    hasAccess(package_id)
+
+    pkg = {}
+    if mapOnly != 'true':
+        pkg = package.get(package_id)
+
+    # clean out
+    for var in ignoreTemplateVars:
+        if var in pkg:
+            del pkg[var]
+
+    wpkg = collections.get('package').find_one({"packageId": package_id},{"map": 1})
+    if "map" in wpkg:
+        pkg['map'] = wpkg['map']
+    else:
+        pkg['map'] = {}
+
+    if format != "json":
+        response.headers["Content-Disposition"] = "attachment; filename=\"%s.json\"" % pkg.get('name')
+
+    return jsonStringify(pkg, formatted=True)
+
 
 def setOptions():
     response.headers["Content-Type"] = "application/json"
