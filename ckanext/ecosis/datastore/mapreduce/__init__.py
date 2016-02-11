@@ -87,7 +87,6 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         "pushed" : datetime.datetime.utcnow(),
         "organization" : "",
         "organization_id" : "",
-        "organization_image_url" : "",
         "description" : pkg.get('notes'),
         "groups" : [],
         "package_id" : pkg.get("id"),
@@ -98,7 +97,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         "version" : pkg.get("version"),
         "license" : pkg.get("license_title"),
         "spectra_count" : spectra_count,
-        "package_schema" : {
+        "spectra_metadata_schema" : {
             "wavelengths" : [],
             "metadata" : [],
             "units" : {}
@@ -116,7 +115,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     if units != None:
         units = json.loads(units)
         for name, unit in units.iteritems():
-            ecosis["package_schema"]["units"][re.sub(r'\.', '_', name)] = unit
+            ecosis["spectra_metadata_schema"]["units"][re.sub(r'\.', '_', name)] = unit
 
     # append the linked data
     linkeddata = getPackageExtra('LinkedData', pkg)
@@ -149,9 +148,6 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         if pkg['organization'] != None:
             ecosis["organization"] = pkg['organization']['title']
             ecosis["organization_id"] = pkg['organization']['id']
-
-            if pkg['organization']['image_url'] != "":
-                ecosis["organization_image_url"] = '/uploads/group/%s' % pkg['organization']['image_url']
         else:
             ecosis['organization'] = 'None'
     else:
@@ -204,9 +200,9 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
         # set the known data attributes
         for key in mrValue['tmp__schema__']['wavelengths']:
-            ecosis['package_schema']['wavelengths'].append(re.sub(r',', '.', key))
+            ecosis['spectra_metadata_schema']['wavelengths'].append(re.sub(r',', '.', key))
         for key in mrValue['tmp__schema__']['metadata']:
-            ecosis['package_schema']['metadata'].append(re.sub(r',', '.', key))
+            ecosis['spectra_metadata_schema']['metadata'].append(re.sub(r',', '.', key))
 
         setValues['$unset']['value.tmp__schema__'] = ''
 
