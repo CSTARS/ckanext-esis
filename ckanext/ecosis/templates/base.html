@@ -1,5 +1,12 @@
 {% ckan_extends %}
 
+{% block meta %}
+  {{ super() }}
+  <meta name="robots" content="noindex" />
+{% endblock %}
+
+
+
 {% block scripts %}
     {% if h.get_google_analytics_code() != '' %}
         <script>
