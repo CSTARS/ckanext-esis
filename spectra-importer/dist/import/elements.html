@@ -8979,7 +8979,12 @@ this.fire('dom-change');
     updateNameLabel : function() {
       var parseInfo = '';
       if( this.resource.datasheets && this.resource.datasheets.length == 1 ) {
-        parseInfo = ' ('+(this.resource.datasheets[0].layout || 'row')+'/'+(this.resource.datasheets[0].seperator || 'comma')+')';
+        var sheet = this.resource.datasheets[0];
+        if( !sheet.ignore && sheet.name) {
+          if( sheet.name.match(/(spectra|csv|tsv)$/i) ){
+            parseInfo = ' ('+(this.resource.datasheets[0].layout || 'row')+'/'+(this.resource.datasheets[0].seperator || 'comma')+')';
+          }
+        }
       }
 
       this.querySelector('#titleLabel').innerHTML = this.resource.name+parseInfo;
@@ -12154,7 +12159,7 @@ this.fire('dom-change');
       <div style="padding: 15px 0">
         <div class="checkbox">
           <label>
-            <input type="checkbox" id="responseEmailInput" checked=""> Email me when the dataset is available in search.
+            <input type="checkbox" id="responseEmailInput" checked="checked"> Email me when the dataset is available in search.
             <div class="help-block">Datasets can take several minutes to show up in search.  We can send you and email when
               the dataset is ready.
             </div>
@@ -12284,7 +12289,7 @@ this.fire('dom-change');
             }
 
             var msg = 'Success.  Your dataset is processing.';
-            if( resp.emailingResult && resp.email ) {
+            if( resp.emailing && resp.email ) {
               msg += '  You will be emailed at '+resp.email+' when the dataset is ready.';
             } else {
               msg += '  Please give some time for your dataset to show in search.  No email will be sent.';
