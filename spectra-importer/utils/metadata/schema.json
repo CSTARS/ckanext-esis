@@ -86,7 +86,7 @@
         "Transflectance",
         "Transmittance"
       ],
-      "description": "",
+      "description": "Scale for spectral instensity (e.g. DN, radiance, irradiance, reflectance)",
       "allowOther": true
     },
     {
@@ -102,11 +102,18 @@
     {
       "name": "Measurement Units",
       "level": 2,
-      "input": "text",
+      "input": "controlled-single",
       "units": "",
       "spectraLevel": true,
-      "vocabulary": null,
-      "description": "Scale for spectral instensity (e.g. DN, radiance, irradiance, reflectance)",
+      "vocabulary": [
+        "%",
+        "W/m^2",
+        "W/m^2/Hz",
+        "W/m^2/nm",
+        "W/m^2/um",
+        "W/sr/m^2"
+      ],
+      "description": "Measuremnt units",
       "allowOther": false
     },
     {

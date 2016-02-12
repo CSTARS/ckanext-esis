@@ -1,7 +1,7 @@
 var csv = require("fast-csv");
 var fs = require("fs");
 
-var file = __dirname+'/data/schema_v1_1.csv';
+var file = __dirname+'/data/schema_v1_2.csv';
 
 console.log('Reading: '+file);
 
