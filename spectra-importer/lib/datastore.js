@@ -10,13 +10,6 @@ module.exports = function(config) {
   // existing package id
   this.package_id = config.package_id;
 
-  // information about exsiting resources
-  /*this.existing = {
-    resources : [],
-    metadata  : [],
-    data      : []
-  };*/
-
   this.data = {
     title : '',
     name : '',
@@ -36,9 +29,6 @@ module.exports = function(config) {
 
   this.owner_org_name = '';
 
-  //this.schema = [];
-  //wavelengths : [],
-
   this.datasetAttributes = {
     //group_by : '',
     sort_on : '',
@@ -56,7 +46,7 @@ module.exports = function(config) {
   // inverse list of above map w/ key / value switched
   this.inverseAttributeMap = {};
 
-  this.metadataDefinitions = require('../utils/metadata/schema.json');
+  this.metadataDefinitions = require('./schema');
   this.metadataLookup = {};
   for( var cat in this.metadataDefinitions ) {
     var defs = this.metadataDefinitions[cat];
@@ -91,14 +81,14 @@ module.exports = function(config) {
       if( result.error ) {
         this.loadingError = result;
         ee.emit('load-error', result);
-        return
+        return;
       }
 
       this.ckan.getWorkspace(this.package_id, function(result){
         if( result.error ) {
           this.loadingError = result;
           ee.emit('load-error', result);
-          return
+          return;
         }
 
         this.result = result;
@@ -349,25 +339,13 @@ module.exports = function(config) {
   this.getScore = function() {
     var count = 0;
 
-    // check for spectra level ecosis metadata
-    // TODO
-    /*this.schema.forEach(function(item){
-      if( this.isEcosisMetadata(item.name) ) {
-        count++;
-      } else if( this.inverseAttributeMap[item.name] &&
-                this.isEcosisMetadata(this.inverseAttributeMap[item.name]) ) {
-
-        count++;
-      }
-    }.bind(this));*/
-
     var map = {
       'Keywords' : 'tags',
       'Author' : 'author',
       'Author Email' : 'author_email',
       'Maintainer' : 'maintainer',
       'Maintainer Email' : 'maintainer_email'
-    }
+    };
 
     // check dataset level ecosis metadata
     for( var key in this.metadataLookup ) {
@@ -383,5 +361,5 @@ module.exports = function(config) {
 
 
     return count;
-  }
-}
+  };
+};

@@ -18,6 +18,27 @@ var ecosis = (function(){
     package_id : currentPkg
   });
 
+  ecosis.app = {};
+
+  function UiBuffer(fn, timeout, bind) {
+    var timer = -1;
+
+    function bufferFn() {
+      if( timer !== -1 ) {
+        clearTimeout(timer);
+      }
+      var args = arguments;
+
+      timer = setTimeout(function(){
+        timer = -1;
+        fn.apply(bind, args);
+      }, timeout);
+    }
+
+    return bufferFn;
+  }
+  ecosis.app.UiBuffer = UiBuffer;
+
   var currentPage = '';
   function updatePage() {
     var hash = window.location.hash.replace(/#/,'');

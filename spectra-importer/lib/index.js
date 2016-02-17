@@ -1,13 +1,18 @@
 var EventEmitter = require("events").EventEmitter;
 var Datastore = require('./datastore');
 var CKAN = require('./ckan');
+var Package = require('./package');
 
-
-module.exports = function(config) {
+function SDK(config) {
   this.user = null;
 
+  this.newPackage = function(data) {
+    return new Package(data, this);
+  };
+
   this.ckan = new CKAN({
-    host : config.host
+    host : config.host,
+    key : config.key
   });
 
   this.ds = new Datastore({
@@ -33,6 +38,11 @@ module.exports = function(config) {
     ee.emit('user-load');
   }.bind(this));
 
-  if( config.package_id ) this.ds.load();
+  require('./logic')(this);
 
+  if( config.package_id ) this.ds.load();
 }
+
+
+
+module.exports = SDK;

@@ -89,7 +89,7 @@
 
         this.current = str;
 
-        ecosis.ckan.suggestOverview(list, function(resp){
+        ecosis.ckan.topSuggestOverview(list, function(resp){
           this.badList = [];
           for( var key in resp ) {
             if( resp[key].type !== 'match' && resp[key].type !== 'nomatch' ) {
@@ -130,7 +130,7 @@
 
         this.$.suggestLabel.style.display = 'block';
 
-        ecosis.ckan.suggest(this.selected.replace(/(-|_)/g, ' '), function(resp){
+        ecosis.ckan.topSuggest(this.selected.replace(/(-|_)/g, ' '), function(resp){
           for( var i = 0; i < resp.result.length; i++ ) {
             var item = resp.result[i];
             item.subClassOfClean = item.subClassOf ? item.subClassOf.replace(/_/g, ' ') : '';

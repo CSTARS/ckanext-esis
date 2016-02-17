@@ -34,25 +34,16 @@
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
           </span>
 
-          <span class="label label-danger" style="display:none" id="tooLong">
-            Invalid name.  Title can have at most 100 characters.
-          </span>
-
-          <span class="label label-danger" style="display:none" id="invalid">
-            Invalid name.  A dataset with the name '<span id="nameLabel"></span>' already exists.
-          </span>
+          <span class="label label-danger" style="display:none" id="invalid"></span>
 
           <span class="label label-success" style="display:none" id="valid" >
             URL: <span id="urlLabelInput"></span>
           </span>
 
-          <div id="message2"></div>
-
           <div id="message" class="help-block" >
             Please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
-
 
         </div>
       </div>
@@ -66,15 +57,16 @@
     is : 'ecosis-title-input',
 
     ready : function() {
-      this.verifyNameTime = -1;
       this.currentName = null;
+      this.verify = new ecosis.app.UiBuffer(this._verify, 500, this);
+
       ecosis.ds.on('load', this.onDataReady.bind(this));
     },
 
     onDataReady : function() {
       if( ecosis.ds.editMode ) {
-        this.$.titleInput.value = ecosis.ds.data.title;
-        this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+        this.$.titleInput.value = ecosis.ds.package.getTitle();
+        this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
         return;
       }
 
@@ -82,76 +74,41 @@
     },
 
     onTitleInputChange : function() {
-      if( ecosis.ds.editMode && ecosis.ds.data.name && this.currentName === null ) {
+      this.verify();
+    },
+
+    _verify : function() {
+      if( ecosis.ds.editMode && ecosis.ds.package.getName() && this.currentName === null ) {
         this.currentName = ecosis.ds.data.name;
-      }
-
-      // TODO: check for 100 characters
-      // TODO: update back button on update
-      var title = this.$.titleInput.value.replace(/_/g, ' ');
-      if( title.length >= 100 ) {
-        this.validName = false;
-        this.$.tooLong.style.display = 'inline-block';
-        return;
-      }
-      this.$.tooLong.style.display = 'none';
-
-      ecosis.ds.data.title = title;
-      ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
-
-      this.$.nameLabel.innerHTML = ecosis.ds.data.name;
-      this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
-
-      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
-      // then there is nothing to check, they are just updating the title.  This will throw
-      // a false positive if we check for name in use (cause it is, by this dataset);
-      if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
-        return;
       }
 
       this.$.verifyingTitleLabel.style.display = 'inline-block';
       this.$.invalid.style.display = 'none';
-      this.$.valid.style.display = 'none';
       this.validName = false;
 
-      if( this.verifyNameTimer != -1 ) clearTimeout(this.verifyNameTimer);
+      // TODO: verify this has been removed
+      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
+      // then there is nothing to check, they are just updating the title.  This will throw
+      // a false positive if we check for name in use (cause it is, by this dataset);
+      //if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
+      //  return;
+      //}
 
-      this.verifyNameTimer = setTimeout(function(){
+      ecosis.ds.package.setTitle(this.$.titleInput.value, function(err, resp){
+        this.$.verifyingTitleLabel.style.display = 'none';
+        if( err ) {
+          this.$.invalid.style.display = 'inline-block';
+          this.$.invalid.innerHTML = err.message;
+          return;
+        }
 
-        ecosis.ckan.getPackage(ecosis.ds.data.name, function(resp){
-          this.$.verifyingTitleLabel.style.display = 'none';
+        this.$.nameLabel.innerHTML = ecosis.ds.package.getName();
+        this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
+        this.validName = true;
 
-          if( resp.error ) {
-            this.validName = true;
-            this.$.valid.style.display = 'inline-block';
-          } else {
-            this.validName = false;
-            this.$.invalid.style.display = 'inline-block';
-          }
-
-          this.fire('update');
-        }.bind(this));
-
-      }.bind(this), 500);
+        this.fire('update');
+      }.bind(this));
     }
 
-    /*onBlur : function() {
-      var parts = ecosis.ds.data.title.split(' ');
-
-      var wordsOverFour = 0;
-      var wordsOverFourNoNum = 0;
-      for( var i = 0; i < parts.length; i++ ) {
-        if( parts[i].length > 4 ) {
-          wordsOverFour++;
-          if( !words.match(/\d/) ) {
-            wordsOverFourNoNum++;
-          }
-        }
-      }
-
-      if( wordsOverFour < 3 ) {
-          var message = '<'
-      }
-    }*/
   });
 </script>

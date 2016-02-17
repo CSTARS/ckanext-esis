@@ -18,7 +18,7 @@
     {
       "name": "Sample Platform",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": [
@@ -92,7 +92,7 @@
     {
       "name": "Index Name",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,
@@ -169,7 +169,7 @@
     {
       "name": "Light Source Specifications",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,
@@ -199,7 +199,7 @@
     {
       "name": "Foreoptic Field of View",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "integer degrees",
       "spectraLevel": true,
       "vocabulary": null,
@@ -209,7 +209,7 @@
     {
       "name": "Foreoptic Specifications",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,
@@ -272,7 +272,7 @@
     {
       "name": "Instrument Manufacturer",
       "level": 1,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,
@@ -282,7 +282,7 @@
     {
       "name": "Instrument Model",
       "level": 1,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,
@@ -292,7 +292,7 @@
     {
       "name": "Instrument Serial Number",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,

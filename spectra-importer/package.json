@@ -13,6 +13,7 @@
   "dependencies": {
     "browserify": "^9.0.8",
     "express": "^3.20.2",
+    "extend": "^3.0.0",
     "fast-csv": "^1.0.0",
     "grunt": "^0.4.5",
     "grunt-browserify": "~4.0.1",
@@ -21,7 +22,7 @@
     "grunt-usemin": "^3.0.0",
     "grunt-vulcanize": "^0.4.2",
     "load-grunt-tasks": "^0.6.0",
-    "superagent": "^1.2.0",
+    "superagent": "^1.7.2",
     "time-grunt": "^1.1.1"
   },
   "devDependencies": {

@@ -1,0 +1,18 @@
+{
+  "title" : "Mocha Dataset 1",
+  "description" : "This is a test.  This is only a test",
+  "keywords" : "Foo,BAR#&,#&$(),spectra",
+  "cleanKeywords" : ["foo", "bar", "spectra"],
+  "license" : {
+    "id" : "odc-pddl",
+    "title" : "Open Data Commons Public Domain Dedication and License (PDDL)"
+  },
+  "organization" : "cstars",
+  "version" : "v1.0",
+  "website" : "http://www.cstars.ucdavis.edu/",
+  "Theme" : "Forest,ASdjf,urban ",
+  "cleanTheme" : ["Forest","Urban"],
+  "EcosystemType" : "Forest,Crops,Forest",
+  "cleanEcosystemType" : ["Forest", "Crops"],
+  "SamplePlatform" : ["Boom", "Tower"]
+}
