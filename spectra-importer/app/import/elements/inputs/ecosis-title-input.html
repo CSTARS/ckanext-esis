@@ -79,18 +79,19 @@
 
     _verify : function() {
       if( ecosis.ds.editMode && ecosis.ds.package.getName() && this.currentName === null ) {
-        this.currentName = ecosis.ds.data.name;
+        this.currentName = ecosis.ds.package.getName();
       }
 
       this.$.verifyingTitleLabel.style.display = 'inline-block';
       this.$.invalid.style.display = 'none';
+      this.$.valid.style.display = 'none';
       this.validName = false;
 
       // TODO: verify this has been removed
       // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
       // then there is nothing to check, they are just updating the title.  This will throw
       // a false positive if we check for name in use (cause it is, by this dataset);
-      //if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
+      //if( ecosis.ds.editMode && ecosis.ds.package.getName() === this.currentName ) {
       //  return;
       //}
 
@@ -102,8 +103,9 @@
           return;
         }
 
-        this.$.nameLabel.innerHTML = ecosis.ds.package.getName();
+        //this.$.nameLabel.innerHTML = ecosis.ds.package.getName();
         this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
+        this.$.valid.style.display = 'inline-block';
         this.validName = true;
 
         this.fire('update');

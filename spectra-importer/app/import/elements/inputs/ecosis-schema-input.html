@@ -24,6 +24,7 @@
       this.style.display = "block";
 
       this.schema = ecosis.ds.metadataLookup[this.metadata];
+      this.flatName = this.schema.name.replace(/ /g, '');
 
       if( this.schema.input == 'controlled' || this.schema.input == 'controlled-single' ) {
         if( this.isYesNo(this.schema) ) {
@@ -78,10 +79,7 @@
     },
 
     trigger : function(e) {
-      this.fire('update', {
-        attribute: this.schema.name,
-        value : e.currentTarget.value
-      });
+      ecosis.ds.package['set'+this.flatName](e.currentTarget.value);
     }
   })
 </script>

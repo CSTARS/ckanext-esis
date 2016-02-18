@@ -47,7 +47,7 @@
     </div>
 
     <h4 class="page-header">Basic Information</h4>
-    <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
+    <ecosis-title-input id="titleInput"></ecosis-title-input>
 
     <div class="form-horizontal">
 
@@ -59,7 +59,7 @@
         </div>
       </div>
 
-      <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
+      <ecosis-keyword-input id="keywordInput"></ecosis-keyword-input>
 
       <div class="form-group">
         <label for="licenseInput" class="col-md-2 control-label">License: </label>
@@ -116,43 +116,40 @@
         </div>
       </div>
 
-
-
-
       <h4 class="page-header">
           <a class="btn-toggle" on-click="toggleCat" cat="themeInput"><i class="fa fa-arrow-right"></i></a> Theme
       </h4>
-      <ecosis-theme-input on-update="save" id="themeInput" style="display:none"></ecosis-theme-input>
+      <ecosis-theme-input id="themeInput" style="display:none"></ecosis-theme-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="measureInput"><i class="fa fa-arrow-right"></i></a> Measurement
       </h4>
-      <ecosis-measurement-input on-update="save" id="measureInput" style="display:none"></ecosis-measurement-input>
+      <ecosis-measurement-input id="measureInput" style="display:none"></ecosis-measurement-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="processingInput"><i class="fa fa-arrow-right"></i></a> Processing Information
       </h4>
-      <ecosis-processing-input on-update="save" id="processingInput" style="display:none"></ecosis-processing-input>
+      <ecosis-processing-input id="processingInput" style="display:none"></ecosis-processing-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="instrumentInput"><i class="fa fa-arrow-right"></i></a> Instrument
       </h4>
-      <ecosis-instrument-input on-update="save" id="instrumentInput" style="display:none"></ecosis-instrument-input>
+      <ecosis-instrument-input id="instrumentInput" style="display:none"></ecosis-instrument-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="locationInput"><i class="fa fa-arrow-right"></i></a> Location
       </h4>
-      <ecosis-location-input on-update="save" id="locationInput" style="display:none"></ecosis-location-input>
+      <ecosis-location-input id="locationInput" style="display:none"></ecosis-location-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput"><i class="fa fa-arrow-right"></i></a> Linked Data
       </h4>
-      <ecosis-linked-data-input on-update="save" id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
+      <ecosis-linked-data-input id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
       </h4>
-      <ecosis-citation-input on-update="save" id="citationInput" style="display:none"></ecosis-citation-input>
+      <ecosis-citation-input id="citationInput" style="display:none"></ecosis-citation-input>
 
     </div>
 
@@ -166,8 +163,8 @@
 
     <div class="layout horizontal" style="margin-top: 15px">
       <div class="flex">
-        <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
-        <a class="btn btn-primary" style="display:none" on-click="goToList" id="goToListBtn"><i class="fa fa-list"></i> Current Resources</a>
+        <a class="btn btn-primary" style="display:none" id="goToBtn" href="#add-resources" ><i class="fa fa-plus"></i> Add Resources</a>
+        <a class="btn btn-primary" style="display:none" id="goToListBtn" href="#current-resources"><i class="fa fa-list"></i> Current Resources</a>
 
 
         <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
@@ -271,6 +268,8 @@
           this.$.gitCommitLabel.innerHTML = this.git.commit;
         }
       }.bind(this));
+
+      ecosis.ds.on('update', this.save.bind(this));
     },
 
     showCreatePopup : function() {
@@ -294,30 +293,30 @@
     },
 
     onDataLoad : function() {
-      var data = ecosis.ds.data;
+      var pkg = ecosis.ds.package;
 
-      this.$.descriptionInput.value = data.notes || '';
-      this.$.keywordInput.setTokens(data.tags || []);
-      this.$.licenseInput.value = data.license_id || '';
-      this.$.organizationInput.value = data.owner_org || '';
-      this.$.visibilityInput.value = data.private ? 'true' : 'false';
-      this.$.versionInput.value = data.version;
-      this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
-      this.$.linkedDataInput.setData(ecosis.ds.getDatasetExtra('LinkedData').value);
+      this.$.descriptionInput.value = pkg.getDescription();
+      this.$.keywordInput.setTokens(pkg.getKeywords());
+      this.$.licenseInput.value = pkg.getLicenseId();
+      this.$.organizationInput.value = pkg.getOrganization();
+      this.$.visibilityInput.value = pkg.isPrivate() ? 'true' : 'false';
+      this.$.versionInput.value = pkg.getVersion();
+      this.$.websiteInput.value = pkg.getWebsite();
+      this.$.linkedDataInput.setData(pkg.getLinkedData());
 
       this.updateVisibilityControl();
     },
 
     updateVisibilityControl : function() {
-      if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
+      if( !ecosis.ds.package.getOrganization() ) {
         this.$.visibilityInput.setAttribute('disabled', '');
         this.$.visibilityInput.value = 'false';
-        ecosis.ds.data.private = false;
+        ecosis.ds.package.setPrivate(false);
         this.$.visibilityWarnLabel.style.display = 'block';
       } else {
         this.$.visibilityInput.removeAttribute('disabled');
         this.$.visibilityWarnLabel.style.display = 'none';
-        this.$.visibilityInput.value = ecosis.ds.data.private ? 'true' : 'false';
+        this.$.visibilityInput.value = ecosis.ds.package.isPrivate() ? 'true' : 'false';
       }
     },
 
@@ -338,7 +337,7 @@
       var options = '<option></option>';
       for( var i = 0; i < resp.length; i++ ) {
         var item = resp[i];
-        options += '<option value="'+item.id+'" '+(ecosis.ds.data.license_id == item.id ? 'selected' : '')+'>'+item.title+'</option>';
+        options += '<option value="'+item.id+'" '+(ecosis.ds.package.getLicenseId() == item.id ? 'selected' : '')+'>'+item.title+'</option>';
       }
       this.$.licenseInput.innerHTML = options;
     },
@@ -363,31 +362,19 @@
       this.$.organizationInput.innerHTML = options;
     },
 
-    goToAdd : function() {
-      window.location = '#add-resources';
-    },
-
-    goToList : function() {
-      window.location = '#current-resources';
-    },
-
     delete : function() {
-      if( confirm('Are you sure your want to remove this dataset?') ) {
-        if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
-          ecosis.ckan.deletePackage(ecosis.ds.package_id,
-            function(resp) {
-              if( resp.error ) {
-                // ERROR 5
-                resp.code = 5;
-                return ecosis.errorPopup.show(resp);
-              }
+      if( !confirm('Are you sure your want to remove this dataset?') ) return;
+      if( !confirm('Are you REALLY sure your want to remove this dataset?!?') ) return;
 
-              alert('dataset deleted.');
-              window.location = '/dataset';
-            }
-          );
+      ecosis.ds.package.delete(function(resp) {
+          if( resp.error ) {
+            return ecosis.errorPopup.show(resp);
+          }
+
+          alert('dataset deleted.');
+          window.location = '/dataset';
         }
-      }
+      );
     },
 
     create : function() {
@@ -396,28 +383,17 @@
       this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
       this.$.createDatasetBtn.setAttribute('disabled', 'disabled');
 
-      ecosis.ckan.createPackage(ecosis.ds.data,
-          function(resp) {
-            this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
-            this.$.createDatasetBtn.removeAttribute('disabled');
+      ecosis.ds.package.create(function(resp) {
+        this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
+        this.$.createDatasetBtn.removeAttribute('disabled');
 
-            if( resp.error ) {
-              // ERROR 6
-              resp.code = 6;
-              return ecosis.errorPopup.show(resp);
-            }
-            if( !resp.id ) {
-              // ERROR 7
-              return ecosis.errorPopup.show({
-                message : 'Failed to create dataset',
-                code : 7
-              });
-            }
+        if( resp.error ) {
+          return ecosis.errorPopup.show(resp);
+        }
 
-            // set the page
-            window.location = '/import/?id='+resp.id+'#add-resources';
-          }.bind(this)
-      );
+        // set the page
+        window.location = '/import/?id='+resp.id+'#add-resources';
+      }.bind(this));
     },
 
     save : function() {
@@ -434,49 +410,13 @@
     },
 
     _save : function() {
-      // make sure we have the correct package state
-      // all resources need to be included when you make a updatePackage call
-      ecosis.ckan.getPackage(ecosis.ds.package_id,
-        function(resp) {
-          if( resp.error ) {
-            this.$.saveLabel.style.display = 'none';
-
-            // ERROR 8
-            resp.code = 8;
-            resp.message += '. Failed to fetch package for update.'
-            return ecosis.errorPopup.show(resp);
-          }
-
-          var metadata = resp.result;
-          for( var key in ecosis.ds.data ) {
-            metadata[key] = ecosis.ds.data[key];
-          }
-
-          ecosis.ckan.updatePackage(metadata,
-            function(resp) {
-              this.$.saveLabel.style.display = 'none';
-
-              if( resp.error ) {
-                // ERROR 9
-                resp.code = 9;
-                resp.message += '. Failed to update dataset.'
-                return ecosis.errorPopup.show(resp);
-              }
-              if( !resp.result.id )  {
-                // ERROR 10
-                return ecosis.errorPopup.show({
-                  message : 'Failed to update dataset',
-                  code : 10
-                });
-              }
-
-              // update back btn as well
-              document.querySelector('ecosis-header').setBackBtn(resp.result.name);
-
-            }.bind(this)
-          );
-        }.bind(this)
-      );
+      ecosis.ds.package.save(function(resp) {
+        this.$.saveLabel.style.display = 'none';
+        if( resp.error ) {
+          return ecosis.errorPopup.show(resp);
+        }
+        document.querySelector('ecosis-header').setBackBtn(resp.result.name);
+      }.bind(this));
     },
 
     fireScoreUpdate : function() {
@@ -484,71 +424,46 @@
     },
 
     /* change handlers */
-    onTitleInputChange : function() {
-      if( ecosis.ds.editMode ) {
-        this.save();
-      } else {
-        this.updateCreateBtnState();
-      }
-    },
-
     onOrganizationInputChange : function() {
-      ecosis.ds.data.owner_org = this.$.organizationInput.value;
+      ecosis.ds.package.setOrganization(this.$.organizationInput.value);
       this.updateVisibilityControl();
-      this.save();
     },
 
     onDescriptionInputChange : function() {
-      ecosis.ds.data.notes = this.$.descriptionInput.value;
-      this.save();
-    },
-
-    onKeywordsChange : function() {
-      var tokens = this.$.keywordInput.getTokens();
-      var keywords = [];
-
-      for( var i = 0; i < tokens.length; i++ ) {
-        keywords.push({name: tokens[i].label});
-      }
-
-      ecosis.ds.data.tags = keywords;
-      this.save();
+      ecosis.ds.package.setDescription(this.$.descriptionInput.value);
     },
 
     onLicenseInputChange : function() {
-      ecosis.ds.data.license_id = this.$.licenseInput.value;
+      var license_id = this.$.licenseInput.value;
+      var license_title = '';
 
       for( var i = 0; i < this.licenses.length; i++ ) {
-        if( this.licenses[i].id == ecosis.ds.data.license_id ) {
-          ecosis.ds.data.license_title = this.licenses[i].title;
+        if( this.licenses[i].id == ecosis.ds.package.getLicenseId() ) {
+          license_title = this.licenses[i].title;
           break;
         }
       }
 
-      this.save();
+      ecosis.ds.package.setLicense(license_id, license_title);
     },
 
     onVisibilityInputChange : function() {
-      ecosis.ds.data.private = this.$.visibilityInput.value == 'true' ? true : false;
+      ecosis.ds.package.setPrivate(this.$.visibilityInput.value == 'true' ? true : false);
 
       // push to search needs to know
       this.fire('visibility-change');
-      this.save();
     },
 
     onVersionInputChange : function() {
-      ecosis.ds.data.version = this.$.versionInput.value;
-      this.save();
+      ecosis.ds.package.setVersion(this.$.versionInput.value);
     },
 
     onWebsiteInputChange : function() {
-      ecosis.ds.setDatasetExtra('Website', this.$.websiteInput.value);
-      this.save();
+      ecosis.ds.package.Website(this.$.websiteInput.value);
     },
 
     onLinkedDataChange : function() {
-      ecosis.ds.setDatasetExtra('LinkedData', this.$.linkedDataInput.getData());
-      this.save();
+      ecosis.ds.package.LinkedData(this.$.linkedDataInput.getData());
     },
 
     toggleCat : function(e) {

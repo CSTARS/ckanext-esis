@@ -1,15 +1,55 @@
 var extend = require('extend');
 var schema = require('../schema');
 var createSchemaMethods = require('./createSchemaMethods');
+var template = require('./template');
+var crud = require('./crud');
+var EventEmitter = require("events").EventEmitter;
+
 
 var ignore = ['Species', 'Date'];
 
 function Package(data, SDK) {
-  this.data = extend(true, {}, data || {});
+
+  if( data ) {
+    this.data = extend(true, {}, data);
+  } else {
+    this.data = {
+      id : '',
+      title : '',
+      name : '',
+      notes : '',
+      author : '',
+      author_email : '',
+      license_id : '',
+      license_title : '',
+      maintainer : '',
+      maintainer_email : '',
+      version : '',
+      owner_org : '',
+      tags : [],
+      private : false,
+      extras : []
+    };
+  }
+
+  this.ee = new EventEmitter();
 
   if( !SDK ) {
     throw(new Error('No SDK provided'));
   }
+  this.SDK = SDK;
+
+  this.on = function(event, fn) {
+    this.ee.on(event, fn);
+  };
+
+  this._onUpdate = function(name) {
+    this.ee.emit('update', {attribute: name});
+  };
+
+  this.getId = function() {
+    return this.data.id || '';
+  };
 
   this.setTitle = function(title, callback) {
     title = title.replace(/_/g, ' ').trim();
@@ -36,6 +76,7 @@ function Package(data, SDK) {
 
       this.data.title = title;
       this.data.name = name;
+      this._onUpdate('Title');
 
       callback(null, {title: title, name: name});
     }.bind(this));
@@ -50,11 +91,12 @@ function Package(data, SDK) {
   };
 
   this.setDescription = function(description) {
-    this.data.description = description;
+    this.data.notes = description;
+    this._onUpdate('Description');
   };
 
   this.getDescription = function() {
-    return this.data.description || '';
+    return this.data.notes || '';
   };
 
   this.getKeywords = function(){
@@ -88,6 +130,7 @@ function Package(data, SDK) {
     }
 
     this.data.tags.push(keyword);
+    this._onUpdate('Keywords');
   };
 
   this.removeKeyword = function(keyword) {
@@ -99,6 +142,8 @@ function Package(data, SDK) {
         return;
       }
     }
+
+    this._onUpdate('Keywords');
   };
 
   this.hasKeyword = function(keyword) {
@@ -119,6 +164,7 @@ function Package(data, SDK) {
   this.setLicense = function(id, title) {
     this.data.license_id = id;
     this.data.license_title = title;
+    this._onUpdate('License');
   };
 
   this.getLicenseId = function() {
@@ -142,6 +188,8 @@ function Package(data, SDK) {
       }
 
       this.data.owner_org = resp.result.id;
+      this._onUpdate('Organization');
+
       if( callback ) {
         callback({success: true});
       }
@@ -154,6 +202,7 @@ function Package(data, SDK) {
 
   this.setVersion = function(version) {
     this.data.version = version;
+    this._onUpdate('Version');
   };
 
   this.getVersion = function() {
@@ -162,12 +211,94 @@ function Package(data, SDK) {
 
   this.setWebsite = function(website) {
     this.data.website = website;
+    this._onUpdate('Website');
   };
 
   this.getWebsite = function() {
     return this.data.website || '';
   };
 
+  this.setAuthor = function(author) {
+    this.data.author = author;
+    this._onUpdate('Author');
+  };
+
+  this.getAuthor = function() {
+    return this.data.author || '';
+  };
+
+  this.setAuthorEmail = function(author_email) {
+    this.data.author_email = author_email;
+    this._onUpdate('AuthorEmail');
+  };
+
+  this.getAuthorEmail = function() {
+    return this.data.author_email || '';
+  };
+
+  this.setMaintainer = function(maintainer) {
+    this.data.maintainer = maintainer;
+    this._onUpdate('Maintainer');
+  };
+
+  this.getMaintainer = function() {
+    return this.data.maintainer || '';
+  };
+
+  this.setMaintainerEmail = function(maintainer_email) {
+    this.data.maintainer_email = maintainer_email;
+    this._onUpdate('MaintainerEmail');
+  };
+
+  this.getMaintainerEmail = function() {
+    return this.data.maintainer_email || '';
+  };
+
+  this.setPrivate = function(private) {
+    this.data.private = private;
+    this._onUpdate('Private');
+  };
+
+  this.isPrivate = function() {
+    return this.data.private ? true : false;
+  };
+
+  this.setLinkedData = function(data) {
+    this.setExtra('LinkedData', JSON.stringify(data));
+    this._onUpdate('LinkedData');
+  };
+
+  this.getLinkedData = function() {
+    var value = this.getExtra('LinkedData');
+    if( !value ) return [];
+
+    try {
+      return JSON.parse(value);
+    } catch(e) {}
+
+    return [];
+  };
+
+  this.setGeoJson = function(data) {
+    if( !data ) {
+      this.setExtra('geojson', '');
+    } else {
+      this.setExtra('geojson', JSON.stringify(data));
+    }
+
+    this._onUpdate('geojson');
+  };
+
+  this.getGeoJson = function() {
+    var value = this.getExtra('geojson');
+    if( !value ) return {};
+
+    try {
+      return JSON.parse(value);
+    } catch(e) {}
+
+    return {};
+  };
 
   this.getExtra = function(key) {
     if( !this.data.extras ) return '';
@@ -204,8 +335,10 @@ function Package(data, SDK) {
       value : value
     });
   };
+
 }
 
+// extend package getters/setters based on schema
 for( var key in schema ) {
   if( ignore.indexOf(key) > -1 ) {
     continue;
@@ -215,6 +348,9 @@ for( var key in schema ) {
     createSchemaMethods(schema[key][i], Package);
   }
 }
+
+template(Package);
+crud(Package);
 
 
 module.exports = Package;

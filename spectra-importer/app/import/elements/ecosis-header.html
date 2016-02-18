@@ -71,11 +71,14 @@
 
       if( ecosis.ds.editMode ) {
         ecosis.ds.on('load', function(){
-          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.data.name);
+          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.package.getName());
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
       }
+
+      var fn = new ecosis.app.UiBuffer(this.onScoreUpdated, 100, this);
+      ecosis.ds.on('update', fn);
     },
 
     attached : function() {
@@ -107,15 +110,14 @@
 
     onScoreUpdated : function() {
 
-      var score = ecosis.ds.getScore();
-      var total = Object.keys(ecosis.ds.metadataLookup).length;
+      var result = ecosis.ds.getScore();
 
       var label = 'success';
-      if( score < 3 ) label = 'danger';
-      else if( score < 8 ) label = 'warning';
+      if( result.score < 3 ) label = 'danger';
+      else if( result.score < 8 ) label = 'warning';
 
-      this.$.score.innerHTML = '<span class="label label-'+label+'">'+score+'/'+total+'</span>';
-      this.$.score2.innerHTML = '<span class="label label-'+label+'">'+score+'/'+total+'</span>';
+      this.$.score.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
+      this.$.score2.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
     }
 
   });

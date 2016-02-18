@@ -62,19 +62,20 @@
 
       setData : function(data) {
         if( !data ) {
-          data = JSON.stringify([{
+          data = [{
             label : '',
             url : '',
             last : 'true'
-          }]);
+          }];
         }
 
-        this.list = JSON.parse(data);
+        this.list = data;
         this.checkFilled();
       },
 
       getData : function() {
         var arr = [];
+
         for( var i = 0; i < this.list.length; i++ ) {
           if( this.list[i].label.length > 0 && this.list[i].url.length > 0 ) {
             arr.push({
@@ -84,7 +85,7 @@
           }
         }
 
-        return JSON.stringify(arr);
+        return arr;
       },
 
       remove : function(e) {
@@ -114,8 +115,7 @@
       },
 
       fireUpdate : function() {
-        ecosis.ds.setDatasetExtra('LinkedData', this.getData());
-        this.fire('update');
+        ecosis.ds.package.setLinkedData(this.getData());
       }
 
     });

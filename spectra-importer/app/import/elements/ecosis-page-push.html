@@ -90,7 +90,7 @@
 
     update : function() {
 
-      if( ecosis.ds.data.private ) {
+      if( ecosis.ds.package.isPrivate() ) {
         this.$.privateAlertPanel.style.display = 'block';
         this.$.main.style.display = 'none';
       } else {
@@ -107,17 +107,17 @@
     },
 
     updateLabels : function() {
-      for( var key in ecosis.ds.data ) {
+      for( var key in ecosis.ds.package.data ) {
         if( key == 'owner_org' ) {
           for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
-            if( ecosis.user.organizations[i].id == ecosis.ds.data.owner_org ) {
+            if( ecosis.user.organizations[i].id == ecosis.ds.package.getOrganization() ) {
               this.$.owner_org_name.innerHTML = ecosis.user.organizations[i].display_name;
               break;
             }
           }
 
         } else if( this.$[key] ) {
-          this.$[key].innerHTML = ecosis.ds.data[key];
+          this.$[key].innerHTML = ecosis.ds.package.data[key];
         }
       }
 

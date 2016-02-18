@@ -24,8 +24,6 @@
           '<div class="col-md-6">'+ col2 + '</div>'+
         '</div>';
 
-      this.addEventListener('update', this.onUpdate.bind(this));
-
       ecosis.ds.on('load', this.setValues.bind(this));
     },
 
@@ -33,23 +31,18 @@
       for( var i = 0; i < this.schema.length; i++ ) {
 
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-        var value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
+
+        var name = this.schema[i].fnName;
+        var value = ecosis.ds.package['get'+name]();
 
         var other = '';
         if( this.schema[i].allowOther ) {
-          other = ecosis.ds.getDatasetExtra(this.schema[i].name+' Other').value || '';
+          other = ecosis.ds.package['get'+name+'Other']();
         }
 
         ele.setValue(value, other);
       }
-    },
-
-    onUpdate : function(e) {
-      var attr = e.detail.attribute;
-      var value = e.detail.value;
-      ecosis.ds.setDatasetExtra(attr, value);
     }
-
 
   })
 </script>

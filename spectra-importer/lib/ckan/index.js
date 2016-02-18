@@ -350,8 +350,8 @@ function postRaw(url, data, callback) {
 function get(url, data, callback) {
   var r = request
     .get(url)
-    .withCredentials()
-    .query(data || {});
+    .query(data || {})
+    .withCredentials();
 
 
   if( key ) {

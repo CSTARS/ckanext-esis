@@ -2,6 +2,7 @@ var EventEmitter = require("events").EventEmitter;
 
 module.exports = function(config) {
   this.ckan = config.ckan;
+  this.SDK = config.SDK;
   if( this.ckan ) this.ckan.ds = this;
 
   // is this an existing dataset
@@ -10,22 +11,7 @@ module.exports = function(config) {
   // existing package id
   this.package_id = config.package_id;
 
-  this.data = {
-    title : '',
-    name : '',
-    notes : '',
-    author : '',
-    author_email : '',
-    license_id : '',
-    license_title : '',
-    maintainer : '',
-    maintainer_email : '',
-    version : '',
-    owner_org : '',
-    tags : [],
-    private : false,
-    extras : []
-  };
+  this.package = this.SDK.newPackage();
 
   this.owner_org_name = '';
 
@@ -43,6 +29,7 @@ module.exports = function(config) {
   //  - key: ecosis name
   //  - value: dataset name
   this.attributeMap = {};
+
   // inverse list of above map w/ key / value switched
   this.inverseAttributeMap = {};
 
@@ -53,6 +40,7 @@ module.exports = function(config) {
     for( var i = 0; i < defs.length; i++ ) {
       defs[i].category = cat;
       defs[i].flat = defs[i].name.replace(/\s/g,'').toLowerCase();
+      defs[i].fnName = defs[i].name.replace(/\s/g,'');
       this.metadataLookup[defs[i].name] = defs[i];
     }
   }
@@ -102,32 +90,11 @@ module.exports = function(config) {
   };
 
   this.loadFromTemplate = function(ckanPackage) {
+    this.package = this.SDK.newPackage();
+    this.package.on('update', this.fireUpdate.bind(this));
+
     // set the default attirbutes for this dataset
-    for( var key in this.data ) {
-      if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
-    }
-
-    if( ckanPackage.extras ) {
-      var arr = [];
-      for( var key in ckanPackage.extras ) {
-        arr.push({
-          key : key,
-          value : ckanPackage.extras[key]
-        });
-      }
-      this.data.extras = arr;
-    }
-
-    if( ckanPackage.tags ) {
-      var arr = [];
-      for( var i = 0; i < ckanPackage.tags.length; i++ ) {
-        arr.push({
-          name : ckanPackage.tags[i],
-          display_name : ckanPackage.tags[i]
-        });
-      }
-      this.data.tags = arr;
-    }
+    this.package.loadFromTemplate(ckanPackage);
 
     if( ckanPackage.map ) {
       this.attributeMap = {};
@@ -149,32 +116,9 @@ module.exports = function(config) {
     var ckanPackage = this.result.ckan.package;
     this.package_id = ckanPackage.id;
 
-    // set the default attirbutes for this dataset
-    for( var key in this.data ) {
-      if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
-    }
-
-    if( this.data.extras && !Array.isArray(this.data.extras) ) {
-      var arr = [];
-      for( var key in this.data.extras) {
-        arr.push({
-          key : key,
-          value : this.data.extras[key]
-        });
-      }
-      this.data.extras = arr;
-    }
-
-    if( this.data.tags ) {
-      var arr = [];
-      for( var i = 0; i < this.data.tags.length; i++ ) {
-        arr.push({
-          name : this.data.tags[i],
-          display_name : this.data.tags[i]
-        });
-      }
-      this.data.tags = arr;
-    }
+    this.package = this.SDK.newPackage();
+    this.package.on('update', this.fireUpdate.bind(this));
+    this.package.loadFromTemplate(ckanPackage);
 
     this.datasheets = this.result.resources;
 
@@ -278,38 +222,15 @@ module.exports = function(config) {
 
   this.fireUpdate = function() {
     ee.emit('update');
-  }
+  };
+  this.package.on('update', this.fireUpdate.bind(this));
 
   // after a resource is added, our entire state is different
   this.runAfterResourceAdd = function(workspaceData) {
     this.result = workspaceData;
     this._setData();
-  }
+  };
 
-  this.getDatasetExtra = function(key) {
-    if( !this.data.extras ) return null;
-
-    for( var i = 0; i < this.data.extras.length; i++ ) {
-      if( this.data.extras[i].key == key ) return this.data.extras[i];
-    }
-    return {};
-  }
-
-  this.setDatasetExtra = function(key, value) {
-    if( !this.data.extras ) this.data.extras = [];
-
-    for( var i = 0; i < this.data.extras.length; i++ ) {
-      if( this.data.extras[i].key == key ) {
-        this.data.extras[i].value = value;
-        return;
-      }
-    }
-
-    this.data.extras.push({
-      key : key,
-      value : value
-    });
-  }
 
   // get all attirbutes from sheets marked as data
   this.getDatasheetAttributes = function() {
@@ -326,7 +247,7 @@ module.exports = function(config) {
     }
 
     return Object.keys(attrs);
-  }
+  };
 
   this.isEcosisMetadata = function(name) {
     name = name.replace(/\s/g, '').toLowerCase();
@@ -334,32 +255,31 @@ module.exports = function(config) {
       if( this.metadataLookup[key].flat == name ) return true;
     }
     return false;
-  }
+  };
 
   this.getScore = function() {
     var count = 0;
-
-    var map = {
-      'Keywords' : 'tags',
-      'Author' : 'author',
-      'Author Email' : 'author_email',
-      'Maintainer' : 'maintainer',
-      'Maintainer Email' : 'maintainer_email'
-    };
+    var total = 3;
 
     // check dataset level ecosis metadata
     for( var key in this.metadataLookup ) {
-      if( map[key] && this.data[map[key]] ) {
-        count++;
-      } else if( this.getDatasetExtra(key).value ) {
-        count++;
+      key = key.replace(/ /g, '');
+      if( this.package['get'+key] ) {
+        var value = this.package['get'+key]();
+        if( value && value.length > 0 ) {
+          count++;
+        } else
+        total++;
       }
     }
 
-    if( this.data.notes ) count++;
-    if( this.data.owner_org ) count++;
+    if( this.package.getTitle() ) count++;
+    if( this.package.getDescription() ) count++;
+    if( Object.keys(this.package.getLinkedData()).length > 0 ) count++;
 
-
-    return count;
+    return {
+      score: count,
+      total : total
+    };
   };
 };

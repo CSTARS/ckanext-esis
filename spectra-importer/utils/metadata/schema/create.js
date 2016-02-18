@@ -11,12 +11,12 @@ var column = {
   l2 : 2,
   inputType : 3,
   allowOther : 4,
-  spectraLevel : 5,
+  forSchema : 5,
   units : 6,
   comment : 7,
   controlledVocab : 8,
   description : 9
-}
+};
 
 
 load(function(data){
@@ -61,7 +61,7 @@ function readCategories(row, data, schema, callback) {
 
         var input = data[row][column.inputType];
         var units = data[row][column.units];
-        var spectraLevel = data[row][column.spectraLevel] == 'TRUE' ? true : false;
+        var forSchema = data[row][column.forSchema];
 
         var vocabulary = null;
         if( data[row][column.controlledVocab].indexOf(',') > -1 ) {
@@ -78,7 +78,7 @@ function readCategories(row, data, schema, callback) {
                 level : level,
                 input : input,
                 units : units,
-                spectraLevel: spectraLevel,
+                forSchema: forSchema,
                 vocabulary : vocabulary,
                 description : data[row][column.description] || '',
                 allowOther : data[row][column.allowOther] == 'TRUE' ? true : false

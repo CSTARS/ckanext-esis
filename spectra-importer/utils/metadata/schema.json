@@ -169,7 +169,7 @@
     {
       "name": "Light Source Specifications",
       "level": 2,
-      "input": "split-text",
+      "input": "text",
       "units": "",
       "spectraLevel": true,
       "vocabulary": null,
@@ -221,7 +221,7 @@
     {
       "name": "Processing Averaged",
       "level": 2,
-      "input": "controlled",
+      "input": "controlled-single",
       "units": "",
       "spectraLevel": true,
       "vocabulary": [
@@ -234,7 +234,7 @@
     {
       "name": "Processing Interpolated",
       "level": 2,
-      "input": "controlled",
+      "input": "controlled-single",
       "units": "",
       "spectraLevel": true,
       "vocabulary": [
@@ -247,7 +247,7 @@
     {
       "name": "Processing Resampled",
       "level": 2,
-      "input": "controlled",
+      "input": "controlled-single",
       "units": "",
       "spectraLevel": true,
       "vocabulary": [

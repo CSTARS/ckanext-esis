@@ -58,10 +58,6 @@ var ecosis = (function(){
   function onLoad(){
     updatePage();
     $('#splash').modal('hide');
-
-    setTimeout(function(){
-      document.querySelector('ecosis-header').onScoreUpdated();
-    }, 1000);
   }
 
   // show splash screen
@@ -96,10 +92,6 @@ var ecosis = (function(){
 
         ecosis.ds.on('load', onLoad);
       }
-
-      document.querySelector('#basic').addEventListener('score-update', function() {
-        document.querySelector('ecosis-header').onScoreUpdated();
-      });
     }, 1000);
 
   });

@@ -17,7 +17,8 @@ function SDK(config) {
 
   this.ds = new Datastore({
     ckan : this.ckan,
-    package_id : config.package_id
+    package_id : config.package_id,
+    SDK : this
   });
 
   // wire events

@@ -1,4 +1,8 @@
-var dontSplit = ['Processing Information Details'];
+// attributes that have a direct mapping to CKAN standard attributes,
+// so they should not be wrapped up in the 'extras' fields.  IE, use
+// these functions.
+var ckanAttriutes = ['Keywords', 'Website', 'Author', 'Author Email',
+'Maintainer Email', 'Maintainer'];
 
 module.exports = function(attribute, Package) {
   if( attribute.name === 'Keywords' || attribute.name === 'Website' ) return;
@@ -7,16 +11,71 @@ module.exports = function(attribute, Package) {
     createControlledInput(attribute, Package);
   } else if( attribute.input === 'split-text' ) {
     createControlledInput(attribute, Package);
+  } else if( attribute.input === 'controlled-single' ) {
+    createSingleInput(attribute, Package);
+  } else if( attribute.input === 'text' || attribute.input === 'latlng' ) {
+    createInput(attribute, Package);
   }
 };
 
+function createInput(attribute, Package) {
+  var name = attribute.name.replace(/ /g, '');
+
+  Package.prototype['get'+name] = function() {
+    return this.getExtra(attribute.name);
+  };
+
+  Package.prototype['set'+name] = function(value) {
+    this.setExtra(attribute.name, value+'');
+    this._onUpdate(attribute.name);
+  };
+}
+
+function createSingleInput(attribute, Package) {
+  var name = attribute.name.replace(/ /g, '');
+
+  Package.prototype['get'+name] = function() {
+    return this.getExtra(attribute.name);
+  };
+
+  Package.prototype['set'+name] = function(value) {
+    var t = tokenize(value);
+
+    for( var i = 0; i < attribute.vocabulary.length; i++ ) {
+      if( tokenize(attribute.vocabulary[i]) === t ) {
+        this.setExtra(attribute.name, attribute.vocabulary[i]);
+        return;
+      }
+    }
+
+    this.setExtra(attribute.name, 'Other');
+    this.setExtra(attribute.name+' Other', value);
+    this._onUpdate(attribute.name);
+  };
+
+  if( attribute.allowOther ) {
+    Package.prototype['get'+name+'Other'] = function() {
+      return this.getExtra(attribute.name+' Other');
+    };
+  }
+}
 
 function createControlledInput(attribute, Package) {
   var name = attribute.name.replace(/ /g, '');
 
   Package.prototype['get'+name] = function() {
-    return this.getExtra(attribute.name).split(',').map(cleanTerm);
+    var attr = this.getExtra(attribute.name);
+    if( !attr ) return [];
+    return attr.split(',').map(cleanTerm);
   };
+
+  if( attribute.allowOther ) {
+    Package.prototype['get'+name+'Other'] = function() {
+      var attr = this.getExtra(attribute.name+' Other');
+      if( !attr ) return [];
+      return attr.split(',').map(cleanTerm);
+    };
+  }
 
   Package.prototype['set'+name] = function(value) {
     if( !value ) {
@@ -39,6 +98,10 @@ function createControlledInput(attribute, Package) {
     if( attribute.input === 'controlled' ) {
       var values = getValues(terms, attribute.vocabulary);
 
+      if( attribute.allowOther && values.other.length > 0 && values.valid.indexOf('Other') == -1 ) {
+        values.valid.push('Other');
+      }
+
       this.setExtra(attribute.name, values.valid.join(', '));
       if( attribute.allowOther ) {
         this.setExtra(attribute.name+' Other', values.other.join(', '));
@@ -47,6 +110,8 @@ function createControlledInput(attribute, Package) {
     } else if( attribute.input === 'split-text' ) {
       this.setExtra(attribute.name, terms.join(', '));
     }
+
+    this._onUpdate(attribute.name);
   };
 
 /*

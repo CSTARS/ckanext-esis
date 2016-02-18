@@ -96,7 +96,6 @@
         var index = parseInt(e.currentTarget.getAttribute('index'));
         var name = this.results[index].name;
 
-
         this.addToken({label:name, value:name}, true);
 
         this.$.keywordInput.value = '';
@@ -114,7 +113,7 @@
         token.label = token.value;
         this.tokens.push(token);
 
-        if( fireEvent ) this.fire('add', token);
+        ecosis.ds.package.addKeyword(token.value);
 
         this.renderTokens();
     },
@@ -156,7 +155,7 @@
         var index = parseInt(e.currentTarget.getAttribute("index"));
         var token = this.tokens.splice(index,1)[0];
 
-        this.fire('remove', token);
+        ecosis.ds.package.removeToken(token.value);
 
         // don't set focus to input
         e.stopPropagation();

@@ -10,7 +10,7 @@
       <div class="form-group">
         <label id="label" for="input" class="col-md-3 control-label"></label>
         <div class="col-md-7">
-          <select class="form-control" id="input" on-change="onChange"></select>
+          <select class="form-control" id="input" on-change="onSelectChange"></select>
 
           <div id="selected"></div>
 
@@ -51,7 +51,7 @@
         this.$.otherRoot.innerHTML = html;
 
         this.$.other = this.$.otherRoot.querySelector('input');
-        this.$.other.addEventListener('change', this.onOtherChange.bind(this));
+        this.$.other.addEventListener('change', this.onChange.bind(this));
       }
     },
 
@@ -85,21 +85,26 @@
       var index = this.selected.indexOf(value);
       if( index > -1 ) this.selected.splice(index, 1);
 
-      this.fire('update', {
-        attribute : this.schema.name,
-        value : this.selected.join(',')
-      });
-
       if( value == 'Other' ) {
         this.$.otherRoot.style.display = 'none';
         this.$.other.value = '';
-        this.onOtherChange();
       }
+
+      ecosis.ds.package['set'+this.schema.fnName](this.getValue());
 
       this.render();
     },
 
-    onChange : function() {
+    getValue : function() {
+      var value = this.selected.join(',');
+      if( this.$.other.value.length > 0 && value.length > 0 ) {
+        value += ',';
+      }
+      value += this.$.other.value;
+      return value;
+    },
+
+    onSelectChange : function() {
       if( this.$.input.value == '' ) return;
 
       if( this.schema.input === 'controlled-single' ) {
@@ -108,26 +113,20 @@
         this.selected.push(this.$.input.value);
       }
 
+      this.onChange();
+    },
 
-      this.fire('update', {
-        attribute : this.schema.name,
-        value : this.selected.join(',')
-      });
-
+    onChange : function() {
+      ecosis.ds.package['set'+this.schema.fnName](this.getValue());
       this.render();
     },
 
-    onOtherChange : function() {
-      this.fire('update', {
-        attribute : this.schema.name+' Other',
-        value : this.$.other.value
-      });
-    },
-
     setValue: function(value, otherValue) {
-      if( !value ) value = '';
+      if( typeof value === 'string' ) {
+        value = [value];
+      }
 
-      this.selected = value.split(',');
+      this.selected = value;
       for( var i = 0; i < this.selected.length; i++ ) {
         this.selected[i] = this.selected[i].trim();
       }
@@ -138,9 +137,8 @@
       }
 
       if( this.schema.allowOther && otherValue ) {
-        var ele = this.querySelector("#other");
-        ele.style.display = (value.length > 0) ? 'block' : 'none';
-        ele.value = otherValue;
+        this.$.otherRoot.style.display = (value.length > 0) ? 'block' : 'none';
+        this.$.other.value = otherValue;
       }
 
       this.render();

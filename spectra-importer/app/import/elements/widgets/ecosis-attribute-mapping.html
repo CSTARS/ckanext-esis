@@ -96,7 +96,7 @@
 
     ready : function() {
       ecosis.ds.on('load', function(){
-        this.$.dsTitleLabel.innerHTML = ecosis.ds.data.title;
+        this.$.dsTitleLabel.innerHTML = ecosis.ds.package.getTitle();
         this.updateSelectList();
         this.updateMap();
       }.bind(this));
@@ -248,7 +248,7 @@
         '<table class="table">'+
           '<tr>'+
               '<th>EcoSIS</th>'+
-              '<th>'+ecosis.ds.data.title+'</th>'+
+              '<th>'+ecosis.ds.package.getTitle()+'</th>'+
               '<th>Remove</th>'+
           '</tr>';
 

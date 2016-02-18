@@ -37,13 +37,13 @@
     },
 
     onLoad : function() {
-      var geojson = ecosis.ds.getDatasetExtra('geojson').value;
-      if( !geojson ) return;
+      var geojson = ecosis.ds.package.getGeoJson();
+      if( Object.keys(geojson).length === 0 ) return;
 
       var geojsonFeature = {
           "type": "Feature",
           "properties": {},
-          "geometry": JSON.parse(geojson)
+          "geometry": geojson
       };
 
       try {
@@ -81,11 +81,8 @@
       if( this.polygon ) {
         this.map.removeLayer(this.polygon);
       }
-      ecosis.ds.setDatasetExtra('geojson', null);
-      this.fire('update', {
-        attribute : 'geojson',
-        value : null
-      });
+
+      ecosis.ds.package.setGeoJson(null);
     },
 
     onMouseMove : function(e) {
@@ -129,13 +126,8 @@
             [this.p1.lng, this.p1.lat]
         ]]
       }
-      geojson = JSON.stringify(geojson);
 
-      ecosis.ds.setDatasetExtra('geojson', geojson);
-      this.fire('update', {
-        attribute : 'geojson',
-        value : geojson
-      });
+      ecosis.ds.package.setGeoJson(geojson);
     }
 
   })
