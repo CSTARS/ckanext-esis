@@ -267,4 +267,5 @@ describe('Create Package - Dataset 1', function() {
 
 });
 
-require('./addResources');
+require('./process');
+require('./search');
