@@ -4,6 +4,7 @@ import ckan.logic as logic
 import ckan.lib.uploader as uploader
 import json, subprocess, os, urllib2, re
 
+import ckanext.ecosis.datastore.delete as deleteUtil
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
 
@@ -26,6 +27,52 @@ def rebuildIndex(collections):
         mapreducePackage(ckanPackage, collections.get("spectra_search"), collections.get("package_search"))
 
     return json.dumps({'success': True, 'rebuildCount': len(list)})
+
+# dump everything (data)!
+def cleanTests():
+    response.headers["Content-Type"] = "application/json"
+    context = {'model': model, 'user': c.user}
+
+    path = os.path.dirname(__file__)
+
+    if not isAdmin():
+        raise Exception('Nope.')
+
+    result = logic.get_action('package_search')(context, {'q' : '_testing_:true'})
+    packages = []
+    msgs = []
+
+    for package in result.get('results'):
+        packages.append({
+            'id': package.get('id'),
+            'name' : package.get('name')
+        })
+
+        logic.get_action('package_delete')(context, {'id' : package.get('id')})
+        deleteUtil.package(package.get('id'))
+
+        # from ckan's admin.py, run a 'purge' on the dataset
+        pkgs = model.Session.query(model.Package).filter_by(id=package.get('id'))
+        for pkg in pkgs:
+            revisions = [x[0] for x in pkg.all_related_revisions]
+            revs_to_purge = []
+            revs_to_purge += [r.id for r in revisions]
+            model.Session.remove()
+
+            for id in revs_to_purge:
+                revision = model.Session.query(model.Revision).get(id)
+                try:
+                    model.repo.purge_revision(revision, leave_record=False)
+                except Exception, inst:
+                    msgs.append('Problem purging revision %s: %s' % (id, inst))
+
+
+    return json.dumps({
+        "packages" : packages,
+        "messages" : msgs,
+        "success" : True
+    })
+
 
 # dump everything (data)!
 def clean(collections):

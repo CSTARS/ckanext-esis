@@ -55,6 +55,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def cleanTests(self):
+        try:
+            return admin.cleanTests()
+        except Exception as e:
+            return handleError(e)
+
     # delete org from UI
     def deleteOrganizationUi(self, id):
         organization.delete(id)
