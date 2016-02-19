@@ -95,6 +95,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
         map.connect('verifyWorkspace', '/ecosis/admin/verifyWorkspace', controller=controller, action='verifyWorkspace')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
+        map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
