@@ -219,7 +219,27 @@ module.exports = function(config) {
     };
 
     get(this.host+'/api/3/action/tag_search', query, function(err, resp) {
-      handleResp(err, resp, callback);
+      handleResp(err, resp, function(resp){
+        if( resp.error ) {
+          return callback(resp);
+        }
+
+        try {
+          var tmp = {}, key;
+          for( var i = 0; i < resp.results.length; i++ ) {
+            resp.results[i].name = resp.results[i].name.toLowerCase().trim();
+            tmp[resp.results[i].name] = resp.results[i];
+          }
+
+          resp.results = [];
+          for( key in tmp ) {
+            resp.results.push(tmp[key]);
+          }
+
+        } catch(e) {}
+
+        callback(resp);
+      });
     });
   };
 

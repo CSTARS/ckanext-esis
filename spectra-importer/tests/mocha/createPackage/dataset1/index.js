@@ -260,7 +260,7 @@ describe('Create Package - Dataset 1', function() {
   it('can create dataset', function(next){
     pkg.create(function(resp){
       assert.equal(resp.error, undefined);
-      assert.equal(resp.success, true);
+      assert.equal(typeof resp.id, 'string');
       next();
     });
   });

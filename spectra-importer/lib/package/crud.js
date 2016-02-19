@@ -34,7 +34,7 @@ function create(callback) {
         });
       }
 
-      callback({success: true});
+      callback(resp);
     }.bind(this)
   );
 }

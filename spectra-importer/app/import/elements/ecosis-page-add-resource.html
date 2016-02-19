@@ -82,7 +82,7 @@
     <div style="margin-top: 40px">
       <a on-click="toggleInfoPanel" style="cursor:pointer">Supported file types and the Ecosis Metadata Editor</a>
     </div>
-    <div id="infoPanel" style="display:none" class="animated fadeInUp">
+    <div id="infoPanel" style="display:none" class="animated fadeIn">
         <h6 class="page-header">Supported File Types</h6>
         <div class="well well-sm">
             <div>Currently the following tabular file types will be parsed.</div>
@@ -97,14 +97,6 @@
             <div><span class="green">*</span>Zip files will be extracted on the server.
               Any files contained within the zip file that have supported extension will be parsed.</div>
             <div>Other file extensions are accepted but will not be parsed.</div>
-        </div>
-
-        <h6 class="page-header">Ecosis Metadata Editor</h6>
-        <div class="well well-sm">
-            <div>Need help packaging your data?  What to markup your data with EcoSIS metadata and controlled
-              vocabularies so it can be easy discovered?  Use the <a href="https://github.com/CSTARS/ecosis-data-tool/releases"
-              target="_blank">Ecosis Metadata Editor</a> to markup your metadata and create a package for your dataset to easily
-              upload using this editor.</div>
         </div>
     </div>
 
@@ -223,7 +215,7 @@
           for( var j = 0; j < resource.childResources.length; j++ ) {
             if( !resource.childResources[j].datasheets ) continue;
             if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
-            
+
             resources.push(resource.childResources[j]);
           }
         } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
@@ -279,7 +271,7 @@
                     if( resp.error ) console.log('Error adding resource: '+file.name);
 
                     // save this, when we are done, we will set default parse type
-                    this.newResourceIds.push(resp.result.id);
+                    this.newResourceIds.push(resp.id);
 
                     index++
                     this.uploadFiles(type, index);

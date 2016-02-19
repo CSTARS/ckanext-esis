@@ -139,7 +139,7 @@
 		},
 
 		updatePushStatus : function() {
-			var count = ecosis.ds.getScore();
+			var count = ecosis.ds.getScore().score;
 
 			if( count < this.requireEcosisAttrs ) {
 				this.$.pushBtn.style.display = 'none';

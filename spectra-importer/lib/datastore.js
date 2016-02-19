@@ -258,11 +258,15 @@ module.exports = function(config) {
 
   this.getScore = function() {
     var count = 0;
-    var total = 5;
+    var total = 7;
 
     // check dataset level ecosis metadata
     for( var key in this.metadataLookup ) {
       key = key.replace(/ /g, '');
+      if( key === 'Latitude' || key === 'Longitude' ) {
+        continue;
+      }
+
       if( this.package['get'+key] ) {
         var value = this.package['get'+key]();
         if( value && value.length > 0 ) {
@@ -277,6 +281,8 @@ module.exports = function(config) {
     if( Object.keys(this.package.getLinkedData()).length > 0 ) count++;
     if( this.package.getOrganization() ) count++;
     if( this.package.getVersion() ) count++;
+    if( this.package.getLicenseId() ) count++;
+    if( Object.keys(this.package.getGeoJson()).length > 0 ) count++;
 
     return {
       score: count,

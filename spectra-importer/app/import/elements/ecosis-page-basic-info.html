@@ -47,7 +47,7 @@
     </div>
 
     <h4 class="page-header">Basic Information</h4>
-    <ecosis-title-input id="titleInput"></ecosis-title-input>
+    <ecosis-title-input id="titleInput" on-update="updateCreateBtnState"></ecosis-title-input>
 
     <div class="form-horizontal">
 
@@ -321,6 +321,8 @@
     },
 
     updateCreateBtnState : function() {
+      if( this.mode === 'edit' ) return;
+
       if( this.$.titleInput.validName ) {
         this.$.createBtn.removeAttribute('disabled');
         this.$.helpCreatePanel.style.display = 'none';
@@ -397,7 +399,9 @@
     },
 
     save : function() {
-      if( this.mode == 'create' ) return;
+      if( this.mode == 'create' ) {
+        return;
+      }
 
       this.$.saveLabel.style.display = 'block';
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);

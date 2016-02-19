@@ -142,6 +142,9 @@
 
       if( this.schema.allowOther && otherValue ) {
         this.$.otherRoot.style.display = (value.length > 0) ? 'block' : 'none';
+        if( Array.isArray(otherValue) ) {
+          otherValue = otherValue.join(', ');
+        }
         this.$.other.value = otherValue;
       }
 

@@ -57,9 +57,13 @@ function addResourceBrowser(pkgid, file, callback, progress) {
     xhr : function() {
         return xhr;
     },
-    success: callback,
+    success: function(resp){
+      callback(null, {
+        body : resp
+      });
+    },
     error : function() {
-        callback({error:true,message:'Request Error'});
+      callback({error:true,message:'Request Error'});
     }
   });
 
