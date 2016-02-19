@@ -82,6 +82,9 @@ def touch(package_id):
     )
 
 def setOptions(package_id, options):
+    # TODO: should we always run a prepare?
+    # are just insert default option setup if not prepared?
+    prepare(package_id)
 
     packageInfo = collections.get("package").find_one({"packageId": package_id})
     if packageInfo is None:

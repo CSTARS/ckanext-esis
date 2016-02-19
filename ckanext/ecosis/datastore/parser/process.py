@@ -119,6 +119,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         response = {
             "message" : "not parsed, invalid file type"
         }
+
     return response
 
 def _processCsv(sheetConfig):

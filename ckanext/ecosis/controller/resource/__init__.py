@@ -63,6 +63,9 @@ def process():
     resource_id = request.params.get('resource_id')
     ids = request.params.get('resource_ids')
 
+    if sheet_id == "":
+        sheet_id = None
+
     try:
         options = json.loads(request.params.get('options'))
     except:
@@ -95,6 +98,9 @@ def get():
     rid = request.params.get('resource_id')
     sid = request.params.get('sheet_id')
 
+    if sid == "":
+        sid = None
+
     hasAccess(pid)
 
     return jsonStringify(query.getResource(rid, sid))
@@ -106,6 +112,9 @@ def getMetadataChunk():
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
 
+    if sheet_id == "":
+        sheet_id = None
+
     return jsonStringify(query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex()))
 
 def getMetadataInfo():
@@ -115,6 +124,9 @@ def getMetadataInfo():
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
 
+    if sheet_id == "":
+        sheet_id = None
+
     return jsonStringify(query.getMetadataInfo(package_id, resource_id, sheet_id))
 
 def getSpectraCount():
@@ -123,6 +135,9 @@ def getSpectraCount():
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
+
+    if sheet_id == "":
+        sheet_id = None
 
     return jsonStringify(query.total(package_id, resource_id, sheet_id))
 
