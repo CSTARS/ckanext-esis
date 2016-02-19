@@ -195,7 +195,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
                 names.append(name)
 
                 if item.get('allowOther') == True:
-                    processAttribute(name+" Other", "text", pkg, mrValue, setValues, keywords)
+                    processAttribute(name+" Other", "split-text", pkg, mrValue, setValues, keywords)
                     names.append(name+" Other")
 
         # set the known data attributes
@@ -280,7 +280,7 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     # if type is controlled, split to multiple values
     if name == 'Keywords':
         pass
-    elif input == "controlled":
+    elif input == "controlled" or input == "split-text":
         val = val.split(",")
     else:
         val = [val]
