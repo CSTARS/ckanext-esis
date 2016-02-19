@@ -260,9 +260,34 @@ module.exports = function(config) {
     var count = 0;
     var total = 7;
 
+    var breakdown = {
+      basic : {
+        score : 0,
+        total : 5
+      },
+      linked : {
+        score : 0,
+        total : 1
+      },
+      location : {
+        score : 0,
+        total : 1
+      }
+    };
+
     // check dataset level ecosis metadata
+    var cat = '';
     for( var key in this.metadataLookup ) {
+      cat = this.metadataLookup[key].category.toLowerCase();
       key = key.replace(/ /g, '');
+
+      if( !breakdown[cat] ) {
+        breakdown[cat] = {
+          score : 0,
+          total : 0
+        };
+      }
+
       if( key === 'Latitude' || key === 'Longitude' ) {
         continue;
       }
@@ -271,22 +296,55 @@ module.exports = function(config) {
         var value = this.package['get'+key]();
         if( value && value.length > 0 ) {
           count++;
+
+          if( key === 'Keywords' || key === 'Website' ) {
+            breakdown.basic.score++;
+          } else {
+            breakdown[cat].score++;
+          }
         }
         total++;
+        if( key === 'Keywords' || key === 'Website' ) {
+          breakdown.basic.total++;
+        } else {
+          breakdown[cat].total++;
+        }
       }
     }
 
-    if( this.package.getTitle() ) count++;
-    if( this.package.getDescription() ) count++;
-    if( Object.keys(this.package.getLinkedData()).length > 0 ) count++;
-    if( this.package.getOrganization() ) count++;
-    if( this.package.getVersion() ) count++;
-    if( this.package.getLicenseId() ) count++;
-    if( Object.keys(this.package.getGeoJson()).length > 0 ) count++;
+    if( this.package.getTitle() ) {
+      count++;
+      breakdown.basic.score++;
+    }
+    if( this.package.getDescription() ) {
+      count++;
+      breakdown.basic.score++;
+    }
+    if( Object.keys(this.package.getLinkedData()).length > 0 ) {
+      count++;
+      breakdown.linked.score++;
+    }
+    if( this.package.getOrganization() ) {
+      count++;
+      breakdown.basic.score++;
+    }
+    if( this.package.getVersion() ) {
+      count++;
+      breakdown.basic.score++;
+    }
+    if( this.package.getLicenseId() ) {
+      count++;
+      breakdown.basic.score++;
+    }
+    if( Object.keys(this.package.getGeoJson()).length > 0 ) {
+      count++;
+      breakdown.location.score++;
+    }
 
     return {
       score: count,
-      total : total
+      total : total,
+      breakdown : breakdown
     };
   };
 };
