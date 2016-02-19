@@ -1,15 +1,15 @@
-var request, key;
+var request, key, host;
 
 // TODO: this needs to be verified :/
 function addResourceNode(pkgid, file, callback) {
   var r = request
-   .post(this.host + '/api/3/action/resource_create')
+   .post(host + '/api/3/action/resource_create')
    .withCredentials()
    .field('package_id', pkgid)
    .field('mimetype', file.mimetype)
    .field('name', file.filename)
    .field('url','upload')
-   .attach('upload', file.filename);
+   .attach('upload', file.path);
 
   if( key ) {
     r.set('Authorization', key);
@@ -46,7 +46,7 @@ function addResourceBrowser(pkgid, file, callback, progress) {
   } catch(e) {}
 
   $.ajax({
-    url: this.host + '/api/3/action/resource_create',
+    url: host + '/api/3/action/resource_create',
     type: "POST",
     data: formData,
     processData: false,
@@ -66,12 +66,17 @@ function addResourceBrowser(pkgid, file, callback, progress) {
   return xhr;
 }
 
-module.exports = function(r, k, isBrowser) {
+module.exports = function(r, h, k, isBrowser, handleResp) {
   request = r;
   key = k;
+  host = h;
 
   return function(pkgid, file, callback, progress) {
-    if( isBrowser ) this._addResourceBrowser(pkgid, file, callback, progress);
-    else this._addResourceNode(pkgid, file, callback);
+    function next(err, resp) {
+      handleResp(err, resp, callback);
+    }
+
+    if( isBrowser ) addResourceBrowser(pkgid, file, next, progress);
+    else addResourceNode(pkgid, file, next);
   };
 };

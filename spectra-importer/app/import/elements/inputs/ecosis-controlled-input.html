@@ -87,7 +87,9 @@
 
       if( value == 'Other' ) {
         this.$.otherRoot.style.display = 'none';
-        this.$.other.value = '';
+        if( this.schema.allowOther ) {
+          this.$.other.value = '';
+        }
       }
 
       ecosis.ds.package['set'+this.schema.fnName](this.getValue());
@@ -97,10 +99,12 @@
 
     getValue : function() {
       var value = this.selected.join(',');
-      if( this.$.other.value.length > 0 && value.length > 0 ) {
-        value += ',';
+      if( this.schema.allowOther ) {
+        if( this.$.other.value.length > 0 && value.length > 0 ) {
+          value += ',';
+        }
+        value += this.$.other.value;
       }
-      value += this.$.other.value;
       return value;
     },
 

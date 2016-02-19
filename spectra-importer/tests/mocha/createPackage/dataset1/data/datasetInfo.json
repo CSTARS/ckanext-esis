@@ -1,8 +1,20 @@
 {
   "title" : "Mocha Dataset 1",
+  "name" : "mocha-dataset-1",
   "description" : "This is a test.  This is only a test",
   "keywords" : "Foo,BAR#&,#&$(),spectra",
-  "cleanKeywords" : ["foo", "bar", "spectra"],
+  "cleanKeywords" : [
+    {
+      "display_name" : "foo",
+      "name" : "foo"
+    },{
+      "display_name" : "bar",
+      "name" : "bar"
+    },{
+      "display_name" : "spectra",
+      "name" : "spectra"
+    }
+  ],
   "license" : {
     "id" : "odc-pddl",
     "title" : "Open Data Commons Public Domain Dedication and License (PDDL)"

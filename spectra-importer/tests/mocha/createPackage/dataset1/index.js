@@ -11,7 +11,6 @@ describe('Create Package - Dataset 1', function() {
 
   // test for invalid titles as well
   it('can set valid title', function(next){
-
     pkg.setTitle('foo', function(err){
       assert.equal(err.error, true);
       assert.equal(err.message, 'Invalid name.  Title must have at least 5 characters.');
@@ -25,10 +24,14 @@ describe('Create Package - Dataset 1', function() {
     pkg.setTitle(data.title, function(err, resp){
       assert.equal(err, null);
       assert.equal(data.title, pkg.getTitle());
-      assert.equal(data.title.toLowerCase().replace(/[^a-z0-9]/g,'-'), pkg.getName());
+      assert.equal(data.name, pkg.getName());
       next();
     });
+  });
 
+  it('can set testing flag', function(){
+    pkg._setTesting();
+    assert(pkg.getExtra('_testing_'), true);
   });
 
   it('can set valid description', function(){
@@ -104,7 +107,6 @@ describe('Create Package - Dataset 1', function() {
   it('can set website', function(){
     pkg.setWebsite(data.website);
     assert.equal(pkg.getWebsite(), data.website);
-    assert.equal(pkg.data.website, data.website);
   });
 
   it('can set the Theme', function(){
@@ -255,4 +257,14 @@ describe('Create Package - Dataset 1', function() {
     assert.equal(pkg.isPrivate(), false);
   });
 
+  it('can create dataset', function(next){
+    pkg.create(function(resp){
+      assert.equal(resp.error, undefined);
+      assert.equal(resp.success, true);
+      next();
+    });
+  });
+
 });
+
+require('./addResources');

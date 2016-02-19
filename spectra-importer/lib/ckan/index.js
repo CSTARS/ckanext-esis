@@ -9,6 +9,7 @@ var key = '';
 module.exports = function(config) {
   this.host = config.host || '/';
   key = config.key || '';
+  this.key = key;
 
   this.prepareWorkspace = function(pkgid, callback) {
     get(
@@ -54,7 +55,7 @@ module.exports = function(config) {
    * callback: callback handler
    * progress: callback for progress update (not supported in NodeJS)
    **/
-  this.addResource = require('./addResource')(request, key, isBrowser);
+  this.addResource = require('./addResource')(request, config.host, key, isBrowser, handleResp);
 
 
   this.getDatasheet = function(pkgid, rid, sid, callback) {
@@ -398,7 +399,12 @@ function handleResp(err, resp, callback) {
     });
   }
 
-  callback(resp.body);
+  if( resp.body.success && resp.body.result ) {
+    callback(resp.body.result);
+  } else {
+    callback(resp.body);
+  }
+
 }
 
 function isError(err, resp) {

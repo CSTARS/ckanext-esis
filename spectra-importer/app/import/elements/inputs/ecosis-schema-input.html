@@ -74,6 +74,10 @@
           this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
         }
       } else {
+        if( Array.isArray(value) ) {
+          value = value.join(', ');
+        }
+
         this.querySelector('input').value = value;
       }
     },

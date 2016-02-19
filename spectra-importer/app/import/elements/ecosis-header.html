@@ -79,6 +79,7 @@
 
       var fn = new ecosis.app.UiBuffer(this.onScoreUpdated, 100, this);
       ecosis.ds.on('update', fn);
+      ecosis.ds.on('load', fn);
     },
 
     attached : function() {
@@ -116,7 +117,7 @@
       if( result.score < 3 ) label = 'danger';
       else if( result.score < 8 ) label = 'warning';
 
-      this.$.score.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
+      this.$.score.innerHTML = '<span style="display:inline-block" class="label label-'+label+' animated zoomIn">'+result.score+'/'+result.total+'</span>';
       this.$.score2.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
     }
 

@@ -116,8 +116,7 @@ module.exports = function(config) {
     var ckanPackage = this.result.ckan.package;
     this.package_id = ckanPackage.id;
 
-    this.package = this.SDK.newPackage();
-    this.package.on('update', this.fireUpdate.bind(this));
+    this.package.reset(ckanPackage);
     this.package.loadFromTemplate(ckanPackage);
 
     this.datasheets = this.result.resources;
@@ -259,7 +258,7 @@ module.exports = function(config) {
 
   this.getScore = function() {
     var count = 0;
-    var total = 3;
+    var total = 5;
 
     // check dataset level ecosis metadata
     for( var key in this.metadataLookup ) {
@@ -268,7 +267,7 @@ module.exports = function(config) {
         var value = this.package['get'+key]();
         if( value && value.length > 0 ) {
           count++;
-        } else
+        }
         total++;
       }
     }
@@ -276,6 +275,8 @@ module.exports = function(config) {
     if( this.package.getTitle() ) count++;
     if( this.package.getDescription() ) count++;
     if( Object.keys(this.package.getLinkedData()).length > 0 ) count++;
+    if( this.package.getOrganization() ) count++;
+    if( this.package.getVersion() ) count++;
 
     return {
       score: count,

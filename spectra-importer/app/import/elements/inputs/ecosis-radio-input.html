@@ -42,11 +42,7 @@
 
       onChange : function(e) {
         this.selected = [e.currentTarget.getAttribute('value')];
-
-        this.fire('update', {
-          attribute : this.schema.name,
-          value : e.currentTarget.getAttribute('value')
-        });
+        ecosis.ds.package['set'+this.schema.fnName](e.currentTarget.getAttribute('value'));
       },
 
       setValue: function(value) {

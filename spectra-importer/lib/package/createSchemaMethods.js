@@ -44,13 +44,18 @@ function createSingleInput(attribute, Package) {
     for( var i = 0; i < attribute.vocabulary.length; i++ ) {
       if( tokenize(attribute.vocabulary[i]) === t ) {
         this.setExtra(attribute.name, attribute.vocabulary[i]);
+        this._onUpdate(attribute.name);
         return;
       }
     }
 
-    this.setExtra(attribute.name, 'Other');
-    this.setExtra(attribute.name+' Other', value);
-    this._onUpdate(attribute.name);
+    if( attribute.allowOther ) {
+      this.setExtra(attribute.name, 'Other');
+      this.setExtra(attribute.name+' Other', value);
+      this._onUpdate(attribute.name);
+    } else {
+      this.setExtra(attribute.name, '');
+    }
   };
 
   if( attribute.allowOther ) {
@@ -83,6 +88,9 @@ function createControlledInput(attribute, Package) {
       if( attribute.allowOther ) {
         this.setExtra(attribute.name+' Other', null);
       }
+
+      this._onUpdate(attribute.name);
+      return;
     }
 
     var terms;

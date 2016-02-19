@@ -8,29 +8,33 @@ var EventEmitter = require("events").EventEmitter;
 
 var ignore = ['Species', 'Date'];
 
-function Package(data, SDK) {
+function Package(initdata, SDK) {
 
-  if( data ) {
-    this.data = extend(true, {}, data);
-  } else {
-    this.data = {
-      id : '',
-      title : '',
-      name : '',
-      notes : '',
-      author : '',
-      author_email : '',
-      license_id : '',
-      license_title : '',
-      maintainer : '',
-      maintainer_email : '',
-      version : '',
-      owner_org : '',
-      tags : [],
-      private : false,
-      extras : []
-    };
-  }
+  this.reset = function(data) {
+    if( data ) {
+      this.data = extend(true, {}, data);
+    } else {
+      this.data = {
+        id : '',
+        title : '',
+        name : '',
+        notes : '',
+        author : '',
+        author_email : '',
+        license_id : '',
+        license_title : '',
+        maintainer : '',
+        maintainer_email : '',
+        version : '',
+        owner_org : '',
+        tags : [],
+        private : false,
+        extras : []
+      };
+    }
+  };
+
+  this.reset(initdata);
 
   this.ee = new EventEmitter();
 
@@ -117,6 +121,11 @@ function Package(data, SDK) {
   };
 
   this.addKeyword = function(keyword) {
+    if( typeof keyword === 'object' ) {
+      keyword = keyword.name;
+
+    }
+
     keyword = cleanKeyword(keyword+'');
 
     if( keyword.length < 2 ) {
@@ -129,7 +138,11 @@ function Package(data, SDK) {
       this.data.tags = [];
     }
 
-    this.data.tags.push(keyword);
+    this.data.tags.push({
+      display_name : keyword,
+      name : keyword
+    });
+
     this._onUpdate('Keywords');
   };
 
@@ -137,7 +150,7 @@ function Package(data, SDK) {
     if( !this.data.tags ) return;
 
     for( var i = 0; i < this.data.tags.length; i++ ) {
-      if( this.data.tags[i] === keyword ) {
+      if( this.data.tags[i].name === keyword ) {
         this.data.tags.splice(i, 1);
         return;
       }
@@ -149,7 +162,7 @@ function Package(data, SDK) {
   this.hasKeyword = function(keyword) {
     if( !this.data.tags ) return false;
     for( var i = 0; i < this.data.tags.length; i++ ) {
-      if( this.data.tags[i] === keyword ) {
+      if( this.data.tags[i].name === keyword ) {
         return true;
       }
     }
@@ -187,7 +200,7 @@ function Package(data, SDK) {
         return;
       }
 
-      this.data.owner_org = resp.result.id;
+      this.data.owner_org = resp.id;
       this._onUpdate('Organization');
 
       if( callback ) {
@@ -210,12 +223,12 @@ function Package(data, SDK) {
   };
 
   this.setWebsite = function(website) {
-    this.data.website = website;
+    this.setExtra('Website', website);
     this._onUpdate('Website');
   };
 
   this.getWebsite = function() {
-    return this.data.website || '';
+    return this.getExtra('Website');
   };
 
   this.setAuthor = function(author) {
@@ -300,6 +313,39 @@ function Package(data, SDK) {
     return {};
   };
 
+  this.addResource = function(file, callback, progress) {
+    function next(resp) {
+      if( resp.error ) {
+        return callback(error);
+      }
+
+      SDK.ckan.processResource(
+        this.data.id,
+        [resp.id],
+        null,
+        {layout: 'column'},
+        function(resp){
+          if( resp.error ) {
+            return callback(resp);
+          }
+
+          // get new workspace state
+          // TODO: proly a better way TODO this.
+          SDK.ckan.getWorkspace(this.data.id, function(result){
+            if( result.error ) {
+              return callback(result);
+            }
+            SDK.ds.runAfterResourceAdd(result);
+
+            callback({success: true});
+          });
+
+        }.bind(this));
+    }
+
+    SDK.ckan.addResource(this.data.id, file, next.bind(this), progress);
+  };
+
   this.getExtra = function(key) {
     if( !this.data.extras ) return '';
 
@@ -336,6 +382,10 @@ function Package(data, SDK) {
     });
   };
 
+  // Should only be used for test data!!
+  this._setTesting = function() {
+    this.setExtra('_testing_', true);
+  };
 }
 
 // extend package getters/setters based on schema

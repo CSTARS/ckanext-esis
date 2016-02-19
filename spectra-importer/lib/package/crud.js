@@ -19,23 +19,23 @@ function deleteFn(callback) {
 
 function create(callback) {
   this.SDK.ckan.createPackage(this.data, function(resp) {
-        if( resp.error ) {
-          // ERROR 6
-          resp.code = 6;
-          return callback(resp);
-        }
+      if( resp.error ) {
+        // ERROR 6
+        resp.code = 6;
+        return callback(resp);
+      }
 
-        if( !resp.id ) {
-          // ERROR 7
-          return callback({
-            error : true,
-            message : 'Failed to create dataset',
-            code : 7
-          });
-        }
+      if( !resp.id ) {
+        // ERROR 7
+        return callback({
+          error : true,
+          message : 'Failed to create dataset',
+          code : 7
+        });
+      }
 
-        callback({success: true});
-      }.bind(this)
+      callback({success: true});
+    }.bind(this)
   );
 }
 
@@ -50,7 +50,7 @@ function save(callback) {
         return callback(resp);
       }
 
-      var metadata = resp.result;
+      var metadata = resp;
       for( var key in this.data ) {
         metadata[key] = this.data[key];
       }
@@ -64,7 +64,7 @@ function save(callback) {
             return callback(resp);
           }
 
-          if( !resp.result.id )  {
+          if( !resp.id )  {
             // ERROR 10
             return callback({
               error: true,

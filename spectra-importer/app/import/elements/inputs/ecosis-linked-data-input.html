@@ -61,7 +61,12 @@
       },
 
       setData : function(data) {
-        if( !data ) {
+        var hasData = false;
+        if( data && data.length > 0 ) {
+          hasData = true;
+        }
+
+        if( !hasData ) {
           data = [{
             label : '',
             url : '',

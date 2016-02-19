@@ -397,7 +397,6 @@
     },
 
     save : function() {
-      this.fireScoreUpdate();
       if( this.mode == 'create' ) return;
 
       this.$.saveLabel.style.display = 'block';
@@ -415,12 +414,8 @@
         if( resp.error ) {
           return ecosis.errorPopup.show(resp);
         }
-        document.querySelector('ecosis-header').setBackBtn(resp.result.name);
+        document.querySelector('ecosis-header').setBackBtn(resp.name);
       }.bind(this));
-    },
-
-    fireScoreUpdate : function() {
-      this.fire('score-update');
     },
 
     /* change handlers */
@@ -459,11 +454,11 @@
     },
 
     onWebsiteInputChange : function() {
-      ecosis.ds.package.Website(this.$.websiteInput.value);
+      ecosis.ds.package.setWebsite(this.$.websiteInput.value);
     },
 
     onLinkedDataChange : function() {
-      ecosis.ds.package.LinkedData(this.$.linkedDataInput.getData());
+      ecosis.ds.package.setLinkedData(this.$.linkedDataInput.getData());
     },
 
     toggleCat : function(e) {

@@ -58,6 +58,7 @@
 
       setTimeout(function(){
         this.map.invalidateSize();
+        this.map.fitBounds(this.polygon.getBounds());
       }.bind(this), 50);
     },
 
