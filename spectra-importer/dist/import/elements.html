@@ -6656,8 +6656,6 @@ this.fire('dom-change');
           '<div class="col-md-6">'+ col2 + '</div>'+
         '</div>';
 
-      this.addEventListener('update', this.onUpdate.bind(this));
-
       ecosis.ds.on('load', this.setValues.bind(this));
     },
 
@@ -6666,21 +6664,17 @@ this.fire('dom-change');
         if( this.schema[i].name == 'Keywords' ) continue;
 
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-        var value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
+
+        var name = this.schema[i].fnName;
+        var value = ecosis.ds.package['get'+name]();
 
         var other = '';
         if( this.schema[i].allowOther ) {
-          other = ecosis.ds.getDatasetExtra(this.schema[i].name+' Other').value || '';
+          other = ecosis.ds.package['get'+name+'Other']();
         }
 
         ele.setValue(value, other);
       }
-    },
-
-    onUpdate : function(e) {
-      var attr = e.detail.attribute;
-      var value = e.detail.value;
-      ecosis.ds.setDatasetExtra(attr, value);
     }
 
 
@@ -6712,8 +6706,6 @@ this.fire('dom-change');
           '<div class="col-md-6">'+ col2 + '</div>'+
         '</div>';
 
-      this.addEventListener('update', this.onUpdate.bind(this));
-
       ecosis.ds.on('load', this.setValues.bind(this));
     },
 
@@ -6721,23 +6713,18 @@ this.fire('dom-change');
       for( var i = 0; i < this.schema.length; i++ ) {
 
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-        var value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
+
+        var name = this.schema[i].fnName;
+        var value = ecosis.ds.package['get'+name]();
 
         var other = '';
         if( this.schema[i].allowOther ) {
-          other = ecosis.ds.getDatasetExtra(this.schema[i].name+' Other').value || '';
+          other = ecosis.ds.package['get'+name+'Other']();
         }
 
         ele.setValue(value, other);
       }
-    },
-
-    onUpdate : function(e) {
-      var attr = e.detail.attribute;
-      var value = e.detail.value;
-      ecosis.ds.setDatasetExtra(attr, value);
     }
-
 
   })
 </script>
@@ -6769,8 +6756,6 @@ this.fire('dom-change');
           '<div class="col-md-6">'+ col2 + '</div>'+
         '</div>';
 
-      this.addEventListener('update', this.onUpdate.bind(this));
-
       ecosis.ds.on('load', this.setValues.bind(this));
     },
 
@@ -6778,24 +6763,18 @@ this.fire('dom-change');
       for( var i = 0; i < this.schema.length; i++ ) {
 
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-        var value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
+
+        var name = this.schema[i].fnName;
+        var value = ecosis.ds.package['get'+name]();
 
         var other = '';
         if( this.schema[i].allowOther ) {
-          other = ecosis.ds.getDatasetExtra(this.schema[i].name+' Other').value || '';
+          other = ecosis.ds.package['get'+name+'Other']();
         }
 
         ele.setValue(value, other);
       }
-    },
-
-    onUpdate : function(e) {
-      var attr = e.detail.attribute;
-      var value = e.detail.value;
-      ecosis.ds.setDatasetExtra(attr, value);
     }
-
-
   })
 </script>
 
@@ -6826,31 +6805,24 @@ this.fire('dom-change');
           '<div class="col-md-6">'+ col2 + '</div>'+
         '</div>';
 
-      this.addEventListener('update', this.onUpdate.bind(this));
-
       ecosis.ds.on('load', this.setValues.bind(this));
     },
 
     setValues : function() {
       for( var i = 0; i < this.schema.length; i++ ) {
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-        var value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
+
+        var name = this.schema[i].fnName;
+        var value = ecosis.ds.package['get'+name]();
 
         var other = '';
         if( this.schema[i].allowOther ) {
-          other = ecosis.ds.getDatasetExtra(this.schema[i].name+' Other').value || '';
+          other = ecosis.ds.package['get'+name+'Other']();
         }
 
         ele.setValue(value, other);
       }
-    },
-
-    onUpdate : function(e) {
-      var attr = e.detail.attribute;
-      var value = e.detail.value;
-      ecosis.ds.setDatasetExtra(attr, value);
     }
-
 
   })
 </script>
@@ -6861,13 +6833,6 @@ this.fire('dom-change');
 
     ready : function() {
       this.schema = ecosis.ds.metadataDefinitions.Citation;
-
-      this.packageAttrMap = {
-        'Author' : 'author',
-        'Author Email' : 'author_email',
-        'Maintainer' : 'maintainer',
-        'Maintainer Email' : 'maintainer_email'
-      }
     },
 
     attached : function() {
@@ -6876,7 +6841,9 @@ this.fire('dom-change');
       var col2 = '';
 
       for( var i = 0; i < this.schema.length; i++ ) {
+        // inserted at top of basic info form, skip here
         if( this.schema[i].name == 'Website' ) continue;
+
         var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
         if( i % 2 == 0 ) col1 += input;
@@ -6889,8 +6856,6 @@ this.fire('dom-change');
           '<div class="col-md-6">'+ col2 + '</div>'+
         '</div>';
 
-      this.addEventListener('update', this.onUpdate.bind(this));
-
       ecosis.ds.on('load', this.setValues.bind(this));
     },
 
@@ -6899,35 +6864,18 @@ this.fire('dom-change');
         if( this.schema[i].name == 'Website' ) continue;
 
         var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-        var value;
 
-        if( this.packageAttrMap[this.schema[i].name] ) {
-          value = ecosis.ds.data[this.packageAttrMap[this.schema[i].name]] || '';
-        } else {
-          value = ecosis.ds.getDatasetExtra(this.schema[i].name).value || '';
-        }
+        var name = this.schema[i].fnName;
+        var value = ecosis.ds.package['get'+name]();
 
         var other = '';
         if( this.schema[i].allowOther ) {
-          other = ecosis.ds.getDatasetExtra(this.schema[i].name+' Other').value || '';
+          other = ecosis.ds.package['get'+name+'Other']();
         }
 
         ele.setValue(value, other);
       }
-    },
-
-    onUpdate : function(e) {
-      var attr = e.detail.attribute;
-      var value = e.detail.value;
-
-      if( this.packageAttrMap[attr] ) {
-        ecosis.ds.data[this.packageAttrMap[attr]] = value;
-      } else {
-        ecosis.ds.setDatasetExtra(attr, value);
-      }
     }
-
-
   })
 </script>
 
@@ -7040,6 +6988,7 @@ this.fire('dom-change');
       this.style.display = "block";
 
       this.schema = ecosis.ds.metadataLookup[this.metadata];
+      this.flatName = this.schema.name.replace(/ /g, '');
 
       if( this.schema.input == 'controlled' || this.schema.input == 'controlled-single' ) {
         if( this.isYesNo(this.schema) ) {
@@ -7089,15 +7038,16 @@ this.fire('dom-change');
           this.querySelector('ecosis-controlled-input').setValue(value, otherValue);
         }
       } else {
+        if( Array.isArray(value) ) {
+          value = value.join(', ');
+        }
+
         this.querySelector('input').value = value;
       }
     },
 
     trigger : function(e) {
-      this.fire('update', {
-        attribute: this.schema.name,
-        value : e.currentTarget.value
-      });
+      ecosis.ds.package['set'+this.flatName](e.currentTarget.value);
     }
   })
 </script>
@@ -7114,7 +7064,7 @@ this.fire('dom-change');
       <div class="form-group">
         <label id="label" for="input" class="col-md-3 control-label"></label>
         <div class="col-md-7">
-          <select class="form-control" id="input" on-change="onChange"></select>
+          <select class="form-control" id="input" on-change="onSelectChange"></select>
 
           <div id="selected"></div>
 
@@ -7155,7 +7105,7 @@ this.fire('dom-change');
         this.$.otherRoot.innerHTML = html;
 
         this.$.other = this.$.otherRoot.querySelector('input');
-        this.$.other.addEventListener('change', this.onOtherChange.bind(this));
+        this.$.other.addEventListener('change', this.onChange.bind(this));
       }
     },
 
@@ -7189,21 +7139,30 @@ this.fire('dom-change');
       var index = this.selected.indexOf(value);
       if( index > -1 ) this.selected.splice(index, 1);
 
-      this.fire('update', {
-        attribute : this.schema.name,
-        value : this.selected.join(',')
-      });
-
       if( value == 'Other' ) {
         this.$.otherRoot.style.display = 'none';
-        this.$.other.value = '';
-        this.onOtherChange();
+        if( this.schema.allowOther ) {
+          this.$.other.value = '';
+        }
       }
+
+      ecosis.ds.package['set'+this.schema.fnName](this.getValue());
 
       this.render();
     },
 
-    onChange : function() {
+    getValue : function() {
+      var value = this.selected.join(',');
+      if( this.schema.allowOther ) {
+        if( this.$.other.value.length > 0 && value.length > 0 ) {
+          value += ',';
+        }
+        value += this.$.other.value;
+      }
+      return value;
+    },
+
+    onSelectChange : function() {
       if( this.$.input.value == '' ) return;
 
       if( this.schema.input === 'controlled-single' ) {
@@ -7212,26 +7171,20 @@ this.fire('dom-change');
         this.selected.push(this.$.input.value);
       }
 
+      this.onChange();
+    },
 
-      this.fire('update', {
-        attribute : this.schema.name,
-        value : this.selected.join(',')
-      });
-
+    onChange : function() {
+      ecosis.ds.package['set'+this.schema.fnName](this.getValue());
       this.render();
     },
 
-    onOtherChange : function() {
-      this.fire('update', {
-        attribute : this.schema.name+' Other',
-        value : this.$.other.value
-      });
-    },
-
     setValue: function(value, otherValue) {
-      if( !value ) value = '';
+      if( typeof value === 'string' ) {
+        value = [value];
+      }
 
-      this.selected = value.split(',');
+      this.selected = value;
       for( var i = 0; i < this.selected.length; i++ ) {
         this.selected[i] = this.selected[i].trim();
       }
@@ -7242,9 +7195,11 @@ this.fire('dom-change');
       }
 
       if( this.schema.allowOther && otherValue ) {
-        var ele = this.querySelector("#other");
-        ele.style.display = (value.length > 0) ? 'block' : 'none';
-        ele.value = otherValue;
+        this.$.otherRoot.style.display = (value.length > 0) ? 'block' : 'none';
+        if( Array.isArray(otherValue) ) {
+          otherValue = otherValue.join(', ');
+        }
+        this.$.other.value = otherValue;
       }
 
       this.render();
@@ -7296,11 +7251,7 @@ this.fire('dom-change');
 
       onChange : function(e) {
         this.selected = [e.currentTarget.getAttribute('value')];
-
-        this.fire('update', {
-          attribute : this.schema.name,
-          value : e.currentTarget.getAttribute('value')
-        });
+        ecosis.ds.package['set'+this.schema.fnName](e.currentTarget.getAttribute('value'));
       },
 
       setValue: function(value) {
@@ -7327,6 +7278,18 @@ this.fire('dom-change');
   </style>
   <template>
     <div class="well">
+
+      <div class="horizontal-form">
+        <div class="form-group">
+          <label id="label" for="input" class="col-md-3 control-label">Location Name</label>
+          <div class="col-md-7">
+            <input type="text" class="form-control" id="input" on-change="onNameChange">
+            <div class="help-block" id="help">You can comma separate</div>
+          </div>
+        </div>
+      </div>
+
+      <h5>Bounding Box</h5>
       <div id="map" style="height: 400px"></div>
       <div class="help-block">Draw bounding box for dataset.  If you provide latitude and
       longitude or geojson field(s) in your spectra, a bounding box for your dataset will
@@ -7358,13 +7321,19 @@ this.fire('dom-change');
     },
 
     onLoad : function() {
-      var geojson = ecosis.ds.getDatasetExtra('geojson').value;
-      if( !geojson ) return;
+      var names = ecosis.ds.package.getLocationName();
+      if( Array.isArray(names) ) {
+        names = names.join(', ');
+      }
+      this.$.input.value = names;
+
+      var geojson = ecosis.ds.package.getGeoJson();
+      if( Object.keys(geojson).length === 0 ) return;
 
       var geojsonFeature = {
           "type": "Feature",
           "properties": {},
-          "geometry": JSON.parse(geojson)
+          "geometry": geojson
       };
 
       try {
@@ -7374,11 +7343,18 @@ this.fire('dom-change');
       } catch(e) {}
     },
 
+    onNameChange : function() {
+      ecosis.ds.package.setLocationName(this.$.input.value);
+    },
+
     onShow : function() {
       this.drawing = false;
 
       setTimeout(function(){
         this.map.invalidateSize();
+        if( this.polygon ) {
+          this.map.fitBounds(this.polygon.getBounds());
+        }
       }.bind(this), 50);
     },
 
@@ -7402,11 +7378,8 @@ this.fire('dom-change');
       if( this.polygon ) {
         this.map.removeLayer(this.polygon);
       }
-      ecosis.ds.setDatasetExtra('geojson', null);
-      this.fire('update', {
-        attribute : 'geojson',
-        value : null
-      });
+
+      ecosis.ds.package.setGeoJson(null);
     },
 
     onMouseMove : function(e) {
@@ -7450,13 +7423,8 @@ this.fire('dom-change');
             [this.p1.lng, this.p1.lat]
         ]]
       }
-      geojson = JSON.stringify(geojson);
 
-      ecosis.ds.setDatasetExtra('geojson', geojson);
-      this.fire('update', {
-        attribute : 'geojson',
-        value : geojson
-      });
+      ecosis.ds.package.setGeoJson(geojson);
     }
 
   })
@@ -7498,25 +7466,16 @@ this.fire('dom-change');
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
           </span>
 
-          <span class="label label-danger" style="display:none" id="tooLong">
-            Invalid name.  Title can have at most 100 characters.
-          </span>
-
-          <span class="label label-danger" style="display:none" id="invalid">
-            Invalid name.  A dataset with the name '<span id="nameLabel"></span>' already exists.
-          </span>
+          <span class="label label-danger" style="display:none" id="invalid"></span>
 
           <span class="label label-success" style="display:none" id="valid">
             URL: <span id="urlLabelInput"></span>
           </span>
 
-          <div id="message2"></div>
-
           <div id="message" class="help-block">
             Please <span class="text text-warning">do not use '_' or '-'</span> in your title use spaces instead.  We want
             your title to be as human readable as possible!
           </div>
-
 
         </div>
       </div>
@@ -7530,15 +7489,17 @@ this.fire('dom-change');
     is : 'ecosis-title-input',
 
     ready : function() {
-      this.verifyNameTime = -1;
       this.currentName = null;
+      this.verify = new ecosis.app.UiBuffer(this._verify, 500, this);
+
       ecosis.ds.on('load', this.onDataReady.bind(this));
+      this.validName = false;
     },
 
     onDataReady : function() {
       if( ecosis.ds.editMode ) {
-        this.$.titleInput.value = ecosis.ds.data.title;
-        this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
+        this.$.titleInput.value = ecosis.ds.package.getTitle();
+        this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
         return;
       }
 
@@ -7546,31 +7507,16 @@ this.fire('dom-change');
     },
 
     onTitleInputChange : function() {
-      if( ecosis.ds.editMode && ecosis.ds.data.name && this.currentName === null ) {
-        this.currentName = ecosis.ds.data.name;
-      }
+      this.verify();
+    },
 
-      // TODO: check for 100 characters
-      // TODO: update back button on update
-      var title = this.$.titleInput.value.replace(/_/g, ' ');
-      if( title.length >= 100 ) {
-        this.validName = false;
-        this.$.tooLong.style.display = 'inline-block';
-        return;
-      }
-      this.$.tooLong.style.display = 'none';
+    onBlur : function() {
+      this.verify();
+    },
 
-      ecosis.ds.data.title = title;
-      ecosis.ds.data.name = ecosis.ds.data.title.toLowerCase().replace(/[^a-z0-9]/g,'-');
-
-      this.$.nameLabel.innerHTML = ecosis.ds.data.name;
-      this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.data.name;
-
-      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
-      // then there is nothing to check, they are just updating the title.  This will throw
-      // a false positive if we check for name in use (cause it is, by this dataset);
-      if( ecosis.ds.editMode && ecosis.ds.data.name === this.currentName ) {
-        return;
+    _verify : function() {
+      if( ecosis.ds.editMode && ecosis.ds.package.getName() && this.currentName === null ) {
+        this.currentName = ecosis.ds.package.getName();
       }
 
       this.$.verifyingTitleLabel.style.display = 'inline-block';
@@ -7578,45 +7524,32 @@ this.fire('dom-change');
       this.$.valid.style.display = 'none';
       this.validName = false;
 
-      if( this.verifyNameTimer != -1 ) clearTimeout(this.verifyNameTimer);
+      // TODO: verify this has been removed
+      // if we are in edit mode and the current, cleaned, name is equal to the 'updated' name
+      // then there is nothing to check, they are just updating the title.  This will throw
+      // a false positive if we check for name in use (cause it is, by this dataset);
+      //if( ecosis.ds.editMode && ecosis.ds.package.getName() === this.currentName ) {
+      //  return;
+      //}
 
-      this.verifyNameTimer = setTimeout(function(){
-
-        ecosis.ckan.getPackage(ecosis.ds.data.name, function(resp){
-          this.$.verifyingTitleLabel.style.display = 'none';
-
-          if( resp.error ) {
-            this.validName = true;
-            this.$.valid.style.display = 'inline-block';
-          } else {
-            this.validName = false;
-            this.$.invalid.style.display = 'inline-block';
-          }
-
+      ecosis.ds.package.setTitle(this.$.titleInput.value, function(err, resp){
+        this.$.verifyingTitleLabel.style.display = 'none';
+        if( err ) {
+          this.$.invalid.style.display = 'inline-block';
+          this.$.invalid.innerHTML = err.message;
           this.fire('update');
-        }.bind(this));
+          return;
+        }
 
-      }.bind(this), 500);
+        //this.$.nameLabel.innerHTML = ecosis.ds.package.getName();
+        this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
+        this.$.valid.style.display = 'inline-block';
+        this.validName = true;
+
+        this.fire('update');
+      }.bind(this));
     }
 
-    /*onBlur : function() {
-      var parts = ecosis.ds.data.title.split(' ');
-
-      var wordsOverFour = 0;
-      var wordsOverFourNoNum = 0;
-      for( var i = 0; i < parts.length; i++ ) {
-        if( parts[i].length > 4 ) {
-          wordsOverFour++;
-          if( !words.match(/\d/) ) {
-            wordsOverFourNoNum++;
-          }
-        }
-      }
-
-      if( wordsOverFour < 3 ) {
-          var message = '<'
-      }
-    }*/
   });
 </script>
 
@@ -7690,7 +7623,7 @@ this.fire('dom-change');
           ecosis.ckan.tagSearch(this.$.keywordInput.value, 10, function(resp){
             this.setSearching(false);
 
-            this.results = resp.result.results;
+            this.results = resp.results;
             this.renderResults();
           }.bind(this));
         }.bind(this), 500);
@@ -7718,7 +7651,6 @@ this.fire('dom-change');
         var index = parseInt(e.currentTarget.getAttribute('index'));
         var name = this.results[index].name;
 
-
         this.addToken({label:name, value:name}, true);
 
         this.$.keywordInput.value = '';
@@ -7736,7 +7668,7 @@ this.fire('dom-change');
         token.label = token.value;
         this.tokens.push(token);
 
-        if( fireEvent ) this.fire('add', token);
+        ecosis.ds.package.addKeyword(token.value);
 
         this.renderTokens();
     },
@@ -7778,7 +7710,7 @@ this.fire('dom-change');
         var index = parseInt(e.currentTarget.getAttribute("index"));
         var token = this.tokens.splice(index,1)[0];
 
-        this.fire('remove', token);
+        ecosis.ds.package.removeToken(token.value);
 
         // don't set focus to input
         e.stopPropagation();
@@ -7848,20 +7780,26 @@ this.fire('dom-change');
       },
 
       setData : function(data) {
-        if( !data ) {
-          data = JSON.stringify([{
+        var hasData = false;
+        if( data && data.length > 0 ) {
+          hasData = true;
+        }
+
+        if( !hasData ) {
+          data = [{
             label : '',
             url : '',
             last : 'true'
-          }]);
+          }];
         }
 
-        this.list = JSON.parse(data);
+        this.list = data;
         this.checkFilled();
       },
 
       getData : function() {
         var arr = [];
+
         for( var i = 0; i < this.list.length; i++ ) {
           if( this.list[i].label.length > 0 && this.list[i].url.length > 0 ) {
             arr.push({
@@ -7871,7 +7809,7 @@ this.fire('dom-change');
           }
         }
 
-        return JSON.stringify(arr);
+        return arr;
       },
 
       remove : function(e) {
@@ -7901,8 +7839,7 @@ this.fire('dom-change');
       },
 
       fireUpdate : function() {
-        ecosis.ds.setDatasetExtra('LinkedData', this.getData());
-        this.fire('update');
+        ecosis.ds.package.setLinkedData(this.getData());
       }
 
     });
@@ -7982,11 +7919,15 @@ this.fire('dom-change');
 
       if( ecosis.ds.editMode ) {
         ecosis.ds.on('load', function(){
-          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.data.name);
+          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.package.getName());
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
       }
+
+      var fn = new ecosis.app.UiBuffer(this.onScoreUpdated, 100, this);
+      ecosis.ds.on('update', fn);
+      ecosis.ds.on('load', fn);
     },
 
     attached : function() {
@@ -8017,16 +7958,19 @@ this.fire('dom-change');
     },
 
     onScoreUpdated : function() {
+      var result = ecosis.ds.getScore();
 
-      var score = ecosis.ds.getScore();
-      var total = Object.keys(ecosis.ds.metadataLookup).length;
+      if( result.score === this.lastScore ) {
+        return;
+      }
+      this.lastScore = result.score;
 
       var label = 'success';
-      if( score < 3 ) label = 'danger';
-      else if( score < 8 ) label = 'warning';
+      if( result.score < 3 ) label = 'danger';
+      else if( result.score < 8 ) label = 'warning';
 
-      this.$.score.innerHTML = '<span class="label label-'+label+'">'+score+'/'+total+'</span>';
-      this.$.score2.innerHTML = '<span class="label label-'+label+'">'+score+'/'+total+'</span>';
+      this.$.score.innerHTML = '<span style="display:inline-block" class="label label-'+label+' animated zoomIn">'+result.score+'/'+result.total+'</span>';
+      this.$.score2.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
     }
 
   });
@@ -8085,9 +8029,6 @@ this.fire('dom-change');
 
     <div class="well">
         EcoSIS accepts data in several tabular formats.  These tabular files can have measurements laid out by column or by row.
-        If you would like help filling out metadata or packaging your spectra, try the
-        <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">EcoSIS Metadata Editor</a> to generate nice
-        tabular packages with EcoSIS metadata.
     </div>
 
     <div id="column">
@@ -10082,8 +10023,8 @@ this.fire('dom-change');
       <div id="createTemplateSuccess" style="display:none"><span class="label label-success">Success!</span></div>
     </div>
 
-    <h4 class="page-header">Basic Information</h4>
-    <ecosis-title-input id="titleInput" on-update="onTitleInputChange"></ecosis-title-input>
+    <h4 class="page-header">Basic Information <small cat="basic"></small></h4>
+    <ecosis-title-input id="titleInput" on-update="updateCreateBtnState"></ecosis-title-input>
 
     <div class="form-horizontal">
 
@@ -10095,7 +10036,7 @@ this.fire('dom-change');
         </div>
       </div>
 
-      <ecosis-keyword-input id="keywordInput" on-add="onKeywordsChange" on-remove="onKeywordsChange"></ecosis-keyword-input>
+      <ecosis-keyword-input id="keywordInput"></ecosis-keyword-input>
 
       <div class="form-group">
         <label for="licenseInput" class="col-md-2 control-label">License: </label>
@@ -10152,43 +10093,47 @@ this.fire('dom-change');
         </div>
       </div>
 
-
-
+      <h4 class="page-header">
+          <a class="btn-toggle" on-click="toggleCat" cat="themeInput">
+          <i class="fa fa-arrow-right"></i></a> Theme <small cat="theme"></small>
+      </h4>
+      <ecosis-theme-input id="themeInput" style="display:none"></ecosis-theme-input>
 
       <h4 class="page-header">
-          <a class="btn-toggle" on-click="toggleCat" cat="themeInput"><i class="fa fa-arrow-right"></i></a> Theme
+        <a class="btn-toggle" on-click="toggleCat" cat="measureInput">
+          <i class="fa fa-arrow-right"></i></a> Measurement <small cat="measurement"></small>
       </h4>
-      <ecosis-theme-input on-update="save" id="themeInput" style="display:none"></ecosis-theme-input>
+      <ecosis-measurement-input id="measureInput" style="display:none"></ecosis-measurement-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="measureInput"><i class="fa fa-arrow-right"></i></a> Measurement
+        <a class="btn-toggle" on-click="toggleCat" cat="processingInput">
+        <i class="fa fa-arrow-right"></i></a> Processing Information <small cat="processing information"></small>
       </h4>
-      <ecosis-measurement-input on-update="save" id="measureInput" style="display:none"></ecosis-measurement-input>
+      <ecosis-processing-input id="processingInput" style="display:none"></ecosis-processing-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="processingInput"><i class="fa fa-arrow-right"></i></a> Processing Information
+        <a class="btn-toggle" on-click="toggleCat" cat="instrumentInput">
+          <i class="fa fa-arrow-right"></i></a> Instrument <small cat="instrument"></small>
       </h4>
-      <ecosis-processing-input on-update="save" id="processingInput" style="display:none"></ecosis-processing-input>
+      <ecosis-instrument-input id="instrumentInput" style="display:none"></ecosis-instrument-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="instrumentInput"><i class="fa fa-arrow-right"></i></a> Instrument
+        <a class="btn-toggle" on-click="toggleCat" cat="locationInput">
+        <i class="fa fa-arrow-right"></i></a> Location <small cat="location"></small>
       </h4>
-      <ecosis-instrument-input on-update="save" id="instrumentInput" style="display:none"></ecosis-instrument-input>
+      <ecosis-location-input id="locationInput" style="display:none"></ecosis-location-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="locationInput"><i class="fa fa-arrow-right"></i></a> Location
+        <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput">
+        <i class="fa fa-arrow-right"></i></a> Linked Data <small cat="linked"></small>
       </h4>
-      <ecosis-location-input on-update="save" id="locationInput" style="display:none"></ecosis-location-input>
+      <ecosis-linked-data-input id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput"><i class="fa fa-arrow-right"></i></a> Linked Data
+        <a class="btn-toggle" on-click="toggleCat" cat="citationInput">
+          <i class="fa fa-arrow-right"></i></a> Citation <small cat="citation"></small>
       </h4>
-      <ecosis-linked-data-input on-update="save" id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
-
-      <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
-      </h4>
-      <ecosis-citation-input on-update="save" id="citationInput" style="display:none"></ecosis-citation-input>
+      <ecosis-citation-input id="citationInput" style="display:none"></ecosis-citation-input>
 
     </div>
 
@@ -10202,8 +10147,8 @@ this.fire('dom-change');
 
     <div class="layout horizontal" style="margin-top: 15px">
       <div class="flex">
-        <a class="btn btn-primary" style="display:none" on-click="goToAdd" id="goToBtn"><i class="fa fa-plus"></i> Add Resources</a>
-        <a class="btn btn-primary" style="display:none" on-click="goToList" id="goToListBtn"><i class="fa fa-list"></i> Current Resources</a>
+        <a class="btn btn-primary" style="display:none" id="goToBtn" href="#add-resources"><i class="fa fa-plus"></i> Add Resources</a>
+        <a class="btn btn-primary" style="display:none" id="goToListBtn" href="#current-resources"><i class="fa fa-list"></i> Current Resources</a>
 
 
         <a class="btn btn-primary" style="display:none" on-click="create" id="createBtn"><i class="fa fa-plus"></i> Create Dataset</a>
@@ -10291,6 +10236,8 @@ this.fire('dom-change');
         this.showCreatePopup();
       }
 
+      this.updateScores();
+
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
 
       ecosis.ckan.gitInfo(function(resp){
@@ -10307,6 +10254,8 @@ this.fire('dom-change');
           this.$.gitCommitLabel.innerHTML = this.git.commit;
         }
       }.bind(this));
+
+      ecosis.ds.on('update', this.save.bind(this));
     },
 
     showCreatePopup : function() {
@@ -10330,34 +10279,36 @@ this.fire('dom-change');
     },
 
     onDataLoad : function() {
-      var data = ecosis.ds.data;
+      var pkg = ecosis.ds.package;
 
-      this.$.descriptionInput.value = data.notes || '';
-      this.$.keywordInput.setTokens(data.tags || []);
-      this.$.licenseInput.value = data.license_id || '';
-      this.$.organizationInput.value = data.owner_org || '';
-      this.$.visibilityInput.value = data.private ? 'true' : 'false';
-      this.$.versionInput.value = data.version;
-      this.$.websiteInput.value = ecosis.ds.getDatasetExtra('Website').value || '';
-      this.$.linkedDataInput.setData(ecosis.ds.getDatasetExtra('LinkedData').value);
+      this.$.descriptionInput.value = pkg.getDescription();
+      this.$.keywordInput.setTokens(pkg.getKeywords());
+      this.$.licenseInput.value = pkg.getLicenseId();
+      this.$.organizationInput.value = pkg.getOrganization();
+      this.$.visibilityInput.value = pkg.isPrivate() ? 'true' : 'false';
+      this.$.versionInput.value = pkg.getVersion();
+      this.$.websiteInput.value = pkg.getWebsite();
+      this.$.linkedDataInput.setData(pkg.getLinkedData());
 
       this.updateVisibilityControl();
     },
 
     updateVisibilityControl : function() {
-      if( !ecosis.ds.data.owner_org || ecosis.ds.data.owner_org == '' ) {
+      if( !ecosis.ds.package.getOrganization() ) {
         this.$.visibilityInput.setAttribute('disabled', '');
         this.$.visibilityInput.value = 'false';
-        ecosis.ds.data.private = false;
+        ecosis.ds.package.setPrivate(false);
         this.$.visibilityWarnLabel.style.display = 'block';
       } else {
         this.$.visibilityInput.removeAttribute('disabled');
         this.$.visibilityWarnLabel.style.display = 'none';
-        this.$.visibilityInput.value = ecosis.ds.data.private ? 'true' : 'false';
+        this.$.visibilityInput.value = ecosis.ds.package.isPrivate() ? 'true' : 'false';
       }
     },
 
     updateCreateBtnState : function() {
+      if( this.mode === 'edit' ) return;
+
       if( this.$.titleInput.validName ) {
         this.$.createBtn.removeAttribute('disabled');
         this.$.helpCreatePanel.style.display = 'none';
@@ -10374,7 +10325,7 @@ this.fire('dom-change');
       var options = '<option></option>';
       for( var i = 0; i < resp.length; i++ ) {
         var item = resp[i];
-        options += '<option value="'+item.id+'" '+(ecosis.ds.data.license_id == item.id ? 'selected' : '')+'>'+item.title+'</option>';
+        options += '<option value="'+item.id+'" '+(ecosis.ds.package.getLicenseId() == item.id ? 'selected' : '')+'>'+item.title+'</option>';
       }
       this.$.licenseInput.innerHTML = options;
     },
@@ -10399,31 +10350,19 @@ this.fire('dom-change');
       this.$.organizationInput.innerHTML = options;
     },
 
-    goToAdd : function() {
-      window.location = '#add-resources';
-    },
-
-    goToList : function() {
-      window.location = '#current-resources';
-    },
-
     delete : function() {
-      if( confirm('Are you sure your want to remove this dataset?') ) {
-        if( confirm('Are you REALLY sure your want to remove this dataset?!?') ) {
-          ecosis.ckan.deletePackage(ecosis.ds.package_id,
-            function(resp) {
-              if( resp.error ) {
-                // ERROR 5
-                resp.code = 5;
-                return ecosis.errorPopup.show(resp);
-              }
+      if( !confirm('Are you sure your want to remove this dataset?') ) return;
+      if( !confirm('Are you REALLY sure your want to remove this dataset?!?') ) return;
 
-              alert('dataset deleted.');
-              window.location = '/dataset';
-            }
-          );
+      ecosis.ds.package.delete(function(resp) {
+          if( resp.error ) {
+            return ecosis.errorPopup.show(resp);
+          }
+
+          alert('dataset deleted.');
+          window.location = '/dataset';
         }
-      }
+      );
     },
 
     create : function() {
@@ -10432,33 +10371,33 @@ this.fire('dom-change');
       this.$.createDatasetBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating...';
       this.$.createDatasetBtn.setAttribute('disabled', 'disabled');
 
-      ecosis.ckan.createPackage(ecosis.ds.data,
-          function(resp) {
-            this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
-            this.$.createDatasetBtn.removeAttribute('disabled');
+      ecosis.ds.package.create(function(resp) {
+        this.$.createDatasetBtn.innerHTML = '<i class="fa fa-plus"></i> Create Dataset';
+        this.$.createDatasetBtn.removeAttribute('disabled');
 
-            if( resp.error ) {
-              // ERROR 6
-              resp.code = 6;
-              return ecosis.errorPopup.show(resp);
-            }
-            if( !resp.id ) {
-              // ERROR 7
-              return ecosis.errorPopup.show({
-                message : 'Failed to create dataset',
-                code : 7
-              });
-            }
+        if( resp.error ) {
+          return ecosis.errorPopup.show(resp);
+        }
 
-            // set the page
-            window.location = '/import/?id='+resp.id+'#add-resources';
-          }.bind(this)
-      );
+        // set the page
+        window.location = '/import/?id='+resp.id+'#add-resources';
+      }.bind(this));
+    },
+
+    updateScores : function() {
+      var breakdown = ecosis.ds.getScore().breakdown;
+      var $this = $(this);
+      for( var key in breakdown ) {
+        $this.find('small[cat="'+key+'"]').html(breakdown[key].score+'/'+breakdown[key].total);
+      }
     },
 
     save : function() {
-      this.fireScoreUpdate();
-      if( this.mode == 'create' ) return;
+      this.updateScores();
+
+      if( this.mode == 'create' ) {
+        return;
+      }
 
       this.$.saveLabel.style.display = 'block';
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
@@ -10470,121 +10409,56 @@ this.fire('dom-change');
     },
 
     _save : function() {
-      // make sure we have the correct package state
-      // all resources need to be included when you make a updatePackage call
-      ecosis.ckan.getPackage(ecosis.ds.package_id,
-        function(resp) {
-          if( resp.error ) {
-            this.$.saveLabel.style.display = 'none';
-
-            // ERROR 8
-            resp.code = 8;
-            resp.message += '. Failed to fetch package for update.'
-            return ecosis.errorPopup.show(resp);
-          }
-
-          var metadata = resp.result;
-          for( var key in ecosis.ds.data ) {
-            metadata[key] = ecosis.ds.data[key];
-          }
-
-          ecosis.ckan.updatePackage(metadata,
-            function(resp) {
-              this.$.saveLabel.style.display = 'none';
-
-              if( resp.error ) {
-                // ERROR 9
-                resp.code = 9;
-                resp.message += '. Failed to update dataset.'
-                return ecosis.errorPopup.show(resp);
-              }
-              if( !resp.result.id )  {
-                // ERROR 10
-                return ecosis.errorPopup.show({
-                  message : 'Failed to update dataset',
-                  code : 10
-                });
-              }
-
-              // update back btn as well
-              document.querySelector('ecosis-header').setBackBtn(resp.result.name);
-
-            }.bind(this)
-          );
-        }.bind(this)
-      );
-    },
-
-    fireScoreUpdate : function() {
-      this.fire('score-update');
+      ecosis.ds.package.save(function(resp) {
+        this.$.saveLabel.style.display = 'none';
+        if( resp.error ) {
+          return ecosis.errorPopup.show(resp);
+        }
+        document.querySelector('ecosis-header').setBackBtn(resp.name);
+      }.bind(this));
     },
 
     /* change handlers */
-    onTitleInputChange : function() {
-      if( ecosis.ds.editMode ) {
-        this.save();
-      } else {
-        this.updateCreateBtnState();
-      }
-    },
-
     onOrganizationInputChange : function() {
-      ecosis.ds.data.owner_org = this.$.organizationInput.value;
+      ecosis.ds.package.setOrganization(this.$.organizationInput.value);
       this.updateVisibilityControl();
-      this.save();
     },
 
     onDescriptionInputChange : function() {
-      ecosis.ds.data.notes = this.$.descriptionInput.value;
-      this.save();
-    },
-
-    onKeywordsChange : function() {
-      var tokens = this.$.keywordInput.getTokens();
-      var keywords = [];
-
-      for( var i = 0; i < tokens.length; i++ ) {
-        keywords.push({name: tokens[i].label});
-      }
-
-      ecosis.ds.data.tags = keywords;
-      this.save();
+      ecosis.ds.package.setDescription(this.$.descriptionInput.value);
     },
 
     onLicenseInputChange : function() {
-      ecosis.ds.data.license_id = this.$.licenseInput.value;
+      var license_id = this.$.licenseInput.value;
+      var license_title = '';
 
       for( var i = 0; i < this.licenses.length; i++ ) {
-        if( this.licenses[i].id == ecosis.ds.data.license_id ) {
-          ecosis.ds.data.license_title = this.licenses[i].title;
+        if( this.licenses[i].id == ecosis.ds.package.getLicenseId() ) {
+          license_title = this.licenses[i].title;
           break;
         }
       }
 
-      this.save();
+      ecosis.ds.package.setLicense(license_id, license_title);
     },
 
     onVisibilityInputChange : function() {
-      ecosis.ds.data.private = this.$.visibilityInput.value == 'true' ? true : false;
+      ecosis.ds.package.setPrivate(this.$.visibilityInput.value == 'true' ? true : false);
 
       // push to search needs to know
       this.fire('visibility-change');
-      this.save();
     },
 
     onVersionInputChange : function() {
-      ecosis.ds.data.version = this.$.versionInput.value;
-      this.save();
+      ecosis.ds.package.setVersion(this.$.versionInput.value);
     },
 
     onWebsiteInputChange : function() {
-      ecosis.ds.setDatasetExtra('Website', this.$.websiteInput.value);
-      this.save();
+      ecosis.ds.package.setWebsite(this.$.websiteInput.value);
     },
 
     onLinkedDataChange : function() {
-      ecosis.ds.setDatasetExtra('LinkedData', this.$.linkedDataInput.getData());
-      this.save();
+      ecosis.ds.package.setLinkedData(this.$.linkedDataInput.getData());
     },
 
     toggleCat : function(e) {
@@ -11032,7 +10906,7 @@ this.fire('dom-change');
     <div style="margin-top: 40px">
       <a on-click="toggleInfoPanel" style="cursor:pointer">Supported file types and the Ecosis Metadata Editor</a>
     </div>
-    <div id="infoPanel" style="display:none" class="animated fadeInUp">
+    <div id="infoPanel" style="display:none" class="animated fadeIn">
         <h6 class="page-header">Supported File Types</h6>
         <div class="well well-sm">
             <div>Currently the following tabular file types will be parsed.</div>
@@ -11047,13 +10921,6 @@ this.fire('dom-change');
             <div><span class="green">*</span>Zip files will be extracted on the server.
               Any files contained within the zip file that have supported extension will be parsed.</div>
             <div>Other file extensions are accepted but will not be parsed.</div>
-        </div>
-
-        <h6 class="page-header">Ecosis Metadata Editor</h6>
-        <div class="well well-sm">
-            <div>Need help packaging your data?  What to markup your data with EcoSIS metadata and controlled
-              vocabularies so it can be easy discovered?  Use the <a href="https://github.com/CSTARS/ecosis-data-tool/releases" target="_blank">Ecosis Metadata Editor</a> to markup your metadata and create a package for your dataset to easily
-              upload using this editor.</div>
         </div>
     </div>
 
@@ -11172,7 +11039,7 @@ this.fire('dom-change');
           for( var j = 0; j < resource.childResources.length; j++ ) {
             if( !resource.childResources[j].datasheets ) continue;
             if( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) continue;
-            
+
             resources.push(resource.childResources[j]);
           }
         } else if ( resource.datasheets.length == 1 && resource.datasheets[0].invalidFileType ) {
@@ -11228,7 +11095,7 @@ this.fire('dom-change');
                     if( resp.error ) console.log('Error adding resource: '+file.name);
 
                     // save this, when we are done, we will set default parse type
-                    this.newResourceIds.push(resp.result.id);
+                    this.newResourceIds.push(resp.id);
 
                     index++
                     this.uploadFiles(type, index);
@@ -11426,7 +11293,7 @@ this.fire('dom-change');
 
     ready : function() {
       ecosis.ds.on('load', function(){
-        this.$.dsTitleLabel.innerHTML = ecosis.ds.data.title;
+        this.$.dsTitleLabel.innerHTML = ecosis.ds.package.getTitle();
         this.updateSelectList();
         this.updateMap();
       }.bind(this));
@@ -11578,7 +11445,7 @@ this.fire('dom-change');
         '<table class="table">'+
           '<tr>'+
               '<th>EcoSIS</th>'+
-              '<th>'+ecosis.ds.data.title+'</th>'+
+              '<th>'+ecosis.ds.package.getTitle()+'</th>'+
               '<th>Remove</th>'+
           '</tr>';
 
@@ -11678,9 +11545,6 @@ this.fire('dom-change');
 <dom-module id="ecosis-top-mapping">
   <template>
     <style>
-      :host {
-        display: none;
-      }
       .card {
         margin: 15px 10px;
         padding: 10px;
@@ -11689,7 +11553,7 @@ this.fire('dom-change');
     </style>
 
     <div style="padding: 15px">
-      <div class="panel panel-primary">
+      <div class="panel panel-primary" id="root">
         <div class="panel-heading">
           <h3 class="panel-title">Standardize Your Plant Trait Names</h3>
         </div>
@@ -11739,6 +11603,10 @@ this.fire('dom-change');
         </div>
       </div>
 
+      <div style="text-align:center" id="allGoodMessage" class="well">
+        We have no suggestions at this time for your spectra metadata attribute names.
+      </div>
+
       <div style="text-align:center">
         Looking for the complete list of standard plant trait names?  Please visit the <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>.
       </div>
@@ -11766,7 +11634,7 @@ this.fire('dom-change');
 
         this.current = str;
 
-        ecosis.ckan.suggestOverview(list, function(resp){
+        ecosis.ckan.topSuggestOverview(list, function(resp){
           this.badList = [];
           for( var key in resp ) {
             if( resp[key].type !== 'match' && resp[key].type !== 'nomatch' ) {
@@ -11775,10 +11643,13 @@ this.fire('dom-change');
           }
 
           if( this.badList.length === 0 ) {
-            this.style.display = 'none';
+            this.$.root.style.display = 'none';
+            this.$.allGoodMessage.style.display = 'block';
             return;
           }
-          this.style.display = 'block';
+
+          this.$.allGoodMessage.style.display = 'none';
+          this.$.root.style.display = 'block';
 
           this.render();
         }.bind(this));
@@ -11807,7 +11678,7 @@ this.fire('dom-change');
 
         this.$.suggestLabel.style.display = 'block';
 
-        ecosis.ckan.suggest(this.selected.replace(/(-|_)/g, ' '), function(resp){
+        ecosis.ckan.topSuggest(this.selected.replace(/(-|_)/g, ' '), function(resp){
           for( var i = 0; i < resp.result.length; i++ ) {
             var item = resp.result[i];
             item.subClassOfClean = item.subClassOf ? item.subClassOf.replace(/_/g, ' ') : '';
@@ -12190,7 +12061,7 @@ this.fire('dom-change');
 
     update : function() {
 
-      if( ecosis.ds.data.private ) {
+      if( ecosis.ds.package.isPrivate() ) {
         this.$.privateAlertPanel.style.display = 'block';
         this.$.main.style.display = 'none';
       } else {
@@ -12207,17 +12078,17 @@ this.fire('dom-change');
     },
 
     updateLabels : function() {
-      for( var key in ecosis.ds.data ) {
+      for( var key in ecosis.ds.package.data ) {
         if( key == 'owner_org' ) {
           for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
-            if( ecosis.user.organizations[i].id == ecosis.ds.data.owner_org ) {
+            if( ecosis.user.organizations[i].id == ecosis.ds.package.getOrganization() ) {
               this.$.owner_org_name.innerHTML = ecosis.user.organizations[i].display_name;
               break;
             }
           }
 
         } else if( this.$[key] ) {
-          this.$[key].innerHTML = ecosis.ds.data[key];
+          this.$[key].innerHTML = ecosis.ds.package.data[key];
         }
       }
 
@@ -12239,7 +12110,7 @@ this.fire('dom-change');
 		},
 
 		updatePushStatus : function() {
-			var count = ecosis.ds.getScore();
+			var count = ecosis.ds.getScore().score;
 
 			if( count < this.requireEcosisAttrs ) {
 				this.$.pushBtn.style.display = 'none';
