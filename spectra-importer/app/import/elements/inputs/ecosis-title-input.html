@@ -61,6 +61,7 @@
       this.verify = new ecosis.app.UiBuffer(this._verify, 500, this);
 
       ecosis.ds.on('load', this.onDataReady.bind(this));
+      this.validName = false;
     },
 
     onDataReady : function() {
@@ -74,6 +75,10 @@
     },
 
     onTitleInputChange : function() {
+      this.verify();
+    },
+
+    onBlur : function() {
       this.verify();
     },
 
@@ -100,6 +105,7 @@
         if( err ) {
           this.$.invalid.style.display = 'inline-block';
           this.$.invalid.innerHTML = err.message;
+          this.fire('update');
           return;
         }
 

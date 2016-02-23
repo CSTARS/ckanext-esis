@@ -110,8 +110,12 @@
     },
 
     onScoreUpdated : function() {
-
       var result = ecosis.ds.getScore();
+
+      if( result.score === this.lastScore ) {
+        return;
+      }
+      this.lastScore = result.score;
 
       var label = 'success';
       if( result.score < 3 ) label = 'danger';

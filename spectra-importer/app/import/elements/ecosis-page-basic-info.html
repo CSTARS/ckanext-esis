@@ -46,8 +46,8 @@
       <div id="createTemplateSuccess" style="display:none"><span class="label label-success">Success!</span></div>
     </div>
 
-    <h4 class="page-header">Basic Information</h4>
-    <ecosis-title-input id="titleInput"></ecosis-title-input>
+    <h4 class="page-header">Basic Information <small cat="basic"></small></h4>
+    <ecosis-title-input id="titleInput" on-update="updateCreateBtnState"></ecosis-title-input>
 
     <div class="form-horizontal">
 
@@ -117,37 +117,44 @@
       </div>
 
       <h4 class="page-header">
-          <a class="btn-toggle" on-click="toggleCat" cat="themeInput"><i class="fa fa-arrow-right"></i></a> Theme
+          <a class="btn-toggle" on-click="toggleCat" cat="themeInput">
+          <i class="fa fa-arrow-right"></i></a> Theme <small cat="theme"></small>
       </h4>
       <ecosis-theme-input id="themeInput" style="display:none"></ecosis-theme-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="measureInput"><i class="fa fa-arrow-right"></i></a> Measurement
+        <a class="btn-toggle" on-click="toggleCat" cat="measureInput">
+          <i class="fa fa-arrow-right"></i></a> Measurement <small cat="measurement"></small>
       </h4>
       <ecosis-measurement-input id="measureInput" style="display:none"></ecosis-measurement-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="processingInput"><i class="fa fa-arrow-right"></i></a> Processing Information
+        <a class="btn-toggle" on-click="toggleCat" cat="processingInput">
+        <i class="fa fa-arrow-right"></i></a> Processing Information <small cat="processing information"></small>
       </h4>
       <ecosis-processing-input id="processingInput" style="display:none"></ecosis-processing-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="instrumentInput"><i class="fa fa-arrow-right"></i></a> Instrument
+        <a class="btn-toggle" on-click="toggleCat" cat="instrumentInput">
+          <i class="fa fa-arrow-right"></i></a> Instrument <small cat="instrument"></small>
       </h4>
       <ecosis-instrument-input id="instrumentInput" style="display:none"></ecosis-instrument-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="locationInput"><i class="fa fa-arrow-right"></i></a> Location
+        <a class="btn-toggle" on-click="toggleCat" cat="locationInput">
+        <i class="fa fa-arrow-right"></i></a> Location <small cat="location"></small>
       </h4>
       <ecosis-location-input id="locationInput" style="display:none"></ecosis-location-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput"><i class="fa fa-arrow-right"></i></a> Linked Data
+        <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput">
+        <i class="fa fa-arrow-right"></i></a> Linked Data <small cat="linked"></small>
       </h4>
       <ecosis-linked-data-input id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
 
       <h4 class="page-header">
-        <a class="btn-toggle" on-click="toggleCat" cat="citationInput"><i class="fa fa-arrow-right"></i></a> Citation
+        <a class="btn-toggle" on-click="toggleCat" cat="citationInput">
+          <i class="fa fa-arrow-right"></i></a> Citation <small cat="citation"></small>
       </h4>
       <ecosis-citation-input id="citationInput" style="display:none"></ecosis-citation-input>
 
@@ -252,6 +259,8 @@
         this.showCreatePopup();
       }
 
+      this.updateScores();
+
       ecosis.ckan.getLicenseList(this.setLicenseList.bind(this));
 
       ecosis.ckan.gitInfo(function(resp){
@@ -321,6 +330,8 @@
     },
 
     updateCreateBtnState : function() {
+      if( this.mode === 'edit' ) return;
+
       if( this.$.titleInput.validName ) {
         this.$.createBtn.removeAttribute('disabled');
         this.$.helpCreatePanel.style.display = 'none';
@@ -396,8 +407,20 @@
       }.bind(this));
     },
 
+    updateScores : function() {
+      var breakdown = ecosis.ds.getScore().breakdown;
+      var $this = $(this);
+      for( var key in breakdown ) {
+        $this.find('small[cat="'+key+'"]').html(breakdown[key].score+'/'+breakdown[key].total);
+      }
+    },
+
     save : function() {
-      if( this.mode == 'create' ) return;
+      this.updateScores();
+
+      if( this.mode == 'create' ) {
+        return;
+      }
 
       this.$.saveLabel.style.display = 'block';
       if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);

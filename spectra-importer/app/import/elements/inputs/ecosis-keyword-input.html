@@ -68,7 +68,7 @@
           ecosis.ckan.tagSearch(this.$.keywordInput.value, 10, function(resp){
             this.setSearching(false);
 
-            this.results = resp.result.results;
+            this.results = resp.results;
             this.renderResults();
           }.bind(this));
         }.bind(this), 500);

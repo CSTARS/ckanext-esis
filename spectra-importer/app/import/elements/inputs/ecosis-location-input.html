@@ -6,6 +6,18 @@
   </style>
   <template>
     <div class="well">
+
+      <div class="horizontal-form">
+        <div class="form-group">
+          <label id="label" for="input" class="col-md-3 control-label">Location Name</label>
+          <div class="col-md-7">
+            <input type="text" class="form-control" id="input" on-change="onNameChange"></select>
+            <div class="help-block" id="help">You can comma separate</div>
+          </div>
+        </div>
+      </div>
+
+      <h5>Bounding Box</h5>
       <div id="map" style="height: 400px"></div>
       <div class="help-block">Draw bounding box for dataset.  If you provide latitude and
       longitude or geojson field(s) in your spectra, a bounding box for your dataset will
@@ -37,6 +49,12 @@
     },
 
     onLoad : function() {
+      var names = ecosis.ds.package.getLocationName();
+      if( Array.isArray(names) ) {
+        names = names.join(', ');
+      }
+      this.$.input.value = names;
+
       var geojson = ecosis.ds.package.getGeoJson();
       if( Object.keys(geojson).length === 0 ) return;
 
@@ -53,12 +71,18 @@
       } catch(e) {}
     },
 
+    onNameChange : function() {
+      ecosis.ds.package.setLocationName(this.$.input.value);
+    },
+
     onShow : function() {
       this.drawing = false;
 
       setTimeout(function(){
         this.map.invalidateSize();
-        this.map.fitBounds(this.polygon.getBounds());
+        if( this.polygon ) {
+          this.map.fitBounds(this.polygon.getBounds());
+        }
       }.bind(this), 50);
     },
 

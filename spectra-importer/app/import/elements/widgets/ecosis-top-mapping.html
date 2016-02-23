@@ -1,9 +1,6 @@
 <dom-module id="ecosis-top-mapping">
   <template>
     <style>
-      :host {
-        display: none;
-      }
       .card {
         margin: 15px 10px;
         padding: 10px;
@@ -12,7 +9,7 @@
     </style>
 
     <div style="padding: 15px">
-      <div class="panel panel-primary">
+      <div class="panel panel-primary" id="root">
         <div class="panel-heading">
           <h3 class="panel-title">Standardize Your Plant Trait Names</h3>
         </div>
@@ -62,6 +59,10 @@
         </div>
       </div>
 
+      <div style="text-align:center" id="allGoodMessage" class="well">
+        We have no suggestions at this time for your spectra metadata attribute names.
+      </div>
+
       <div style="text-align:center">
         Looking for the complete list of standard plant trait names?  Please visit the <a href="http://top-thesaurus.org/" target="_blank">TOP Thesaurus</a>.
       </div>
@@ -98,10 +99,13 @@
           }
 
           if( this.badList.length === 0 ) {
-            this.style.display = 'none';
+            this.$.root.style.display = 'none';
+            this.$.allGoodMessage.style.display = 'block';
             return;
           }
-          this.style.display = 'block';
+
+          this.$.allGoodMessage.style.display = 'none';
+          this.$.root.style.display = 'block';
 
           this.render();
         }.bind(this));

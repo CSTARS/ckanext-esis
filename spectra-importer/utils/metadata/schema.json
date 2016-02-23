@@ -385,7 +385,7 @@
     {
       "name": "Location Name",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
       "spectraLevel": false,
       "vocabulary": null,
