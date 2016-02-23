@@ -148,7 +148,7 @@
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput">
-        <i class="fa fa-arrow-right"></i></a> Linked Data <small cat="linked"></small>
+        <i class="fa fa-arrow-right"></i></a> Linked Resources <small cat="linked"></small>
       </h4>
       <ecosis-linked-data-input id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
 
@@ -278,7 +278,9 @@
         }
       }.bind(this));
 
-      ecosis.ds.on('update', this.save.bind(this));
+      ecosis.ds.package.on('update', this.updateScores.bind(this))
+      ecosis.ds.package.on('save-start', this.saveStart.bind(this));
+      ecosis.ds.package.on('save-end', this.saveEnd.bind(this));
     },
 
     showCreatePopup : function() {
@@ -415,30 +417,18 @@
       }
     },
 
-    save : function() {
-      this.updateScores();
-
-      if( this.mode == 'create' ) {
-        return;
-      }
-
+    saveStart : function() {
+      if( this.mode === 'create' ) return;
       this.$.saveLabel.style.display = 'block';
-      if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
-
-      this.updateTimer = setTimeout(function(){
-        this.updateTimer = -1;
-        this._save();
-      }.bind(this), 2000);
     },
 
-    _save : function() {
-      ecosis.ds.package.save(function(resp) {
-        this.$.saveLabel.style.display = 'none';
-        if( resp.error ) {
-          return ecosis.errorPopup.show(resp);
-        }
-        document.querySelector('ecosis-header').setBackBtn(resp.name);
-      }.bind(this));
+    saveEnd : function(resp) {
+      if( this.mode === 'create' ) return;
+      this.$.saveLabel.style.display = 'none';
+      if( resp.error ) {
+        return ecosis.errorPopup.show(resp);
+      }
+      document.querySelector('ecosis-header').setBackBtn(resp.name);
     },
 
     /* change handlers */

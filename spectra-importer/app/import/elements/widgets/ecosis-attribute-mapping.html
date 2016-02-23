@@ -151,10 +151,13 @@
     },
 
     addFromSuggest : function(custom, trait) {
-      ecosis.ds.attributeMap[trait] = custom;
-      ecosis.ds.inverseAttributeMap[custom] = trait;
+      var aliases = ecosis.ds.package.getAliases();
+      aliases[trait] = custom;
 
-      this.save(ecosis.ds.attributeMap);
+      ecosis.ds.package.setAliases(aliases);
+      ecosis.ds.updateAliasLookup();
+      this.updateMap();
+      this.updateSelectList();
     },
 
     updateMap : function() {
@@ -322,20 +325,11 @@
         map : newMap
       };
 
-      ecosis.ckan.setPackageOptions(ecosis.ds.package_id, options,
-        function(resp) {
-          this.$.saveLabel.style.display = 'none';
+      ecosis.ds.package.setAliases(newMap);
+      ecosis.ds.updateAliasLookup();
 
-          this.updateMap();
-          this.updateSelectList();
-          if( resp.error ) {
-            // ERROR 13
-            resp.code = 13;
-            resp.message += '. Error saving attribute name mapping.';
-            ecosis.errorPopup.show(resp);
-          }
-        }.bind(this)
-      )
+      this.updateMap();
+      this.updateSelectList();
     },
 
     toggleMetadata : function() {

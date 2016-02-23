@@ -163,6 +163,12 @@
         var index = parseInt(e.currentTarget.getAttribute('index'));
         document.querySelector('ecosis-attribute-mapping').addFromSuggest(this.selected, this.suggestions[index].preferredLabel);
         this.suggestions = [];
+
+        index = this.badList.indexOf(this.selected);
+        if( index > -1 ) {
+          this.badList.splice(index, 1);
+        }
+        this.render();
       }
     });
   </script>

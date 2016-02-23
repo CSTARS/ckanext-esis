@@ -8949,7 +8949,9 @@ this.fire('dom-change');
         this.querySelector('#trashBtn').style.color = '#333';
       }
 
-
+      if( this.resource.fromZip ) {
+        this.querySelector('#select').style.display = 'none';
+      }
 
       // hide edit button if invalid file type
       if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
@@ -9097,6 +9099,9 @@ this.fire('dom-change');
           }
           ecosis.ds.fireUpdate();
 
+          ecosis.ds.deleteResourceTime = new Date();
+          ecosis.ds.checkChanges();
+
           var ele = this;
           $(this).hide('slow', function(){
             $(this).detach();
@@ -9133,7 +9138,7 @@ this.fire('dom-change');
       <div class="layout horizontal center">
           <a class="btn btn-default" id="leftArrow" on-click="moveLeft"><i class="fa fa-arrow-left"></i></a>
 
-          <div class="flex" id="columnPreview" style="overflow:auto;">
+          <div class="flex" id="columnPreview" style="overflow:hidden">
             <div class="row">
               <div class="col-sm-6">
                 <div id="columnTableRoot" style="height: 300px; overflow:auto; margin-left: 10px"></div>
@@ -9142,7 +9147,7 @@ this.fire('dom-change');
             </div>
           </div>
 
-          <div class="flex" id="rowPreview" style="overflow:auto;">
+          <div class="flex" id="rowPreview" style="overflow:hidden">
             <div id="rowTableRoot" style="overflow:auto; margin-bottom: 35px"></div>
             <div id="rowChartRoot" style="height: 200px; margin: 25px 0 15px 0"></div>
           </div>
@@ -10125,7 +10130,7 @@ this.fire('dom-change');
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput">
-        <i class="fa fa-arrow-right"></i></a> Linked Data <small cat="linked"></small>
+        <i class="fa fa-arrow-right"></i></a> Linked Resources <small cat="linked"></small>
       </h4>
       <ecosis-linked-data-input id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
 
@@ -10255,7 +10260,9 @@ this.fire('dom-change');
         }
       }.bind(this));
 
-      ecosis.ds.on('update', this.save.bind(this));
+      ecosis.ds.package.on('update', this.updateScores.bind(this))
+      ecosis.ds.package.on('save-start', this.saveStart.bind(this));
+      ecosis.ds.package.on('save-end', this.saveEnd.bind(this));
     },
 
     showCreatePopup : function() {
@@ -10392,30 +10399,18 @@ this.fire('dom-change');
       }
     },
 
-    save : function() {
-      this.updateScores();
-
-      if( this.mode == 'create' ) {
-        return;
-      }
-
+    saveStart : function() {
+      if( this.mode === 'create' ) return;
       this.$.saveLabel.style.display = 'block';
-      if( this.updateTimer != -1 ) clearTimeout(this.updateTimer);
-
-      this.updateTimer = setTimeout(function(){
-        this.updateTimer = -1;
-        this._save();
-      }.bind(this), 2000);
     },
 
-    _save : function() {
-      ecosis.ds.package.save(function(resp) {
-        this.$.saveLabel.style.display = 'none';
-        if( resp.error ) {
-          return ecosis.errorPopup.show(resp);
-        }
-        document.querySelector('ecosis-header').setBackBtn(resp.name);
-      }.bind(this));
+    saveEnd : function(resp) {
+      if( this.mode === 'create' ) return;
+      this.$.saveLabel.style.display = 'none';
+      if( resp.error ) {
+        return ecosis.errorPopup.show(resp);
+      }
+      document.querySelector('ecosis-header').setBackBtn(resp.name);
     },
 
     /* change handlers */
@@ -10759,12 +10754,16 @@ this.fire('dom-change');
 
         ecosis.ds.fireUpdate();
 
+        ecosis.ds.deleteResourceTime = new Date();
+        ecosis.ds.checkChanges();
+
         if( ecosis.ds.resources.length == 0 ) {
           this.$.noResources.style.display = 'block';
           this.$.legend.style.display = 'none';
           this.$.removeAll.style.display = 'none';
         }
 
+        this.$.deleteAll.style.display = 'none';
       }.bind(this));
     },
 
@@ -11348,10 +11347,13 @@ this.fire('dom-change');
     },
 
     addFromSuggest : function(custom, trait) {
-      ecosis.ds.attributeMap[trait] = custom;
-      ecosis.ds.inverseAttributeMap[custom] = trait;
+      var aliases = ecosis.ds.package.getAliases();
+      aliases[trait] = custom;
 
-      this.save(ecosis.ds.attributeMap);
+      ecosis.ds.package.setAliases(aliases);
+      ecosis.ds.updateAliasLookup();
+      this.updateMap();
+      this.updateSelectList();
     },
 
     updateMap : function() {
@@ -11519,20 +11521,11 @@ this.fire('dom-change');
         map : newMap
       };
 
-      ecosis.ckan.setPackageOptions(ecosis.ds.package_id, options,
-        function(resp) {
-          this.$.saveLabel.style.display = 'none';
+      ecosis.ds.package.setAliases(newMap);
+      ecosis.ds.updateAliasLookup();
 
-          this.updateMap();
-          this.updateSelectList();
-          if( resp.error ) {
-            // ERROR 13
-            resp.code = 13;
-            resp.message += '. Error saving attribute name mapping.';
-            ecosis.errorPopup.show(resp);
-          }
-        }.bind(this)
-      )
+      this.updateMap();
+      this.updateSelectList();
     },
 
     toggleMetadata : function() {
@@ -11707,6 +11700,12 @@ this.fire('dom-change');
         var index = parseInt(e.currentTarget.getAttribute('index'));
         document.querySelector('ecosis-attribute-mapping').addFromSuggest(this.selected, this.suggestions[index].preferredLabel);
         this.suggestions = [];
+
+        index = this.badList.indexOf(this.selected);
+        if( index > -1 ) {
+          this.badList.splice(index, 1);
+        }
+        this.render();
       }
     });
   </script>
@@ -11819,11 +11818,12 @@ this.fire('dom-change');
 
       this.$.orderByInput.innerHTML = options;
 
-      if( !ecosis.ds.sort ) return;
+      var sort = ecosis.ds.package.getSort();
+      if( Object.keys(sort) === 0 ) return;
 
-      var sort_description = ecosis.ds.sort.description || '';
-      var sort_type = ecosis.ds.sort.type || '';
-      var sort_on = ecosis.ds.sort.on || '';
+      var sort_description = sort.description || '';
+      var sort_type = sort.type || '';
+      var sort_on = sort.on || '';
 
       this.$.orderByInput.value = sort_on;
       this.$.orderTypeInput.value = sort_type;
@@ -11846,12 +11846,11 @@ this.fire('dom-change');
       var sort_on = this.$.orderByInput.value;
       var sort_type = this.$.orderTypeInput.value;
 
-      ecosis.ds.sort = {
+      var sort = {
         on : sort_on,
         type : sort_type,
         description : this.$.descriptionInput.value || ''
       }
-
 
       if( sort_on && sort_on != '' ) {
         this.$.secondaryPanel.style.display = 'block';
@@ -11865,33 +11864,7 @@ this.fire('dom-change');
         this.$.dateHelp.style.display = 'none';
       }
 
-      if( this.timer != -1 ) clearTimeout(this.timer);
-
-      this.timer = setTimeout(function() {
-          this.timer = -1;
-          this.save();
-      }.bind(this), 2000);
-    },
-
-    save : function() {
-        this.$.saveLabel.style.display = 'block';
-
-        var options = {
-          sort : ecosis.ds.sort
-        }
-
-        ecosis.ckan.setPackageOptions(ecosis.ds.package_id, options,
-          function(resp) {
-            this.$.saveLabel.style.display = 'none';
-
-            if( resp.error ) {
-              // ERROR 14
-              resp.code = 14;
-              resp.message += '. Failed to set dataset sort order.';
-              ecosis.errorPopup.show(resp);
-            }
-          }.bind(this)
-        );
+      ecosis.ds.package.setSort(sort);
     }
   });
 </script>
@@ -12092,14 +12065,18 @@ this.fire('dom-change');
         }
       }
 
-      if( ecosis.ds.result && ecosis.ds.result.pushed ) {
-        var last = '';
-        try {
-          var date = new Date(ecosis.ds.result.pushed);
-          last = '<br />Last published: '+date.toLocaleString();
-        } catch(e) {}
+      if( ecosis.ds.result && ecosis.ds.lastPushed ) {
+        var resp = ecosis.ds.checkChanges();
 
-        this.$.available.innerHTML = '<span class="label label-success">Published to Search</span> '+last;
+        var last = '<br />Last Published: '+resp.lastPushed.toLocaleString();
+        if( resp.unpublishedChanges ) {
+          last += '<br />Last Updated: '+resp.lastUpdated.toLocaleString();
+          last = '<span class="label label-warning">Updated since last publish</span> ' + last;
+        } else {
+          last = '<span class="label label-success">Published to search</span> ' + last;
+        }
+
+        this.$.available.innerHTML = last;
       } else {
         this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
       }

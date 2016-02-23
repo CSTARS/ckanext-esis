@@ -39,44 +39,66 @@ function create(callback) {
   );
 }
 
+var saveTimer = -1;
 function save(callback) {
+  this.ee.emit('save-start');
+
+  if( saveTimer !== -1 ) {
+    clearTimeout(saveTimer);
+  }
+
+  saveTimer = setTimeout(function(){
+    saveTimer = -1;
+    _save(this, callback);
+  }.bind(this), 500);
+}
+
+function _save(ref, callback) {
   // make sure we have the correct package state
   // all resources need to be included when you make a updatePackage call
-  this.SDK.ckan.getPackage(this.data.id,
-    function(resp) {
+  ref.SDK.ckan.getPackage(ref.data.id, function(resp) {
       if( resp.error ) {
         resp.code = 8;
         resp.message += '. Failed to fetch package for update.';
-        return callback(resp);
+        ref.ee.emit('save-end', resp);
+        if( callback ) callback(resp);
+        return;
       }
 
       var metadata = resp;
-      for( var key in this.data ) {
-        metadata[key] = this.data[key];
+      for( var key in ref.data ) {
+        metadata[key] = ref.data[key];
       }
 
-      this.SDK.ckan.updatePackage(metadata,
+      ref.SDK.ckan.updatePackage(metadata,
         function(resp) {
           if( resp.error ) {
             // ERROR 9
             resp.code = 9;
             resp.message += '. Failed to update dataset.';
-            return callback(resp);
+            ref.ee.emit('save-end', resp);
+            if( callback ) callback(resp);
+            return;
           }
 
           if( !resp.id )  {
-            // ERROR 10
-            return callback({
+            var msg = {
               error: true,
               message : 'Failed to update dataset',
               code : 10
-            });
+            };
+            ref.ee.emit('save-end', msg);
+            // ERROR 10
+            if( callback ) callback(msg);
+            return;
           }
 
-          callback({success: true});
+          ref.data = resp;
 
-        }.bind(this)
+          if( callback ) callback({success: true});
+          ref.ee.emit('save-end', {success: true});
+        }
       );
-    }.bind(this)
+    }
   );
 }

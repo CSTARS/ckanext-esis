@@ -242,12 +242,16 @@
 
         ecosis.ds.fireUpdate();
 
+        ecosis.ds.deleteResourceTime = new Date();
+        ecosis.ds.checkChanges();
+
         if( ecosis.ds.resources.length == 0 ) {
           this.$.noResources.style.display = 'block';
           this.$.legend.style.display = 'none';
           this.$.removeAll.style.display = 'none';
         }
 
+        this.$.deleteAll.style.display = 'none';
       }.bind(this));
     },
 

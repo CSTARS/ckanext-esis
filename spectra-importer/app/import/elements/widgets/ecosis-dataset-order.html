@@ -105,11 +105,12 @@
 
       this.$.orderByInput.innerHTML = options;
 
-      if( !ecosis.ds.sort ) return;
+      var sort = ecosis.ds.package.getSort();
+      if( Object.keys(sort) === 0 ) return;
 
-      var sort_description = ecosis.ds.sort.description || '';
-      var sort_type = ecosis.ds.sort.type || '';
-      var sort_on = ecosis.ds.sort.on || '';
+      var sort_description = sort.description || '';
+      var sort_type = sort.type || '';
+      var sort_on = sort.on || '';
 
       this.$.orderByInput.value = sort_on;
       this.$.orderTypeInput.value = sort_type;
@@ -132,12 +133,11 @@
       var sort_on = this.$.orderByInput.value;
       var sort_type = this.$.orderTypeInput.value;
 
-      ecosis.ds.sort = {
+      var sort = {
         on : sort_on,
         type : sort_type,
         description : this.$.descriptionInput.value || ''
       }
-
 
       if( sort_on && sort_on != '' ) {
         this.$.secondaryPanel.style.display = 'block';
@@ -151,33 +151,7 @@
         this.$.dateHelp.style.display = 'none';
       }
 
-      if( this.timer != -1 ) clearTimeout(this.timer);
-
-      this.timer = setTimeout(function() {
-          this.timer = -1;
-          this.save();
-      }.bind(this), 2000);
-    },
-
-    save : function() {
-        this.$.saveLabel.style.display = 'block';
-
-        var options = {
-          sort : ecosis.ds.sort
-        }
-
-        ecosis.ckan.setPackageOptions(ecosis.ds.package_id, options,
-          function(resp) {
-            this.$.saveLabel.style.display = 'none';
-
-            if( resp.error ) {
-              // ERROR 14
-              resp.code = 14;
-              resp.message += '. Failed to set dataset sort order.';
-              ecosis.errorPopup.show(resp);
-            }
-          }.bind(this)
-        );
+      ecosis.ds.package.setSort(sort);
     }
   });
 </script>

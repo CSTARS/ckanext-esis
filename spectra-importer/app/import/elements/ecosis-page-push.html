@@ -121,14 +121,18 @@
         }
       }
 
-      if( ecosis.ds.result && ecosis.ds.result.pushed ) {
-        var last = '';
-        try {
-          var date = new Date(ecosis.ds.result.pushed);
-          last = '<br />Last published: '+date.toLocaleString();
-        } catch(e) {}
+      if( ecosis.ds.result && ecosis.ds.lastPushed ) {
+        var resp = ecosis.ds.checkChanges();
 
-        this.$.available.innerHTML = '<span class="label label-success">Published to Search</span> '+last;
+        var last = '<br />Last Published: '+resp.lastPushed.toLocaleString();
+        if( resp.unpublishedChanges ) {
+          last += '<br />Last Updated: '+resp.lastUpdated.toLocaleString();
+          last = '<span class="label label-warning">Updated since last publish</span> ' + last;
+        } else {
+          last = '<span class="label label-success">Published to search</span> ' + last;
+        }
+
+        this.$.available.innerHTML = last;
       } else {
         this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
       }

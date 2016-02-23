@@ -49,6 +49,10 @@ function Package(initdata, SDK) {
 
   this._onUpdate = function(name) {
     this.ee.emit('update', {attribute: name});
+
+    if( this.mode !== 'create' ) {
+      this.save();
+    }
   };
 
   this.getId = function() {
@@ -290,6 +294,38 @@ function Package(initdata, SDK) {
     } catch(e) {}
 
     return [];
+  };
+
+  this.setSort = function(data) {
+    this.setExtra('sort', JSON.stringify(data));
+    this._onUpdate('sort');
+  };
+
+  this.getSort = function() {
+    var value = this.getExtra('sort');
+    if( !value ) return [];
+
+    try {
+      return JSON.parse(value);
+    } catch(e) {}
+
+    return {};
+  };
+
+  this.setAliases = function(data) {
+    this.setExtra('aliases', JSON.stringify(data));
+    this._onUpdate('aliases');
+  };
+
+  this.getAliases = function() {
+    var value = this.getExtra('aliases');
+    if( !value ) return [];
+
+    try {
+      return JSON.parse(value);
+    } catch(e) {}
+
+    return {};
   };
 
   this.setGeoJson = function(data) {

@@ -84,6 +84,7 @@ module.exports = function(config) {
 
         this.loaded = true;
         ee.emit('load');
+        this.checkChanges();
 
       }.bind(this));
     }.bind(this));
@@ -109,9 +110,42 @@ module.exports = function(config) {
     ee.emit('load');
   };
 
+  this.checkChanges = function() {
+    if( !this.editMode || !this.lastPushed ) return;
+
+    var t = new Date(this.package.data.metadata_modified).getTime();
+    var t2;
+    for( var i = 0; i < this.datasheets.length; i++ ) {
+      t2 = new Date(this.datasheets[i].processed).getTime();
+      if( t2 > t ) {
+        t = t2;
+      }
+    }
+
+    if( this.deleteResourceTime ) {
+      if( this.deleteResourceTime.getTime() > t ) {
+        t = this.deleteResourceTime.getTime();
+      }
+    }
+
+    var resp = {
+      lastPushed : this.lastPushed,
+      lastUpdated : new Date(t),
+      unpublishedChanges : (this.lastPushed.getTime() < new Date(t).getTime())
+    };
+
+    ee.emit('changes', resp);
+    return resp;
+  },
+
   // helper for when data loads
   this._setData = function() {
     this.editMode = true;
+
+    this.lastPushed = this.result.pushed;
+    if( this.lastPushed ) {
+      this.lastPushed = new Date(this.lastPushed);
+    }
 
     var ckanPackage = this.result.ckan.package;
     this.package_id = ckanPackage.id;
@@ -123,16 +157,16 @@ module.exports = function(config) {
 
     this.attributeMap = {};
     this.inverseAttributeMap = {};
-    if( this.result.package.map ) {
-      this.attributeMap = this.result.package.map;
-      for( var key in this.result.package.map ) {
-        this.inverseAttributeMap[this.result.package.map[key]] = key;
-      }
+
+    if( this.result.package.map && Object(this.package.getAliases()).length === 0 ) {
+      this.package.setAliases(this.result.package.map);
     }
 
-    this.sort = {};
-    if( this.result.package.sort ) {
-      this.sort = this.result.package.sort;
+    this.updateAliasLookup();
+
+    // check for badness
+    if( this.result.package.sort && Object(this.package.getSort()).length === 0 ) {
+      this.package.setSort(this.result.package.sort);
     }
 
     this.resources = this.result.ckan.resources;
@@ -194,6 +228,13 @@ module.exports = function(config) {
     this.fireUpdate();
   }
 
+  this.updateAliasLookup = function() {
+    this.attributeMap = this.package.getAliases();
+    for( var key in this.attributeMap ) {
+      this.inverseAttributeMap[this.attributeMap[key]] = key;
+    }
+  };
+
   this.setSheet = function(sheet) {
     for( var i = 0; i < this.datasheets.length; i++ ) {
       if( this.datasheets[i].resourceId == sheet.resourceId &&
@@ -217,17 +258,21 @@ module.exports = function(config) {
           break;
       }
     }
+
+    this.checkChanges();
   }
 
   this.fireUpdate = function() {
     ee.emit('update');
   };
-  this.package.on('update', this.fireUpdate.bind(this));
+
+  this.package.on('save-end', this.checkChanges.bind(this));
 
   // after a resource is added, our entire state is different
   this.runAfterResourceAdd = function(workspaceData) {
     this.result = workspaceData;
     this._setData();
+    this.checkChanges();
   };
 
 

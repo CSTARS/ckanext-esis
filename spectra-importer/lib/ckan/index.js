@@ -279,7 +279,7 @@ module.exports = function(config) {
     });
   };
 
-  this.setPackageOptions = function(pkgid, options, callback) {
+  /*this.setPackageOptions = function(pkgid, options, callback) {
     var data = {
       package_id : pkgid,
       options : JSON.stringify(options)
@@ -288,7 +288,7 @@ module.exports = function(config) {
     post(this.host+'/ecosis/package/setOptions', data, function(err, resp) {
       handleResp(err, resp, callback);
     });
-  };
+  };*/
 
   this.topSuggestOverview = function(list, callback) {
     var data = {

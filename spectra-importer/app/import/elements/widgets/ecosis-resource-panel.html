@@ -139,7 +139,9 @@
         this.querySelector('#trashBtn').style.color = '#333';
       }
 
-
+      if( this.resource.fromZip ) {
+        this.querySelector('#select').style.display = 'none';
+      }
 
       // hide edit button if invalid file type
       if( this.resource.datasheets && this.resource.datasheets.length > 0 && this.resource.datasheets[0].invalidFileType ) {
@@ -286,6 +288,9 @@
             }
           }
           ecosis.ds.fireUpdate();
+
+          ecosis.ds.deleteResourceTime = new Date();
+          ecosis.ds.checkChanges();
 
           var ele = this;
           $(this).hide('slow', function(){
