@@ -4,9 +4,19 @@ module.exports = function(Package) {
 };
 
 // load from server provided template
-function loadFromTemplate(ckanPackage)  {
+function loadFromTemplate(ckanPackage, user)  {
   for( var key in this.data ) {
+    if( key === 'owner_org' ) continue;
     if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
+  }
+
+  if( user && user.organizations && ckanPackage.owner_org ) {
+    for( var i = 0; i < user.organizations.length; i++ ) {
+      if( user.organizations[i].id === ckanPackage.owner_org ) {
+        data.owner_org = ckanPackage.owner_org;
+        break;
+      }
+    }
   }
 
   if( ckanPackage.extras ) {
@@ -29,5 +39,9 @@ function loadFromTemplate(ckanPackage)  {
       });
     }
     this.data.tags = arr;
+  }
+
+  if( ckanPackage.map ) {
+    this.setAliases(ckanPackage.map);
   }
 }
