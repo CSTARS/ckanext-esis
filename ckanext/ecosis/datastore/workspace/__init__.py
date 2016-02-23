@@ -95,6 +95,7 @@ def setOptions(package_id, options):
             packageInfo[option] = options[option]
 
     packageInfo["lastTouched"] = datetime.utcnow()
+    packageInfo["modified"] = datetime.utcnow()
 
     collections.get("package").update({"packageId": package_id}, packageInfo)
 
