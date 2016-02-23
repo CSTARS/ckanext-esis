@@ -169,11 +169,16 @@ def _processSheetArray(data, sheetConfig):
     attrTypes = []
     if layout == "row":
         stop = len(data[localRange['start']])
-        for i in range(0, stop):
-            info = utils.parseAttrType(data[localRange['start']][i], [localRange['start'], i])
-            attrTypes.append(info)
+
+        if stop > 1:# check for bad parse
+            for i in range(0, stop):
+                info = utils.parseAttrType(data[localRange['start']][i], [localRange['start'], i])
+                attrTypes.append(info)
     else:
         for i in range(localRange['start'], localRange['stop']+1):
+            if len(data[i]) <= 1: # probably a bad parse
+                continue
+
             info = utils.parseAttrType(data[i][0], [i,0])
             attrTypes.append(info)
 

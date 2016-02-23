@@ -61,7 +61,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
     if config == None:
         config = {}
 
-    mapNames(spectra, config, attributeProcessInfo)
+    mapNames(spectra, config, attributeProcessInfo, package)
 
     usda.setCodes(spectra, info=attributeProcessInfo)
 
@@ -72,7 +72,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
     else:
         addEcosisNamespace(spectra, package, main, sheetInfo)
 
-    setSort(spectra, config)
+    setSort(spectra, config, package)
     setLocation(spectra)
 
     return spectra
@@ -240,11 +240,19 @@ def setLocation(spectra):
         except:
             pass
 
-def setSort(spectra, config):
-    if 'sort' not in config:
-        return
+def setSort(spectra, config, package):
+    sort = None
 
-    sort = config.get('sort')
+    # backword compatibility.  But moving away from config object
+    # all 'advanced data' should be stored in package
+    extras = package.get('extras')
+    if extras != None and extras.get('sort') != None:
+        sort = json.loads(extras.get('sort'))
+    elif config.get("sort") != None:
+        sort = config.get("sort")
+
+    if sort == None:
+        return
 
     on = sort.get('on')
     type = sort.get('type')
@@ -301,9 +309,19 @@ def addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=None):
 
     spectra['ecosis'] = ecosis
 
-def mapNames(spectra, config, processInfo):
-    if config.get("map") != None:
-        for key, value in config["map"].iteritems():
+def mapNames(spectra, config, processInfo, package):
+    # backword compatibility.  But moving away from config object
+    # all 'advanced data' should be stored in package
+
+    aliases = None
+    extras = package.get('extras')
+    if extras != None and extras.get('aliases') != None:
+        aliases = json.loads(extras.get('aliases'))
+    elif config.get("map") != None:
+        aliases = config.get("map")
+
+    if aliases != None:
+        for key, value in aliases.iteritems():
             if value in spectra:
                 spectra[key] = spectra[value]
 
