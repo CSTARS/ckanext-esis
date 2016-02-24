@@ -12,6 +12,7 @@ module.exports = function(config) {
   this.package_id = config.package_id;
 
   this.package = this.SDK.newPackage();
+  this.package.mode = this.editMode ? 'edit' : 'create';
 
   this.owner_org_name = '';
 
@@ -92,20 +93,12 @@ module.exports = function(config) {
 
   this.loadFromTemplate = function(ckanPackage) {
     this.package = this.SDK.newPackage();
+    this.package.mode = 'create';
     this.package.on('update', this.fireUpdate.bind(this));
 
     // set the default attirbutes for this dataset
-    this.package.loadFromTemplate(ckanPackage);
-
-    if( ckanPackage.map ) {
-      this.attributeMap = {};
-      this.inverseAttributeMap = {};
-
-      this.attributeMap = ckanPackage.map;
-      for( var key in ckanPackage.map ) {
-        this.inverseAttributeMap[ckanPackage.map[key]] = key;
-      }
-    }
+    this.package.loadFromTemplate(ckanPackage, this.SDK.user);
+    this.updateAliasLookup();
 
     ee.emit('load');
   };
