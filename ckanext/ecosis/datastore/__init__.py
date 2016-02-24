@@ -21,7 +21,7 @@ def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
     ensureIndexes(collections)
 
     parser.init(collections, workspacePath)
-    ckan.init(pgConn)
+    ckan.init(pgConn, schema)
     query.init(collections, host)
     vocab.init(schema, collections)
     delete.init(collections, workspacePath)

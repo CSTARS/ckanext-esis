@@ -1,10 +1,15 @@
 import psycopg2.extras
 
 connStr = None
+schema = None
 
-def init(pgConn):
-    global connStr
+def init(pgConn, s):
+    global connStr, schema
     connStr = pgConn
+    schema = s
+
+def getSchema():
+    return schema
 
 def get(package_id):
     conn = psycopg2.connect(connStr)
