@@ -7887,7 +7887,7 @@ this.fire('dom-change');
 
           <ul class="nav navbar-nav navbar-right">
             <li><a href="http://tutorial.ecospectra.org" target="_blank"><i class="fa fa-question-circle"></i> Help</a></li>
-            <li><a id="exit"><i class="fa fa-sign-in"></i> Exit</a></li>
+            <li><a id="exit" href="/dataset/"><i class="fa fa-sign-in"></i> Exit</a></li>
           </ul>
         </div>
       </div>
@@ -7919,7 +7919,7 @@ this.fire('dom-change');
 
       if( ecosis.ds.editMode ) {
         ecosis.ds.on('load', function(){
-          if( ecosis.ds.editMode ) this.setBackBtn(ecosis.ds.package.getName());
+          if( ecosis.ds.editMode ) this.setBackBtn();
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
@@ -7938,8 +7938,8 @@ this.fire('dom-change');
       }
     },
 
-    setBackBtn : function(name) {
-      this.$.exit.setAttribute('href', '/dataset/'+name);
+    setBackBtn : function() {
+      this.$.exit.setAttribute('href', '/dataset/'+ecosis.ds.package.getName());
     },
 
     updateActiveTab : function() {
@@ -10394,6 +10394,7 @@ this.fire('dom-change');
     updateScores : function() {
       var breakdown = ecosis.ds.getScore().breakdown;
       var $this = $(this);
+
       for( var key in breakdown ) {
         $this.find('small[cat="'+key+'"]').html(breakdown[key].score+'/'+breakdown[key].total);
       }
@@ -11322,11 +11323,22 @@ this.fire('dom-change');
         reader.onload = function(e) {
           try {
             var data = JSON.parse(e.target.result);
-            // we only want to update map here
-            data = {
-              map : data.map
-            };
-            ecosis.ds.loadFromTemplate(data);
+            if( data.map ) {
+              data.aliases = data.map;
+            }
+
+            var newAliases = {};
+            for( var key in data.aliases ) {
+              if( data.aliases[key] ) {
+                newAliases[key] = data.aliases[key];
+              }
+            }
+
+            ecosis.ds.package.setAliases(newAliases);
+            ecosis.ds.updateAliasLookup();
+            this.updateSelectList();
+            this.updateMap();
+
             this.$.map.value = '';
 
             this.$.mapSuccessLabel.style.display = 'inline-block';

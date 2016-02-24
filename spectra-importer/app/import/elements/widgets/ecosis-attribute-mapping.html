@@ -126,11 +126,22 @@
         reader.onload = function(e) {
           try {
             var data = JSON.parse(e.target.result);
-            // we only want to update map here
-            data = {
-              map : data.map
-            };
-            ecosis.ds.loadFromTemplate(data);
+            if( data.map ) {
+              data.aliases = data.map;
+            }
+
+            var newAliases = {};
+            for( var key in data.aliases ) {
+              if( data.aliases[key] ) {
+                newAliases[key] = data.aliases[key];
+              }
+            }
+
+            ecosis.ds.package.setAliases(newAliases);
+            ecosis.ds.updateAliasLookup();
+            this.updateSelectList();
+            this.updateMap();
+
             this.$.map.value = '';
 
             this.$.mapSuccessLabel.style.display = 'inline-block';

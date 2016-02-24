@@ -412,6 +412,7 @@
     updateScores : function() {
       var breakdown = ecosis.ds.getScore().breakdown;
       var $this = $(this);
+
       for( var key in breakdown ) {
         $this.find('small[cat="'+key+'"]').html(breakdown[key].score+'/'+breakdown[key].total);
       }

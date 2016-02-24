@@ -92,15 +92,15 @@ module.exports = function(config) {
   };
 
   this.loadFromTemplate = function(ckanPackage) {
-    this.package = this.SDK.newPackage();
+    this.package.reset();
     this.package.mode = 'create';
-    this.package.on('update', this.fireUpdate.bind(this));
 
     // set the default attirbutes for this dataset
     this.package.loadFromTemplate(ckanPackage, this.SDK.user);
     this.updateAliasLookup();
 
     ee.emit('load');
+    this.fireUpdate();
   };
 
   this.checkChanges = function() {
