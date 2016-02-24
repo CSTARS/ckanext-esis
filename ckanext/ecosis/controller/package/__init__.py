@@ -93,23 +93,38 @@ def getTemplate():
 
     hasAccess(package_id)
 
-    pkg = {}
-    if mapOnly != 'true':
-        pkg = package.get(package_id)
+    pkg = package.get(package_id)
 
     # clean out
     for var in ignoreTemplateVars:
         if var in pkg:
             del pkg[var]
 
-    wpkg = collections.get('package').find_one({"packageId": package_id},{"map": 1})
-    if "map" in wpkg:
-        pkg['map'] = wpkg['map']
-    else:
-        pkg['map'] = {}
+    extras = pkg.get("extras")
+    if extras != None and extras.get("aliases") != None:
+        pkg["aliases"] = json.loads(extras["aliases"])
+        del extras["aliases"]
+
+    if pkg.get("aliases") == None:
+        wpkg = collections.get('package').find_one({"packageId": package_id},{"map": 1})
+        if "map" in wpkg:
+            pkg['aliases'] = wpkg['map']
+        else:
+            pkg['aliases'] = {}
 
     if format != "json":
         response.headers["Content-Disposition"] = "attachment; filename=\"%s.json\"" % pkg.get('name')
+
+    if mapOnly:
+        schema = package.getSchema()
+        for key, s in schema.iteritems():
+            for item in s:
+                if pkg['aliases'].get(item.get('name')) == None:
+                    pkg['aliases'][item.get('name')] = ''
+
+        pkg = {
+            'aliases' : pkg['aliases']
+        }
 
     return jsonStringify(pkg, formatted=True)
 
