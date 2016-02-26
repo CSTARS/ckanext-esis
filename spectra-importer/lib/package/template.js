@@ -6,7 +6,7 @@ module.exports = function(Package) {
 // load from server provided template
 function loadFromTemplate(ckanPackage, user)  {
   for( var key in this.data ) {
-    if( key === 'owner_org' ) continue;
+    if( key === 'owner_org' || key === 'id' ) continue;
     if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
   }
 
