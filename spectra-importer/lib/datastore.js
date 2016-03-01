@@ -259,7 +259,10 @@ module.exports = function(config) {
     ee.emit('update');
   };
 
-  this.package.on('save-end', this.checkChanges.bind(this));
+  this.package.on('save-end', function(){
+    this.checkChanges();
+    this.fireUpdate();
+  }.bind(this));
 
   // after a resource is added, our entire state is different
   this.runAfterResourceAdd = function(workspaceData) {

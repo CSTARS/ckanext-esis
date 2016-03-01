@@ -278,7 +278,9 @@
         }
       }.bind(this));
 
-      ecosis.ds.package.on('update', this.updateScores.bind(this))
+      var fn = new ecosis.app.UiBuffer(this.updateScores, 100, this);
+      ecosis.ds.on('load', fn);
+      ecosis.ds.on('update', fn);
       ecosis.ds.package.on('save-start', this.saveStart.bind(this));
       ecosis.ds.package.on('save-end', this.saveEnd.bind(this));
     },
