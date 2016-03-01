@@ -1,6 +1,6 @@
 {
   "name": "spectra-importer",
-  "version": "1.3",
+  "version": "1.3.0",
   "description": "import various spectra types into ckan",
   "main": "server.js",
   "scripts": {

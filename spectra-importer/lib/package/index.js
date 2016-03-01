@@ -319,10 +319,13 @@ function Package(initdata, SDK) {
 
   this.getAliases = function() {
     var value = this.getExtra('aliases');
-    if( !value ) return [];
+    if( !value ) return {};
 
     try {
-      return JSON.parse(value);
+      var t = JSON.parse(value);
+      // hack
+      if( Array.isArray(t) ) return {};
+      return t;
     } catch(e) {}
 
     return {};
