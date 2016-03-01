@@ -320,7 +320,7 @@ def mapNames(spectra, config, processInfo, package):
     elif config.get("map") != None:
         aliases = config.get("map")
 
-    if aliases != None:
+    if aliases != None and isinstance(aliases, dict):
         for key, value in aliases.iteritems():
             if value in spectra:
                 spectra[key] = spectra[value]
