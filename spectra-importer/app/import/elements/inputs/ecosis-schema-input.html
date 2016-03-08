@@ -40,8 +40,20 @@
             '<div class="col-md-7">'+
               '<input type="'+this.schema.input+'" class="form-control" />';
 
-        if( this.schema.description ) {
-          html += '<div class="help-block">'+this.schema.description+'</div>';
+        if( this.schema.description || this.schema.input === 'split-text' ) {
+          var help = this.schema.description || '';
+          if( help.length > 0 ) {
+            if( !help.match(/\.$/) ) {
+              help += '.  ';
+            } else {
+              help += '  ';
+            }
+          }
+          if( this.schema.input === 'split-text' ) {
+            help += 'Comma separate for multiple values.';
+          }
+
+          html += '<div class="help-block">'+help+'</div>';
         }
 
         html += '</div></div>';
