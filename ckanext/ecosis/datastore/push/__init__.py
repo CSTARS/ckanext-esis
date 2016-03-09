@@ -95,7 +95,7 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
                 {
                     "subject" : "EcoSIS Push Failed",
                     "body" : ("Your recent push to search for '%s' has failed.  "
-                              "You can try again or contact help@ecospectra.org.  "
+                              "You can try again or contact help@ecosis.org.  "
                               "We apologize for the inconvenience\n\n-The EcoSIS Team") % (ckanPackage["title"])
                 }
             )
