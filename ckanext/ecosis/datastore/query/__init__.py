@@ -403,6 +403,8 @@ def getResource(resource_id, sheet_id=None):
     for sheet in sheets:
         # only send metadata attributes
         metadata = []
+        repeats = []
+        units = {}
         attributeRepeatFlag = False # proly have wrong layout
         if sheet.get('attributes') is not None:
             for attr in sheet.get('attributes'):
@@ -410,16 +412,45 @@ def getResource(resource_id, sheet_id=None):
                     continue
 
                 if attr.get("name") in metadata:
+                    if attr.get("name") not in repeats:
+                        repeats.append(attr.get("name"))
                     attributeRepeatFlag = True
                     continue
 
                 metadata.append(attr.get("name"))
+
+                if attr.get("units") is not None:
+                    units[attr.get("name")] = attr.get("units")
+
         sheet['attributes'] = metadata
+        sheet['units'] = units
         if attributeRepeatFlag:
             sheet['repeatAttributes'] = True
+            sheet['repeats'] = repeats
         response.append(sheet)
 
     return response
+
+def allUnits(package_id):
+    query = {
+        "package_id" : package_id
+    }
+
+    sheets = collections.get("resource").find(query,{
+        "localRange" : 0,
+        "hash" : 0,
+        "file" : 0,
+        "_id" : 0
+    })
+
+    units = {}
+    for sheet in sheets:
+        if sheet.get('attributes') is not None:
+            for attr in sheet.get('attributes'):
+                if attr.get("units") is not None and attr.get("units") != "":
+                    units[attr.get("name")] = attr.get("units")
+
+    return units
 
 def isPushed(package_id):
     result = collections.get("search_package").find_one({"value.ecosis.package_id": package_id},{"value.ecosis.pushed": 1})

@@ -5,6 +5,7 @@ from bson.son import SON
 from pylons import config
 import lookup
 import dateutil.parser as dateparser
+from ckanext.ecosis.datastore import query
 
 path = os.path.dirname(os.path.abspath(__file__))
 
@@ -105,17 +106,15 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         "resources" : [],
         "linked_data" : [],
         "geojson" : None,
-        "spectra_bbox_geojson" : None,
         "sort_on" : sort.get("on"),
         "sort_description" : sort.get("description")
     }
 
     # append the units
-    units = getPackageExtra('package_units', pkg)
+    #units = getPackageExtra('package_units', pkg)
+    units = query.allUnits(pkg.get("package_id"))
     if units != None:
-        units = json.loads(units)
-        for name, unit in units.iteritems():
-            ecosis["spectra_metadata_schema"]["units"][re.sub(r'\.', '_', name)] = unit
+         ecosis["spectra_metadata_schema"]["units"] = units
 
     # append the linked data
     linkeddata = getPackageExtra('LinkedData', pkg)
@@ -157,19 +156,6 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     # This means there is no spectra
     item = collection.find_one({'_id': pkg['id'], 'value': None})
 
-    # if we found bbox info in the spectra, add it
-    if bboxInfo['use']:
-        ecosis['spectra_bbox_geojson'] = {
-            "type": "Polygon",
-            "coordinates" : [[
-                [bboxInfo["maxlng"], bboxInfo["maxlat"]],
-                [bboxInfo["minlng"], bboxInfo["maxlat"]],
-                [bboxInfo["minlng"], bboxInfo["minlat"]],
-                [bboxInfo["maxlng"], bboxInfo["minlat"]],
-                [bboxInfo["maxlng"], bboxInfo["maxlat"]]
-            ]]
-        }
-
     # now see if we have a group by attribute...
     if item != None:
         collection.remove({'_id': pkg['id']})
@@ -188,7 +174,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
                 name = item.get('name')
                 input = item.get('input')
 
-                if name == 'Latitude' or name == 'Longitude':
+                if name == 'Latitude' or name == 'Longitude' or name == 'geojson':
                     continue
 
                 processAttribute(name, input, pkg, mrValue, setValues, keywords)
@@ -206,27 +192,9 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
         setValues['$unset']['value.tmp__schema__'] = ''
 
-        # now, lets remove any non-ecosis metadata that has more than 100 entries
-        # also we will set the spectra 'schema' lets us know what wavelengths are dataset
-        # as well as what fields are spectra level metadata
-        for key, values in mrValue.iteritems():
-            if key == 'tmp__schema__':
-                continue
-
-            if key in names or values == None:
-                continue
-
-            if len(values) > 100:
-                vkey = 'value.%s' % key
-                setValues['$unset'][vkey] = "";
 
         # finally, let's handle geojson
-        geojson = []
-        if setValues['$set'].get('value.geojson') != None:
-            geojson = setValues['$set'].get('value.geojson');
-            del setValues['$set']['value.geojson']
-
-        geojson = processGeoJson(geojson, pkg);
+        geojson = processGeoJson(bboxInfo, pkg);
         if len(geojson.get('geometries')) == 0:
             setValues['$set']['value.ecosis']['geojson'] = None
         else:
@@ -237,27 +205,51 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
             setValues
         )
 
-def processGeoJson(geojson, pkg):
+def processGeoJson(bboxInfo, pkg):
     result = {
         "type": "GeometryCollection",
         "geometries": []
     }
 
-    for js in geojson:
-        js = json.loads(js)
+        # if we found bbox info in the spectra, add it
+    if bboxInfo['use']:
+        result['geometries'].append({
+            "type": "Polygon",
+            "coordinates" : [[
+                [bboxInfo["maxlng"], bboxInfo["maxlat"]],
+                [bboxInfo["minlng"], bboxInfo["maxlat"]],
+                [bboxInfo["minlng"], bboxInfo["minlat"]],
+                [bboxInfo["maxlng"], bboxInfo["minlat"]],
+                [bboxInfo["maxlng"], bboxInfo["maxlat"]]
+            ]]
+        })
 
-        if js.get("type") == "GeometryCollection":
-            for geo in js.get("geometries"):
-                result['geometries'].append(geo)
-        elif js.get("type") == "Feature":
-            result['geometries'].append(js.get('geometry'))
-        elif js.get("type") == "FeatureCollection":
-            for f in js.get("features"):
-                result['geometries'].append(f.get("geometry"))
-        else:
-            result['geometries'].append(js)
+    geojson = getPackageExtra("geojson", pkg)
+    if geojson != None:
+        try:
+            # TODO: add checks for valid geojson
+            result['geometries'].append(json.loads(geojson))
+        except Exception:
+            pass
 
     return result
+
+
+#    for js in geojson:
+#        js = json.loads(js)
+
+#        if js.get("type") == "GeometryCollection":
+#            for geo in js.get("geometries"):
+#                result['geometries'].append(geo)
+#        elif js.get("type") == "Feature":
+#            result['geometries'].append(js.get('geometry'))
+#        elif js.get("type") == "FeatureCollection":
+#            for f in js.get("features"):
+#                result['geometries'].append(f.get("geometry"))
+#        else:
+#            result['geometries'].append(js)
+
+#    return result
 
 def cleanValue(value):
     if value is None:
