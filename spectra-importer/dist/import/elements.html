@@ -7004,8 +7004,20 @@ this.fire('dom-change');
             '<div class="col-md-7">'+
               '<input type="'+this.schema.input+'" class="form-control" />';
 
-        if( this.schema.description ) {
-          html += '<div class="help-block">'+this.schema.description+'</div>';
+        if( this.schema.description || this.schema.input === 'split-text' ) {
+          var help = this.schema.description || '';
+          if( help.length > 0 ) {
+            if( !help.match(/\.$/) ) {
+              help += '.  ';
+            } else {
+              help += '  ';
+            }
+          }
+          if( this.schema.input === 'split-text' ) {
+            help += 'Comma separate for multiple values.';
+          }
+
+          html += '<div class="help-block">'+help+'</div>';
         }
 
         html += '</div></div>';
@@ -7723,7 +7735,7 @@ this.fire('dom-change');
     },
 
     clean : function(txt) {
-      return txt.replace(/[^A-Za-z0-9-_]/g, '').trim();
+      return txt.replace(/[^A-Za-z0-9-_ ]/g, '').trim();
     }
   });
 </script>
@@ -8429,6 +8441,8 @@ this.fire('dom-change');
           Error parsing file
       </span>
 
+      <span class="alert alert-warning" style="display:none" id="repeatsWarning"></span>
+
       <h4 class="page-header"><i class="fa fa-cogs"></i> Sheet Settings</h4>
 
       <!-- Is Metadata -->
@@ -8635,11 +8649,7 @@ this.fire('dom-change');
       if( this.sheet.layout == 'column' ) {
         $(this.$.columnInput).prop('checked', true);
         $(this.$.rowInput).prop('checked', false);
-        //this.$.columnInput.setAttribute('checked', '');
-        //this.$.rowInput.removeAttribute('checked');
       } else {
-        //this.$.rowInput.setAttribute('checked', '');
-        //this.$.columnInput.removeAttribute('checked');
         $(this.$.columnInput).prop('checked', false);
         $(this.$.rowInput).prop('checked', true);
       }
@@ -8647,6 +8657,26 @@ this.fire('dom-change');
       this.updateMetadataUi();
       this.updateIgnoreUi();
       this.updateSeperatorUi();
+
+      // see if there are repeats
+      if( this.sheet.repeatAttributes && !this.sheet.ignore) {
+        var html = '<b>Warning.</b> You have repeat '+(this.layout === 'column' ? 'row' : 'column') +' attribute headers:';
+
+        html += '<ul>';
+        this.sheet.repeats.forEach(function(repeat){
+          html += '<li>'+repeat+'</li>';
+        });
+        html += '</ul>';
+
+        html += 'Possible solutions.  You may not have the sheet orientation set correctly.  Or you may have multiple attributes '+
+                'defined with ().  Remember, units are specified by () and anything between parentheses will be removed from the '+
+                'name and considered units for the attribute.';
+
+        this.$.repeatsWarning.innerHTML = html;
+        this.$.repeatsWarning.style.display = 'block';
+      } else {
+        this.$.repeatsWarning.style.display = 'none';
+      }
 
       if( callback ) callback();
     },
@@ -9310,6 +9340,13 @@ this.fire('dom-change');
       }.bind(this));
     },
 
+    getUnitsLabel : function(attr) {
+      if( !this.sheet.units ) return '';
+      if( !this.sheet.units[attr] ) return '';
+
+      return ' <span style="color:#aaa;font-size: 80%;font-weight:normal">('+this.sheet.units[attr]+')</span>';
+    },
+
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
 
@@ -9321,7 +9358,9 @@ this.fire('dom-change');
         var c = 0;
         for( var key in metadata ) {
           if( ignorelist.indexOf(key) > -1 ) continue;
-          table += '<tr><td style="font-weight:bold">'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
+
+          var units = this.getUnitsLabel(key);
+          table += '<tr><td><span style="font-weight:bold">'+key+units+'</span></td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
 
           c++;
           if( c == 100 ) {
@@ -9335,7 +9374,9 @@ this.fire('dom-change');
         var data = '<tr>';
         for( var key in metadata ) {
           if( ignorelist.indexOf(key) > -1 ) continue;
-          header += '<th style="white-space:nowrap">'+key+'</th>';
+
+          var units = this.getUnitsLabel(key);
+          header += '<th style="white-space:nowrap">'+key+units+'</th>';
           data += '<td style="white-space:nowrap; max-width: 250px; overflow:auto">'+metadata[key]+this.getProcessInfo(key, metadata)+'</td>';
 
           c++;

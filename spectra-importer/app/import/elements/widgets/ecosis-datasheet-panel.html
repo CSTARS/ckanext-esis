@@ -18,6 +18,8 @@
           Error parsing file
       </span>
 
+      <span class="alert alert-warning" style="display:none" id="repeatsWarning"></span>
+
       <h4 class="page-header"><i class="fa fa-cogs"></i> Sheet Settings</h4>
 
       <!-- Is Metadata -->
@@ -226,11 +228,7 @@
       if( this.sheet.layout == 'column' ) {
         $(this.$.columnInput).prop('checked', true);
         $(this.$.rowInput).prop('checked', false);
-        //this.$.columnInput.setAttribute('checked', '');
-        //this.$.rowInput.removeAttribute('checked');
       } else {
-        //this.$.rowInput.setAttribute('checked', '');
-        //this.$.columnInput.removeAttribute('checked');
         $(this.$.columnInput).prop('checked', false);
         $(this.$.rowInput).prop('checked', true);
       }
@@ -238,6 +236,26 @@
       this.updateMetadataUi();
       this.updateIgnoreUi();
       this.updateSeperatorUi();
+
+      // see if there are repeats
+      if( this.sheet.repeatAttributes && !this.sheet.ignore) {
+        var html = '<b>Warning.</b> You have repeat '+(this.layout === 'column' ? 'row' : 'column') +' attribute headers:';
+
+        html += '<ul>';
+        this.sheet.repeats.forEach(function(repeat){
+          html += '<li>'+repeat+'</li>';
+        });
+        html += '</ul>';
+
+        html += 'Possible solutions.  You may not have the sheet orientation set correctly.  Or you may have multiple attributes '+
+                'defined with ().  Remember, units are specified by () and anything between parentheses will be removed from the '+
+                'name and considered units for the attribute.';
+
+        this.$.repeatsWarning.innerHTML = html;
+        this.$.repeatsWarning.style.display = 'block';
+      } else {
+        this.$.repeatsWarning.style.display = 'none';
+      }
 
       if( callback ) callback();
     },

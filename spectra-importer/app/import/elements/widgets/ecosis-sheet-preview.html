@@ -192,6 +192,13 @@
       }.bind(this));
     },
 
+    getUnitsLabel : function(attr) {
+      if( !this.sheet.units ) return '';
+      if( !this.sheet.units[attr] ) return '';
+
+      return ' <span style="color:#aaa;font-size: 80%;font-weight:normal">('+this.sheet.units[attr]+')</span>';
+    },
+
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
 
@@ -203,7 +210,9 @@
         var c = 0;
         for( var key in metadata ) {
           if( ignorelist.indexOf(key) > -1 ) continue;
-          table += '<tr><td style="font-weight:bold">'+key+'</td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
+
+          var units = this.getUnitsLabel(key);
+          table += '<tr><td><span style="font-weight:bold">'+key+units+'</span></td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
 
           c++;
           if( c == 100 ) {
@@ -217,7 +226,9 @@
         var data = '<tr>';
         for( var key in metadata ) {
           if( ignorelist.indexOf(key) > -1 ) continue;
-          header += '<th style="white-space:nowrap">'+key+'</th>';
+
+          var units = this.getUnitsLabel(key);
+          header += '<th style="white-space:nowrap">'+key+units+'</th>';
           data += '<td style="white-space:nowrap; max-width: 250px; overflow:auto">'+metadata[key]+this.getProcessInfo(key, metadata)+'</td>';
 
           c++;
