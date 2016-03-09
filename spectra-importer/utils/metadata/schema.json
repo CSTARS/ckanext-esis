@@ -5,7 +5,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Contact",
         "Other",
@@ -20,7 +20,7 @@
       "level": 2,
       "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Airplane",
         "Boom",
@@ -36,7 +36,7 @@
       "level": 2,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Greenhouse",
         "Laboratory",
@@ -51,7 +51,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Animal",
         "Bark",
@@ -75,7 +75,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Absorptance",
         "DN",
@@ -94,7 +94,7 @@
       "level": 2,
       "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "Measurement quantity's index name.  Please provide if Measurement Quantity = \"Index\"",
       "allowOther": false
@@ -104,7 +104,7 @@
       "level": 2,
       "input": "controlled-single",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "%",
         "W/m^2",
@@ -121,7 +121,7 @@
       "level": 2,
       "input": "controlled-single",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Other",
         "Unitless",
@@ -136,7 +136,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Dried",
         "Fresh",
@@ -156,7 +156,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Lamp",
         "Laser",
@@ -169,9 +169,9 @@
     {
       "name": "Light Source Specifications",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -181,7 +181,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Bare Fiber",
         "Contact Probe",
@@ -201,7 +201,7 @@
       "level": 2,
       "input": "split-text",
       "units": "integer degrees",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -211,7 +211,7 @@
       "level": 2,
       "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -223,7 +223,7 @@
       "level": 2,
       "input": "controlled-single",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "No",
         "Yes"
@@ -236,7 +236,7 @@
       "level": 2,
       "input": "controlled-single",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "No",
         "Yes"
@@ -249,7 +249,7 @@
       "level": 2,
       "input": "controlled-single",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "No",
         "Yes"
@@ -262,7 +262,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "Other details about processing are provided here.",
       "allowOther": false
@@ -274,7 +274,7 @@
       "level": 1,
       "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "Spectrometer manufacturer.",
       "allowOther": false
@@ -284,7 +284,7 @@
       "level": 1,
       "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "Spectrometer model.",
       "allowOther": false
@@ -294,7 +294,7 @@
       "level": 2,
       "input": "split-text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -306,7 +306,7 @@
       "level": 1,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Agriculture",
         "Biochemistry",
@@ -326,9 +326,9 @@
     {
       "name": "Keywords",
       "level": 2,
-      "input": "text",
+      "input": "split-text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -338,7 +338,7 @@
       "level": 2,
       "input": "controlled",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": [
         "Aquatic",
         "Coastal",
@@ -357,7 +357,7 @@
       "level": 1,
       "input": "latlng",
       "units": "decimal degree",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -367,7 +367,7 @@
       "level": 1,
       "input": "latlng",
       "units": "decimal degree",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -377,7 +377,7 @@
       "level": 1,
       "input": "geojson",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -387,7 +387,7 @@
       "level": 2,
       "input": "split-text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -399,7 +399,7 @@
       "level": 1,
       "input": "date",
       "units": "ISO Date ",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -409,7 +409,7 @@
       "level": 2,
       "input": "date",
       "units": "ISO Date ",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -419,7 +419,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Both",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -431,7 +431,7 @@
       "level": 1,
       "input": "text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "Common name of the target that was measured.",
       "allowOther": false
@@ -441,7 +441,7 @@
       "level": 1,
       "input": "text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "Latin genus of the target that was measured.",
       "allowOther": false
@@ -451,7 +451,7 @@
       "level": 1,
       "input": "text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "Latin species of the target that was measured.",
       "allowOther": false
@@ -461,7 +461,7 @@
       "level": 1,
       "input": "text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "USDA code of the target that was measured.",
       "allowOther": false
@@ -471,7 +471,7 @@
       "level": 1,
       "input": "text",
       "units": "",
-      "spectraLevel": true,
+      "forSchema": "Spectra",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -483,7 +483,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -493,7 +493,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -503,7 +503,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -513,7 +513,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -523,7 +523,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -533,7 +533,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -543,7 +543,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -553,7 +553,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
@@ -563,7 +563,7 @@
       "level": 2,
       "input": "text",
       "units": "",
-      "spectraLevel": false,
+      "forSchema": "Dataset",
       "vocabulary": null,
       "description": "",
       "allowOther": false
