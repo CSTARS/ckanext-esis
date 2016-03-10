@@ -264,6 +264,10 @@ module.exports = function(config) {
     this.fireUpdate();
   }.bind(this));
 
+  this.package.on('value-set-on-create', function(){
+    this.fireUpdate();
+  }.bind(this));
+
   // after a resource is added, our entire state is different
   this.runAfterResourceAdd = function(workspaceData) {
     this.result = workspaceData;

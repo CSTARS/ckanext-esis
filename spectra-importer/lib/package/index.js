@@ -52,6 +52,8 @@ function Package(initdata, SDK) {
 
     if( this.mode !== 'create' ) {
       this.save();
+    } else {
+      this.ee.emit('value-set-on-create', {});
     }
   };
 
