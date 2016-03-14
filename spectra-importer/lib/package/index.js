@@ -177,7 +177,7 @@ function Package(initdata, SDK) {
 
 
   function cleanKeyword(txt) {
-    return txt.replace(/[^A-Za-z0-9-_]/g, '').toLowerCase().trim();
+    return txt.replace(/[^A-Za-z0-9-_ ]/g, '').toLowerCase().trim();
   }
 
   this.setLicense = function(id, title) {
