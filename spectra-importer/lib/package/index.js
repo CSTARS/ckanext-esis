@@ -158,7 +158,7 @@ function Package(initdata, SDK) {
     for( var i = 0; i < this.data.tags.length; i++ ) {
       if( this.data.tags[i].name === keyword ) {
         this.data.tags.splice(i, 1);
-        return;
+        break;
       }
     }
 

@@ -7723,7 +7723,7 @@ this.fire('dom-change');
         var index = parseInt(e.currentTarget.getAttribute("index"));
         var token = this.tokens.splice(index,1)[0];
 
-        ecosis.ds.package.removeToken(token.value);
+        ecosis.ds.package.removeKeyword(token.value);
 
         // don't set focus to input
         e.stopPropagation();
