@@ -3,6 +3,19 @@
 {% block meta %}
   {{ super() }}
   <meta name="robots" content="noindex" />
+
+    <style>
+        .top-pager {
+            margin: -20px 0px 25px 0px;
+            border-bottom:1px solid #ccc;
+        }
+        .module-content .top-pager .pagination {
+            margin-bottom: 0px !important;
+        }
+        .module .top-pager .pagination {
+            border: none !important;
+        }
+    </style>
 {% endblock %}
 
 
