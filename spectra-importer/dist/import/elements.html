@@ -9342,17 +9342,43 @@ this.fire('dom-change');
     },
 
     getUnitsLabel : function(attr) {
-      if( !this.sheet.units ) return '';
-      if( !this.sheet.units[attr] ) return '';
+      var units;
+      if( this.sheet.units ) {
+        if( this.sheet.units[attr] ) {
+          units = this.sheet.units[attr];
+        }
+      }
 
-      return ' <span style="color:#aaa;font-size: 80%;font-weight:normal">('+this.sheet.units[attr]+')</span>';
+      if( !units && this.units ) {
+        if( this.units[attr] ) {
+          units = this.units[attr];
+        }
+      }
+
+      if( !units ) return '';
+
+      return ' <span style="color:#aaa;font-size: 80%;font-weight:normal">('+units+')</span>';
+    },
+
+    setAllUnits : function(metadata) {
+      this.units = null;
+      if( !ecosis.ds.datasheets ) return;
+
+      this.units = {};
+      for( var i = 0; i < ecosis.ds.datasheets.length; i++ ) {
+        if( ecosis.ds.datasheets[i].units ) {
+          var u = ecosis.ds.datasheets[i].units;
+          for( var key in u ) {
+            this.units[key] = u[key];
+          }
+        }
+      }
     },
 
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
 
       var layout = this.sheet.layout || 'row';
-
       var table = '<h5>Metadata</h5><table class="table">';
 
       if( this.sheet.layout === 'column' ) {
@@ -9437,10 +9463,12 @@ this.fire('dom-change');
       return '';
     },
 
-    update : function(sheet) {
+    update : function(sheet, autoUpdateUnits) {
       if( sheet ) {
         this.sheet = sheet;
       }
+
+      this.setAllUnits();
 
       if( this.sheet.ignore ) return;
 
@@ -12102,7 +12130,7 @@ this.fire('dom-change');
         this.$.preview.update({
           packageId: ecosis.ds.package_id,
           layout : 'column'
-        })
+        }, true)
       }
     },
 

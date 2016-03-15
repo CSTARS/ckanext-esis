@@ -97,7 +97,7 @@ module.exports = function(config) {
         index : index
       };
       if( sheet_id ) {
-        params.sheet_id = sheet_id;
+        query.sheet_id = sheet_id;
       }
 
       get(
