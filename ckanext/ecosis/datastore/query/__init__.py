@@ -365,6 +365,9 @@ def join(packageId, spectra, processInfo):
             }
             query["spectra.%s" % sheetConfig.get('joinOn')] = joinVar
 
+            if sheetConfig.get('sheetId') != None:
+                query["sheetId"] = sheetConfig.get('sheetId')
+
             joinData = collections.get('spectra').find_one(query)
             if joinData != None:
                 for key in joinData.get("spectra"):
