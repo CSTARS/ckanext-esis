@@ -79,14 +79,18 @@ def process(collection, sheetConfig, hash):
 
     return datasheets
 
-def getWorksheetData(sheet):
+def getWorksheetData(sheet, workbook):
     data = []
     for i in range(sheet.nrows):
         row = []
         for j in range(sheet.ncols):
             val = ""
             try:
-                val = str(sheet.cell_value(i, j))
+                if sheet.cell_type(i,j) == xlrd.XL_CELL_DATE:
+                    val = sheet.cell_value(i, j)
+                    val = datetime.datetime(*xlrd.xldate_as_tuple(val, workbook.datemode)).isoformat()
+                else:
+                    val = str(sheet.cell_value(i, j))
             except Exception as e:
                 try:
                     val = re.sub(r'[^\x00-\x7F]+',' ', sheet.cell_value(i, j))
@@ -126,7 +130,7 @@ def cacheWrite(collection, sheetConfig, hash):
 
         for i, sheet in enumerate(sheets):
             sheetNames.append('%s-%s' % (i, sheet))
-            data = getWorksheetData(workbook.sheet_by_name(sheet))
+            data = getWorksheetData(workbook.sheet_by_name(sheet), workbook)
             fullPath = os.path.join(workspacePath,'%s.csv' % i)
 
             csvfile = open(fullPath, 'wb')
