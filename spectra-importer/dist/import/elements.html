@@ -9312,14 +9312,19 @@ this.fire('dom-change');
       });
 
       data.splice(0, 0, ['Wavelength', '']);
-      this.$[layout+'ChartRoot'].firstChild.setHeight(layout === 'row' ? 200 : 300);
-      this.$[layout+'ChartRoot'].firstChild.options = {
-        animation:{
-          duration: 700,
-          easing: 'out',
+
+      // HACK:  FF seems to be slow upgrading the <ecosis-chart /> element :(
+      setTimeout(function(){
+        this.$[layout+'ChartRoot'].firstChild.setHeight(layout === 'row' ? 200 : 300);
+        this.$[layout+'ChartRoot'].firstChild.options = {
+          animation:{
+            duration: 700,
+            easing: 'out',
+          }
         }
-      }
-      this.$[layout+'ChartRoot'].firstChild.setData(data);
+        this.$[layout+'ChartRoot'].firstChild.setData(data);
+      }.bind(this), 200)
+
     },
 
     initSlider : function() {
@@ -12130,7 +12135,7 @@ this.fire('dom-change');
         this.$.preview.update({
           packageId: ecosis.ds.package_id,
           layout : 'column'
-        }, true)
+        }, true);
       }
     },
 
