@@ -1,0 +1,172 @@
+<dom-module id="ecosis-doi">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <h4 class="page-header">
+      Dataset DOI
+    </h4>
+
+    <div id="needsData" class="subpanel">
+      <div>To request a EcoSIS DOI you must enter the following metadata:</div>
+      <table class="table" id="needsDataTable"></table>
+    </div>
+
+    <div id="request" class="subpanel">
+      <a class="btn btn-default">Request Dataset Doi</a>
+    </div>
+
+    <div id="pendingApproval" class="subpanel">
+      Your dataset is pending review by a EcoSIS administrator.  The dataset author
+      and maintainer will be notified when the dataset is approved or if more information
+      is required.
+    </div>
+
+    <div id="pendingRevision" class="subpanel">
+      Your dataset has been reviewed by a EcoSIS administrator and further updates
+      are required for a DOI.  The set of changes has been emailed to the datasets
+      author and maintainer.
+
+      If you are ready to re-submit your dataset, please click below.
+      <a class="btn btn-default">Resubmit</a>
+    </div>
+
+    <div id="accepted" class="subpanel">
+      Your dataset has been approved for a DOI.  The DOI is being generated and
+      should be assigned shortly.
+    </div>
+
+    <div id="applied" class="subpanel">
+      <b>Dataset DOI:</b> <span id="appliedLabel"></span>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'ecosis-doi',
+
+      setData : function(pkg) {
+        this.pkg = pkg;
+        this.pkg.on('save-end', this.render.bind(this));
+        this.render();
+      },
+
+      render : function() {
+        var doi = this.pkg.getDoi();
+        $(this).find('.subpanel').hide();
+
+        if( doi.status === '' ) {
+          this.verify();
+          return;
+        }
+
+        if( doi.status === 'Pending Approval' ) {
+          this.$.pendingApproval.style.display = 'block';
+          return;
+        }
+
+        if( doi.status === 'Pending Revision' ) {
+          this.$.pendingRevision.style.display = 'block';
+          return;
+        }
+
+        if( doi.status === 'Accepted' ) {
+          this.$.accepted.style.display = 'block';
+          return;
+        }
+
+        if( doi.status === 'Applied' ) {
+          this.$.applied.style.display = 'block';
+          this.$.appliedLabel.innerHTML = doi.value;
+          return;
+        }
+      },
+
+      verify : function() {
+        var html = '';
+
+        var extras = ['Theme','Ecosystem Type','Acquisition Method'];
+        var valid = {
+          description : false,
+          keywords : false,
+          organization : false,
+          public : false,
+          author : false,
+          'author email': false,
+          maintainer : false,
+          'maintainer email': false
+        };
+
+        extras.forEach(function(e){
+          if( this.pkg.getExtra(e) !== '' ) {
+            valid[e] = true;
+          } else {
+            valid[e] = false;
+          }
+        }.bind(this));
+
+        if( this.pkg.getDescription() !== '' ) {
+          valid.description = true;
+        }
+        if( this.pkg.getKeywords().length > 0 ) {
+          valid.keywords = true;
+        }
+        if( this.pkg.getOrganization() !== '' ) {
+          valid.organization = true;
+        }
+        if( !this.pkg.isPrivate() ) {
+          valid.public = true;
+        }
+        if( this.pkg.getAuthor() !== '' ) {
+          valid.author = true;
+        }
+        if( this.pkg.getAuthorEmail() !== '' ) {
+          valid['author email'] = true;
+        }
+        if( this.pkg.getMaintainer() !== '' ) {
+          valid.maintainer = true;
+        }
+        if( this.pkg.getMaintainerEmail() !== '' ) {
+          valid['maintainer email'] = true;
+        }
+
+        var canRequest = true;
+        var c = 0;
+        for( var key in valid ) {
+          if( valid[key] === false ) {
+            canRequest = false;
+            html += this.addRow(key, false);
+          } else {
+            html += this.addRow(key, true);
+          }
+
+          c++;
+          if( c % 2 === 0 ) {
+            html += '</tr><tr>';
+          }
+
+        }
+
+        if( canRequest ) {
+          this.$.request.style.display = 'block';
+        } else {
+          this.$.needsData.style.display = 'block';
+          this.$.needsDataTable.innerHTML = '<tr>'+html+'</tr>';
+        }
+      },
+
+      addRow : function(key, value) {
+        return '<td>'+
+            '<i class="fa text fa-'+(value ? 'check text-success' : 'times text-danger')+'"></i>'+
+          '</td><td style="text-transform:capitalize">'+
+            key+
+          '</td>';
+      }
+
+
+    });
+  </script>
+</dom-module>

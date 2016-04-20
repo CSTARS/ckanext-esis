@@ -298,6 +298,27 @@ function Package(initdata, SDK) {
     return [];
   };
 
+  this.requestDoi = function() {
+    var doi = this.getDoi();
+
+    if( doi.status !== 'Pending Revision' || doi.status !== '' ) {
+      return;
+    }
+
+    this.setExtra('EcoSIS DOI Status','Pending Approval');
+    this._onUpdate('EcoSIS DOI Status');
+  };
+
+  this.getDoi = function() {
+    var status = this.getExtra('EcoSIS DOI Status');
+    var value = this.getExtra('EcoSIS DOI');
+
+    return {
+      status : status,
+      value : value
+    };
+  };
+
   this.setSort = function(data) {
     this.setExtra('sort', JSON.stringify(data));
     this._onUpdate('sort');

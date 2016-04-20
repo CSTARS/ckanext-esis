@@ -158,6 +158,8 @@
       </h4>
       <ecosis-citation-input id="citationInput" style="display:none"></ecosis-citation-input>
 
+      <ecosis-doi id="doi" style="display:none"></ecosis-doi>
+
     </div>
 
     <!-- Create Dataset -->
@@ -298,6 +300,7 @@
         this.$.createFromTemplate.style.display = 'block';
         this.updateCreateBtnState();
       } else {
+        this.$.doi.style.display = 'block';
         this.$.goToBtn.style.display = 'inline-block';
         this.$.goToListBtn.style.display = 'inline-block';
         this.$.createFromTemplate.style.display = 'none';
@@ -316,7 +319,7 @@
       this.$.versionInput.value = pkg.getVersion();
       this.$.websiteInput.value = pkg.getWebsite();
       this.$.linkedDataInput.setData(pkg.getLinkedData());
-
+      this.$.doi.setData(pkg);
       this.updateVisibilityControl();
     },
 
