@@ -11,6 +11,7 @@ import ckan.logic as logic
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckan.lib.email_notifications import send_notification
 from pylons import config
+from doi import handleDoiUpdate, hasAppliedDoi
 
 collections = None
 ignoreTemplateVars = ["metadata_modified", "state", "creator_user_id", "revision_id", "type", "url","organization"]
@@ -34,12 +35,34 @@ def delete():
 
     hasAccess(params['id'])
 
+    if hasAppliedDoi(params['id']):
+        return json.dumps({'error': True, 'message':'Cannot delete package with applied DOI'})
+
     context = {'model': model, 'user': c.user}
     logic.get_action('package_delete')(context, params)
 
     deleteUtil.package(params['id'])
 
     return json.dumps({'success': True})
+
+def update():
+    response.headers["Content-Type"] = "application/json"
+
+    params = json.loads(request.body)
+
+    hasAccess(params['id'])
+    context = {'model': model, 'user': c.user}
+
+    cpkg = logic.get_action('package_update')(context, {'id': params['id']})
+
+    # check EcoSIS DOI status
+    resp = handleDoiUpdate(cpkg, params)
+    if resp.get('error') == True:
+        return json.dumps(response)
+
+    pkg = logic.get_action('package_update')(context, params)
+
+    return json.dumps(pkg)
 
 def create():
     response.headers["Content-Type"] = "application/json"
@@ -80,6 +103,9 @@ def setPrivate():
     response.headers["Content-Type"] = "application/json"
     package_id = request.params.get('id')
     hasAccess(package_id)
+
+    if hasAppliedDoi(package_id):
+        return json.dumps({'error':True, 'message': 'Cannot modify package with applied DOI'})
 
     deleteUtil.cleanFromSearch(package_id)
 

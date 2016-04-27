@@ -73,6 +73,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # Standard CKAN overrides
         map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
         map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
+        map.connect('update_package_3', '/api/3/action/package_update', controller=controller, action='updatePackage')
+        map.connect('update_package', '/api/action/package_update', controller=controller, action='updatePackage')
         map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
@@ -96,6 +98,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('verifyWorkspace', '/ecosis/admin/verifyWorkspace', controller=controller, action='verifyWorkspace')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
+        # ecosis - admin doi
+        map.connect('doi_query', '/ecosis/admin/doi/query', controller=controller, action='doiQuery')
+        map.connect('doi_update_status', '/ecosis/admin/doi/update', controller=controller, action='doiUpdateStatus')
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
