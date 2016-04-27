@@ -1,0 +1,16 @@
+
+<dom-module id="app-nav">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        
+        <div class="list-group">
+            <a class="list-group-item active" on-click="setQuery" status="pending">Pending</a>
+            <a class="list-group-item" on-click="setQuery" status="revising">Waiting For Revision</a>
+            <a class="list-group-item" on-click="setQuery" status="approved">Approved</a>
+        </div>
+    </template>
+</dom-module>

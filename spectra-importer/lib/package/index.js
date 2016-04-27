@@ -301,12 +301,14 @@ function Package(initdata, SDK) {
   this.requestDoi = function() {
     var doi = this.getDoi();
 
-    if( doi.status !== 'Pending Revision' || doi.status !== '' ) {
-      return;
+    if( doi.status !== 'Pending Revision' && doi.status !== '' ) {
+      return false;
     }
 
     this.setExtra('EcoSIS DOI Status','Pending Approval');
     this._onUpdate('EcoSIS DOI Status');
+    
+    return true;
   };
 
   this.getDoi = function() {

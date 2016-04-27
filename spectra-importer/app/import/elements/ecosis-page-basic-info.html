@@ -364,9 +364,11 @@
       if( !ecosis.user ) {
         alert("You are not logged in :(");
         window.location.href = ecosis.ckan.host + '/user/login';
+        return;
       } else if( !ecosis.user.loggedIn ) {
         alert("You are not logged in :(");
         window.location.href = ecosis.ckan.host + '/user/login';
+        return;
       }
 
       this.$.usernameLabel.innerHTML = ecosis.user.username;

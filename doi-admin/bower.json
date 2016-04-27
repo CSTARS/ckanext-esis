@@ -1,0 +1,16 @@
+{
+  "name": "doi-admin",
+  "description": "Admin DOI files for EcoSIS",
+  "main": "app/index.html",
+  "authors": [
+    "Justin Merz"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/CSTARS/ckanext-esis",
+  "moduleType": [],
+  "private": true,
+  "dependencies": {
+    "bootswatch-dist": "paper",
+    "polymer": "^1.4.0"
+  }
+}

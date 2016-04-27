@@ -8,3 +8,5 @@ spectra-importer/app/import/components
 spectra-importer/dist/import/components
 spectra-importer/node_modules
 spectra-importer/import-top-traits/node_modules
+node_modules
+bower_components

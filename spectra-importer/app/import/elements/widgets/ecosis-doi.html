@@ -4,43 +4,51 @@
       :host {
         display: block;
       }
+      #panel {
+        display: none;
+        margin-bottom: 40px;
+      }
     </style>
 
     <h4 class="page-header">
-      Dataset DOI
+      <a class="btn-toggle" on-click="toggleCat"><i class="fa fa-arrow-right"></i></a> Dataset DOI
     </h4>
+    
+    <div id="panel">
 
-    <div id="needsData" class="subpanel">
-      <div>To request a EcoSIS DOI you must enter the following metadata:</div>
-      <table class="table" id="needsDataTable"></table>
-    </div>
+      <div id="needsData" class="subpanel">
+        <div>To request a EcoSIS DOI you must enter the following metadata:</div>
+        <table class="table" id="needsDataTable"></table>
+      </div>
 
-    <div id="request" class="subpanel">
-      <a class="btn btn-default">Request Dataset Doi</a>
-    </div>
+      <div id="request" class="subpanel">
+        <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
+      </div>
 
-    <div id="pendingApproval" class="subpanel">
-      Your dataset is pending review by a EcoSIS administrator.  The dataset author
-      and maintainer will be notified when the dataset is approved or if more information
-      is required.
-    </div>
+      <div id="pendingApproval" class="subpanel">
+        Your dataset is pending review by a EcoSIS administrator.  The dataset author
+        and maintainer will be notified when the dataset is approved or if more information
+        is required.
+      </div>
 
-    <div id="pendingRevision" class="subpanel">
-      Your dataset has been reviewed by a EcoSIS administrator and further updates
-      are required for a DOI.  The set of changes has been emailed to the datasets
-      author and maintainer.
+      <div id="pendingRevision" class="subpanel">
+        Your dataset has been reviewed by a EcoSIS administrator and further updates
+        are required for a DOI.  The set of changes has been emailed to the datasets
+        author and maintainer.
 
-      If you are ready to re-submit your dataset, please click below.
-      <a class="btn btn-default">Resubmit</a>
-    </div>
+        If you are ready to re-submit your dataset, please click below.
+        <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit</a>
+      </div>
 
-    <div id="accepted" class="subpanel">
-      Your dataset has been approved for a DOI.  The DOI is being generated and
-      should be assigned shortly.
-    </div>
+      <div id="accepted" class="subpanel">
+        Your dataset has been approved for a DOI.  The DOI is being generated and
+        should be assigned shortly.
+      </div>
 
-    <div id="applied" class="subpanel">
-      <b>Dataset DOI:</b> <span id="appliedLabel"></span>
+      <div id="applied" class="subpanel">
+        <b>Dataset DOI:</b> <span id="appliedLabel"></span>
+      </div>
+    
     </div>
 
   </template>
@@ -53,10 +61,34 @@
         this.pkg.on('save-end', this.render.bind(this));
         this.render();
       },
+      
+      requestDoi : function(e) {
+         if( $(e.currentTarget).hasClass('disabled') ) {
+           return;
+         }
+        
+         if( this.pkg.requestDoi() ) {
+           $(this)
+            .find('.btn-request')
+            .addClass('disabled')
+            .attr('disabled', 'disabled');
+         } else {
+           $(this)
+            .find('.btn-request')
+            .removeClass('disabled')
+            .removeAttr('disabled');
+         }
+      },
 
       render : function() {
         var doi = this.pkg.getDoi();
         $(this).find('.subpanel').hide();
+
+        // cleanup request btns
+        $(this)
+            .find('.btn-request')
+            .removeClass('disabled')
+            .removeAttr('disabled');
 
         if( doi.status === '' ) {
           this.verify();
@@ -164,7 +196,19 @@
           '</td><td style="text-transform:capitalize">'+
             key+
           '</td>';
-      }
+      },
+      
+      toggleCat : function(e) {
+        if( this.$.panel.style.display == 'none' ) {
+          e.currentTarget.querySelector('i').className = 'fa fa-arrow-down';
+          this.$.panel.classList.add('animated','fadeIn');
+          this.$.panel.style.display = 'block';
+          if( this.$.panel.onShow ) this.$[id].onShow();
+        } else {
+          e.currentTarget.querySelector('i').className = 'fa fa-arrow-right';
+          this.$.panel.style.display = 'none';
+        }
+      },
 
 
     });
