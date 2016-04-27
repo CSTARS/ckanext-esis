@@ -12,6 +12,7 @@ import ckanext.ecosis.datastore.delete as deleteUtil
 import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.datastore.workspace as workspace
 from ckanext.ecosis.lib.utils import jsonStringify
+from ckanext.ecosis.controller.package.doi import hasAppliedDoi
 
 parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 
@@ -21,9 +22,9 @@ def delete():
     params = utils.get_request_data(request)
 
     # remove resource from disk - normally this doesn't happen
-    _delete(params)
+    resp = _delete(params)
 
-    return json.dumps({'success': True})
+    return json.dumps(resp)
 
 def deleteMany():
     response.headers["Content-Type"] = "application/json"
@@ -31,15 +32,20 @@ def deleteMany():
     params = utils.get_request_data(request)
     ids = params.get('ids')
 
-    for id in ids:
-        _delete({'id': id})
+    resp = []
 
-    return jsonStringify({'success': True})
+    for id in ids:
+        resp.append(_delete({'id': id}))
+
+    return jsonStringify(resp)
 
 def _delete(params):
     # remove resource from disk - normally this doesn't happen
     context = {'model': model, 'user': c.user}
     resource = logic.get_action('resource_show')(context, params)
+
+    if hasAppliedDoi(resource.get('package_id')):
+        return {'error':True, 'message':'Cannot delete resource of package with applied DOI'}
 
     # this will fire error if user does not have access
     logic.get_action('resource_delete')(context, params)
@@ -52,6 +58,9 @@ def _delete(params):
             os.remove(path)
 
     deleteUtil.resource(resource.get("package_id"), id)
+
+    params['success'] = True
+    return params
 
 def process():
     response.headers["Content-Type"] = "application/json"

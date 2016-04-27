@@ -57,3 +57,31 @@ def get(package_id):
         package['tags'].append(row.get('name'))
 
     return package
+
+def doiQuery(status="", query="", limit=10, offset=0):
+    conn = psycopg2.connect(connStr)
+
+    if status == "" or status is None:
+        status = "Pending Approval"
+    if query is None:
+        query = ""
+    if limit is None:
+        limit = 10
+    if offset is None:
+        offset = 0
+
+    query = "%%%s%%" % query.lower()
+
+    print (status, query, limit, offset)
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(
+        ("select p.title, p.id, pe.value as status "
+         "from package_extra pe join package p on pe.package_id = p.id "
+         "where pe.key = 'EcoSIS DOI Status' and pe.state != 'deleted' "
+         "and pe.value = %s and lower(p.title) like %s limit %s offset %s;"),(status, query, limit, offset)
+        )
+    packages = cur.fetchall()
+    cur.close()
+
+    return packages

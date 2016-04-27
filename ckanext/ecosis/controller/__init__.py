@@ -55,6 +55,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def updatePackage(self):
+        try:
+            return package.update()
+        except Exception as e:
+            return handleError(e)
+
     def cleanTests(self):
         try:
             return admin.cleanTests()
@@ -92,6 +98,18 @@ class EcosisController(PackageController):
     def rebuildIndex(self):
         try:
             return admin.rebuildIndex(collections)
+        except Exception as e:
+            return handleError(e)
+
+    def doiQuery(self):
+        try:
+            return package.doi.doiQuery()
+        except Exception as e:
+            return handleError(e)
+
+    def doiUpdateStatus(self):
+        try:
+            return package.doi.doiUpdateStatus()
         except Exception as e:
             return handleError(e)
 
