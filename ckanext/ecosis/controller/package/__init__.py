@@ -11,14 +11,16 @@ import ckan.logic as logic
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckan.lib.email_notifications import send_notification
 from pylons import config
-from doi import handleDoiUpdate, hasAppliedDoi
+from doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
+from doi import init as initDoi
 
 collections = None
 ignoreTemplateVars = ["metadata_modified", "state", "creator_user_id", "revision_id", "type", "url","organization"]
 
-def init(co):
+def init(co, pgConn):
     global collections
 
+    initDoi(pgConn)
     collections = co
 
 def delete():
@@ -53,7 +55,7 @@ def update():
     hasAccess(params['id'])
     context = {'model': model, 'user': c.user}
 
-    cpkg = logic.get_action('package_update')(context, {'id': params['id']})
+    cpkg = logic.get_action('package_show')(context, {'id': params['id']})
 
     # check EcoSIS DOI status
     resp = handleDoiUpdate(cpkg, params)
@@ -61,6 +63,10 @@ def update():
         return json.dumps(response)
 
     pkg = logic.get_action('package_update')(context, params)
+
+    doiStatus = getDoiStatus(pkg);
+    if doiStatus.get('status').get('value') == DOI_STATUS["ACCEPTED"]:
+        applyDoi(pkg)
 
     return json.dumps(pkg)
 
