@@ -301,11 +301,11 @@ function Package(initdata, SDK) {
   this.requestDoi = function() {
     var doi = this.getDoi();
 
-    if( doi.status !== 'Pending Revision' && doi.status !== '' ) {
+    if( doi.status.value !== 'Pending Revision' && doi.status.value ) {
       return false;
     }
 
-    this.setExtra('EcoSIS DOI Status','Pending Approval');
+    this.setExtra('EcoSIS DOI Status', JSON.stringify({value:'Pending Approval'}));
     this._onUpdate('EcoSIS DOI Status');
     
     return true;
@@ -314,6 +314,12 @@ function Package(initdata, SDK) {
   this.getDoi = function() {
     var status = this.getExtra('EcoSIS DOI Status');
     var value = this.getExtra('EcoSIS DOI');
+    
+    if( status ) {
+      status = JSON.parse(status);
+    } else {
+      status = {};
+    }
 
     return {
       status : status,

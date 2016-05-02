@@ -5,7 +5,25 @@
             :host {
                 display: block;
             }
+            #controls {
+                display: flex;
+                margin-bottom: 15px;
+            }
+            
         </style>
         
+        <div id="controls">
+            <div style="flex:1">
+                <input class="form-control" type="text" id="query" on-keypress="onInputKeyPress" placeholder="Filter" />
+            </div>
+            <div>
+                <div id="navControls" class="btn-group" role="group">
+                    <button type="button" class="btn btn-default" on-click="prev">Prev</button>
+                    <button type="button" class="btn btn-default" on-click="next">Next</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="table"></div>
     </template>
 </dom-module>
