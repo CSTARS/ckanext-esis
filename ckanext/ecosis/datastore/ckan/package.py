@@ -1,4 +1,4 @@
-import psycopg2.extras
+import psycopg2.extras, json
 
 connStr = None
 schema = None
@@ -72,16 +72,19 @@ def doiQuery(status="", query="", limit=10, offset=0):
 
     query = "%%%s%%" % query.lower()
 
-    print (status, query, limit, offset)
-
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(
-        ("select p.title, p.id, pe.value as status "
+        ("select p.title as title, p.id, pe.value as status, pev.value as doi "
          "from package_extra pe join package p on pe.package_id = p.id "
+         "left join package_extra pev on pev.package_id = p.id and pev.key = 'EcoSIS DOI' "
          "where pe.key = 'EcoSIS DOI Status' and pe.state != 'deleted' "
-         "and pe.value = %s and lower(p.title) like %s limit %s offset %s;"),(status, query, limit, offset)
+         "and pe.value::json->>'value' = %s and lower(p.title) like %s order by title limit %s offset %s;"),(status, query, limit, offset)
         )
     packages = cur.fetchall()
     cur.close()
+
+    for package in packages:
+        if package.get('status') is not None:
+            package['status'] = json.loads(package['status'])
 
     return packages
