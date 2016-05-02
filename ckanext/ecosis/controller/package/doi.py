@@ -156,6 +156,8 @@ def sendUserNotification(pkg, approved):
     )
     users = cur.fetchall()
     cur.close()
+
+    email = ""
     for user in users:
         email = user.get('email')
         break
