@@ -5,7 +5,19 @@ Polymer({
     is: 'app-table',
     
     ready : function() {
-      this.queryParams = {};  
+      this.queryParams = {
+          query : '',
+          limit : 10,
+          offset : 0
+      };
+      this.packages = [];
+      
+      document.querySelector('app-nav').addEventListener('update-query', (e) => {
+          this.queryParams.query = '';
+          this.$.query.value = '';
+          this.queryParams.status = e.detail.status;
+          this.query();
+      });
     },
     
     attached : function() {
@@ -16,13 +28,62 @@ Polymer({
         rest.getDoiPackages(this.queryParams, this.onPackagesLoad.bind(this));
     },
     
+    next : function() {
+      if( this.packages.length < 10 ) {
+          return;
+      }
+      this.queryParams.offset += 10;
+    },
+    
+    prev : function() {
+      if( this.packages.length == 0 ) {
+          return;
+      }
+      this.queryParams.offset -= 10;
+    },
+    
     onPackagesLoad : function(packages) {
         this.packages = packages;
         this.render();
     },
     
+    onInputKeyPress : function(e) {
+        if( e.which === 13 ) {
+            this.queryParams.query = this.$.query.value;
+            this.query();
+        }
+    },
+    
     render : function() {
-        var html = '<table class="table">';
+        if( this.packages.length === 0 ) {
+            if( !this.queryParams.query ) {
+                this.$.controls.style.display = 'none';
+            } else {
+                this.$.controls.style.display = 'flex';
+            }
+            
+            this.$.table.innerHTML = '<div class="alert alert-info">No packages to display</div>';
+            return;
+        }
+        
+        if( this.packages.length < 10 ) {
+            this.$.navControls.style.display = 'none';
+        } else {
+            this.$.navControls.style.display = 'inline-block';
+        }
+        
+        this.$.controls.style.display = 'flex';
+        var html = `<table class="table">
+            <tr>
+                <th>Package</th>
+                <th>Status</th>
+        `;
+        
+        if( this.queryParams.status === 'Applied' ) {
+            html += '<th>DOI</th></tr>';
+        } else {
+            html += '<th></th></tr>';
+        }
         
         this.packages.forEach((pkg) => {
            var btnType = this.getBtnType(pkg);
@@ -30,23 +91,53 @@ Polymer({
            html += `
             <tr>
                 <td><a target="_blank" href="${config.ckan.host}/dataset/${pkg.id}">${pkg.title}</a></td>
-                <td>${pkg.status}</td>
-                <td>
+                <td>${pkg.status.value}</td>
+                <td>`;
+                
+                
+           if( pkg.status.value === 'Pending Approval' ) {
+               html += `
                     <div class="btn-group">
                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Update <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a>Approve</a></li>
-                        <li><a>Request More Info</a></li>
+                        <li><a pkg="${pkg.id}" action="approve">Approve</a></li>
+                        <li><a pkg="${pkg.id}" action="deny">Deny, Request More Information</a></li>
                     </ul>
-                    </div>
+                    </div>`;
+           } else if( pkg.status.value === 'Applied' ) {
+                html += pkg.doi;
+           }
+                    
+           html += `
                 </td>
             </tr>
            `;
         });
         
-        this.innerHTML = `${html}</table>`;
+        this.$.table.innerHTML = `${html}</table>`;
+        
+        $(this.$.table)
+            .find('a[action]')
+            .on('click', this.onActionClicked.bind(this));
+    },
+    
+    onActionClicked : function(e) {
+        var pkgId = e.currentTarget.getAttribute('pkg');
+        var action = e.currentTarget.getAttribute('action');
+        
+        if( action === 'approve' ) {
+            rest.setDoiStatus(pkgId, 'Accepted', (resp) => {
+               console.log(resp);
+               this.query(); 
+            });
+        } else {
+            rest.setDoiStatus(pkgId, 'Pending Revision', (resp) => {
+               console.log(resp);
+               this.query(); 
+            });
+        }
     },
     
     getBtnType : function(pkg) {

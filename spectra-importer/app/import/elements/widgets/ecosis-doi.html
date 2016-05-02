@@ -33,10 +33,9 @@
 
       <div id="pendingRevision" class="subpanel">
         Your dataset has been reviewed by a EcoSIS administrator and further updates
-        are required for a DOI.  The set of changes has been emailed to the datasets
-        author and maintainer.
+        are required for a DOI.
 
-        If you are ready to re-submit your dataset, please click below.
+        If you are ready to re-submit your dataset, please click below.<br />
         <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit</a>
       </div>
 
@@ -46,7 +45,9 @@
       </div>
 
       <div id="applied" class="subpanel">
-        <b>Dataset DOI:</b> <span id="appliedLabel"></span>
+        <div><b>Dataset DOI:</b> <span id="appliedLabel"></span></div>
+        <div id="devMsg" style="display:none">This is NOT a real DOI.  Only datasets in 
+        production system (<a href="http://data.ecosis.org">data.ecosis.org</a>) will be given actual DOI numbers.</div>
       </div>
     
     </div>
@@ -79,10 +80,20 @@
             .removeAttr('disabled');
          }
       },
+      
+      // re-render
+      onGitInfoLoad : function() {
+        this.render();
+      },
 
       render : function() {
+        
         var doi = this.pkg.getDoi();
         $(this).find('.subpanel').hide();
+        
+        if( ecosis.git && ecosis.git.branch !== 'master' ) {
+          this.$.devMsg.style.display = 'block';
+        }
 
         // cleanup request btns
         $(this)
@@ -90,27 +101,27 @@
             .removeClass('disabled')
             .removeAttr('disabled');
 
-        if( doi.status === '' ) {
+        if( !doi.status.value ) {
           this.verify();
           return;
         }
 
-        if( doi.status === 'Pending Approval' ) {
+        if( doi.status.value === 'Pending Approval' ) {
           this.$.pendingApproval.style.display = 'block';
           return;
         }
 
-        if( doi.status === 'Pending Revision' ) {
+        if( doi.status.value === 'Pending Revision' ) {
           this.$.pendingRevision.style.display = 'block';
           return;
         }
 
-        if( doi.status === 'Accepted' ) {
+        if( doi.status.value === 'Accepted' ) {
           this.$.accepted.style.display = 'block';
           return;
         }
 
-        if( doi.status === 'Applied' ) {
+        if( doi.status.value === 'Applied' ) {
           this.$.applied.style.display = 'block';
           this.$.appliedLabel.innerHTML = doi.value;
           return;

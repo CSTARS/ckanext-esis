@@ -8,9 +8,10 @@
         </style>
         
         <div class="list-group">
-            <a class="list-group-item active" on-click="setQuery" status="pending">Pending</a>
-            <a class="list-group-item" on-click="setQuery" status="revising">Waiting For Revision</a>
-            <a class="list-group-item" on-click="setQuery" status="approved">Approved</a>
+            <a class="list-group-item active" on-click="setQuery" status="Pending Approval">Pending Approval</a>
+            <a class="list-group-item" on-click="setQuery" status="Pending Revision">Denied, Waiting For Revision</a>
+            <a class="list-group-item" on-click="setQuery" status="Accepted">Approved, Waiting for DOI</a>
+            <a class="list-group-item" on-click="setQuery" status="Applied">Approved, DOI Assigned</a>
         </div>
     </template>
 </dom-module>

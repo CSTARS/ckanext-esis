@@ -278,6 +278,9 @@
           this.$.gitVersionLabel.innerHTML = this.git.version;
           this.$.gitCommitLabel.innerHTML = this.git.commit;
         }
+        
+        // HACK
+        document.querySelector('ecosis-doi').onGitInfoLoad();
       }.bind(this));
 
       var fn = new ecosis.app.UiBuffer(this.updateScores, 100, this);
