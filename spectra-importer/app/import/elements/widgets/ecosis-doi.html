@@ -87,6 +87,7 @@
       },
 
       render : function() {
+        if( !this.pkg ) return;
         
         var doi = this.pkg.getDoi();
         $(this).find('.subpanel').hide();
