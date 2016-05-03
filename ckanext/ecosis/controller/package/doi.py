@@ -3,7 +3,7 @@ import ckan.logic as logic
 from ckan.lib.email_notifications import send_notification
 from pylons import config
 from ckan.common import request, response
-import json, math, random, psycopg2
+import json, math, random, psycopg2, urllib2
 
 from ckanext.ecosis.datastore.ckan import package
 
@@ -52,6 +52,13 @@ def handleDoiUpdate(currentPackage, newPackage):
             sendAdminNotification(newPackage)
 
             return {'success': True}
+
+        # user is canceling request
+        if newDoi.get('status').get('value') is None:
+            setPackageExtra('EcoSIS DOI Status', '{}', newPackage)
+
+            return {'success': True}
+
 
     if not isAdmin():
         return {
@@ -136,9 +143,9 @@ def sendAdminNotification(pkg):
                     {
                         "subject" : "EcoSIS Dataset DOI Request - %s" % pkg.get('title'),
                         "body" : ("A DOI has been requested for the dataset '%s' by user %s/user/%s.  "
-                                    "You can view the dataset here:  %s/#result/%s and approve the DOI here: %s/doi/%s"
+                                    "You can view the dataset here:  %s/#result/%s and approve the DOI here: %s/doi-admin/#%s"
                                     "\n\n-EcoSIS Server") %
-                                 (pkg.get('title'), config.get('ckan.site_url'), c.user, config.get('ecosis.search_url'), pkg.get("id"), config.get('ckan.site_url'), pkg.get("id"))
+                                 (pkg.get('title'), config.get('ckan.site_url'), c.user, config.get('ecosis.search_url'), pkg.get("id"), config.get('ckan.site_url'), urllib2.quote(pkg.get("title")))
                     }
                 )
             except:
