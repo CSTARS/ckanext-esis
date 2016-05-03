@@ -18,10 +18,19 @@
       <div id="needsData" class="subpanel">
         <div>To request a EcoSIS DOI you must enter the following metadata:</div>
         <table class="table" id="needsDataTable"></table>
+        
+        <div class="alert alert-warning">Warning: Once a DOI is applied, you can no longer make
+          changes to the dataset.
+        </div>
       </div>
 
       <div id="request" class="subpanel">
         <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
+        
+        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
+          before proceeding.
+        </div>
       </div>
 
       <div id="pendingApproval" class="subpanel">
@@ -30,6 +39,10 @@
         is required.
         <br />
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
+        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
+          before proceeding.
+        </div>
       </div>
 
       <div id="pendingRevision" class="subpanel">
