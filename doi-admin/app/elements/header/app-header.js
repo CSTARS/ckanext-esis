@@ -4,7 +4,12 @@ Polymer({
     is: 'app-header',
     ready : function() {
         rest.getUserInfo(function(resp){
-            console.log(resp);
+            if( !resp.loggedIn ) {
+                window.location = '/user/login';
+            } else if( !resp.isAdmin ) {
+                alert('Nope');
+                window.location = '/';
+            }
         });
     }
 });

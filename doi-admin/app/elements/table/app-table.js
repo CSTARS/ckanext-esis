@@ -11,6 +11,7 @@ Polymer({
           offset : 0
       };
       this.packages = [];
+      this.init = false;
       
       document.querySelector('app-nav').addEventListener('update-query', (e) => {
           this.queryParams.query = '';
@@ -21,6 +22,15 @@ Polymer({
     },
     
     attached : function() {
+        if( this.init ) return;
+        this.init = true;
+        
+        // initial query set via url
+        var hash = decodeURIComponent(window.location.hash.replace('#',''));
+        if( hash ) {
+            this.$.query.value = hash;
+        }
+        
         this.query();
     },
     

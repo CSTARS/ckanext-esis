@@ -310,6 +310,19 @@ function Package(initdata, SDK) {
     
     return true;
   };
+  
+  this.cancelDoiRequest = function() {
+    var doi = this.getDoi();
+
+    if( doi.status.value !== 'Pending Revision' && doi.status.value !== 'Pending Approval' ) {
+      return false;
+    }
+
+    this.setExtra('EcoSIS DOI Status', JSON.stringify({}));
+    this._onUpdate('EcoSIS DOI Status');
+    
+    return true;
+  };
 
   this.getDoi = function() {
     var status = this.getExtra('EcoSIS DOI Status');
