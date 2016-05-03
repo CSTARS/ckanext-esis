@@ -12,8 +12,20 @@ def info():
     # see line 604 or ckan/logic/action/get about params for this method
     orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
-    return json.dumps({
+    user = {
         "loggedIn": True,
         "username": c.user,
         "organizations" : orgs
-    })
+    }
+
+    if isAdmin():
+        user['isAdmin'] = True
+
+    return json.dumps(user)
+
+def isAdmin():
+    if c.userobj == None:
+        return False
+    if not c.userobj.sysadmin:
+        return False
+    return True
