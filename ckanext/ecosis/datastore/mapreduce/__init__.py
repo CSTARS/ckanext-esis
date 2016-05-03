@@ -121,6 +121,11 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     if linkeddata != None:
         ecosis["linked_data"] = json.loads(linkeddata)
 
+    # append the EcoSIS DOI
+    doi = getPackageExtra('EcoSIS DOI', pkg)
+    if doi != None:
+        ecosis["doi"] = doi
+
     # append the list of resources
     for item in pkg['resources']:
         if item.get("state") != "active":
