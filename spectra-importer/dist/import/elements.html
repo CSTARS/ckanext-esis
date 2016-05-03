@@ -10063,7 +10063,6 @@ this.fire('dom-change');
         display: block;
       }
       #panel {
-        display: none;
         margin-bottom: 40px;
       }
     </style>
@@ -10072,7 +10071,7 @@ this.fire('dom-change');
       <a class="btn-toggle" on-click="toggleCat"><i class="fa fa-arrow-right"></i></a> Dataset DOI
     </h4>
     
-    <div id="panel">
+    <div id="panel" style="display:none">
 
       <div id="needsData" class="subpanel">
         <div>To request a EcoSIS DOI you must enter the following metadata:</div>
@@ -10087,6 +10086,8 @@ this.fire('dom-change');
         Your dataset is pending review by a EcoSIS administrator.  The dataset author
         and maintainer will be notified when the dataset is approved or if more information
         is required.
+        <br>
+        <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
       </div>
 
       <div id="pendingRevision" class="subpanel">
@@ -10094,7 +10095,8 @@ this.fire('dom-change');
         are required for a DOI.
 
         If you are ready to re-submit your dataset, please click below.<br>
-        <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit</a>
+        <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit Doi Request</a>
+        <a class="btn btn-wanring btn-request" on-click="cancelRequest">Cancel Doi Request</a>
       </div>
 
       <div id="accepted" class="subpanel">
@@ -10127,6 +10129,24 @@ this.fire('dom-change');
          }
         
          if( this.pkg.requestDoi() ) {
+           $(this)
+            .find('.btn-request')
+            .addClass('disabled')
+            .attr('disabled', 'disabled');
+         } else {
+           $(this)
+            .find('.btn-request')
+            .removeClass('disabled')
+            .removeAttr('disabled');
+         }
+      },
+      
+      cancelRequest : function(e) {
+         if( $(e.currentTarget).hasClass('disabled') ) {
+           return;
+         }
+        
+         if( this.pkg.cancelDoiRequest() ) {
            $(this)
             .find('.btn-request')
             .addClass('disabled')
