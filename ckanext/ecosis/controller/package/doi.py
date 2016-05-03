@@ -4,6 +4,7 @@ from ckan.lib.email_notifications import send_notification
 from pylons import config
 from ckan.common import request, response
 import json, math, random, psycopg2, urllib2
+from ckanext.ecosis.datastore.push import Push
 
 from ckanext.ecosis.datastore.ckan import package
 
@@ -30,6 +31,7 @@ def handleDoiUpdate(currentPackage, newPackage):
     if oldDoi.get('status').get('value') == newDoi.get('status').get('value'):
         if oldDoi.get('value') == newDoi.get('value'):
             # check this package doesn't have a DOI
+            # Perhaps just not let them make it private?
             if not canUpdate(oldDoi):
                 return {
                     'error': True,
@@ -88,6 +90,10 @@ def applyDoi(pkg):
     # TODO: implement request to DOI service here
     setPackageExtra('EcoSIS DOI Status', json.dumps({'value':DOI_STATUS["APPLIED"]}), pkg)
     setPackageExtra('EcoSIS DOI', math.floor(random.random() * 1000000000),  pkg)
+
+    # now that it's applied, push to search
+    push = Push()
+    push.run(pkg)
 
     logic.get_action('package_update')(context, pkg)
 
