@@ -67,7 +67,12 @@
       },
 
       _show : function(e) {
-        this.$.message.innerHTML = e.message;
+        var msg = '';
+        if( e.details && e.details.message ) {
+          msg = e.details.message;
+        }
+
+        this.$.message.innerHTML = msg || e.message || '';
         this.$.message2.innerHTML = e.message || '';
         this.$.project.innerHTML = ecosis.ds.package_id;
         this.$.code.innerHTML = e.code || -1;

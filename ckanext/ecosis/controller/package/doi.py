@@ -3,7 +3,8 @@ import ckan.logic as logic
 from ckan.lib.email_notifications import send_notification
 from pylons import config
 from ckan.common import request, response
-import json, math, random, psycopg2, urllib2
+import json, datetime, psycopg2, urllib2, base64
+from dateutil import parser
 from ckanext.ecosis.datastore.push import Push
 
 from ckanext.ecosis.datastore.ckan import package
@@ -15,7 +16,11 @@ DOI_STATUS = {
     'PENDING_REVISION' : 'Pending Revision',
     'PENDING_APPROVAL' : 'Pending Approval'
 }
-
+DOI_CONFIG = {
+    "url" : config.get("ecosis.doi.url"),
+    "username" : config.get("ecosis.doi.username"),
+    "password" : config.get("ecosis.doi.password")
+}
 connStr = ""
 
 def init(pgConn):
@@ -87,9 +92,26 @@ def applyDoi(pkg):
     context = {'model': model, 'user': c.user}
     logic.get_action('package_update')(context, pkg)
 
+    doiResponse = requestDoi(pkg)
+
+    if doiResponse.get('status') != 'success':
+        status = {
+            'value': DOI_STATUS["APPLIED"],
+            'error' : True,
+            'message': 'Failed to request DOI from service',
+            'serverResponseStatus' : doiResponse.get('status')
+        }
+        setPackageExtra('EcoSIS DOI Status', json.dumps(status), pkg)
+        return status
+
     # TODO: implement request to DOI service here
-    setPackageExtra('EcoSIS DOI Status', json.dumps({'value':DOI_STATUS["APPLIED"]}), pkg)
-    setPackageExtra('EcoSIS DOI', math.floor(random.random() * 1000000000),  pkg)
+    status = {
+        'value' : DOI_STATUS["APPLIED"],
+        'ark' : doiResponse.get('ark'),
+        'applied' : datetime.datetime.utcnow().isoformat()
+    }
+    setPackageExtra('EcoSIS DOI Status', json.dumps(status), pkg)
+    setPackageExtra('EcoSIS DOI', doiResponse.get('doi'),  pkg)
 
     # now that it's applied, push to search
     push = Push()
@@ -98,6 +120,34 @@ def applyDoi(pkg):
     logic.get_action('package_update')(context, pkg)
 
     return {'success': True}
+
+def requestDoi(pkg):
+    data = "_target: %s/#result/%s\n" % (config.get("ecosis.search_url"), pkg.get('id'))
+    data += "datacite.creator: %s\n" % pkg.get('author')
+    data += "datacite.title: %s\n" % pkg.get('title')
+    data += "datacite.publisher: EcoSIS\n"
+    data += "datacite.publicationyear: %s" % parser.parse(pkg.get('metadata_created')).year
+
+
+    r = urllib2.Request(DOI_CONFIG.get('url'))
+    base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    r.add_header("Authorization", "Basic %s" % base64string)
+    r.add_header("Content-Type", "text/plain;charset=UTF-8")
+    r.add_data(data)
+
+    result = urllib2.urlopen(r).read()
+
+    (status, value) = result.split(': ')
+    doi = ""
+    ark = ""
+    if status == 'success':
+        (doi, ark) = value.split(' | ')
+
+    return {
+        "status" : status,
+        "doi" : doi,
+        "ark" : ark
+    }
 
 
 # helper for deleting package or updating resources

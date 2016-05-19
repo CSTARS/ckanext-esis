@@ -1,0 +1,5 @@
+_target: http://ecosis.org/
+datacite.creator: Justin Merz
+datacite.title: EcoSIS Website
+datacite.publisher: EcoSIS
+datacite.publicationyear: 2016

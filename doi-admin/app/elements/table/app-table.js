@@ -108,13 +108,13 @@ Polymer({
            if( pkg.status.value === 'Pending Approval' ) {
                html += `
                     <div class="btn-group">
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Update <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a pkg="${pkg.id}" action="approve">Approve</a></li>
-                        <li><a pkg="${pkg.id}" action="deny">Deny, Request More Information</a></li>
-                    </ul>
+                        <button id="btn-${pkg.id}" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Update <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a pkg="${pkg.id}" action="approve">Approve</a></li>
+                            <li><a pkg="${pkg.id}" action="deny">Deny, Request More Information</a></li>
+                        </ul>
                     </div>`;
            } else if( pkg.status.value === 'Applied' ) {
                 html += pkg.doi;
@@ -136,18 +136,39 @@ Polymer({
     onActionClicked : function(e) {
         var pkgId = e.currentTarget.getAttribute('pkg');
         var action = e.currentTarget.getAttribute('action');
+        this.disableBtn(pkgId);
         
         if( action === 'approve' ) {
             rest.setDoiStatus(pkgId, 'Accepted', (resp) => {
-               console.log(resp);
+               this.enableBtn(pkgId);
+               if( resp.error ) {
+                   alert(resp.message);
+               } else {
+                   alert('Success');
+               }
+                
                this.query(); 
             });
         } else {
             rest.setDoiStatus(pkgId, 'Pending Revision', (resp) => {
-               console.log(resp);
+               this.enableBtn(pkgId);
                this.query(); 
             });
         }
+    },
+    
+    disableBtn : function(id) {
+        var ele = this.querySelector(`#btn-${id}`);
+        ele.setAttribute('disabled', 'disabled');
+        ele.classList.toggle('disabled');
+        ele.innerHTML = 'working...';
+    },
+    
+    enableBtn : function(id) {
+        var ele = this.querySelector(`#btn-${id}`);
+        ele.removeAttribute('disabled');
+        ele.classList.toggle('disabled');
+        ele.innerHTML = 'Update <span class="caret"></span>';
     },
     
     getBtnType : function(pkg) {

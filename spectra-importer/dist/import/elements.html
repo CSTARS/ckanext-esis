@@ -7865,9 +7865,34 @@ this.fire('dom-change');
     :host {
       display: block;
     }
+    #root.static {
+      background-color: rgb(70, 70, 70);
+    }
+    #root.static a {
+      color: white !important;
+    }
+    #root.static .navbar-brand {
+      color: white !important;
+    }
+    #root.static li.active a {
+      color: #222 !important;
+    }
+    #root.static li.open a {
+      color: #222 !important;
+    }
+    #staticMessage {
+      position: fixed;
+      z-index: 25;
+      top: 62px;
+      text-align: center;
+      padding: 4px 0 2px 0;
+      background-color: rgba(255,255,255,.5);
+      width: 100%;
+      border-bottom: 1px solid #ccc;
+    }
   </style>
   <template>
-    <nav class="navbar navbar-default navbar-fixed-top">
+    <nav class="navbar navbar-default navbar-fixed-top" id="root">
       <div class="container-fluid">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#ecosis-header-collapse">
@@ -7876,7 +7901,7 @@ this.fire('dom-change');
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <span class="navbar-brand">EcoSIS Importer <span id="score2" class="visible-xs-inline"></span></span>
+          <span class="navbar-brand">EcoSIS Importer<span id="score2" class="visible-xs-inline"></span></span>
         </div>
 
         <div class="collapse navbar-collapse" id="ecosis-header-collapse">
@@ -7906,6 +7931,9 @@ this.fire('dom-change');
         </div>
       </div>
     </nav>
+    <div id="staticMessage" style="display:none">
+      <i class="fa fa-warning"></i> A EcoSIS DOI as been applied to the dataset.  It is no longer editable.
+    </div>
   </template>
 </dom-module>
 
@@ -7932,8 +7960,9 @@ this.fire('dom-change');
       this.updateActiveTab();
 
       if( ecosis.ds.editMode ) {
-        ecosis.ds.on('load', function(){
+        ecosis.ds.on('load', function(pkg){
           if( ecosis.ds.editMode ) this.setBackBtn();
+          this.checkDoiStatus();
         }.bind(this));
       } else {
         this.$.exit.setAttribute('href', '/dataset/');
@@ -7949,6 +7978,16 @@ this.fire('dom-change');
         this.$.resourcesDropdown.style.display = 'block';
         this.$.advanced.style.display = 'block';
         this.$.push.style.display = 'block';
+      }
+    },
+    
+    checkDoiStatus : function() {
+      var status = ecosis.ds.package.getDoi().status;
+      if( status ) {
+        if( status.value.toLowerCase() === 'applied' ) {
+          this.$.root.classList.add('static');
+          this.$.staticMessage.style.display = 'block';
+        }
       }
     },
 
@@ -9754,7 +9793,12 @@ this.fire('dom-change');
       },
 
       _show : function(e) {
-        this.$.message.innerHTML = e.message;
+        var msg = '';
+        if( e.details && e.details.message ) {
+          msg = e.details.message;
+        }
+
+        this.$.message.innerHTML = msg || e.message || '';
         this.$.message2.innerHTML = e.message || '';
         this.$.project.innerHTML = ecosis.ds.package_id;
         this.$.code.innerHTML = e.code || -1;
@@ -10764,6 +10808,12 @@ this.fire('dom-change');
     saveEnd : function(resp) {
       if( this.mode === 'create' ) return;
       this.$.saveLabel.style.display = 'none';
+
+      console.log(resp);
+      if( resp.details.doiApplied ) {
+        return alert('You cannot update this dataset.  EcoSIS DOI has been applied');
+      }
+
       if( resp.error ) {
         return ecosis.errorPopup.show(resp);
       }

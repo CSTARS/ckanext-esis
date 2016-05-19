@@ -60,7 +60,8 @@ def update():
     # check EcoSIS DOI status
     resp = handleDoiUpdate(cpkg, params)
     if resp.get('error') == True:
-        return json.dumps(response)
+        resp['doiApplied'] = True
+        return json.dumps(resp)
 
     pkg = logic.get_action('package_update')(context, params)
 
