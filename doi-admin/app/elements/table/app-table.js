@@ -1,13 +1,14 @@
 var rest = require('../../../lib/rest');
 var config = require('../../../lib/config');
+var extend = require('extend')
 
 Polymer({
     is: 'app-table',
     
     ready : function() {
       this.queryParams = {
-          query : '',
-          limit : 10,
+          query : 'Pending',
+          limit : 100,
           offset : 0
       };
       this.packages = [];
@@ -35,6 +36,25 @@ Polymer({
     },
     
     query : function() {
+        if( this.queryParams.status == "Accepted" ) {
+            var options = extend(true, {}, this.queryParams);
+            
+            options.status = 'Requesting';
+            var self = this;
+            
+            rest.getDoiPackages(options, (packages) => {
+                self.packages = packages;
+                rest.getDoiPackages(self.queryParams, (packages) => {
+                    packages.forEach((p) => {
+                        self.packages.push(p);
+                    });
+                    self.render();
+                });
+            });
+
+            return;
+        }
+
         rest.getDoiPackages(this.queryParams, this.onPackagesLoad.bind(this));
     },
     
@@ -118,6 +138,8 @@ Polymer({
                     </div>`;
            } else if( pkg.status.value === 'Applied' ) {
                 html += pkg.doi;
+           } else if( pkg.status.value === 'Accepted' && pkg.status.error ) {
+                html += `<span class="text text-danger">Error Requesting DOI <a pkg="${pkg.id}" action="approve" id="btn-${pkg.id}" class="btn btn-default">Retry</a></span>`;
            }
                     
            html += `
@@ -144,7 +166,12 @@ Polymer({
                if( resp.error ) {
                    alert(resp.message);
                } else {
-                   alert('Success');
+                   var status = JSON.parse(rest.getExtra(resp, 'EcoSIS DOI Status'));
+                   if( status.error ) {
+                       alert(status.message);
+                   } else {
+                       alert('Success');
+                   }
                }
                 
                this.query(); 

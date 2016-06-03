@@ -328,7 +328,7 @@ function Package(initdata, SDK) {
     var status = this.getExtra('EcoSIS DOI Status');
     var value = this.getExtra('EcoSIS DOI');
     
-    if( status ) {
+    if( status && status.length > 0 ) {
       status = JSON.parse(status);
     } else {
       status = {};

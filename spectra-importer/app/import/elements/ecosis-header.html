@@ -121,7 +121,7 @@
     
     checkDoiStatus : function() {
       var status = ecosis.ds.package.getDoi().status;
-      if( status ) {
+      if( status && status.value ) {
         if( status.value.toLowerCase() === 'applied' ) {
           this.$.root.classList.add('static');
           this.$.staticMessage.style.display = 'block';

@@ -36,6 +36,11 @@
         </div>
       </div>
 
+
+      <div id="requesting" class="subpanel">
+        Your doi has been approved and a request is being made for the DOI.
+      </div>
+
       <div id="pendingApproval" class="subpanel">
         Your dataset is pending review by a EcoSIS administrator.  The dataset author
         and maintainer will be notified when the dataset is approved or if more information
@@ -155,6 +160,11 @@
 
         if( doi.status.value === 'Pending Revision' ) {
           this.$.pendingRevision.style.display = 'block';
+          return;
+        }
+
+        if( doi.status.value === 'Requesting' ) {
+          this.$.requesting.style.display = 'block';
           return;
         }
 

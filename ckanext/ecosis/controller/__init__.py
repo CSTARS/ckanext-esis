@@ -23,7 +23,6 @@ with open(schema) as schema_file:
 
 client = MongoClient(config.get("ecosis.mongo.url"))
 db = client[config.get("ecosis.mongo.db")]
-print config.get("ecosis.mongo.db")
 
 collections = {
     "spectra" : db[config.get("ecosis.mongo.workspace_spectra_collection")],
@@ -104,6 +103,12 @@ class EcosisController(PackageController):
     def doiQuery(self):
         try:
             return package.doi.doiQuery()
+        except Exception as e:
+            return handleError(e)
+
+    def clearDoi(self):
+        try:
+            return package.doi.clearDoi()
         except Exception as e:
             return handleError(e)
 

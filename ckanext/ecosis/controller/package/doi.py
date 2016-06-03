@@ -33,7 +33,7 @@ def handleDoiUpdate(currentPackage, newPackage):
     newDoi = getDoiStatus(newPackage)
 
     # No changes
-    if oldDoi.get('status').get('value') == newDoi.get('status').get('value'):
+    if oldDoi.get('status').get('value') == newDoi.get('status').get('value') and oldDoi.get('status').get('error') != True:
         if oldDoi.get('value') == newDoi.get('value'):
             # check this package doesn't have a DOI
             # Perhaps just not let them make it private?
@@ -96,15 +96,15 @@ def applyDoi(pkg):
 
     if doiResponse.get('status') != 'success':
         status = {
-            'value': DOI_STATUS["APPLIED"],
+            'value': DOI_STATUS["ACCEPTED"],
             'error' : True,
             'message': 'Failed to request DOI from service',
             'serverResponseStatus' : doiResponse.get('status')
         }
         setPackageExtra('EcoSIS DOI Status', json.dumps(status), pkg)
+        logic.get_action('package_update')(context, pkg)
         return status
 
-    # TODO: implement request to DOI service here
     status = {
         'value' : DOI_STATUS["APPLIED"],
         'ark' : doiResponse.get('ark'),
@@ -135,7 +135,10 @@ def requestDoi(pkg):
     r.add_header("Content-Type", "text/plain;charset=UTF-8")
     r.add_data(data)
 
-    result = urllib2.urlopen(r).read()
+    try:
+        result = urllib2.urlopen(r).read()
+    except Exception as e:
+        result = "error: request error"
 
     (status, value) = result.split(': ')
     doi = ""
@@ -181,7 +184,30 @@ def doiQuery():
     offset = request.params.get('offset')
     limit = request.params.get('limit')
 
-    return json.dumps(package.doiQuery(query=query, status=status, offset=offset, limit=limit))
+    resp = package.doiQuery(query=query, status=status, offset=offset, limit=limit)
+    return json.dumps(resp)
+
+def clearDoi():
+    response.headers["Content-Type"] = "application/json"
+
+    if not isAdmin():
+        return {
+            'error' : True,
+            'message' : 'Nope.'
+        }
+
+    id = request.params.get('id')
+
+    context = {'model': model, 'user': c.user}
+    pkg = logic.get_action('package_show')(context, {'id': id})
+
+    # check EcoSIS DOI status
+    setPackageExtra('EcoSIS DOI Status', '{}', pkg)
+    setPackageExtra('EcoSIS DOI', '', pkg)
+
+    pkg = logic.get_action('package_update')(context, pkg)
+
+    return json.dumps({'success': True})
 
 
 def sendAdminNotification(pkg):
@@ -270,7 +296,7 @@ def getDoiStatus(pkg):
         'value' : getPackageExtra('EcoSIS DOI', pkg)
     }
 
-    if doi['status'] is None:
+    if doi['status'] is None or doi['status'] == "":
         doi['status'] = {}
     else:
         doi['status'] = json.loads(doi['status'])

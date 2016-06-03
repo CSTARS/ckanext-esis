@@ -87,5 +87,6 @@ function setExtra(pkg, key, value) {
 module.exports = {
     getUserInfo : getUserInfo,
     getDoiPackages : getDoiPackages,
-    setDoiStatus : setDoiStatus
+    setDoiStatus : setDoiStatus,
+    getExtra : getExtra
 }

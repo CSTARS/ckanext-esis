@@ -437,8 +437,7 @@
       if( this.mode === 'create' ) return;
       this.$.saveLabel.style.display = 'none';
 
-      console.log(resp);
-      if( resp.details.doiApplied ) {
+      if( resp.details && resp.details.doiApplied ) {
         return alert('You cannot update this dataset.  EcoSIS DOI has been applied');
       }
 
