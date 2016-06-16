@@ -7983,7 +7983,7 @@ this.fire('dom-change');
     
     checkDoiStatus : function() {
       var status = ecosis.ds.package.getDoi().status;
-      if( status ) {
+      if( status && status.value ) {
         if( status.value.toLowerCase() === 'applied' ) {
           this.$.root.classList.add('static');
           this.$.staticMessage.style.display = 'block';
@@ -10138,6 +10138,11 @@ this.fire('dom-change');
         </div>
       </div>
 
+
+      <div id="requesting" class="subpanel">
+        Your doi has been approved and a request is being made for the DOI.
+      </div>
+
       <div id="pendingApproval" class="subpanel">
         Your dataset is pending review by a EcoSIS administrator.  The dataset author
         and maintainer will be notified when the dataset is approved or if more information
@@ -10257,6 +10262,11 @@ this.fire('dom-change');
 
         if( doi.status.value === 'Pending Revision' ) {
           this.$.pendingRevision.style.display = 'block';
+          return;
+        }
+
+        if( doi.status.value === 'Requesting' ) {
+          this.$.requesting.style.display = 'block';
           return;
         }
 
@@ -10809,8 +10819,7 @@ this.fire('dom-change');
       if( this.mode === 'create' ) return;
       this.$.saveLabel.style.display = 'none';
 
-      console.log(resp);
-      if( resp.details.doiApplied ) {
+      if( resp.details && resp.details.doiApplied ) {
         return alert('You cannot update this dataset.  EcoSIS DOI has been applied');
       }
 
