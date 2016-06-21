@@ -20,6 +20,13 @@ function loadFromTemplate(ckanPackage, user)  {
   }
 
   if( ckanPackage.extras ) {
+    if( ckanPackage.extras['EcoSIS DOI'] ) {
+      delete ckanPackage.extras['EcoSIS DOI']
+    }
+    if( ckanPackage.extras['EcoSIS DOI Status'] ) {
+      delete ckanPackage.extras['EcoSIS DOI Status']
+    }
+
     var arr = [];
     for( var key in ckanPackage.extras ) {
       arr.push({
