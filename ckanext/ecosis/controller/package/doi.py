@@ -157,7 +157,7 @@ def requestDoi(pkg):
 def hasAppliedDoi(pkgId):
     context = {'model': model, 'user': c.user}
     pkg = logic.get_action('package_update')(context, {'id': pkgId})
-    return canUpdate(getDoiStatus(pkg))
+    return not canUpdate(getDoiStatus(pkg))
 
 def doiUpdateStatus():
     response.headers["Content-Type"] = "application/json"
