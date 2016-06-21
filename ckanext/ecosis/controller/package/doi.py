@@ -156,8 +156,9 @@ def requestDoi(pkg):
 # helper for deleting package or updating resources
 def hasAppliedDoi(pkgId):
     context = {'model': model, 'user': c.user}
-    pkg = logic.get_action('package_update')(context, {'id': pkgId})
-    return not canUpdate(getDoiStatus(pkg))
+    pkg = logic.get_action('package_show')(context, {'id': pkgId})
+    resp = not canUpdate(getDoiStatus(pkg))
+    return resp
 
 def doiUpdateStatus():
     response.headers["Content-Type"] = "application/json"

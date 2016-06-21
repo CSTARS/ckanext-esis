@@ -307,7 +307,17 @@
         this.$.goToBtn.style.display = 'inline-block';
         this.$.goToListBtn.style.display = 'inline-block';
         this.$.createFromTemplate.style.display = 'none';
-        this.$.deleteBtn.style.display = 'inline-block';
+
+
+        var status = ecosis.ds.package.getDoi().status;
+        var hasDOI = false;
+        if( status && status.value ) {
+          if( status.value.toLowerCase() === 'applied' ) {
+            hasDOI = true;
+          }
+        }
+
+        this.$.deleteBtn.style.display = hasDOI ? 'none' : 'inline-block';
       }
     },
 
