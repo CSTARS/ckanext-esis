@@ -4,7 +4,7 @@ module.exports = function(Package) {
 };
 
 // load from server provided template
-function loadFromTemplate(ckanPackage, user)  {
+function loadFromTemplate(ckanPackage, user, keepDoi)  {
   for( var key in this.data ) {
     if( key === 'owner_org' || key === 'id' ) continue;
     if( ckanPackage[key] ) this.data[key] = ckanPackage[key];
@@ -20,11 +20,13 @@ function loadFromTemplate(ckanPackage, user)  {
   }
 
   if( ckanPackage.extras ) {
-    if( ckanPackage.extras['EcoSIS DOI'] ) {
-      delete ckanPackage.extras['EcoSIS DOI']
-    }
-    if( ckanPackage.extras['EcoSIS DOI Status'] ) {
-      delete ckanPackage.extras['EcoSIS DOI Status']
+    if( !keepDoi ) {
+      if( ckanPackage.extras['EcoSIS DOI'] ) {
+        delete ckanPackage.extras['EcoSIS DOI']
+      }
+      if( ckanPackage.extras['EcoSIS DOI Status'] ) {
+        delete ckanPackage.extras['EcoSIS DOI Status']
+      }
     }
 
     var arr = [];

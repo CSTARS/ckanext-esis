@@ -144,7 +144,7 @@ module.exports = function(config) {
     this.package_id = ckanPackage.id;
 
     this.package.reset(ckanPackage);
-    this.package.loadFromTemplate(ckanPackage);
+    this.package.loadFromTemplate(ckanPackage, null, true);
 
     this.datasheets = this.result.resources;
 
