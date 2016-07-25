@@ -125,6 +125,13 @@ module.exports = function (grunt) {
                     src: '*.*',
                     dest: '<%= yeoman.dist %>/import/fonts',
                     cwd: '<%= yeoman.app %>/import/components/font-awesome/fonts'
+                },
+                {
+                    expand: true,
+                    dot: true,
+                    src: '*.*',
+                    dest: '<%= yeoman.dist %>/import/styles/images',
+                    cwd: '<%= yeoman.app %>/import/components/leaflet-control-geocoder/dist/images'
                 }]
             }
         },
