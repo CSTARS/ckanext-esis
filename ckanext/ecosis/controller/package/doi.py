@@ -274,7 +274,7 @@ def sendUserNotification(pkg, approved):
                 send_notification(
                     {
                         "email" : email,
-                        "display_name" : "EcoSIS DOI Service"
+                        "display_name" : "EcoSIS User %s," % status.get('requested_by')
                     },
                     {
                         "subject" : "EcoSIS Dataset DOI Request - %s" % pkg.get('title'),
