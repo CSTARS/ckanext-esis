@@ -7,7 +7,8 @@ Polymer({
     
     ready : function() {
       this.queryParams = {
-          query : 'Pending',
+          query : '',
+          status : 'Pending Approval',
           limit : 100,
           offset : 0
       };
@@ -178,6 +179,7 @@ Polymer({
             });
         } else {
             rest.setDoiStatus(pkgId, 'Pending Revision', (resp) => {
+                alert('User '+resp.doi_user_name+' ('+resp.doi_user_email+') has been notified via emailed.  Please follow up with user as to why they were denied.');
                this.enableBtn(pkgId);
                this.query(); 
             });

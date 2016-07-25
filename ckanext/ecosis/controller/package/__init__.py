@@ -69,6 +69,11 @@ def update():
     if doiStatus.get('status').get('value') == DOI_STATUS["ACCEPTED"]:
         applyDoi(pkg)
 
+    if resp.get('email') is not None:
+        pkg['doi_user_email'] = resp.get('email')
+        pkg['doi_user_name'] = resp.get('user')
+
+
     return json.dumps(pkg)
 
 def create():

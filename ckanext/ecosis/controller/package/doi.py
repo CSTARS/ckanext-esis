@@ -74,12 +74,12 @@ def handleDoiUpdate(currentPackage, newPackage):
         }
 
     if newDoi.get('status').get('value') == DOI_STATUS['PENDING_REVISION'] and oldDoi.get('status').get('value') != DOI_STATUS['PENDING_REVISION']:
-        sendUserNotification(newPackage, False)
+        resp = sendUserNotification(newPackage, False)
     elif newDoi.get('status').get('value') == DOI_STATUS['ACCEPTED'] and oldDoi.get('status').get('value') != DOI_STATUS['ACCEPTED']:
-        sendUserNotification(newPackage, True)
+        resp = sendUserNotification(newPackage, True)
 
-
-    return {'success': True}
+    resp['success'] = True
+    return resp
 
 def applyDoi(pkg):
     doiStatus = getDoiStatus(pkg)
@@ -237,7 +237,9 @@ def sendAdminNotification(pkg):
 def sendUserNotification(pkg, approved):
     url = config.get('ckan.site_url')
 
-    status = getDoiStatus(pkg)
+    status = getDoiStatus(pkg).get('status')
+    if status is None:
+        status = {}
 
     conn = psycopg2.connect(connStr)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -281,6 +283,11 @@ def sendUserNotification(pkg, approved):
                 )
             except:
                 print "Failed to send admin email"
+
+    return {
+        "email" : email,
+        "user" : status.get('requested_by')
+    }
 
 
 
