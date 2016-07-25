@@ -7318,6 +7318,10 @@ this.fire('dom-change');
     attached : function() {
       this.drawing = false;
 
+      // HACK, clicking the goecode menu fires a click on the map as well.
+      // Can't seem to find where to intercept event.  Ignoring with flag for now...
+      this.geocodeMenuClicked = false;
+
       this.map = L.map(this.$.map, {
           center: [0, 0],
           zoom: 2
@@ -7326,6 +7330,9 @@ this.fire('dom-change');
       L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map);
+      L.Control.geocoder()
+        .on('markgeocode', this.onGeocodeSelect.bind(this))
+        .addTo(this.map);
 
       this.map.on('click', this.onClick.bind(this));
       this.map.on('mousemove', this.onMouseMove.bind(this));
@@ -7371,7 +7378,18 @@ this.fire('dom-change');
       }.bind(this), 50);
     },
 
+    onGeocodeSelect : function() {
+      this.geocodeMenuClicked = true;
+      setTimeout(function(){
+        this.geocodeMenuClicked = false;
+      }.bind(this), 100);
+    },
+
     onClick : function(e) {
+      if( this.geocodeMenuClicked ) {
+        return;
+      }
+
       if( this.drawing ) {
         this.drawing = false;
         this.setPolygon(e.latlng);
