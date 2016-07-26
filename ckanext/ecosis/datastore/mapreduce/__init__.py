@@ -159,10 +159,12 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
     # make sure the map reduce did not create a null collection, if so, remove
     # This means there is no spectra
-    item = collection.find_one({'_id': pkg['id'], 'value': None})
+    item = collection.find_one({'_id': pkg['id']})
 
     # now see if we have a group by attribute...
-    if item != None:
+    if item is None:
+        pass
+    elif item.get('value') is None:
         collection.remove({'_id': pkg['id']})
     else:
         item = collection.find_one({'_id': pkg['id']})
@@ -238,23 +240,6 @@ def processGeoJson(bboxInfo, pkg):
             pass
 
     return result
-
-
-#    for js in geojson:
-#        js = json.loads(js)
-
-#        if js.get("type") == "GeometryCollection":
-#            for geo in js.get("geometries"):
-#                result['geometries'].append(geo)
-#        elif js.get("type") == "Feature":
-#            result['geometries'].append(js.get('geometry'))
-#        elif js.get("type") == "FeatureCollection":
-#            for f in js.get("features"):
-#                result['geometries'].append(f.get("geometry"))
-#        else:
-#            result['geometries'].append(js)
-
-#    return result
 
 def cleanValue(value):
     if value is None:

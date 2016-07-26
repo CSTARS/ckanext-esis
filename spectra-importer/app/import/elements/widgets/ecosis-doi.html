@@ -19,21 +19,23 @@
     <div id="panel" style="display:none">
 
       <div id="needsData" class="subpanel">
-        <div>To request a EcoSIS DOI you must enter the following metadata:</div>
-        <table class="table" id="needsDataTable"></table>
-        
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you can no longer make
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you can no longer make
           changes to the dataset.
         </div>
+        
+        <br />
+
+        <div>To request a EcoSIS DOI you must enter the following metadata:</div>
+        <table class="table" id="needsDataTable"></table>
       </div>
 
       <div id="request" class="subpanel">
-        <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
-        
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
           make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.
+          before proceeding.  You can continue to link external resources after you have applied a DOI.
         </div>
+
+        <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
       </div>
 
 
@@ -42,28 +44,30 @@
       </div>
 
       <div id="pendingApproval" class="subpanel">
-        Your dataset is pending review by a EcoSIS administrator.  The dataset author
-        and maintainer will be notified when the dataset is approved or if more information
+        Your dataset is pending review by a EcoSIS administrator.  The DOI requester 
+        <span id="requestedBy"></span> will be notified when the dataset is approved or if more information
         is required.
         <br />
-        <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+
+         <div class="text text-warning">Warning: Once a DOI is applied, you will no longer be able to
           make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
           before proceeding.
         </div>
+
+        <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
+       
       </div>
 
       <div id="pendingRevision" class="subpanel">
         Your dataset has been reviewed by a EcoSIS administrator and further updates
-        are required for a DOI.
+        are required for a DOI.If you are ready to re-submit your dataset, please click below.<br />
 
-        If you are ready to re-submit your dataset, please click below.<br />
         <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit Doi Request</a>
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
         
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
           make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.
+          before proceeding.  You can continue to link external resources after you have applied a DOI.
         </div>
       </div>
 
@@ -155,6 +159,7 @@
 
         if( doi.status.value === 'Pending Approval' ) {
           this.$.pendingApproval.style.display = 'block';
+          this.$.requestedBy.innerHTML = doi.status ? doi.status.requested_by : '';
           return;
         }
 

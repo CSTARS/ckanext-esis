@@ -261,6 +261,17 @@ module.exports = function(config) {
     });
   };
 
+  this.updateLinkedResources = function(id, resources, callback) {
+    var data = {
+      id : id,
+      linkedResources : resources
+    }
+
+    postRaw(this.host+'/ecosis/package/updateLinkedResources', data, function(err, resp) {
+      handleResp(err, resp, callback);
+    });
+  };
+
   this.verifyPrivate = function(id, callback) {
     get(this.host+'/ecosis/package/setPrivate', {id: id}, function(err, resp) {
       handleResp(err, resp, callback);

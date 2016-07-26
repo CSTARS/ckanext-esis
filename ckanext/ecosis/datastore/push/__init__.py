@@ -60,19 +60,22 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             updateLookup()
             return
 
-        send_notification(
-            {
-                "email" : emailAddress,
-                "display_name" : username
-            },
-            {
-                "subject" : "EcoSIS Push Successful",
-                "body" : ("Your dataset '%s' has been pushed to EcoSIS Search.  "
-                            "You can view your dataset here:  %s#result/%s"
-                            "\n\n-The EcoSIS Team") %
-                         (ckanPackage.get('title'), config.get('ecosis.search_url'), ckanPackage.get("id"))
-            }
-        )
+        try:
+            send_notification(
+                {
+                    "email" : emailAddress,
+                    "display_name" : username
+                },
+                {
+                    "subject" : "EcoSIS Push Successful",
+                    "body" : ("Your dataset '%s' has been pushed to EcoSIS Search.  "
+                                "You can view your dataset here:  %s#result/%s"
+                                "\n\n-The EcoSIS Team") %
+                             (ckanPackage.get('title'), config.get('ecosis.search_url'), ckanPackage.get("id"))
+                }
+            )
+        except Exception as e:
+            print "Failed to send email: %s" % emailAddress
 
         updateLookup()
 

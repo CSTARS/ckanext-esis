@@ -76,6 +76,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def updateLinkedResources(self):
+        try:
+            return package.updateLinkedResources()
+        except Exception as e:
+            return handleError(e)
+
     def getTemplate(self):
         try:
             return package.getTemplate()

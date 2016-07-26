@@ -110,6 +110,24 @@ def create():
 
     return json.dumps(ckanPackage)
 
+# Once a DOI is applied, the update package function is disabled
+# this is a simple workaround service, for just upda
+def updateLinkedResources():
+    response.headers["Content-Type"] = "application/json"
+    context = {'model': model, 'user': c.user}
+
+    params = json.loads(request.body)
+    package_id = params.get('id')
+    hasAccess(package_id)
+
+    linkedResources = params.get('linkedResources')
+    cpkg = logic.get_action('package_show')(context, {'id': package_id})
+
+    setPackageExtra('LinkedData', json.dumps(linkedResources), cpkg)
+    pkg = logic.get_action('package_update')(context, cpkg)
+
+    return json.dumps({'success': True})
+
 
 def setPrivate():
     response.headers["Content-Type"] = "application/json"
@@ -193,3 +211,19 @@ def editPackageRedirect(id):
     response.status_int = 307
     response.headers["Location"] = "/import/?id=%s" % id.encode('ascii','ignore')
     return "Redirecting"
+
+def setPackageExtra(attr, value, pkg):
+    extra = pkg.get('extras')
+    if extra == None:
+        pkg['extras'] = []
+        extra = pkg['extras']
+
+    for item in extra:
+        if item.get('key') == attr:
+            item['value'] = value;
+            return
+
+    extra.append({
+        'key' : attr,
+        'value' : value
+    })

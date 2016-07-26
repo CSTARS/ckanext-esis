@@ -107,13 +107,6 @@ module.exports = function(config) {
     if( !this.editMode || !this.lastPushed ) return;
 
     var t = new Date(this.package.data.metadata_modified).getTime();
-    var t2;
-    for( var i = 0; i < this.datasheets.length; i++ ) {
-      t2 = new Date(this.datasheets[i].processed).getTime();
-      if( t2 > t ) {
-        t = t2;
-      }
-    }
 
     if( this.deleteResourceTime ) {
       if( this.deleteResourceTime.getTime() > t ) {

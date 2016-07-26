@@ -105,6 +105,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
+        map.connect('updateLinkedResources', '/ecosis/package/updateLinkedResources', controller=controller, action='updateLinkedResources')
         map.connect('getTemplate', '/ecosis/package/getTemplate', controller=controller, action='getTemplate')
         map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setPackageOptions')
 

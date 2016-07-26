@@ -284,7 +284,16 @@ function Package(initdata, SDK) {
 
   this.setLinkedData = function(data) {
     this.setExtra('LinkedData', JSON.stringify(data));
-    this._onUpdate('LinkedData');
+
+    this.ee.emit('update', {attribute: name});
+
+    if( this.mode !== 'create' ) {
+      this.SDK.ckan.updateLinkedResources(this.data.id, data, function(resp) {
+        console.log(resp);
+      });
+    } else {
+      this.ee.emit('value-set-on-create', {});
+    }
   };
 
   this.getLinkedData = function() {

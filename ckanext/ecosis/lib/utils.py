@@ -58,3 +58,29 @@ def jsondefault(obj):
         return obj.isoformat()
     else:
         return None
+
+def setPackageExtra(attr, value, pkg):
+    extra = pkg.get('extras')
+    if extra == None:
+        pkg['extras'] = []
+        extra = pkg['extras']
+
+    for item in extra:
+        if item.get('key') == attr:
+            item['value'] = value;
+            return
+
+    extra.append({
+        'key' : attr,
+        'value' : value
+    })
+
+def getPackageExtra(attr, pkg):
+    extra = pkg.get('extras')
+    if extra == None:
+        return None
+
+    for item in extra:
+        if item.get('key') == attr:
+            return item.get('value')
+    return None

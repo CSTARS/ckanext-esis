@@ -84,6 +84,9 @@
     properties : {
       resourceid : {
         type : String
+      },
+      hasDoi : {
+        type : Boolean
       }
     },
 
@@ -149,7 +152,7 @@
         if( link ) link.style.display = 'none';
       } else {
         var link = this.querySelector('#editLink');
-        if( link ) link.style.display = 'inline-block';
+        if( link && !this.hasDoi ) link.style.display = 'inline-block';
       }
 
       this.updateNameLabel();
@@ -195,6 +198,12 @@
       } else {
         this.querySelector('#trashBtn').style.display = 'inline-block';
         this.querySelector('#downloadBtn').style.display = 'inline-block';
+      }
+
+      if( this.hasDoi ) {
+        this.querySelector('#trashBtn').style.display = 'none';
+        this.querySelector('#select').style.display = 'none';
+        this.querySelector('#editLink').style.display = 'none';
       }
 
       // update css class

@@ -98,6 +98,24 @@ def process():
         workspace.prepareFile(package_id, resource_id, sheet_id, safeOptions)
         result = query.getResource(resource_id, sheet_id)
 
+    # update the dataset, so the metadata timestamp changes
+    context = {'model': model, 'user': c.user}
+    pkg = logic.get_action('package_show')(context, {'id': package_id})
+
+    resourceUpdateCount = utils.getPackageExtra('resourceUpdateCount', pkg)
+    if resourceUpdateCount is None:
+        resourceUpdateCount = 1
+    else:
+        resourceUpdateCount = int(resourceUpdateCount) + 1
+    utils.setPackageExtra('resourceUpdateCount', resourceUpdateCount, pkg)
+    pkg = logic.get_action('package_update')(context, pkg)
+
+    result = {
+        'metadata_modified' : pkg.get('metadata_modified'),
+        'result' : result
+    }
+
+
     return jsonStringify(result)
 
 def get():

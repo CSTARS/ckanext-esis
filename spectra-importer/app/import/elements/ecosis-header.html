@@ -45,7 +45,11 @@
         <div class="collapse navbar-collapse" id="ecosis-header-collapse">
           <ul class="nav navbar-nav">
 
-            <li class="active"><a  id="basicInfo"><i class="fa fa-info-circle"></i> Basic Information</a></li>
+            <li class="active">
+              <a id="basicInfo">
+                <i class="fa fa-info-circle"></i><span class="hidden-sm">  Basic</span> Information
+              </a>
+            </li>
 
             <li class="dropdown" id="resourcesDropdown" style="display:none">
               <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -58,19 +62,28 @@
             </li>
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o"></i> Publish</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o" id="publishedIcon"></i> Publish</a></li>
             <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="http://tutorial.ecosis.org" target="_blank"><i class="fa fa-question-circle"></i> Help</a></li>
-            <li><a id="exit" href="/dataset/"><i class="fa fa-sign-in"></i> Exit</a></li>
+            <li>
+              <a href="http://tutorial.ecosis.org" target="_blank">
+                <i class="fa fa-question-circle"></i><span class="hidden-sm"> Help</span>
+              </a>
+            </li>
+            <li>
+              <a id="exit" href="/dataset/">
+                <i class="fa fa-sign-in"></i><span class="hidden-sm">  Exit</span>
+              </a>
+            </li>
           </ul>
         </div>
       </div>
     </nav>
     <div id="staticMessage" style="display:none">
-      <i class="fa fa-warning"></i> A EcoSIS DOI as been applied to the dataset.  It is no longer editable.
+      <i class="fa fa-warning"></i> A EcoSIS DOI as been applied to the dataset.  You can no longer make changes to 
+      the resources or metadata.  You can still link additional external resources.
     </div>
   </template>
 </dom-module>
@@ -87,7 +100,6 @@
     },
 
     ready : function() {
-      // such BS polymer!
       this.$.basicInfo.setAttribute('href', '#basic-info');
       this.$.addResources.setAttribute('href', '#add-resources');
       this.$.currentResources.setAttribute('href', '#current-resources');
@@ -125,6 +137,7 @@
         if( status.value.toLowerCase() === 'applied' ) {
           this.$.root.classList.add('static');
           this.$.staticMessage.style.display = 'block';
+          this.$.addResources.style.display = 'none';
         }
       }
     },
@@ -151,6 +164,17 @@
     onScoreUpdated : function() {
       var result = ecosis.ds.getScore();
 
+      if( ecosis.ds.result && ecosis.ds.lastPushed ) {
+        var resp = ecosis.ds.checkChanges();
+        if( resp.unpublishedChanges ) {
+          this.updatePublishedIconStatus('changes');
+        } else {
+          this.updatePublishedIconStatus('published'); 
+        }
+      } else {
+        this.updatePublishedIconStatus('notpublished'); 
+      }
+
       if( result.score === this.lastScore ) {
         return;
       }
@@ -162,6 +186,16 @@
 
       this.$.score.innerHTML = '<span style="display:inline-block" class="label label-'+label+' animated zoomIn">'+result.score+'/'+result.total+'</span>';
       this.$.score2.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
+    },
+
+    updatePublishedIconStatus : function(status) {
+      if( status === 'changes' ) {
+        this.$.publishedIcon.className = 'fa fa-warning text text-warning';
+      } else if( status === 'published' ) {
+        this.$.publishedIcon.className = 'fa fa-check-circle-o text text-success';
+      } else {
+        this.$.publishedIcon.className = 'fa fa-check-circle-o';
+      }
     }
 
   });

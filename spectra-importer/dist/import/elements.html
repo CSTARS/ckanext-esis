@@ -7925,7 +7925,11 @@ this.fire('dom-change');
         <div class="collapse navbar-collapse" id="ecosis-header-collapse">
           <ul class="nav navbar-nav">
 
-            <li class="active"><a id="basicInfo"><i class="fa fa-info-circle"></i> Basic Information</a></li>
+            <li class="active">
+              <a id="basicInfo">
+                <i class="fa fa-info-circle"></i><span class="hidden-sm">  Basic</span> Information
+              </a>
+            </li>
 
             <li class="dropdown" id="resourcesDropdown" style="display:none">
               <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -7938,19 +7942,28 @@ this.fire('dom-change');
             </li>
 
             <li><a id="advanced" style="display:none"><i class="fa fa-cog"></i> Advanced</a></li>
-            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o"></i> Publish</a></li>
+            <li><a id="push" style="display:none"><i class="fa fa-check-circle-o" id="publishedIcon"></i> Publish</a></li>
             <li id="score" class="hidden-xs" style="padding-top:18px"></li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="http://tutorial.ecosis.org" target="_blank"><i class="fa fa-question-circle"></i> Help</a></li>
-            <li><a id="exit" href="/dataset/"><i class="fa fa-sign-in"></i> Exit</a></li>
+            <li>
+              <a href="http://tutorial.ecosis.org" target="_blank">
+                <i class="fa fa-question-circle"></i><span class="hidden-sm"> Help</span>
+              </a>
+            </li>
+            <li>
+              <a id="exit" href="/dataset/">
+                <i class="fa fa-sign-in"></i><span class="hidden-sm">  Exit</span>
+              </a>
+            </li>
           </ul>
         </div>
       </div>
     </nav>
     <div id="staticMessage" style="display:none">
-      <i class="fa fa-warning"></i> A EcoSIS DOI as been applied to the dataset.  It is no longer editable.
+      <i class="fa fa-warning"></i> A EcoSIS DOI as been applied to the dataset.  You can no longer make changes to 
+      the resources or metadata.  You can still link additional external resources.
     </div>
   </template>
 </dom-module>
@@ -7967,7 +7980,6 @@ this.fire('dom-change');
     },
 
     ready : function() {
-      // such BS polymer!
       this.$.basicInfo.setAttribute('href', '#basic-info');
       this.$.addResources.setAttribute('href', '#add-resources');
       this.$.currentResources.setAttribute('href', '#current-resources');
@@ -8005,6 +8017,7 @@ this.fire('dom-change');
         if( status.value.toLowerCase() === 'applied' ) {
           this.$.root.classList.add('static');
           this.$.staticMessage.style.display = 'block';
+          this.$.addResources.style.display = 'none';
         }
       }
     },
@@ -8031,6 +8044,17 @@ this.fire('dom-change');
     onScoreUpdated : function() {
       var result = ecosis.ds.getScore();
 
+      if( ecosis.ds.result && ecosis.ds.lastPushed ) {
+        var resp = ecosis.ds.checkChanges();
+        if( resp.unpublishedChanges ) {
+          this.updatePublishedIconStatus('changes');
+        } else {
+          this.updatePublishedIconStatus('published'); 
+        }
+      } else {
+        this.updatePublishedIconStatus('notpublished'); 
+      }
+
       if( result.score === this.lastScore ) {
         return;
       }
@@ -8042,6 +8066,16 @@ this.fire('dom-change');
 
       this.$.score.innerHTML = '<span style="display:inline-block" class="label label-'+label+' animated zoomIn">'+result.score+'/'+result.total+'</span>';
       this.$.score2.innerHTML = '<span class="label label-'+label+'">'+result.score+'/'+result.total+'</span>';
+    },
+
+    updatePublishedIconStatus : function(status) {
+      if( status === 'changes' ) {
+        this.$.publishedIcon.className = 'fa fa-warning text text-warning';
+      } else if( status === 'published' ) {
+        this.$.publishedIcon.className = 'fa fa-check-circle-o text text-success';
+      } else {
+        this.$.publishedIcon.className = 'fa fa-check-circle-o';
+      }
     }
 
   });
@@ -8650,7 +8684,9 @@ this.fire('dom-change');
           this.sheet.sheetId,
           options,
           function(resp){
-
+            // set to timestamp for data changed stuff
+            ecosis.ds.package.data.metadata_modified = resp.metadata_modified;
+            resp = resp.result;
 
             if( Array.isArray(resp) ) {
               resp = resp[0];
@@ -8983,6 +9019,9 @@ this.fire('dom-change');
     properties : {
       resourceid : {
         type : String
+      },
+      hasDoi : {
+        type : Boolean
       }
     },
 
@@ -9048,7 +9087,7 @@ this.fire('dom-change');
         if( link ) link.style.display = 'none';
       } else {
         var link = this.querySelector('#editLink');
-        if( link ) link.style.display = 'inline-block';
+        if( link && !this.hasDoi ) link.style.display = 'inline-block';
       }
 
       this.updateNameLabel();
@@ -9094,6 +9133,12 @@ this.fire('dom-change');
       } else {
         this.querySelector('#trashBtn').style.display = 'inline-block';
         this.querySelector('#downloadBtn').style.display = 'inline-block';
+      }
+
+      if( this.hasDoi ) {
+        this.querySelector('#trashBtn').style.display = 'none';
+        this.querySelector('#select').style.display = 'none';
+        this.querySelector('#editLink').style.display = 'none';
       }
 
       // update css class
@@ -10139,21 +10184,23 @@ this.fire('dom-change');
     <div id="panel" style="display:none">
 
       <div id="needsData" class="subpanel">
-        <div>To request a EcoSIS DOI you must enter the following metadata:</div>
-        <table class="table" id="needsDataTable"></table>
-        
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you can no longer make
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you can no longer make
           changes to the dataset.
         </div>
+        
+        <br>
+
+        <div>To request a EcoSIS DOI you must enter the following metadata:</div>
+        <table class="table" id="needsDataTable"></table>
       </div>
 
       <div id="request" class="subpanel">
-        <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
-        
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
           make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.
+          before proceeding.  You can continue to link external resources after you have applied a DOI.
         </div>
+
+        <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
       </div>
 
 
@@ -10162,28 +10209,30 @@ this.fire('dom-change');
       </div>
 
       <div id="pendingApproval" class="subpanel">
-        Your dataset is pending review by a EcoSIS administrator.  The dataset author
-        and maintainer will be notified when the dataset is approved or if more information
+        Your dataset is pending review by a EcoSIS administrator.  The DOI requester 
+        <span id="requestedBy"></span> will be notified when the dataset is approved or if more information
         is required.
         <br>
-        <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+
+         <div class="text text-warning">Warning: Once a DOI is applied, you will no longer be able to
           make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
           before proceeding.
         </div>
+
+        <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
+       
       </div>
 
       <div id="pendingRevision" class="subpanel">
         Your dataset has been reviewed by a EcoSIS administrator and further updates
-        are required for a DOI.
+        are required for a DOI.If you are ready to re-submit your dataset, please click below.<br>
 
-        If you are ready to re-submit your dataset, please click below.<br>
         <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit Doi Request</a>
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
         
-        <div class="alert alert-warning">Warning: Once a DOI is applied, you will no longer be able to
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
           make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.
+          before proceeding.  You can continue to link external resources after you have applied a DOI.
         </div>
       </div>
 
@@ -10275,6 +10324,7 @@ this.fire('dom-change');
 
         if( doi.status.value === 'Pending Approval' ) {
           this.$.pendingApproval.style.display = 'block';
+          this.$.requestedBy.innerHTML = doi.status ? doi.status.requested_by : '';
           return;
         }
 
@@ -10718,6 +10768,7 @@ this.fire('dom-change');
         }
 
         this.$.deleteBtn.style.display = hasDOI ? 'none' : 'inline-block';
+        this.$.goToBtn.style.display = hasDOI ? 'none' : 'inline-block';
       }
     },
 
@@ -10992,7 +11043,6 @@ this.fire('dom-change');
           <button type="button" class="close" aria-label="Close" on-click="toggleFilter"><span aria-hidden="true">×</span></button>
           <h5 class="page-header" style="margin-top:5px">Show</h5>
 
-
           <div class="checkbox">
             <label>
               <input type="checkbox" checked="" class="filter" on-click="filter" data-type="success">
@@ -11070,6 +11120,8 @@ this.fire('dom-change');
     },
 
     render : function() {
+      this.checkDoiStatus();
+
       if( ecosis.ds.resources.length == 0 ) {
         this.$.noResources.style.display = 'block';
         this.$.legend.style.display = 'none';
@@ -11078,7 +11130,9 @@ this.fire('dom-change');
       } else {
         this.$.noResources.style.display = 'none';
         this.$.legend.style.display = 'block';
-        this.$.removeAll.style.display = 'block';
+        if( !this.hasDOI ) {
+          this.$.removeAll.style.display = 'block';
+        }
       }
 
       var html = '';
@@ -11088,7 +11142,7 @@ this.fire('dom-change');
         var resource = ecosis.ds.resources[i];
         if( resource.fromZip ) continue;
 
-        html += '<ecosis-resource-panel resourceid="'+resource.id+'" style="width:100%" class="data-item"></ecosis-resource-panel>';
+        html += '<ecosis-resource-panel resourceid="'+resource.id+'" '+(this.hasDOI ? 'has-doi' : '')+' style="width:100%" class="data-item"></ecosis-resource-panel>';
       }
 
       this.$.resourceRoot.html(html);
@@ -11101,6 +11155,16 @@ this.fire('dom-change');
 
 
       this.$.resourceRoot.init();
+    },
+
+    checkDoiStatus : function() {
+      var status = ecosis.ds.package.getDoi().status;
+      if( status && status.value ) {
+        if( status.value.toLowerCase() === 'applied' ) {
+          this.hasDOI = true;
+          this.$.removeAll.style.display = 'none';
+        }
+      }
     },
 
     toggleFilter : function() {
@@ -12526,14 +12590,17 @@ this.fire('dom-change');
         var last = '<br />Last Published: '+resp.lastPushed.toLocaleString();
         if( resp.unpublishedChanges ) {
           last += '<br />Last Updated: '+resp.lastUpdated.toLocaleString();
-          last = '<span class="label label-warning">Updated since last publish</span> ' + last;
+          last = '<span class="label label-warning">Updated since last publish</span> ' + last + '<br />' +
+                '<div class="text text-warning">Please review your dataset, then click <b>Publish</b> below to make your changes available in search</div>';
         } else {
           last = '<span class="label label-success">Published to search</span> ' + last;
         }
 
         this.$.available.innerHTML = last;
       } else {
-        this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>';
+        this.$.available.innerHTML = '<span class="label label-warning">Not Published</span>' +
+                            '<div class="text text-warning">This dataset is not available is search.  Click <b>Publish</b> below to publish the dataset to search when the dataset is ready.</div>';
+
       }
     },
 
