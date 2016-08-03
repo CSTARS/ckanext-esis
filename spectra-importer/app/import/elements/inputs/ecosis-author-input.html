@@ -1,0 +1,79 @@
+
+<dom-module id="ecosis-author-input">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      #list div:nth-last-of-type(1) a {
+        display: none;
+      }
+    </style>
+
+    <div id="list">
+      <template is="dom-repeat" items="{{authors}}" id="repeat">
+        <div class="layout horizontal" style="margin-top: 10px">
+          <input type="text" class="form-control" value="[[item]]" index$="[[index]]" on-input="onEdit" style="margin-right:20px" />
+          <a class="btn btn-default" index$="[[index]]" on-click="removeAuthor"><i class="fa fa-trash"></i></a>
+        </div>
+      </template>
+    </div>
+    
+  </template>
+  <script>
+    Polymer({
+      is: 'ecosis-author-input',
+
+      properties : {
+        authors : {
+          type : Array,
+          notify : true,
+          value: function() { 
+            return ['']; 
+          }
+        }
+      },
+
+      setValue : function(value) {
+        this.value = value;
+        var tmp = this.value.split(',');
+        tmp = tmp.map(function(val){
+          return val.trim();
+        });
+        this.authors = tmp;
+        this.authors.push('');
+      },
+
+      removeAuthor : function(e) {
+        this.splice('authors', parseInt(e.currentTarget.getAttribute('index')), 1);
+        this.updateValue();
+      },
+
+      onEdit : function(e) {
+        var index = parseInt(e.currentTarget.getAttribute('index'));
+        this.authors[index] = e.currentTarget.value.replace(/,/g, ' ');
+        
+        if( this.authors[this.authors.length-1] ) {
+          this.push('authors', '');
+        } else if ( !this.authors[this.authors.length-1] && !this.authors[this.authors.length-2] ) {
+          this.splice('authors', this.authors.length-1, 1);
+        }
+
+        this.updateValue();
+      },
+
+      updateValue : function() {
+        var tmp = [];
+        for( var i = 0; i < this.authors.length; i++ ) {
+          if( this.authors[i].replace(/ /g,'') ) tmp.push(this.authors[i]); 
+        }
+
+        this.value = tmp.join(', ');
+
+        this.debounce('setValue', function(){
+          ecosis.ds.package.setAuthor(this.value);
+        }, 500);
+      }
+    });
+  </script>
+</dom-module>

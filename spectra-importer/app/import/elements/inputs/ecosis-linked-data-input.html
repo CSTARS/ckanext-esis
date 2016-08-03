@@ -13,14 +13,15 @@
     </style>
 
     <div class="help-block">
-      Links to additional site related information and data.  Here you link your spectral
-      data to external sites and datasets.  Example, flux data.
+      Links to additional related information and data.  Here you can link your spectral
+      data to external sites and datasets.  You can also link to papers
+      which are useful in describing this dataset.
     </div>
 
     <template is="dom-repeat" items="{{list}}">
       <div class="form-inline">
         <div class="form-group">
-          <label for="">Label</label>
+          <label for="">Title</label>
           <input type="text"
             class="form-control"
             placeholder="Ex: Fluxnet"
@@ -29,7 +30,7 @@
             on-blur="fireUpdate" />
         </div>
         <div class="form-group">
-          <label for="">URL</label>
+          <label for="">URL or DOI</label>
           <input type="text"
             class="form-control"
             style="min-width: 300px"

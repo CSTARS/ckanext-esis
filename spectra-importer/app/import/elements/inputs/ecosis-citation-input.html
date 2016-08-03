@@ -1,52 +1,123 @@
+<dom-module id="ecosis-citation-input">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
 
-<script>
-  Polymer({
-    is : 'ecosis-citation-input',
+  <template>
+    <div class="horizontal-form">
+      <div class="form-group">
+        <label class="col-md-2 control-label">Citation</label>
+        <div class="col-md-10" id="citation"></div>
+      </div>
 
-    ready : function() {
-      this.schema = ecosis.ds.metadataDefinitions.Citation;
-    },
+      <div class="form-group">
+        <label class="col-md-2 control-label">Author(s)</label>
+        <div class="col-md-10">
+          <ecosis-author-input metadata="Author"></ecosis-author-input>
+        </div>
+      </div>
 
-    attached : function() {
+      <div id="colRoot"></div>
+    </div>
 
-      var col1 = '';
-      var col2 = '';
+  </template>
 
-      for( var i = 0; i < this.schema.length; i++ ) {
-        // inserted at top of basic info form, skip here
-        if( this.schema[i].name == 'Website' ) continue;
+  <script>
+    Polymer({
+      is : 'ecosis-citation-input',
 
-        var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
+      ready : function() {
+        this.schema = ecosis.ds.metadataDefinitions.Citation;
+        this.customInputList = ['Citation','Website','Author'];
+      },
 
-        if( i % 2 == 0 ) col1 += input;
-        else col2 += input;
-      }
+      attached : function() {
+        var col1 = '';
+        var col2 = '';
 
-      this.innerHTML =
-        '<div class="row">'+
-          '<div class="col-md-6">'+ col1 + '</div>'+
-          '<div class="col-md-6">'+ col2 + '</div>'+
-        '</div>';
+        var c = 0;
+        for( var i = 0; i < this.schema.length; i++ ) {
+          // inserted at top of basic info form, skip here
+          if( this.customInputList.indexOf(this.schema[i].name) > -1 ) continue;
+          c++;
+          var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
-      ecosis.ds.on('load', this.setValues.bind(this));
-    },
-
-    setValues : function() {
-      for( var i = 0; i < this.schema.length; i++ ) {
-        if( this.schema[i].name == 'Website' ) continue;
-
-        var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
-
-        var name = this.schema[i].fnName;
-        var value = ecosis.ds.package['get'+name]();
-
-        var other = '';
-        if( this.schema[i].allowOther ) {
-          other = ecosis.ds.package['get'+name+'Other']();
+          if( c % 2 == 1 ) col1 += input;
+          else col2 += input;
         }
 
-        ele.setValue(value, other);
+        this.$.colRoot.innerHTML =
+          '<div class="row">'+
+            '<div class="col-md-6">'+ col1 + '</div>'+
+            '<div class="col-md-6">'+ col2 + '</div>'+
+          '</div>';
+
+        ecosis.ds.on('load', this.setValues.bind(this));
+        ecosis.ds.on('update', this.setCitation.bind(this));
+      },
+
+      setValues : function() {
+        for( var i = 0; i < this.schema.length; i++ ) {
+          if( this.schema[i].name == 'Website' ) continue;
+
+          if( this.schema[i].name == 'Citation' ) {
+            this.setCitation();
+            continue;
+          }
+
+          var ele = this.querySelector('[metadata="'+this.schema[i].name+'"]');
+          if( !ele ) continue;
+
+          var name = this.schema[i].fnName;
+          var value = ecosis.ds.package['get'+name]();
+
+          var other = '';
+          if( this.schema[i].allowOther ) {
+            other = ecosis.ds.package['get'+name+'Other']();
+          }
+
+          ele.setValue(value, other);
+        }
+      },
+
+      setCitation : function() {
+        var citation = [];
+
+        var authors = ecosis.ds.package.getAuthor().split(',');
+        if( authors.length === 1 ) {
+          citation.push(authors);
+        } else if ( authors.length === 2 ) {
+          citation.push(authors.join(' and '));
+        } else if( authors.length >= 3) {
+          var last = authors.pop();
+          citation.push(authors.join(', ')+' and '+last);
+        }
+
+        if( ecosis.ds.package.getYear() ) {
+          citation.push(ecosis.ds.package.getYear());
+        }
+
+        citation.push(ecosis.ds.package.getTitle());
+
+        citation.push('Data set. Available on-line [http://ecosis.org] from the Ecosystem Spectral Information System (EcoSIS)')
+
+        var doi = ecosis.ds.package.getDoi().value;
+        if( !doi ) {
+          doi = ecosis.ds.package.getCitationDOI();
+        }
+        if( doi ) {
+          citation.push(doi);
+        }
+
+        citation = citation.join('. ');
+        if( ecosis.ds.package.getCitation() !== citation ) {
+          ecosis.ds.package.setCitation(citation);
+        }
+
+        this.$.citation.innerHTML = citation;
       }
-    }
-  })
-</script>
+    })
+  </script>
+</dom-module>

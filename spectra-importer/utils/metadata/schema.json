@@ -568,6 +568,16 @@
       "vocabulary": null,
       "description": "",
       "allowOther": false
+    },
+    {
+      "name": "Year",
+      "level": 2,
+      "input": "text",
+      "units": "",
+      "forSchema": "Dataset",
+      "vocabulary": null,
+      "description": "",
+      "allowOther": false
     }
   ]
 }

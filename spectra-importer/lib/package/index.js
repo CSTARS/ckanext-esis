@@ -283,7 +283,12 @@ function Package(initdata, SDK) {
   };
 
   this.setLinkedData = function(data) {
-    this.setExtra('LinkedData', JSON.stringify(data));
+    var newData = JSON.stringify(data);
+    var oldData = JSON.stringify(this.getLinkedData());
+
+    if( newData === oldData ) return;
+
+    this.setExtra('LinkedData', newData);
 
     this.ee.emit('update', {attribute: name});
 
