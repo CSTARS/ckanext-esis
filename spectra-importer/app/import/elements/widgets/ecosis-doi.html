@@ -19,8 +19,8 @@
     <div id="panel" style="display:none">
 
       <div id="needsData" class="subpanel">
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you can no longer make
-          changes to the dataset.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you can only edit the metadata
+          for this dataset.
         </div>
         
         <br />
@@ -30,9 +30,8 @@
       </div>
 
       <div id="request" class="subpanel">
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
-          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.  You can continue to link external resources after you have applied a DOI.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, only be able to edit the metadata.  
+          Make sure ALL data is valid and complete before proceeding.
         </div>
 
         <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
@@ -49,9 +48,8 @@
         is required.
         <br />
 
-         <div class="text text-warning">Warning: Once a DOI is applied, you will no longer be able to
-          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.
+         <div class="text text-warning">Warning: Once a DOI is applied, only be able to edit the metadata.
+             Make sure ALL data is valid and complete before proceeding.
         </div>
 
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
@@ -60,14 +58,13 @@
 
       <div id="pendingRevision" class="subpanel">
         Your dataset has been reviewed by a EcoSIS administrator and further updates
-        are required for a DOI.If you are ready to re-submit your dataset, please click below.<br />
+        are required for a DOI.  If you are ready to re-submit your dataset, please click below.<br />
 
         <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit Doi Request</a>
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
         
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
-          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.  You can continue to link external resources after you have applied a DOI.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, only be able to edit the metadata.    
+        Make sure ALL data is filled out, valid and complete before proceeding.
         </div>
       </div>
 

@@ -37,13 +37,13 @@ def handleDoiUpdate(currentPackage, newPackage):
         if oldDoi.get('value') == newDoi.get('value'):
             # check this package doesn't have a DOI
             # Perhaps just not let them make it private?
-            if not canUpdate(oldDoi, currentPackage, newPackage):
-                return {
-                    'error': True,
-                    'message' : 'You cannot update a package once the DOI as been applied'
-                }
-            else:
-                return {'success': True}
+            # if not canUpdate(oldDoi):
+            #     return {
+            #         'error': True,
+            #         'message' : 'You cannot update a package once the DOI as been applied'
+            #     }
+            # else:
+            return {'success': True}
 
     # the one thing a USER can do is request approval
     if oldDoi.get('status').get('value') in (None, DOI_STATUS['PENDING_REVISION']):
@@ -292,7 +292,7 @@ def sendUserNotification(pkg, approved):
 
 
 
-def canUpdate(doi, currentPackage, newPackage):
+def canUpdate(doi):
     # TODO: later check for props we can update?
     if doi.get('status').get('value') == None or \
        doi.get('status').get('value') == DOI_STATUS['PENDING_REVISION']:

@@ -88,6 +88,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def createResource(self):
+        try:
+            return resource.create()
+        except Exception as e:
+            return handleError(e)
+
     def deleteResource(self):
         try:
             return resource.delete()

@@ -79,6 +79,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
         map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+        map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
+        map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
 
         # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
         map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')

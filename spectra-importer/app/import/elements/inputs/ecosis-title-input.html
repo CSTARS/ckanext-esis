@@ -29,7 +29,7 @@
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
-
+          <div id="static"></div>
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
           </span>
@@ -67,11 +67,26 @@
     onDataReady : function() {
       if( ecosis.ds.editMode ) {
         this.$.titleInput.value = ecosis.ds.package.getTitle();
+        this.$.static.innerHTML = ecosis.ds.package.getTitle();
         this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
+
+        this.checkDoiStatus();
+
         return;
       }
 
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/';
+    },
+
+    checkDoiStatus : function() {
+      var status = ecosis.ds.package.getDoi().status;
+      if( status && status.value ) {
+        if( status.value.toLowerCase() === 'applied' ) {
+          this.$.static.style.display = 'block';
+          this.$.titleInput.style.display = 'none';
+          this.$.message.style.display = 'none';
+        }
+      }
     },
 
     onTitleInputChange : function() {

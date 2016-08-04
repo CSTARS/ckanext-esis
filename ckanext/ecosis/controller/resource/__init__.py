@@ -62,11 +62,32 @@ def _delete(params):
     params['success'] = True
     return params
 
+def create():
+    response.headers["Content-Type"] = "application/json"
+
+    request_data = dict(request.POST)
+
+    if hasAppliedDoi(request_data.get('package_id')):
+        return {'error': True, 'message': 'Cannot add resources to package with applied DOI'}
+
+    context = {'model': model, 'user': c.user}
+    resource_create = logic.get_action('resource_create')
+    resp = resource_create(context, request_data)
+
+    return json.dumps({
+        'result' : resp,
+        'success' : True
+    })
+
+
 def process():
     response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
     hasAccess(package_id)
+
+    if hasAppliedDoi(package_id):
+        return {'error':True, 'message':'Cannot edit resource of package with applied DOI'}
 
     sheet_id = request.params.get('sheet_id')
     resource_id = request.params.get('resource_id')
@@ -114,7 +135,6 @@ def process():
         'metadata_modified' : pkg.get('metadata_modified'),
         'result' : result
     }
-
 
     return jsonStringify(result)
 
