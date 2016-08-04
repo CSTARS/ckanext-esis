@@ -1,9 +1,16 @@
-from ckan.common import response
 from ckan.lib.base import c, model
 from ckanext.ecosis.datastore import delete as deleteUtil
 import ckan.logic as logic
+from ckanext.ecosis.lib.auth import hasOrgAccess
+from ckan.common import request, response
+import json
 
 NotFound = logic.NotFound
+collections = None
+
+def init(co):
+    global collections
+    collections = co
 
 def delete(id):
     # first, get a list of all organizations datasets
@@ -29,3 +36,15 @@ def delete(id):
     response.headers["Location"] = "/dashboard/organizations"
 
     return "Redirecting"
+
+# update search (MongoDB) org name when organization is updated
+def update(org):
+    name = org.title
+    id = org.id
+
+    collections\
+        .get('search_package')\
+        .update_many(
+            {"value.ecosis.organization_id": id},
+            { "$set" : {"value.ecosis.organization": name} }
+        )

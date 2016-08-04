@@ -4,6 +4,7 @@ import pylons.config as config
 
 import ckanext.ecosis.controller as controller
 import ckanext.ecosis.datastore.query as query
+import ckanext.ecosis.controller.organization as orgController
 
 class EcosisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
@@ -15,7 +16,29 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IRoutes, inherit=True)
+    plugins.implements(plugins.IOrganizationController)
 
+    def read(self, entity):
+        pass
+
+    def create(self, entity):
+        pass
+
+    def edit(self, entity):
+        orgController.update(entity)
+        pass
+
+    def authz_add_role(self, object_role):
+        pass
+
+    def authz_remove_role(self, object_role):
+        pass
+
+    def delete(self, entity):
+        pass
+
+    def before_view(self, pkg_dict):
+        return pkg_dict
 
     def update_config(self, config):
         # Add this plugin's templates dir to CKAN's extra_template_paths, so

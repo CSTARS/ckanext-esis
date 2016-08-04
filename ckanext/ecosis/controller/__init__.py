@@ -39,6 +39,7 @@ upload = uploader.ResourceUpload({})
 
 datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), upload, config.get("ecosis.workspace.root"))
 package.init(collections, pgConnStr)
+organization.init(collections)
 
 class EcosisController(PackageController):
 
