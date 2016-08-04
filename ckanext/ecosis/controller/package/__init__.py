@@ -1,10 +1,10 @@
 import json
 
 import ckanext.ecosis.lib.utils as utils
-import ckanext.ecosis.datastore.delete as deleteUtil
+from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.lib.auth import hasAccess
-import ckanext.ecosis.datastore.workspace as workspace
-import ckanext.ecosis.datastore.ckan.package as package
+from ckanext.ecosis.datastore import workspace
+from ckanext.ecosis.datastore.ckan import package
 from ckan.common import request, response
 from ckan.lib.base import c, model
 import ckan.logic as logic

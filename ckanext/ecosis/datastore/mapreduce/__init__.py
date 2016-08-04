@@ -277,7 +277,7 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
                 spValues.append(v)
         val = spValues
 
-    if name != 'geojson':
+    if name != 'geojson' and name != 'Citation':
         val = map(lambda it: cleanValue(it), val)
 
     setValues['$set']['value.'+name] = val

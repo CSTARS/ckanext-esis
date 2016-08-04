@@ -30,7 +30,7 @@ function(key, spectra){
                 // is this new or are we pushing to an array?
                 if( value === null ) return;
 
-                if( key !== 'geojson' ) {
+                if( key !== 'geojson' && key !== 'Citation') {
                     value = cleanValue(value);
                 }
 

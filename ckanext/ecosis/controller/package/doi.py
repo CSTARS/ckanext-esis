@@ -6,7 +6,7 @@ from ckan.common import request, response
 import json, datetime, psycopg2, urllib2, base64
 from dateutil import parser
 from ckanext.ecosis.datastore.push import Push
-
+from ckanext.ecosis.lib.utils import setPackageExtra, getPackageExtra
 from ckanext.ecosis.datastore.ckan import package
 
 DOI_STATUS = {
@@ -312,32 +312,6 @@ def getDoiStatus(pkg):
         doi['status'] = json.loads(doi['status'])
 
     return doi
-
-def getPackageExtra(attr, pkg):
-    extra = pkg.get('extras')
-    if extra == None:
-        return None
-
-    for item in extra:
-        if item.get('key') == attr:
-            return item.get('value')
-    return None
-
-def setPackageExtra(attr, value, pkg):
-    extra = pkg.get('extras')
-    if extra == None:
-        pkg['extras'] = []
-        extra = pkg['extras']
-
-    for item in extra:
-        if item.get('key') == attr:
-            item['value'] = value;
-            return
-
-    extra.append({
-        'key' : attr,
-        'value' : value
-    })
 
 def isAdmin():
     if c.userobj == None:
