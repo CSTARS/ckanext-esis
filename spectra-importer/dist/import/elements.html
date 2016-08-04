@@ -9402,7 +9402,7 @@ this.fire('dom-change');
         <label for="titleInput" class="col-md-2 control-label">Title</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
-
+          <div id="static"></div>
           <span id="verifyingTitleLabel" class="label label-info" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Verifying name...
           </span>
@@ -9440,11 +9440,26 @@ this.fire('dom-change');
     onDataReady : function() {
       if( ecosis.ds.editMode ) {
         this.$.titleInput.value = ecosis.ds.package.getTitle();
+        this.$.static.innerHTML = ecosis.ds.package.getTitle();
         this.$.urlLabel.innerHTML = ecosis.ckan.host + '/dataset/' + ecosis.ds.package.getName();
+
+        this.checkDoiStatus();
+
         return;
       }
 
       this.$.urlLabelInput.innerHTML = ecosis.ckan.host + '/dataset/';
+    },
+
+    checkDoiStatus : function() {
+      var status = ecosis.ds.package.getDoi().status;
+      if( status && status.value ) {
+        if( status.value.toLowerCase() === 'applied' ) {
+          this.$.static.style.display = 'block';
+          this.$.titleInput.style.display = 'none';
+          this.$.message.style.display = 'none';
+        }
+      }
     },
 
     onTitleInputChange : function() {
@@ -9953,7 +9968,7 @@ this.fire('dom-change');
     </nav>
     <div id="staticMessage" style="display:none">
       <i class="fa fa-warning"></i> A EcoSIS DOI as been applied to the dataset.  You can no longer make changes to 
-      the resources or metadata.  You can still link additional external resources.
+      the dataset resources.  You can still edit the metadata.
     </div>
   </template>
 </dom-module>
@@ -12174,8 +12189,8 @@ this.fire('dom-change');
     <div id="panel" style="display:none">
 
       <div id="needsData" class="subpanel">
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you can no longer make
-          changes to the dataset.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you can only edit the metadata
+          for this dataset.
         </div>
         
         <br>
@@ -12185,9 +12200,8 @@ this.fire('dom-change');
       </div>
 
       <div id="request" class="subpanel">
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
-          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.  You can continue to link external resources after you have applied a DOI.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, only be able to edit the metadata.  
+          Make sure ALL data is valid and complete before proceeding.
         </div>
 
         <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
@@ -12204,9 +12218,8 @@ this.fire('dom-change');
         is required.
         <br>
 
-         <div class="text text-warning">Warning: Once a DOI is applied, you will no longer be able to
-          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.
+         <div class="text text-warning">Warning: Once a DOI is applied, only be able to edit the metadata.
+             Make sure ALL data is valid and complete before proceeding.
         </div>
 
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
@@ -12215,14 +12228,13 @@ this.fire('dom-change');
 
       <div id="pendingRevision" class="subpanel">
         Your dataset has been reviewed by a EcoSIS administrator and further updates
-        are required for a DOI.If you are ready to re-submit your dataset, please click below.<br>
+        are required for a DOI.  If you are ready to re-submit your dataset, please click below.<br>
 
         <a class="btn btn-default btn-request" on-click="requestDoi">Resubmit Doi Request</a>
         <a class="btn btn-warning btn-request" on-click="cancelRequest">Cancel Doi Request</a>
         
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will no longer be able to
-          make changes to the dataset.  Make sure ALL data AND metadata is filled out, valid and complete
-          before proceeding.  You can continue to link external resources after you have applied a DOI.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, only be able to edit the metadata.    
+        Make sure ALL data is filled out, valid and complete before proceeding.
         </div>
       </div>
 
@@ -12588,7 +12600,7 @@ this.fire('dom-change');
 
       <h4 class="page-header">
         <a class="btn-toggle" on-click="toggleCat" cat="linkedDataInput">
-        <i class="fa fa-arrow-right"></i></a> Linked Resources <small cat="linked"></small>
+        <i class="fa fa-arrow-right"></i></a> Linked Resources &amp; Papers <small cat="linked"></small>
       </h4>
       <ecosis-linked-data-input id="linkedDataInput" style="display:none"></ecosis-linked-data-input>
 
