@@ -197,6 +197,9 @@ function Package(initdata, SDK) {
   this.setOrganization = function(id, callback) {
     if( !id ) {
       this.data.owner_org = '';
+      if( callback ) {
+        callback({success: true});
+      }
       return;
     }
 

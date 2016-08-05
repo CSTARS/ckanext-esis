@@ -13,9 +13,15 @@ var ecosis = (function(){
   }
 
   var currentPkg = getVar('id');
+  var defaultGroup = '';
+  if( !currentPkg ) {
+    defaultGroup = getVar('group');
+  }
+  
   var ecosis = new Ecosis({
     host : host,
-    package_id : currentPkg
+    package_id : currentPkg,
+    defaultGroup : defaultGroup
   });
 
   ecosis.app = {};

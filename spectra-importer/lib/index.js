@@ -6,6 +6,8 @@ var Package = require('./package');
 function SDK(config) {
   this.user = null;
 
+  this.defaultGroup = config.defaultGroup;
+
   this.newPackage = function(data) {
     return new Package(data, this);
   };

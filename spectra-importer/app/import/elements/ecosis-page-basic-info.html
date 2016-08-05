@@ -302,6 +302,11 @@
         this.$.createBtn.style.display = 'inline-block';
         this.$.createFromTemplate.style.display = 'block';
         this.updateCreateBtnState();
+
+        if( ecosis.defaultGroup ) {
+          this.$.organizationInput.value = ecosis.defaultGroup;
+          this.onOrganizationInputChange();
+        }
       } else {
         this.$.doi.style.display = 'block';
         this.$.goToBtn.style.display = 'inline-block';
@@ -369,7 +374,7 @@
       var options = '<option></option>';
       for( var i = 0; i < resp.length; i++ ) {
         var item = resp[i];
-        options += '<option value="'+item.id+'" '+(ecosis.ds.package.getLicenseId() == item.id ? 'selected' : '')+'>'+item.title+'</option>';
+        options += '<option value="'+item.id+'">'+item.title+'</option>';
       }
       this.$.licenseInput.innerHTML = options;
     },
@@ -391,7 +396,7 @@
       var options = '<option></option>';
       for( var i = 0; i < ecosis.user.organizations.length; i++ ) {
         var org = ecosis.user.organizations[i];
-        options += '<option value="'+org.id+'">'+org.display_name+'</option>';
+        options += '<option value="'+org.id+'" '+(ecosis.defaultGroup === org.id ? 'selected' : '' )+'>'+org.display_name+'</option>';
       }
       this.$.organizationInput.innerHTML = options;
     },
@@ -460,8 +465,9 @@
 
     /* change handlers */
     onOrganizationInputChange : function() {
-      ecosis.ds.package.setOrganization(this.$.organizationInput.value);
-      this.updateVisibilityControl();
+      ecosis.ds.package.setOrganization(this.$.organizationInput.value, function(){
+        this.updateVisibilityControl();
+      }.bind(this));
     },
 
     onDescriptionInputChange : function() {
