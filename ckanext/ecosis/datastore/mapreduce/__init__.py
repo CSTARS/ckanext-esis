@@ -262,7 +262,7 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     # if type is controlled, split to multiple values
     if name == 'Keywords':
         pass
-    elif input == "controlled" or input == "split-text":
+    elif input == "controlled" or input == "split-text" or name == 'Author':
         val = val.split(",")
     else:
         val = [val]
