@@ -277,6 +277,7 @@ function Package(initdata, SDK) {
   };
 
   this.setPrivate = function(private) {
+    if( this.data.private === private ) return;
     this.data.private = private;
     this._onUpdate('Private');
   };
