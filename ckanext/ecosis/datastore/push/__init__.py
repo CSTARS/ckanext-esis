@@ -155,7 +155,7 @@ def setCitation(pkg):
         authors = authors.split(',')
         map(unicode.strip, authors)
         if len(authors) == 1:
-            citation.append(authors)
+            citation.append(authors[0])
         elif len(authors) == 2:
             citation.append(' and '.join(authors))
         elif len(authors) > 2:
