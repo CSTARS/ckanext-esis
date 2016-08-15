@@ -1,0 +1,45 @@
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix skosxl:  <http://www.w3.org/2008/05/skos-xl#> .
+@prefix change:  <http://top-thesaurus.org/trait/change#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ref:     <http://top-thesaurus.org/trait/reference#> .
+@prefix unit:    <http://top-thesaurus.org/trait/unit#> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix trait:   <http://top-thesaurus.org/trait#> .
+@prefix vs:      <http://www.w3.org/2003/06/sw-vocab-status/ns#> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+
+trait:TOP25
+      a       skos:Concept , owl:Class ;
+      rdfs:label "Leaf_area"^^xsd:string ;
+      rdfs:subClassOf trait:Leaf_area_trait ;
+      trait:id "TOP25"^^xsd:string ;
+      trait:prefUnit
+              [ rdf:value "area unit"^^xsd:string
+              ] ;
+      trait:relatedTerm "leaf size "^^xsd:string ;
+      vs:term_status "stable"^^xsd:string ;
+      skos:broaderTransitive
+              trait:Leaf_area_trait ;
+      skos:definition
+              [ rdf:value "the area (PATO:area) of a leaf (PO:leaf) in the one sided projection"^^xsd:string ;
+                trait:reference
+                        [ rdf:value "Eric Garnier, Jens Kattge, Stefan Klotz, Ingolf Kuehn, Ulrike Stahl"^^xsd:string
+                        ]
+              ] ;
+      skos:exactMatch "1"^^xsd:string ;
+      skos:inScheme trait:Thesaurustrait ;
+      skos:relatedMatch <http://purl.obolibrary.org/obo/PO/Po_leaf> , <http://purl.bioontology.org/ontology/PATO/Pato_area> ;
+      skosxl:altLabel
+              [ skosxl:literalForm "area of a leaf"^^xsd:string
+              ] ;
+      skosxl:prefLabel
+              [ trait:abbreviation
+                        [ skosxl:literalForm "LA"^^xsd:string
+                        ] ;
+                skosxl:literalForm "Leaf area"^^xsd:string
+              ] .

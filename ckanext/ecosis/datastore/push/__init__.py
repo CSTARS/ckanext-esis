@@ -148,12 +148,12 @@ def setCitation(pkg):
     year = getPackageExtra('Year', pkg)
 
     doi = getPackageExtra('EcoSIS DOI', pkg)
-    if doi is None:
+    if doi is None or doi == '':
         doi = getPackageExtra('Citation DOI', pkg)
 
     if authors is not None:
         authors = authors.split(',')
-        map(unicode.strip, authors)
+        authors = map(unicode.strip, authors)
         if len(authors) == 1:
             citation.append(authors[0])
         elif len(authors) == 2:
