@@ -5,7 +5,7 @@ from ckan.common import request, response
 from ckanext.ecosis.lib.utils import jsonStringify
 import ckanext.ecosis.datastore.query as query
 from ckanext.ecosis.datastore.vocab import top
-import ckanext.ecosis.lib.utils as utils
+from ckanext.ecosis.datastore.vocab import gcmd
 
 def get():
     response.headers["Content-Type"] = "application/json"
@@ -40,6 +40,15 @@ def suggestOverview():
         raise Exception('Name list not provided')
 
     return jsonStringify(top.overview(json.loads(params.get('names'))))
+
+def suggestGCMD():
+    response.headers["Content-Type"] = "application/json"
+
+    query = request.params.get('query')
+    if query is None:
+        query = ""
+
+    return jsonStringify(gcmd.suggest(query))
 
 
 def _getIndex():

@@ -150,6 +150,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')
         map.connect('top_suggest', '/ecosis/spectra/suggest', controller=controller, action='topSuggest')
         map.connect('top_overview', '/ecosis/spectra/suggestOverview', controller=controller, action='topOverview')
+        map.connect('gcmd_suggest', '/ecosis/spectra/gcmd', controller=controller, action='gcmdSuggest')
 
         # ecosis - workspace
         map.connect('prepare_workspace', '/ecosis/workspace/prepare', controller=controller, action='prepareWorkspace')

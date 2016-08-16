@@ -317,6 +317,12 @@ module.exports = function(config) {
     });
   };
 
+  this.gcmdSuggest = function(name, callback) {
+    get(this.host+'/ecosis/spectra/gcmd', {query: name.toLowerCase()}, function(err, resp) {
+      handleResp(err, resp, callback);
+    });
+  };
+
   this.removeResource = function(resourceId, callback) {
     postRaw(this.host+'/api/3/action/resource_delete', JSON.stringify({id : resourceId }), function(err, resp) {
       handleResp(err, resp, callback);
