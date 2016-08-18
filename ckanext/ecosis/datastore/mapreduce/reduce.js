@@ -34,7 +34,6 @@ function(key, spectra){
                     value = cleanValue(value);
                 }
 
-
                 if( value === '' ) return;
 
                 if( !searchObj[key] ) searchObj[key] = {};

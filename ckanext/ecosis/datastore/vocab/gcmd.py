@@ -6,7 +6,7 @@ def init(collections):
     gcmdCollection = collections.get('gcmd')
 
 def suggest(query):
-    query = query.split(",")
+    query = re.split(',|\s', query)
     query = map(unicode.strip, query)
 
     arr = []

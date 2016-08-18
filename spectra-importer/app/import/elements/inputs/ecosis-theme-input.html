@@ -8,7 +8,7 @@
     </style>
 
     <div id="root"></div>
-    <!--<ecosis-gcmd-input></ecosis-gcmd-input>-->
+    <!--<ecosis-gcmd-input id="gcmd"></ecosis-gcmd-input>-->
 
   </template>
 
@@ -28,7 +28,7 @@
         var c = 0;
         for( var i = 0; i < this.schema.length; i++ ) {
           if( this.schema[i].name == 'Keywords' ) continue;
-          if( this.schema[i].name == 'NASA GCMD Science & Services Keywords' ) continue;
+          if( this.schema[i].name == 'NASA GCMD Keywords' ) continue;
 
           var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
@@ -49,12 +49,20 @@
       setValues : function() {
         for( var i = 0; i < this.schema.length; i++ ) {
           if( this.schema[i].name == 'Keywords' ) continue;
-          if( this.schema[i].name == 'NASA GCMD Science & Services Keywords' ) continue;
-
-          var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
 
           var name = this.schema[i].fnName;
           var value = ecosis.ds.package['get'+name]();
+
+          if( this.schema[i].name == 'NASA GCMD Keywords' ) {
+            // if( !value ) value = '[]';
+            // value = JSON.parse(value);
+            // this.$.gcmd.setTokens(value);
+            continue;
+          }
+
+          var ele = this.querySelector('ecosis-schema-input[metadata="'+this.schema[i].name+'"]');
+
+          
 
           var other = '';
           if( this.schema[i].allowOther ) {

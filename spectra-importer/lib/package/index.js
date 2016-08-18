@@ -487,6 +487,7 @@ function Package(initdata, SDK) {
   this._setTesting = function() {
     this.setExtra('_testing_', true);
   };
+
 }
 
 // extend package getters/setters based on schema

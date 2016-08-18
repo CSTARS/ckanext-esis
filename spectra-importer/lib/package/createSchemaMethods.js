@@ -6,7 +6,7 @@ var ckanAttriutes = ['Keywords', 'Website', 'Author', 'Author Email',
 
 module.exports = function(attribute, Package) {
   if( attribute.name === 'Keywords' || attribute.name === 'Website' ) return;
-
+if(attribute.name === 'NASA GCMD Science & Services Keywords') debugger;
   if( attribute.input === 'controlled' ) {
     createControlledInput(attribute, Package);
   } else if( attribute.input === 'split-text' ) {
@@ -121,38 +121,6 @@ function createControlledInput(attribute, Package) {
 
     this._onUpdate(attribute.name);
   };
-
-/*
-  Package.prototype['add'+name] = function(value) {
-    if( typeof value !== 'string' ) {
-      throw(new Error('value must be type string'));
-    }
-
-    var currentValue = this.getExtra(name).split(',').map(cleanTerm);
-    var currentOther = this.getExtra(name+' Other').split(',').map(cleanTerm);
-
-    if( attribute.type === 'controlled' ) {
-      var t = tokenize(value);
-      var valid = false;
-      for( var i = 0; i < attribute.vocabulary.length; i++ ) {
-        if( tokenize(attribute.vocabulary[i]) === t ) {
-          t = attribute.vocabulary[i];
-          valid = true;
-          break;
-        }
-      }
-
-      if( valid ) {
-        currentValue.push(t);
-        this.setExtra(attribute.name, currentValue.join(', '));
-      } else if( attribute.allowOther ) {
-        currentOther.push(t);
-        this.setExtra(attribute.name, currentValue.join(', '));
-      }
-    }
-
-  };
-*/
 }
 
 function cleanTerm(txt) {

@@ -111,7 +111,6 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     }
 
     # append the units
-    #units = getPackageExtra('package_units', pkg)
     units = query.allUnits(pkg.get("package_id"))
     if units != None:
          ecosis["spectra_metadata_schema"]["units"] = units
@@ -181,7 +180,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
                 name = item.get('name')
                 input = item.get('input')
 
-                if name == 'Latitude' or name == 'Longitude' or name == 'geojson':
+                if name == 'Latitude' or name == 'Longitude' or name == 'geojson' or name == 'NASA GCMD Keywords':
                     continue
 
                 processAttribute(name, input, pkg, mrValue, setValues, keywords)
@@ -199,6 +198,21 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
         setValues['$unset']['value.tmp__schema__'] = ''
 
+        # append the gcmd keywords
+        gcmd = getPackageExtra('NASA GCMD Keywords', pkg)
+        if gcmd is not None and gcmd != '':
+            arr = json.loads(gcmd)
+            setValues['$set']['value.ecosis']['nasa_gcmd_keywords'] = arr
+            keywords = []
+
+            for item in arr:
+                parts = item.get('label').split('>')
+                parts =  map(unicode.strip, parts)
+                for key in parts:
+                    if key not in keywords:
+                        keywords.append(key)
+
+            setValues['$set']['value.NASA GCMD Keywords'] = keywords
 
         # finally, let's handle geojson
         geojson = processGeoJson(bboxInfo, pkg);

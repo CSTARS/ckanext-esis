@@ -17,12 +17,11 @@
 
     <div class="form-horizontal">
       <div class="form-group">
-        <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Keywords</label>
+        <label for="keywordInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> GCMD Keywords</label>
         <div class="col-md-9">
-          <input type="text" class="form-control" id="keywordInput" on-keyup="onInputChange" placeholder="Search Keywords">
+          <input type="text" class="form-control" id="keywordInput" on-input="onInputChange" placeholder="Search GCMD Keywords">
           <div class="help-block">
-            Search for EcoSIS keywords or create new keywords.  Comma separate to add more than one keyword at a time.  Use
-            the 'enter' key to create new keyword(s).
+            Select spectroscopy-related keywords from the NASA Global Change Master Directory's controlled keyword vocabularies. (http://gcmd.nasa.gov/learn/keyword_list.html)
           </div>
           <span id="searchingPanel" class="label label-primary" style="display:none">
             <i class="fa fa-spinner fa-spin"></i> Searching...
@@ -95,26 +94,26 @@
 
     addResult : function(e) {
         var index = parseInt(e.currentTarget.getAttribute('index'));
-        var name = this.results[index].name;
+        var item = this.results[index];
 
-        this.addToken({label:name, value:name}, true);
+        this.addToken({label:item.keywords.join(' > '), value: item.id}, true);
 
         this.$.keywordInput.value = '';
         this.$.resultRoot.innerHTML = '';
         this.renderTokens();
     },
 
-    addToken : function(token, fireEvent) {
+    addToken : function(token, setKeywords) {
         if( !token.value || token.value == '' ) return;
 
         for( var i = 0; i < this.tokens.length; i++ ) {
             if( this.tokens[i].value == token.value ) return;
         }
 
-        token.label = token.value;
         this.tokens.push(token);
-
-        ecosis.ds.package.addKeyword(token.value);
+        if( setKeywords ) {
+          ecosis.ds.package.setNASAGCMDKeywords(JSON.stringify(this.tokens));
+        }
 
         this.renderTokens();
     },
@@ -122,21 +121,22 @@
     renderResults : function() {
       var btns = '';
       for( var i = 0; i < this.results.length; i++ ) {
-        btns += '<a class="btn btn-default btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].keywords.join(' > ')+'</a>';
+        if( i === 10 ) break;
+        btns += '<div style="text-transform:capitalize; cursor:pointer; padding: 10px" index="'+i+'" ><i class="fa fa-plus"></i> '+this.results[i].keywords.join(' > ')+'</div>';
       }
-      this.$.resultRoot.innerHTML = btns.length > 0 ? '<div class="well">Suggestions:<br />'+btns+'</div>' : '';
+      this.$.resultRoot.innerHTML = btns.length > 0 ? '<div>'+btns+'</div>' : '';
 
-      $(this.$.resultRoot).find('a').on('click', this.addResult.bind(this));
+      $(this.$.resultRoot).find('div[index]').on('click', this.addResult.bind(this));
     },
 
     renderTokens : function() {
       var btns = '';
       for( var i = 0; i < this.tokens.length; i++ ) {
-        btns += '<a class="btn btn-primary btn-sm ecosis-keyword-input" style="text-transform:initial" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</a>';
+        btns += '<div class="btn btn-primary btn-sm ecosis-keyword-input" style="text-transform:capitalize;display:block;margin-bottom: 15px;white-space:initial" index="'+i+'"><i class="fa fa-times"></i> '+this.tokens[i].label+'</div>';
       }
       this.$.currentKeywordsRoot.innerHTML = btns;
 
-      $(this.$.currentKeywordsRoot).find('a').on('click', this.onTokenClick.bind(this));
+      $(this.$.currentKeywordsRoot).find('div[index]').on('click', this.onTokenClick.bind(this));
     },
 
     getTokens : function() {
@@ -146,7 +146,7 @@
     setTokens : function(tokens) {
         this.tokens.splice(0,this.tokens.length);
         for( var i = 0; i < tokens.length; i++ ) {
-            this.addToken({label: tokens[i].name, value : tokens[i].name});
+            this.addToken({label: tokens[i].label, value : tokens[i].value});
         }
 
         this.renderTokens();
@@ -156,7 +156,7 @@
         var index = parseInt(e.currentTarget.getAttribute("index"));
         var token = this.tokens.splice(index,1)[0];
 
-        ecosis.ds.package.removeKeyword(token.value);
+        ecosis.ds.package.setNASAGCMDKeywords(JSON.stringify(this.tokens));
 
         // don't set focus to input
         e.stopPropagation();

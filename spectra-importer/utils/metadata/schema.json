@@ -352,7 +352,7 @@
       "allowOther": false
     },
     {
-      "name": "NASA GCMD Science & Services Keywords",
+      "name": "NASA GCMD Keywords",
       "level": 2,
       "input": "text",
       "units": "",

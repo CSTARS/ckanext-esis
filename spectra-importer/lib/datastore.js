@@ -329,7 +329,7 @@ module.exports = function(config) {
       if( key === 'Latitude' || key === 'Longitude' ) {
         continue;
       }
-      if( key === 'NASAGCMDScience&ServicesKeywords' ) continue;
+      if( key === 'NASAGCMDKeywords' ) continue;
 
       if( this.package['get'+key] ) {
         var value = this.package['get'+key]();
