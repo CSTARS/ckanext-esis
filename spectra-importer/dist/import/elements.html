@@ -9021,7 +9021,7 @@ this.fire('dom-change');
     </style>
 
     <div id="root"></div>
-    <!--<ecosis-gcmd-input id="gcmd"></ecosis-gcmd-input>-->
+    <ecosis-gcmd-input id="gcmd"></ecosis-gcmd-input>
 
   </template>
 
@@ -9067,9 +9067,9 @@ this.fire('dom-change');
           var value = ecosis.ds.package['get'+name]();
 
           if( this.schema[i].name == 'NASA GCMD Keywords' ) {
-            // if( !value ) value = '[]';
-            // value = JSON.parse(value);
-            // this.$.gcmd.setTokens(value);
+            if( !value ) value = '[]';
+            value = JSON.parse(value);
+            this.$.gcmd.setTokens(value);
             continue;
           }
 
