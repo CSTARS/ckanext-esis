@@ -1,17 +1,19 @@
 from ckan.lib.base import c, model
 from ckanext.ecosis.datastore import delete as deleteUtil
 import ckan.logic as logic
-from ckanext.ecosis.lib.auth import hasOrgAccess
-from ckan.common import request, response
-import json
+from ckan.common import response
+
 
 NotFound = logic.NotFound
 collections = None
 
+# inject global dependencies
 def init(co):
     global collections
     collections = co
 
+# delete organization
+# when org is deleted, we need to remove all of organizations datasets
 def delete(id):
     # first, get a list of all organizations datasets
     group = model.Group.get(id)
@@ -28,7 +30,7 @@ def delete(id):
     context = {'model': model, 'user': c.user}
     logic.get_action('organization_delete')(context, {'id': id})
 
-
+    # EcoSIS package delete happens here
     for package_id in datasets:
         deleteUtil.package(package_id)
 

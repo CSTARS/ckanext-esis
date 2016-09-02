@@ -2,7 +2,6 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import pylons.config as config
 
-import ckanext.ecosis.controller as controller
 import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.controller.organization as orgController
 

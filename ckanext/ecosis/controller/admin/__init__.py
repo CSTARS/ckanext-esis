@@ -28,7 +28,7 @@ def rebuildIndex(collections):
 
     return json.dumps({'success': True, 'rebuildCount': len(list)})
 
-# dump everything (data)!
+# Remove all testing data flagged with _testing_
 def cleanTests():
     response.headers["Content-Type"] = "application/json"
     context = {'model': model, 'user': c.user}
@@ -75,6 +75,7 @@ def cleanTests():
 
 
 # dump everything (data)!
+# this will not work on the master branch
 def clean(collections):
     response.headers["Content-Type"] = "application/json"
     context = {'model': model, 'user': c.user}
@@ -116,6 +117,7 @@ def clean(collections):
         'message' : 'Go to /ckan-admin/trash to finish cleanup'
     })
 
+# rebuild the USDA MongoDB collection
 def rebuildUSDACollection(collections, usdaApiUrl):
     if not isAdmin():
         raise Exception('Nope.')

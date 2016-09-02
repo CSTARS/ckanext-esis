@@ -7,6 +7,7 @@ import json, datetime, psycopg2, urllib2, base64
 from dateutil import parser
 from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import setPackageExtra, getPackageExtra
+from ckanext.ecosis.lib.auth import isAdmin
 from ckanext.ecosis.datastore.ckan import package
 
 DOI_STATUS = {
@@ -23,6 +24,7 @@ DOI_CONFIG = {
 }
 connStr = ""
 
+# inject global dependencies
 def init(pgConn):
     global connStr
     connStr = pgConn
@@ -312,10 +314,3 @@ def getDoiStatus(pkg):
         doi['status'] = json.loads(doi['status'])
 
     return doi
-
-def isAdmin():
-    if c.userobj == None:
-        return False
-    if not c.userobj.sysadmin:
-        return False
-    return True

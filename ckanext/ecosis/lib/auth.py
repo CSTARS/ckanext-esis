@@ -22,3 +22,9 @@ def hasOrgAccess(package_id):
 
     check_access('organization_update', context, data_dict)
 
+def isAdmin():
+    if c.userobj == None:
+        return False
+    if not c.userobj.sysadmin:
+        return False
+    return True

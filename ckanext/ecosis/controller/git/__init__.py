@@ -3,6 +3,7 @@ import subprocess, json, re, os
 
 path = os.path.dirname(os.path.abspath(__file__))
 
+# grab git info using command line git commands
 def info():
     response.headers["Content-Type"] = "application/json"
     resp = {}
