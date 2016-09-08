@@ -126,11 +126,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def doiUpdateStatus(self):
-        try:
-            return package.doi.doiUpdateStatus()
-        except Exception as e:
-            return handleError(e)
+    # TODO: verify ok to remove
+    # def doiUpdateStatus(self):
+    #     try:
+    #         return package.doi.doiUpdateStatus()
+    #     except Exception as e:
+    #         return handleError(e)
 
     def verifyWorkspace(self):
         try:

@@ -11,12 +11,14 @@ from ckanext.ecosis.lib.auth import isAdmin
 from ckanext.ecosis.datastore.ckan import package
 
 DOI_STATUS = {
-    'APPLIED' : 'Applied',
-    'REQUESTING' : 'Requesting',
-    'ACCEPTED' : 'Accepted',
-    'PENDING_REVISION' : 'Pending Revision',
-    'PENDING_APPROVAL' : 'Pending Approval'
+    'APPLIED' : 'Applied',                   # DOI has been applied by EZID
+    'REQUESTING' : 'Requesting',             # Requesting DOI from EZID
+    'ACCEPTED' : 'Accepted',                 # Admins have accepted DOI request
+    'PENDING_REVISION' : 'Pending Revision', # Admins not approved the DOI request, dataset needs revision
+    'PENDING_APPROVAL' : 'Pending Approval'  # User has requested DOI
 }
+
+# EZID config
 DOI_CONFIG = {
     "url" : config.get("ecosis.doi.url"),
     "username" : config.get("ecosis.doi.username"),
@@ -84,19 +86,26 @@ def handleDoiUpdate(currentPackage, newPackage):
     resp['success'] = True
     return resp
 
+# Actually request DOI from EZID
 def applyDoi(pkg):
+    # get the current package DOI status
     doiStatus = getDoiStatus(pkg)
 
+    # make sure it's set to accepted
     if doiStatus.get('status').get('value') != DOI_STATUS["ACCEPTED"]:
         return
 
+    # set the new status to REQUESTING DOI
     setPackageExtra('EcoSIS DOI Status', json.dumps({'value':DOI_STATUS["REQUESTING"]}), pkg)
 
+    # update the dataset
     context = {'model': model, 'user': c.user}
     logic.get_action('package_update')(context, pkg)
 
+    # Request DOI from EZID
     doiResponse = requestDoi(pkg)
 
+    # If request failed, reset DOI status, return new error
     if doiResponse.get('status') != 'success':
         status = {
             'value': DOI_STATUS["ACCEPTED"],
@@ -108,6 +117,7 @@ def applyDoi(pkg):
         logic.get_action('package_update')(context, pkg)
         return status
 
+    # set the returned DOI ARK and new DOI Status
     status = {
         'value' : DOI_STATUS["APPLIED"],
         'ark' : doiResponse.get('ark'),
@@ -116,22 +126,25 @@ def applyDoi(pkg):
     setPackageExtra('EcoSIS DOI Status', json.dumps(status), pkg)
     setPackageExtra('EcoSIS DOI', doiResponse.get('doi'),  pkg)
 
-    # now that it's applied, push to search
+    # now that it's applied, re-push to search so updates are visible
     push = Push()
     push.run(pkg)
 
+    # final dataset update with new DOI status
     logic.get_action('package_update')(context, pkg)
 
     return {'success': True}
 
+# HTTP request for EZID
 def requestDoi(pkg):
+    # Request body
     data = "_target: %s/#result/%s\n" % (config.get("ecosis.search_url"), pkg.get('id'))
     data += "datacite.creator: %s\n" % pkg.get('author')
     data += "datacite.title: %s\n" % pkg.get('title')
     data += "datacite.publisher: EcoSIS\n"
     data += "datacite.publicationyear: %s" % parser.parse(pkg.get('metadata_created')).year
 
-
+    # set body, authentication header and make request
     r = urllib2.Request(DOI_CONFIG.get('url'))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
     r.add_header("Authorization", "Basic %s" % base64string)
@@ -143,6 +156,7 @@ def requestDoi(pkg):
     except Exception as e:
         result = "error: request error"
 
+    # parse EZID text response format
     (status, value) = result.split(': ')
     doi = ""
     ark = ""
@@ -163,17 +177,18 @@ def hasAppliedDoi(pkgId):
     resp = not canUpdate(getDoiStatus(pkg))
     return resp
 
-def doiUpdateStatus():
-    response.headers["Content-Type"] = "application/json"
+# def doiUpdateStatus():
+#     response.headers["Content-Type"] = "application/json"
+#
+#     if not isAdmin():
+#         return {
+#             'error' : True,
+#             'message' : 'Nope.'
+#         }
+#
+#     return json.dumps({})
 
-    if not isAdmin():
-        return {
-            'error' : True,
-            'message' : 'Nope.'
-        }
-
-    return json.dumps({})
-
+# for admin DOI interface, query datasets by DOI status
 def doiQuery():
     response.headers["Content-Type"] = "application/json"
 
@@ -191,6 +206,8 @@ def doiQuery():
     resp = package.doiQuery(query=query, status=status, offset=offset, limit=limit)
     return json.dumps(resp)
 
+# for admin, allows admin to completely clear a DOI.  Should only be used in
+# dev interface, never in production.
 def clearDoi():
     response.headers["Content-Type"] = "application/json"
 
@@ -213,7 +230,7 @@ def clearDoi():
 
     return json.dumps({'success': True})
 
-
+# Send admin notification of DOI request
 def sendAdminNotification(pkg):
     url = config.get('ckan.site_url')
     admin_email = config.get('ecosis.admin_email')
@@ -237,6 +254,7 @@ def sendAdminNotification(pkg):
             except:
                 print "Failed to send admin email"
 
+# send user notification of approval/denial of DOI request
 def sendUserNotification(pkg, approved):
     url = config.get('ckan.site_url')
 
@@ -292,8 +310,9 @@ def sendUserNotification(pkg, approved):
         "user" : status.get('requested_by')
     }
 
-
-
+# make sure user has permission to update DOI status.  There are only two status users are
+# allowed to update.  1) Doi has never been requested 2) DOI has been requested and
+# the admins have said revisions are needed
 def canUpdate(doi):
     # TODO: later check for props we can update?
     if doi.get('status').get('value') == None or \
@@ -302,6 +321,7 @@ def canUpdate(doi):
 
     return False
 
+# wrapper for getting package-extra doi status from status fields (stored as JSON)
 def getDoiStatus(pkg):
     doi = {
         'status' : getPackageExtra('EcoSIS DOI Status', pkg),

@@ -6,10 +6,11 @@ from pylons import config
 import lookup
 import dateutil.parser as dateparser
 from ckanext.ecosis.datastore import query
+from ckanext.ecosis.lib.utils import getPackageExtra
 
 path = os.path.dirname(os.path.abspath(__file__))
 
-# read in mapreduce strings
+# read in mapreduce strings.  These javascript files are (obviously) stored locally
 f = open('%s/../mapreduce/map.js' %  path, 'r')
 mapJs = Code(f.read())
 f.close()
@@ -25,6 +26,7 @@ f.close()
 collections = None
 schema = None
 
+# map from CKAN attribute name to EcoSIS
 schemaMap = {
     'Keywords' : 'tags',
     'Author' : 'author',
@@ -33,8 +35,10 @@ schemaMap = {
     'Maintainer Email' : 'maintainer_email'
 }
 
+# initialized in init()
 mapReduceAttribute = []
 
+# inject global dependencies
 def init(mongoCollections, jsonSchema):
     global collections, schema, mapReduceAttribute
 
@@ -51,7 +55,6 @@ def init(mongoCollections, jsonSchema):
 
 # pkg should be a ckan pkg
 # collection should be the search collection
-
 def mapreducePackage(ckanPackage, bboxInfo):
 
     # pass along attribute to mapreduce
@@ -59,15 +62,21 @@ def mapreducePackage(ckanPackage, bboxInfo):
         "mapReduceAttribute" : mapReduceAttribute
     }
 
+    # run mongo db mapreduce
     collections.get("search_spectra").map_reduce(mapJs, reduceJs, finalize=finalizeJs, scope=scope, out=SON([("merge", config.get("ecosis.mongo.search_collection"))]), query={"ecosis.package_id": ckanPackage['id']})
+    # get the resulting count
     spectra_count = collections.get("search_spectra").find({"ecosis.package_id": ckanPackage['id']}).count()
 
+    # now that we have our mapreduce spectra colleciton, lets process it
     updateEcosisNs(ckanPackage, spectra_count, bboxInfo)
 
+# process dataset after mapreduce.  add the ecosis namespace with additional ecosis/ckan information
 def updateEcosisNs(pkg, spectra_count, bboxInfo):
+    # get the package workspace object, contains config
     config = collections.get("package").find_one({"packageId": pkg.get("id")})
     collection = collections.get('search_package')
 
+    # TODO: shouldn't this be accessing the package extra for the sorting information?
     sort = config.get("sort")
     if sort is None:
         sort = {}
@@ -84,7 +93,9 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     except Exception as e:
         pass
 
+    # default ecosis information we are going to add to the package
     ecosis = {
+        # TODO: change to ISO string, check this doesn't break 'updated since last push check'
         "pushed" : datetime.datetime.utcnow(),
         "organization" : "",
         "organization_id" : "",
@@ -170,6 +181,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
         setValues = {'$set' : { 'value.ecosis': ecosis }, '$unset' : {}}
 
+        # grab the mapreduce value
         mrValue = item.get('value')
 
         # process ecosis schema
@@ -180,9 +192,12 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
                 name = item.get('name')
                 input = item.get('input')
 
+                # ignore these attributes, they should not be processed.
+                # TODO: make this a global list
                 if name == 'Latitude' or name == 'Longitude' or name == 'geojson' or name == 'NASA GCMD Keywords':
                     continue
 
+                # processAttribute does all sorts-o-stuff, see function definition below
                 processAttribute(name, input, pkg, mrValue, setValues, keywords)
                 names.append(name)
 
@@ -191,11 +206,16 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
                     names.append(name+" Other")
 
         # set the known data attributes
+        # the mapreduce function created these objects, storing all know wavelengths and metadata attributes
+        # for the function.  Here we transform those objects (dicts) into arrays, we only care about the keys
+        # Finally, MongoDB does not allow '.' in attribute name, so names were stored with commas instead,
+        # transpose the ',' back to '.'
         for key in mrValue['tmp__schema__']['wavelengths']:
             ecosis['spectra_metadata_schema']['wavelengths'].append(re.sub(r',', '.', key))
         for key in mrValue['tmp__schema__']['metadata']:
             ecosis['spectra_metadata_schema']['metadata'].append(re.sub(r',', '.', key))
 
+        # tell MongoDB to remove the object storing our schema information processed above
         setValues['$unset']['value.tmp__schema__'] = ''
 
         # append the gcmd keywords
@@ -205,6 +225,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
             setValues['$set']['value.ecosis']['nasa_gcmd_keywords'] = arr
             keywords = []
 
+            # create unique array of all gcmd keywords to be searched on
             for item in arr:
                 parts = item.get('label').split('>')
                 parts =  map(unicode.strip, parts)
@@ -221,18 +242,20 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         else:
             setValues['$set']['value.ecosis']['geojson'] = geojson
 
+        # really, finally, update the collection with the 'setValues' dict we have been creating
         collection.update(
             {'_id': pkg['id']},
             setValues
         )
 
+# handle the various ways we are given a bounding box
 def processGeoJson(bboxInfo, pkg):
     result = {
         "type": "GeometryCollection",
         "geometries": []
     }
 
-        # if we found bbox info in the spectra, add it
+    # if we found bbox info in the spectra, add it
     if bboxInfo['use']:
         result['geometries'].append({
             "type": "Polygon",
@@ -255,53 +278,52 @@ def processGeoJson(bboxInfo, pkg):
 
     return result
 
+# make sure value is not none, strip string and set to lower case
 def cleanValue(value):
     if value is None:
         return ""
 
     return value.lower().strip()
 
+# all sorts of magics here.
 def processAttribute(name, input, pkg, mrValue, setValues, keywords):
     val = None
-    if name == 'Keywords':
+
+    # first we need to get the values we are working with
+    if name == 'Keywords': # this is the keywords attribute, special case
         val = keywords
-    elif schemaMap.get(name) != None:
+    elif schemaMap.get(name) != None: # if the schemaMap has alias set, lookup value based on alias name
         val = pkg.get(schemaMap.get(name))
-    else:
+    else: # otherwise just use the provided attribute name
         val = getPackageExtra(name, pkg)
 
+    # if we don't have values to process, do nothing
     if val == None or val == '':
         return
 
-    # if type is controlled, split to multiple values
+    # if attribute schema type is 'controlled', split to multiple values
     if name == 'Keywords':
         pass
     elif input == "controlled" or input == "split-text" or name == 'Author':
         val = val.split(",")
-    else:
+    else: # we store everything as an array, easier to handle on other end
         val = [val]
 
-    # now we have an dataset level value, see if we have spectra level
-    # join if we do
+    # now we have an dataset value, see if we have spectra value and join if we do
+    # what does this mean?  So spectra resource attributes were mapreduced into
+    # this single 'mrValue' dict.  If the attribute name is found as a first class
+    # citizen, then it was provided by the spectra and we need to include it
     if mrValue.get(name) != None:
         spValues = mrValue.get(name)
 
+        # merge and above values with new values
         for v in val:
             if not v in spValues:
                 spValues.append(v)
         val = spValues
 
+    # finally, clean all values (strip and set to lower case)
     if name != 'geojson' and name != 'Citation':
         val = map(lambda it: cleanValue(it), val)
 
     setValues['$set']['value.'+name] = val
-
-def getPackageExtra(attr, pkg):
-    extra = pkg.get('extras')
-    if extra == None:
-        return None
-
-    for item in extra:
-        if item.get('key') == attr:
-            return item.get('value')
-    return None

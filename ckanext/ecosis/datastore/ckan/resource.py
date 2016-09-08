@@ -2,10 +2,12 @@ import psycopg2.extras, psycopg2
 
 connStr = None
 
+# inject global dependencies
 def init(pgConn):
     global connStr
     connStr = pgConn
 
+# get a resource with out the requirement of a authenticated in HTTP request
 def get(resource_id):
     conn = psycopg2.connect(connStr)
 
@@ -23,7 +25,7 @@ def get(resource_id):
 
     return resource
 
-# get all active resources
+# get all active resources for a package
 def active(package_id):
     conn = psycopg2.connect(connStr)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

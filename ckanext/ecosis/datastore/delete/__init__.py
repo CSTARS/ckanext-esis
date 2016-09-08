@@ -11,6 +11,7 @@ extension does store files on disk while a workspace is 'open'.  These files nee
 to be cleaned as well.
 '''
 
+# inject global dependencies
 def init(mongoCollections, workspaceDirectory):
     global collections, workspaceDir
 

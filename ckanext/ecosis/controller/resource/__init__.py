@@ -16,6 +16,8 @@ from ckanext.ecosis.controller.package.doi import hasAppliedDoi
 
 parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 
+# delete are resource
+# By default, CKAN keeps resources on disk after they are deleted.  EcoSIS does not.
 def delete():
     response.headers["Content-Type"] = "application/json"
 
@@ -26,6 +28,7 @@ def delete():
 
     return json.dumps(resp)
 
+# Single HTTP call for deleting multiple resources
 def deleteMany():
     response.headers["Content-Type"] = "application/json"
 
@@ -39,11 +42,13 @@ def deleteMany():
 
     return jsonStringify(resp)
 
+# Actually delete are srource
 def _delete(params):
     # remove resource from disk - normally this doesn't happen
     context = {'model': model, 'user': c.user}
     resource = logic.get_action('resource_show')(context, params)
 
+    # if package has DOI applied, resources cannot be modified
     if hasAppliedDoi(resource.get('package_id')):
         return {'error':True, 'message':'Cannot delete resource of package with applied DOI'}
 
@@ -51,25 +56,30 @@ def _delete(params):
     logic.get_action('resource_delete')(context, params)
     id = params.get('id')
 
+    # if the resource is a file upload, remove from disk
     if resource.get('url_type') == "upload":
         upload = uploader.ResourceUpload(resource)
         path = upload.get_path(resource['id'])
         if os.path.exists(path):
             os.remove(path)
 
+    # remove resource from EcoSIS
     deleteUtil.resource(resource.get("package_id"), id)
 
     params['success'] = True
     return params
 
+# create new resource for dataset
 def create():
     response.headers["Content-Type"] = "application/json"
 
     request_data = dict(request.POST)
 
+    # if the dataset has a DOI applied, you cannot add new resources
     if hasAppliedDoi(request_data.get('package_id')):
         return {'error': True, 'message': 'Cannot add resources to package with applied DOI'}
 
+    # run the default CKAN create resource logic
     context = {'model': model, 'user': c.user}
     resource_create = logic.get_action('resource_create')
     resp = resource_create(context, request_data)
@@ -79,7 +89,9 @@ def create():
         'success' : True
     })
 
-
+# process a resource
+# this will be given a set of options, then parse the measurement data or metadata out of
+# the resource based on this options
 def process():
     response.headers["Content-Type"] = "application/json"
 
@@ -103,12 +115,13 @@ def process():
 
     # option, if a resource id and a datasheet id are passed, then the full 'merged' view will be return
 
+    # only allow specified options
     safeOptions = {}
     for option in parseOptions:
         if option in options:
             safeOptions[option] = options[option]
 
-
+    # see if we are editing multiple files or just one
     result = []
     if ids is not None:
         ids = json.loads(ids)
@@ -123,6 +136,8 @@ def process():
     context = {'model': model, 'user': c.user}
     pkg = logic.get_action('package_show')(context, {'id': package_id})
 
+    # use this counter to poke the dataset.  This will update the last modified timestamps
+    # required for 'updated since last pushed UI'
     resourceUpdateCount = utils.getPackageExtra('resourceUpdateCount', pkg)
     if resourceUpdateCount is None:
         resourceUpdateCount = 1
@@ -138,6 +153,8 @@ def process():
 
     return jsonStringify(result)
 
+# get a specific resource
+# optional sheet id, it the resource has multiple sheets (excel file)
 def get():
     response.headers["Content-Type"] = "application/json"
 
@@ -152,6 +169,8 @@ def get():
 
     return jsonStringify(query.getResource(rid, sid))
 
+# a get a row or column (depending on sheet orientation) of a resource file
+# index is the row/column to retrieve
 def getMetadataChunk():
     response.headers["Content-Type"] = "application/json"
 
@@ -164,6 +183,8 @@ def getMetadataChunk():
 
     return jsonStringify(query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex()))
 
+# get overview information for file, like number of rows/columns (chunks)
+# also returns number of join rows/columns if metadata resource type
 def getMetadataInfo():
     response.headers["Content-Type"] = "application/json"
 
@@ -176,6 +197,7 @@ def getMetadataInfo():
 
     return jsonStringify(query.getMetadataInfo(package_id, resource_id, sheet_id))
 
+# get the number of spectra measurements found in the file
 def getSpectraCount():
     response.headers["Content-Type"] = "application/json"
 
@@ -188,6 +210,7 @@ def getSpectraCount():
 
     return jsonStringify(query.total(package_id, resource_id, sheet_id))
 
+# helper for getting index as int
 def _getIndex():
     index = request.params.get('index')
     if index is None:

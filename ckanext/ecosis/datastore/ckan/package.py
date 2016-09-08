@@ -3,17 +3,21 @@ import psycopg2.extras, json
 connStr = None
 schema = None
 
+# inject global dependencies
 def init(pgConn, s):
     global connStr, schema
     connStr = pgConn
     schema = s
 
+# helper for returning EcoSIS attribute schema
 def getSchema():
     return schema
 
+# get a dataset by id
 def get(package_id):
     conn = psycopg2.connect(connStr)
 
+    # query pg for dataset
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("select * from package where id = %s", (package_id,))
     package = cur.fetchall()
@@ -27,6 +31,7 @@ def get(package_id):
     # extras
     package['extras'] = {}
 
+    # grab all extra fields where status is not deleted
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("select * from package_extra where package_id = %s and state != 'deleted'", (package_id,))
     rows = cur.fetchall()
@@ -34,7 +39,7 @@ def get(package_id):
         package['extras'][row['key']] = row['value']
     cur.close()
 
-    # org
+    # append organization information
     ownerOrg = package.get('owner_org')
     if ownerOrg != None and ownerOrg != "":
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -45,7 +50,7 @@ def get(package_id):
         if len(rows) > 0:
             package['organization'] = rows[0]
 
-    # tags
+    # append tag (keywords) information
     package['tags'] = []
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("select t.name from tag t, package_tag pt where t.id = pt.tag_id and pt.package_id = %s and pt.state = 'active'", (package_id,))
@@ -58,6 +63,8 @@ def get(package_id):
 
     return package
 
+# query package by EcoSIS DOI status.  Uses pg-json functionality
+# TODO: build index on doi status -> value field
 def doiQuery(status="", query="", limit=10, offset=0):
     conn = psycopg2.connect(connStr)
 

@@ -1,5 +1,6 @@
-import pprint
 
+# mostly for debug
+# was having issue with dropped db connection
 def verifyConnection(conn):
     print "Connect status:%s, closed:%s" % (conn.status, conn.closed)
 

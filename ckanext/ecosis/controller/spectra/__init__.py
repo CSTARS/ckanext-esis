@@ -7,6 +7,7 @@ import ckanext.ecosis.datastore.query as query
 from ckanext.ecosis.datastore.vocab import top
 from ckanext.ecosis.datastore.vocab import gcmd
 
+# get a spectra measurement with joined metadata
 def get():
     response.headers["Content-Type"] = "application/json"
 
@@ -16,6 +17,7 @@ def get():
 
     return jsonStringify(query.get(package_id, resource_id, sheet_id, _getIndex(), showProcessInfo=True))
 
+# get TOP suggestions for given attribute name
 def suggestAttributeName():
     response.headers["Content-Type"] = "application/json"
 
@@ -25,6 +27,8 @@ def suggestAttributeName():
 
     return jsonStringify(top.suggest(name))
 
+# for a list of attributes of a spectra, returns attributes which might
+# have TOP suggestions
 def suggestOverview():
     response.headers["Content-Type"] = "application/json"
 
@@ -41,6 +45,7 @@ def suggestOverview():
 
     return jsonStringify(top.overview(json.loads(params.get('names'))))
 
+# Query NASA GCDM vocab
 def suggestGCMD():
     response.headers["Content-Type"] = "application/json"
 
