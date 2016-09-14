@@ -26,12 +26,23 @@ describe('Add Resources & Configure - Dataset 1', function() {
     SDK = require('../../newSDK')();
   });
 
+
+
   it('should get Dataset 1 by name via api', function(next){
     SDK.ckan.getPackage(data.name, function(resp){
       assert.equal(resp.error, undefined);
       pkg = SDK.newPackage(resp);
       assert.equal(pkg.getTitle(), data.title);
-      //console.log(pkg.getId());
+      next();
+    });
+  });
+
+  it('should prepare workspace for Dataset 1 by id via api', function(next){
+    SDK.ckan.prepareWorkspace(pkg.getId(), function(resp){
+      assert.equal(resp.error, undefined);
+      assert.equal(resp.prepared, true);
+      assert.equal(resp.packageId, pkg.getId());
+
       next();
     });
   });
@@ -109,7 +120,9 @@ describe('Add Resources & Configure - Dataset 1', function() {
 
     SDK.ckan.processResource(pkg.getId(), resources.metadata.id, null, options, function(resp){
       assert.equal(resp.error, undefined);
+      assert.equal(typeof resp.result, 'object');
 
+      resp = resp.result;
       if( Array.isArray(resp) ) {
         resp = resp[0];
       }
@@ -125,6 +138,8 @@ describe('Add Resources & Configure - Dataset 1', function() {
   });
 
   it('should let you join the metadata', function(next){
+    this.timeout(5000);
+    
     var options = {
       layout : 'row',
       metadata: true,
@@ -133,6 +148,9 @@ describe('Add Resources & Configure - Dataset 1', function() {
 
     SDK.ckan.processResource(pkg.getId(), resources.metadata.id, null, options, function(resp){
       assert.equal(resp.error, undefined);
+      assert.equal(typeof resp.result, 'object');
+      
+      resp = resp.result;
       if( Array.isArray(resp) ) {
         resp = resp[0];
       }
@@ -155,21 +173,6 @@ describe('Add Resources & Configure - Dataset 1', function() {
       assert.equal(resp.spectra, 'AK01_ACRU_B_LC_REFL');
       assert.equal(resp.instrumentation, 'ASD FieldSpec 3');
       assert.equal(Object.keys(resp.datapoints).length, 2151);
-      next();
-    });
-  });
-
-  it('should map spectra metadata attributes', function(next){
-    var map = {
-      'USDA Symbol' : 'species'
-    };
-
-    SDK.ckan.setPackageOptions(pkg.getId(), {map: map}, function(resp) {
-      assert.equal(resp.error, undefined);
-      assert.equal(resp.success, true);
-
-      SDK.ds.attributeMap = map;
-
       next();
     });
   });

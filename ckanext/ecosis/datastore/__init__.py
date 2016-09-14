@@ -4,7 +4,7 @@ import time
 
 from pymongo import MongoClient
 
-import parser
+import files
 import ckan
 import vocab
 import delete
@@ -20,7 +20,7 @@ from ckan import package
 def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
     ensureIndexes(collections)
 
-    parser.init(collections, workspacePath)
+    files.init(collections, workspacePath)
     ckan.init(pgConn, schema)
     query.init(collections, host)
     vocab.init(schema, collections)

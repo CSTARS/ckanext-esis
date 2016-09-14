@@ -1,9 +1,16 @@
 import re
 from ..vocab import controlled as controlledVocabulary
 
+'''
+Utilities for the process module
+'''
+
+# grab extension for a file
+# TODO: make lower case
 def getFileExtension(filename):
      return re.sub(r".*\.", "", filename)
 
+# given a sheet config, get the correct layout
 def getLayout(sheetConfig):
     layout = 'row' # default
 
@@ -14,6 +21,8 @@ def getLayout(sheetConfig):
 
     return layout
 
+# walk of data[][] and discover data ranges
+# this will find the first two tables of data
 def getDataRanges(data):
     ranges = []
     r = {
@@ -88,10 +97,14 @@ def parseAttrType(name, pos):
         units = re.sub(r"\)\s*","", units)
         name = re.sub(r"\(.*", "", name).strip()
 
-    type = "metadata"
+    type = "metadata" # default type
+
+    # if attribute name is actually a number, assum its a wavelength
     if re.match(r"^-?\d+\.?\d*", name) or re.match(r"^-?\d*\.\d+", name):
         type = "wavelength"
         name = re.sub(r"\.0+$", "", name)
+    # otherwise lookup and see if we 'flatten' (lower case, no spaces) name, does it match
+    # a EcoSIS defined schema name.  If so, set as 'pretty' schema name
     else:
         name = controlledVocabulary.getEcoSISName(name)
 
@@ -108,9 +121,11 @@ def parseAttrType(name, pos):
         "pos" : "%s-%s" % (pos[0], pos[1])
     }
 
+    # if units were found, store them
     if units != None:
         attr["units"] = units
 
+    # if the name was changed, store the name that was given to us as well
     if original != name:
         attr["originalName"] = original
 

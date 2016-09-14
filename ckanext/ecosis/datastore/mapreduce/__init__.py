@@ -74,7 +74,11 @@ def mapreducePackage(ckanPackage, bboxInfo):
 def updateEcosisNs(pkg, spectra_count, bboxInfo):
     # get the package workspace object, contains config
     config = collections.get("package").find_one({"packageId": pkg.get("id")})
+    if config is None:
+        config = {}
+
     collection = collections.get('search_package')
+
 
     # TODO: shouldn't this be accessing the package extra for the sorting information?
     sort = config.get("sort")

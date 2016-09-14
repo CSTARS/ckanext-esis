@@ -7,10 +7,14 @@ from ckanext.ecosis.datastore.vocab import controlled as controlledVocab
 from ckanext.ecosis.datastore.utils import mongo
 import workspace
 
+'''
+Query ecosis workspace collections
+'''
 
 collections = None
 host = ""
 
+# inject global dependencies
 def init(co, hostUrl):
     global collections, host
 
@@ -18,26 +22,32 @@ def init(co, hostUrl):
     host = hostUrl
     workspace.init(co, getResource, isPushed)
 
+# get a spectra at a specific index.
 def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=False, must_be_valid=False, clean_wavelengths=True):
     # build out query
     query = {
         "type" : "data",
         "packageId" : packageId
     }
+
+    # you can limit by resource and sheet id if you want
     if resourceId is not None:
         query["resourceId"] = resourceId
     if sheetId is not None:
         query["sheetId"] = sheetId
 
+    # get spectra at index
     main = collections.get('spectra').find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
 
     if main == None:
         raise Exception('Unabled to get spectra from package_id: %s at index %s' % (packageId, index))
 
+    # the collection also contains config information about the spectra, just grab to spectra attribute
     spectra = main.get('spectra')
 
-
-    moveWavelengths(spectra, clean_wavelengths)  # this also replaces , with .
+    # this also replaces , with .
+    # also moves measurement waveslength keys to 'datapoints' object
+    moveWavelengths(spectra, clean_wavelengths)
 
     if must_be_valid:
         if 'datapoints' not in spectra:
@@ -45,58 +55,76 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
         if len(spectra['datapoints']) == 0:
             return {}
 
+    # get information for the sheet this spectra came from
     sheetInfo = collections.get('resource').find_one({
         "packageId": packageId,
         "resourceId": main.get("resourceId"),
         "sheetId" : main.get("sheetId")
     })
 
+    # get package information for the package this spectra came from
     package = ckanPackageQuery.get(packageId)
 
     attributeProcessInfo = []
-    join(packageId, spectra, attributeProcessInfo)
 
+    # join together metadata to this spectra
+    join(packageId, spectra, attributeProcessInfo)
 
     config = collections.get('package').find_one({"packageId": packageId})
     if config == None:
         config = {}
 
+    # set the spectra attribute aliases
     mapNames(spectra, config, attributeProcessInfo, package)
 
+    # lookup any usda code given
     usda.setCodes(spectra, info=attributeProcessInfo)
 
+    # strip controlled vocab fields.  Remove any values that are not part of the controlled
+    # vocabulary
     controlledVocab.enforce(spectra)
 
+    # add 'spectra.ecosis' attribute with package and sheet info
     if showProcessInfo:
         addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=attributeProcessInfo)
     else:
         addEcosisNamespace(spectra, package, main, sheetInfo)
 
+    # set the sort information.  This data needs to be of the correct type (string, number, date) for
+    # proper sorting in mongodb
     setSort(spectra, config, package)
+
+    # set the location information.  Needs to be proper geojson if it's going to be used
     setLocation(spectra)
 
     return spectra
 
+# just like get spectra, but retrieves a row or column of metadata
 def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
     query = {
         "type" : "metadata",
         "packageId" : packageId
     }
 
+    # add additional query parameters
     if resourceId is not None:
         query['resourceId'] = resourceId
     if sheetId is not None:
         query['sheetId'] = sheetId
 
+    # grab metadata chunk at given index
     chunk = collections.get('spectra').find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
     if chunk is None:
         raise Exception('Invalid resource ids given')
 
+    # grab the sheet information
     del query['type']
     sheetInfo = collections.get('resource').find_one(query)
 
+    # now look up information about what spectra we are joining to
     joinedNames = []
     joinOn = sheetInfo.get("joinOn")
+
     if sheetInfo is not None and joinOn is not None and joinOn != "" and chunk.get('spectra') is not None:
         # now make join query
         joinQuery = {
@@ -104,12 +132,16 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
             "packageId" : packageId
         }
 
+        # we are going to find all spectra that have the 'joinOn' attribute equal to this metadata
+        # chunks value.
         joinQuery['spectra.%s' % sheetInfo.get("joinOn")] = chunk.get('spectra')[sheetInfo.get("joinOn")]
 
+        # run query
         joined = collections.get('spectra').find(joinQuery)
+
+        # for all results, append sheet information to the 'joinedNames' resources array.
         for r in joined:
-            # this is really SHITTY
-            # TODO: figure out best place to commonly store resource name
+            # TODO: is there a better way to get the actual 'name' of a resource?
             joinedInfo = collections.get('resource').find_one(
                 {
                     'resourceId': r.get('resourceId'),
@@ -123,12 +155,13 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
                 joinedInfo = {}
             elif 'name' in joinedInfo:
                 joinedName = joinedInfo
-            else:
+            else: # if no name is provided in workspace, fallback to postgres
                 try:
                     joinedName = ckanResourceQuery.get(r.get('resourceId'))
                 except:
                     joinedName = {}
 
+            # add information about which spectra this chunk joins to
             if joinedName is not None:
                 joinedNames.append({
                     "resourceId" : r.get('resourceId'),
@@ -138,19 +171,21 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
                     "index" : r.get("index")
                 })
 
-
+    # return metadata and join information
     return {
         "metadata" : chunk.get('spectra'),
         "joinedResources" : joinedNames,
         "joinKey" : sheetInfo.get("joinOn")
     }
 
-# get number or chunks and number of joined chunks
+# get all metadata information for a sheet
+# get number of chunks and number of joined chunks
 def getMetadataInfo(packageId, resourceId=None, sheetId=None):
     query = {
         "packageId" : packageId
     }
 
+    # add additional query parameters
     if resourceId is not None:
         query['resourceId'] = resourceId
     if sheetId is not None:
@@ -162,7 +197,9 @@ def getMetadataInfo(packageId, resourceId=None, sheetId=None):
 
     query['type'] = "metadata"
 
+    # get all distinct join values
     attrs = mongo.distinct(collections.get('spectra'), 'spectra.%s' % sheetInfo.get('joinOn'), query)
+    # get total number of metadata rows or columns
     total = mongo.count(collections.get('spectra'), query)
 
     query = {
@@ -173,12 +210,13 @@ def getMetadataInfo(packageId, resourceId=None, sheetId=None):
         "$in" : attrs
     }
 
+    # get the number of spectra that match to this sheet
     return {
         "joinCount": mongo.count(collections.get('spectra'), query),
         "total" : total
     }
 
-
+# get total number of rows/cols for a sheet
 def total(packageId, resourceId=None, sheetId=None):
     query = {
         "type" : "data",
@@ -193,6 +231,8 @@ def total(packageId, resourceId=None, sheetId=None):
     # need to support 2.8 drive cause pythons 3.0 seems to be a POS
     return {"total" : mongo.count(collections.get('spectra'), query)}
 
+# make sure location information for spectra is valid geojson
+# if this is not valid, mongodb will not allow it to be inserted (geoindex)
 def setLocation(spectra):
     if spectra.get('geojson') != None:
         js = json.loads(spectra['geojson'])
@@ -240,6 +280,8 @@ def setLocation(spectra):
         except:
             pass
 
+# set sort value as correct type (string, number, date)
+# dates need to be ISO strings
 def setSort(spectra, config, package):
     sort = None
 
@@ -276,12 +318,16 @@ def setSort(spectra, config, package):
     else:
         spectra['ecosis']['sort'] = spectra[on]
 
+# append the .ecosis attribute to a spectra given sheet and dataset information
 def addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=None):
     name = sheetInfo.get('name')
+
+    # fall back to postgres if we don't have a name
     if name is None and sheetInfo.get('fromZip') != True:
         resource = ckanResourceQuery.get(sheetInfo.get('resourceId'))
         name = resource.get('name')
 
+    # append sheet and package information
     ecosis = {
         'package_id': sheetInfo.get("packageId"),
         'package_title': package.get('title'),
@@ -294,25 +340,28 @@ def addEcosisNamespace(spectra, package, main, sheetInfo, processInfo=None):
         'dataset_api_link' : '%spackage/get?id=%s' % (host, sheetInfo.get('packageId')),
     }
 
+    # append zip package information if from zip file
     if 'zip' in sheetInfo:
         ecosis['zip_package'] = {
             "id" : sheetInfo.get('zip').get('resourceId'),
             "name" : sheetInfo.get('zip').get('name')
         }
 
-
+    # append the latest processing information (when the sheet was last parsed)
     if processInfo is not None:
         ecosis['processInfo'] = processInfo
 
+    # append the organziation information
     if package.get('organization') != None:
         ecosis['organization'] = package['organization']['title']
 
     spectra['ecosis'] = ecosis
 
+# set attribute aliases if they exists
 def mapNames(spectra, config, processInfo, package):
+
     # backword compatibility.  But moving away from config object
     # all 'advanced data' should be stored in package
-
     aliases = None
     extras = package.get('extras')
     if extras != None and extras.get('aliases') != None:
@@ -331,6 +380,7 @@ def mapNames(spectra, config, processInfo, package):
                     "from" : value
                 })
 
+# move wavelengths from first class citizen in spectra to 'datapoints' object
 def moveWavelengths(spectra, clean):
     wavelengths = {}
     toRemove = []
@@ -347,14 +397,20 @@ def moveWavelengths(spectra, clean):
 
     spectra['datapoints'] = wavelengths
 
+# given a list of joinable metadata sheets, see if any of the sheets have matches
+# to the 'joinOn' value.  If so merge metadata information to spectra.
 def join(packageId, spectra, processInfo):
+    # get all the metadata sheets
     joinableSheets = collections.get('resource').find({"metadata": True, "packageId": packageId})
 
+    # for each sheet config
     for sheetConfig in joinableSheets:
+        # grab the metadata sheets join variable
         joinOn = sheetConfig.get('joinOn')
         if joinOn == None:
             continue
 
+        # see if we have a join variable in the spectra
         joinVar = spectra.get(joinOn)
 
         if joinVar != None:
@@ -368,12 +424,18 @@ def join(packageId, spectra, processInfo):
             if sheetConfig.get('sheetId') != None:
                 query["sheetId"] = sheetConfig.get('sheetId')
 
+            # query for matches to spectras value
             joinData = collections.get('spectra').find_one(query)
             if joinData != None:
+
+                # for each match, append all attributes
                 for key in joinData.get("spectra"):
                     if key not in spectra:
                         spectra[key] = joinData.get("spectra").get(key)
 
+                        # keep track of where attribute came from, this mostly for reporting in the UI
+                        # lets the user know which attributes have properly join and which sheets
+                        # those attributes came from
                         processInfo.append({
                             "type" : "join",
                             "key" : key,
@@ -381,10 +443,13 @@ def join(packageId, spectra, processInfo):
                             "sheetId" : joinData.get("sheetId"),
                         })
 
+# switch from MongoDB version to normal (only for wavelengths)
 def uncleanKey(key):
     return re.sub(r',', '.', key)
 
+# get workspace resource
 def getResource(resource_id, sheet_id=None):
+    # query needs to check if is part of zip package
     query = {
         "$or" : [
             {"resourceId" : resource_id},
@@ -392,9 +457,12 @@ def getResource(resource_id, sheet_id=None):
         ]
     }
 
+    # see if a sheet id was provided, sheets of excel files are
+    # considered individual resources in this context
     if sheet_id is not None:
         query['sheetId'] = sheet_id
 
+    # grab the sheet information from the resource workspace collection
     sheets = collections.get("resource").find(query,{
         "localRange" : 0,
         "hash" : 0,
@@ -409,6 +477,9 @@ def getResource(resource_id, sheet_id=None):
         repeats = []
         units = {}
         attributeRepeatFlag = False # proly have wrong layout
+
+        # read in all of the attribute data including attribute names,
+        # units and possible repeats if they exist
         if sheet.get('attributes') is not None:
             for attr in sheet.get('attributes'):
                 if attr.get("type") != "metadata":
@@ -434,11 +505,13 @@ def getResource(resource_id, sheet_id=None):
 
     return response
 
+# get the dict of attribute name to units type
 def allUnits(package_id):
     query = {
         "package_id" : package_id
     }
 
+    # query workspace resources for package
     sheets = collections.get("resource").find(query,{
         "localRange" : 0,
         "hash" : 0,
@@ -447,6 +520,8 @@ def allUnits(package_id):
     })
 
     units = {}
+
+    # loop through all sheets, all attributes
     for sheet in sheets:
         if sheet.get('attributes') is not None:
             for attr in sheet.get('attributes'):
@@ -455,6 +530,7 @@ def allUnits(package_id):
 
     return units
 
+# get last pushed time
 def isPushed(package_id):
     result = collections.get("search_package").find_one({"value.ecosis.package_id": package_id},{"value.ecosis.pushed": 1})
 

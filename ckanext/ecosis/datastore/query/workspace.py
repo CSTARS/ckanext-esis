@@ -1,13 +1,11 @@
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
 
-# WHY is this not working?
-# from . import getResource
-
 collections = None
 getResource = None
 isPushed = None
 
+# inject global dependencies
 def init(co, fn, q):
     global collections, getResource, isPushed
 
@@ -15,6 +13,7 @@ def init(co, fn, q):
     getResource = fn
     isPushed = q
 
+# get a workspace for a package
 def get(package_id):
     # get all package resources
     resources = ckanResourceQuery.active(package_id)
@@ -34,7 +33,7 @@ def get(package_id):
     if response['package'] is None:
         response['package'] = {}
 
-
+    # append information about the dataset resources to response
     for resource in resources:
         sheets = getResource(resource.get('id'))
 
@@ -44,14 +43,5 @@ def get(package_id):
                 continue
 
             response.get('resources').append(sheet)
-
-    # now add all zip file resources
-    #resources = collections.get("resource").find({
-    #    "packageId" : package_id,
-    #    "fromZip" : True
-    #})
-
-    #for resourceOrSheet in resources:
-    #    response.get('resources').append(resourceOrSheet)
 
     return response

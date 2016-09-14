@@ -7,7 +7,7 @@ import hashlib
 
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
-from ckanext.ecosis.datastore.parser import process as importer
+from ckanext.ecosis.datastore.files import process as importer
 
 dataExtension = ["xlsx","xls","spectra","csv","tsv"]
 allowedOptions = ['map', 'sort']

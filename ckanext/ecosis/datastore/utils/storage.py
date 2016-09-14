@@ -2,6 +2,9 @@ import os
 
 storage_path = None
 
+'''
+Helpers for reading storage paths for reading resources from disk
+'''
 
 def init(config):
     global storage_path

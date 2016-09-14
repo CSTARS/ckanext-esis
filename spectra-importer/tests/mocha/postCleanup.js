@@ -11,6 +11,8 @@ describe('Post Cleanup Test Data', function() {
   });
 
   it('can cleanup test data', function(next){
+    this.timeout(10000);
+
     request
       .get(SDK.ckan.host+'/ecosis/admin/cleanTests')
       .set('Authorization', SDK.ckan.key)

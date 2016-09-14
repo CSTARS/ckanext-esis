@@ -1,6 +1,7 @@
 import re, copy
 topCollection = None
 
+# MongoDB query projection
 projection = {
     'definition' : 1,
     '_id' : 0,
@@ -19,11 +20,13 @@ searchProjection['score'] = {
     '$meta': "textScore"
 }
 
+# inject global dependencies
 def init(collections):
     global topCollection
 
     topCollection = collections.get('top')
 
+# get list of suggested top names
 def overview(list):
     result = {}
 

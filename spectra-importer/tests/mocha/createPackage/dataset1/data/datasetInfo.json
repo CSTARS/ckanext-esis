@@ -46,6 +46,7 @@
   "cleanLightSource" : ["Lamp", "Laser", "Other"],
   "cleanLightSourceOther" : ["SUPER LASER!"],
   "LightSourceSpecifications" : "This is a light source.  what a, light source?",
+  "cleanLightSourceSpecifications" : ["This is a light source.  what a", "light source?"],
   "ForeopticType" : ["random"],
   "cleanForeopticType" : ["Other"],
   "cleanForeopticTypeOther" : ["random"],

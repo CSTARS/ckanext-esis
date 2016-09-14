@@ -171,7 +171,7 @@ describe('Create Package - Dataset 1', function() {
 
   it('can set the Light Source Specifications', function(){
     pkg.setLightSourceSpecifications(data.LightSourceSpecifications);
-    assert.deepEqual(pkg.getLightSourceSpecifications(), data.LightSourceSpecifications);
+    assert.deepEqual(pkg.getLightSourceSpecifications(), data.cleanLightSourceSpecifications);
   });
 
   it('can set the Foreoptic Type', function(){
@@ -257,13 +257,27 @@ describe('Create Package - Dataset 1', function() {
     assert.equal(pkg.isPrivate(), false);
   });
 
+    it('should map spectra metadata attributes', function(next){
+    var map = {
+      'USDA Symbol' : 'species'
+    };
+
+    pkg.setAliases(map);
+    assert.deepEqual(pkg.getAliases(), map);
+    next();
+  });
+
   it('can create dataset', function(next){
+    this.timeout(5000);
+
     pkg.create(function(resp){
       assert.equal(resp.error, undefined);
       assert.equal(typeof resp.id, 'string');
       next();
     });
   });
+
+
 
 });
 

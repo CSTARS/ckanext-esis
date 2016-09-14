@@ -1,17 +1,19 @@
 import utils, excel, hashlib, datetime
 
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
-from ckanext.ecosis.datastore.parser import csvReader
+from ckanext.ecosis.datastore.files import csvReader
 
 collections = None
 
-
+# inject global dependencies
 def init(co):
     global collections
 
     collections = co
 
+# read a tabular file, this may be a single sheet of a excel file
 def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, resource=None):
+
     # get config for sheet if on exists
     sheetConfig = collections.get('resource').find_one({
         "resourceId" : resourceId,
@@ -19,12 +21,14 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         "sheetId" : sheetId
     })
 
+    # if we don't have a sheet config, query CKAN PG for details
     if resource is None:
         if 'name' in sheetConfig:
             resource = sheetConfig
         else:
             resource = ckanResourceQuery.get(resourceId)
 
+    # grab the file extension
     ext = utils.getFileExtension(resource.get('name'))
 
     # check for ignore conditions
@@ -41,6 +45,10 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
 
     # now get md5 of current file
     hash = hashfile(file)
+
+    # if the hash has changed compared to the value stored in the workspace
+    # collection, then no changes have been made to this file and we do not need to
+    # reparse.  Note, the response will be flagged as 'ignored'.
     if sheetConfig.get('hash') == hash and keyCount == 0:
         # no changes to file for config, just exit
         return {
@@ -57,7 +65,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     sheetConfig['resourceId'] = resourceId
     sheetConfig['sheetId'] = sheetId
 
-    # clear spectra collection
+    # clear spectra collection for this sheet
     removeQuery = {
         "resourceId" : resourceId,
         "packageId" : packageId
@@ -66,9 +74,11 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         removeQuery["sheetId"] = sheetId
     collections.get('spectra').remove(removeQuery)
 
-
+    # has this sheet been marked by user to ignore?
     if sheetConfig.get('ignore') == True:
         ignore = True
+    # is this sheet not of a valid extension?
+    # TODO: make global array
     elif ext != "csv" and ext != "tsv" and ext != "spectra" and ext != "xlsx" and ext != "xls":
         ignore = True
         sheetConfig['ignore'] = True
@@ -76,7 +86,8 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         if 'layout' in sheetConfig:
             del sheetConfig['layout']
 
-    if ignore == True: # save and return
+    # if we should ignore sheet for reasons above, just save and return
+    if ignore == True:
         collections.get('resource').update({
             "resourceId" : sheetConfig.get('resourceId'),
             "packageId" : sheetConfig.get('packageId'),
@@ -91,20 +102,24 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
             "name" : resource.get("name")
         }
 
+    # set our last processed timestamp
     sheetConfig['processed'] = datetime.datetime.utcnow()
 
     response = None
+    # parse as comma sperated
     if ext == "csv" or ext == "spectra":
         sheetConfig['hash'] = hash
         response = _processCsv(sheetConfig)
         response['name'] = resource.get('name')
+
+    # parse as tab sperated
     elif ext == "tsv":
         sheetConfig['hash'] = hash
         response = _processTsv(sheetConfig)
         response['name'] = resource.get('name')
-    elif ext == "xlsx" or ext == "xls":
-        # TODO: add flag so we can specify we only want to update one sheet here
 
+    # parse as excel
+    elif ext == "xlsx" or ext == "xls":
         # an excel file is going to actually expand to several files
         # so pass the files array so the placeholder can be removed
         # and the new 'sheet' files can be inserted
@@ -115,6 +130,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
             t['sheetId'] = sheet.get('config').get('sheetId')
             t['name'] = resource.get('name')
             response.append(t)
+    # badness
     else:
         response = {
             "message" : "not parsed, invalid file type"
@@ -122,24 +138,38 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
 
     return response
 
+# start of parsing csv file
 def _processCsv(sheetConfig):
+    # default seperator
     seperator = ","
+
+    # user can specify seperator as well
     if sheetConfig.get("seperator") is not None:
         seperator = str(sheetConfig.get("seperator"))
         if seperator == "tab":
             seperator = "\t"
 
+    # actually parse file with given sperator
     return _processSeperatorFile(seperator, sheetConfig)
 
+# like _processCsv above but defaults to tab
 def _processTsv(sheetConfig):
     return _processSeperatorFile("\t", sheetConfig)
 
 # parse a csv or tsv file location into array
 def _processSeperatorFile(separator, sheetConfig):
+    # parse using csvReader module
     data = csvReader.read(sheetConfig.get('file'), separator)
+
+    # post process sheet data
     return _processSheetArray(data, sheetConfig)
 
+# This function deals with the 'orientation' of a sheet.  IE, should it be read
+# as a set of rows or a set of columns.  There is optionally a global table
+# of key/value pairs at the top of the sheet that will be applied to every
+# measurement of that sheet
 def _processSheetArray(data, sheetConfig):
+
     # for local scope are we parsing a metadata file or a normal datasheet
     # how should be parse this file?
     layout = utils.getLayout(sheetConfig)
@@ -148,6 +178,7 @@ def _processSheetArray(data, sheetConfig):
     # get table ranges in sheet, where is the data
     ranges = utils.getDataRanges(data)
 
+    # figure out the data range as well as global data range (if exits)
     localRange = {}
     globalRange = None
     if len(ranges) == 1:
@@ -156,7 +187,7 @@ def _processSheetArray(data, sheetConfig):
         globalRange = ranges[0]
         localRange = ranges[1]
 
-    # no local data
+    # no local data, nothing to do
     if localRange['start'] == localRange['stop']:
         return {
             "processed" : True,
@@ -165,13 +196,17 @@ def _processSheetArray(data, sheetConfig):
             "count" : 0
         }
 
-    # ckan all the attribute types based on layout
+    # parse all the attribute types based on layout
+    # basically this is reading the first column or row (depending on layout) then
+    # parsing out the attribute name, 'cleaned' ecosis name as well as position
+    # within the sheet.  Finally it parses the units as well.
     attrTypes = []
     if layout == "row":
         stop = len(data[localRange['start']])
 
         if stop > 1:# check for bad parse
             for i in range(0, stop):
+                # actually parse attribute info
                 info = utils.parseAttrType(data[localRange['start']][i], [localRange['start'], i])
                 attrTypes.append(info)
     else:
@@ -179,14 +214,18 @@ def _processSheetArray(data, sheetConfig):
             if len(data[i]) <= 1: # probably a bad parse
                 continue
 
+            # actually parse attribute info
             info = utils.parseAttrType(data[i][0], [i,0])
             attrTypes.append(info)
 
+    # if there is a global range, read in attribute information for global
+    # attributes as well
     if globalRange != None:
         for i in range(globalRange['start'], globalRange['stop']+1):
             info = utils.parseAttrType(data[i][0], [i,0])
             attrTypes.append(info)
 
+    # store attribute information as well as range information
     sheetConfig["attributes"] = attrTypes
     sheetConfig["localRange"] = localRange
 
@@ -196,6 +235,7 @@ def _processSheetArray(data, sheetConfig):
     elif 'globalRange' in sheetConfig:
         del sheetConfig['globalRange']
 
+    # store in the workspace resources collection
     collections.get('resource').update({
         "resourceId" : sheetConfig.get('resourceId'),
         "packageId" : sheetConfig.get('packageId'),
@@ -210,6 +250,8 @@ def _processSheetArray(data, sheetConfig):
 
     # now lets insert into mongo
     index = 0
+
+    # loop over rows and columns
     if layout == 'row':
         start = localRange['start']
         for j in range(start+1, localRange['stop']+1):
@@ -217,6 +259,7 @@ def _processSheetArray(data, sheetConfig):
             for i in range(len(data[start])):
                 try:
                     if data[start+j][i]:
+                        # grab the attribute name as set the data
                         sp[_getName(nameMap, data[start][i])] = data[start+j][i]
                 except Exception as e:
                     pass
@@ -224,9 +267,12 @@ def _processSheetArray(data, sheetConfig):
             # add global data
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']+1):
+                    # grab the attribute name as set the data
                     sp[_getName(nameMap, data[i][0])] = data[i][1]
 
             index += 1
+
+            # insert the spectra into the spectra workspace collection
             _insertSpectra(sp, sheetConfig, index)
 
     else:
@@ -236,6 +282,7 @@ def _processSheetArray(data, sheetConfig):
             for i in range(start, localRange['stop']+1):
                 try:
                     if data[i][j]:
+                        # grab the attribute name as set the data
                         sp[_getName(nameMap, data[i][0])] = data[i][j]
                 except:
                     pass
@@ -243,9 +290,12 @@ def _processSheetArray(data, sheetConfig):
             # add global data
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']+1):
+                    # grab the attribute name as set the data
                     sp[_getName(nameMap, data[i][0])] = data[i][1]
 
             index += 1
+
+            # insert the spectra into the spectra workspace collection
             _insertSpectra(sp, sheetConfig, index)
 
     return {
@@ -255,6 +305,10 @@ def _processSheetArray(data, sheetConfig):
         "count" : index
     }
 
+# insert a spectra into the workspace collection.
+# if this is from a metadata, this is actually considered a metadata 'chunk'
+# that can be joined to spectra later on.  The metadata will just be flagged
+# for now
 def _insertSpectra(sp, sheetConfig, index):
     type = "data"
     if sheetConfig.get('metadata') == True:
@@ -274,6 +328,7 @@ def _insertSpectra(sp, sheetConfig, index):
     except Exception as e:
         pass
 
+# get the md5 hash of a files contents
 def hashfile(file):
     f = open(file, 'rb')
     blocksize = 65536
@@ -288,6 +343,7 @@ def hashfile(file):
     f.close()
     return md5
 
+# get the name of an attribute, see if it has been modified
 def _getName(nameMap, name):
     mapped = nameMap.get(name)
     if mapped != None:

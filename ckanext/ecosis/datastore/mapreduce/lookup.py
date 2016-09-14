@@ -1,8 +1,13 @@
 import os
 from bson.code import Code
 from bson.son import SON
-from pylons import config
 
+'''
+Create the keywords typeahead collection
+Will run the lookup mapreduce js functions in MongoDB
+'''
+
+# Read in local js mapreduce files
 path = os.path.dirname(os.path.abspath(__file__))
 collections = None
 running = False
@@ -15,6 +20,7 @@ f = open('%s/../mapreduce/lookup_reduce.js' % path, 'r')
 reduceJs = Code(f.read())
 f.close()
 
+# inject global dependencies
 def init(mongoCollections):
     global collections
     collections = mongoCollections
@@ -22,6 +28,7 @@ def init(mongoCollections):
 def update():
     global running
 
+    # check if we are already running
     if running:
         return
 
@@ -32,6 +39,7 @@ def update():
         print "Error creating lookup index"
     running = False
 
+# update the filter lookup collection
 def _update():
     collection = collections.get('search_package')
     try:

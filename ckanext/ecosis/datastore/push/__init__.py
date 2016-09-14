@@ -1,29 +1,37 @@
 from multiprocessing import Process, Queue
-
-import insert
-from ckanext.ecosis.datastore import mapreduce
-from ckanext.ecosis.datastore import query
-from ckanext.ecosis.datastore import delete as deleteUtils
-
-
-# grrrrr
 from ckan.lib.email_notifications import send_notification
 from pylons import config
 import ckan.logic as logic
 from ckan.lib.base import c, model
 
+from ckanext.ecosis.datastore import mapreduce
+from ckanext.ecosis.datastore import query
+from ckanext.ecosis.datastore import delete as deleteUtils
 from ckanext.ecosis.datastore.mapreduce.lookup import update as updateLookup
 from ckanext.ecosis.lib.utils import getPackageExtra, setPackageExtra
 
-def init(collections):
-    insert.init(collections)
+spectraCollection = None
 
+'''
+This module handles 'pushing' or 'publishing' a dataset from the dataset administration (CKAN)
+to search (ecosis.org)
+'''
+
+# inject global dependencies
+def init(collections):
+    global spectraCollection
+
+    spectraCollection = collections.get('search_spectra')
+
+# this will run the main worker on a separate thread so we can send a HTTP response, then email
+# user when push is complete
 class Push:
 
     def run(self, ckanPackage, emailOnComplete=False, emailAddress="", username=""):
         # first clean out data
         deleteUtils.cleanFromSearch(ckanPackage.get('id'))
 
+        # we don't want to push private datasets to public search
         if ckanPackage.get('private') == True:
             raise Exception('This dataset is private')
 
@@ -32,6 +40,7 @@ class Push:
         context = {'model': model, 'user': c.user}
         ckanPackage = logic.get_action('package_update')(context, ckanPackage)
 
+        # start our new thread
         q = Queue()
         p = Process(target=sub_run, args=(q, ckanPackage, emailOnComplete, emailAddress, username))
         p.start()
@@ -39,6 +48,7 @@ class Push:
         return {'success': True, 'emailing': emailOnComplete, 'email': emailAddress}
 
 
+# run the new push
 def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
     try:
         # calculate bounding box from spectra (lat/lng was provided)
@@ -51,20 +61,27 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             "use" : False
         }
 
+        # grab each spectra and insert into public EcoSIS search
         for i in range(0, total):
             spectra = query.get(ckanPackage.get('id'), index=i, must_be_valid=True, clean_wavelengths=False)
             if not 'datapoints' in spectra:
                 continue
             if len(spectra['datapoints']) == 0:
                 continue
-            insert.insert(spectra)
+
+            # update search
+            spectraCollection.insert(spectra)
+            # update the bounding box if the spectra has a lat/lng
             updateBbox(spectra, bbox)
 
+        # see if we found a bounding box from the spectra
         if bbox["maxlat"] != -9999 and bbox["maxlng"] != -9999 and bbox["minlng"] != 9999 and bbox["minlng"] != -9999:
             bbox["use"] = True
 
+        # mapreduce the dataset package data
         mapreduce.mapreducePackage(ckanPackage, bbox)
 
+        # alert (email user) or quit
         if not emailOnComplete:
             updateLookup()
             return
@@ -114,6 +131,7 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
         except:
             pass
 
+# update bounding box built from spectra given either a lat/lng coordinate or geojson
 def updateBbox(spectra, bbox):
     if 'ecosis' not in spectra:
         return
@@ -140,6 +158,7 @@ def updateBbox(spectra, bbox):
         bbox['minlng'] = geojson['coordinates'][0]
 
 # TODO: this needs to stay in sync with the Importer UI :/
+# Auto build the citiation field when data is pushed
 def setCitation(pkg):
     citation = []
 

@@ -1,8 +1,10 @@
 import csv, re
 
+# parse a csv file
 def read(file, separator):
     data = []
     with open(file, 'rU') as csvfile:
+        # open will csv files
         reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
 
         for row in reader:
@@ -10,7 +12,7 @@ def read(file, separator):
             # TODO: is there a better way todo this?
             for i in range(0, len(row)):
                 try:
-                    #row[i] = row[i].encode("utf-8", "ignore")
+                    # HACK, remove bad characters
                     row[i]  = re.sub(r'[^\x00-\x7F]+',' ', row[i]).encode("utf-8", "ignore")
                 except Exception as e:
                     row[i] = '__invalid_utf-8_characters__'

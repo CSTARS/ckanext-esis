@@ -1,4 +1,5 @@
 # Migrate from Beta 1 setup to Beta 2 setup
+# TODO: remove this.
 
 import time, psycopg2, json, os, hashlib, re, xlrd
 from pymongo import MongoClient
