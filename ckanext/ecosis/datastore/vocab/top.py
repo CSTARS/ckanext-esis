@@ -80,6 +80,7 @@ def overview(list):
 
     return result
 
+# get a list of top names that match the given name
 def suggest(name):
     result = []
     regx = re.compile("^%s$" % name, re.IGNORECASE)

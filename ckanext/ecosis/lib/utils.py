@@ -27,6 +27,8 @@ def get_request_data(request):
                           (e, request_data))
     return request_data
 
+# We don't want to send HTML templated errors when things go wrong (CKAN default).
+# Instead we catch errors and respond with this.
 def handleError(e):
     response.headers["Content-Type"] = "application/json"
 
@@ -48,6 +50,7 @@ def handleError(e):
         "message": "%s:%s" % (type(e).__name__, str(e))
     })
 
+# helper for sending json, mostly adds ability to encode dates in ISO format.
 def jsonStringify(obj, formatted=False):
     if not formatted:
         return json.dumps(obj, default=jsondefault)
