@@ -1,4 +1,4 @@
-import urllib2, json, datetime
+import urllib2, json, datetime, re
 import ckan.lib.helpers as h
 from ckan.common import response
 
@@ -87,3 +87,7 @@ def getPackageExtra(attr, pkg):
         if item.get('key') == attr:
             return item.get('value')
     return None
+
+# a 'flat' name is when the name is in lower case with no spaces
+def flatten(name):
+    return re.sub(r'\s', '', name).lower()

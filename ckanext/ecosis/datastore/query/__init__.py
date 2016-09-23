@@ -5,6 +5,7 @@ from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.vocab import usda
 from ckanext.ecosis.datastore.vocab import controlled as controlledVocab
 from ckanext.ecosis.datastore.utils import mongo
+from ckanext.ecosis.lib import utils
 import workspace
 
 '''
@@ -96,6 +97,9 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
 
     # set the location information.  Needs to be proper geojson if it's going to be used
     setLocation(spectra)
+
+    # set photo
+    setPhoto(packageId, spectra)
 
     return spectra
 
@@ -230,6 +234,31 @@ def total(packageId, resourceId=None, sheetId=None):
 
     # need to support 2.8 drive cause pythons 3.0 seems to be a POS
     return {"total" : mongo.count(collections.get('spectra'), query)}
+
+# if the spectra has a 'photo' attribute see if it's a name of a resource file,
+# if so, set the download URL as the value
+def setPhoto(packageId, spectra):
+    photoKey = None
+
+    for key in spectra:
+        if utils.flatten(key) == 'photo':
+            photoKey = key
+            break
+
+    if photoKey is None:
+        return
+
+    if photoKey != 'photo':
+        spectra['photo'] = spectra[photoKey]
+        del spectra[photoKey]
+
+    if re.match(r'^https?', spectra['photo'], re.I):
+        return
+
+    resource = ckanResourceQuery.getByName(packageId, spectra['photo'])
+    if resource is not None:
+        spectra['photo'] = resource.get('url')
+
 
 # make sure location information for spectra is valid geojson
 # if this is not valid, mongodb will not allow it to be inserted (geoindex)

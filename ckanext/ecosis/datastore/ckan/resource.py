@@ -25,6 +25,24 @@ def get(resource_id):
 
     return resource
 
+# get a resource by name and package with out the requirement of a authenticated in HTTP request
+def getByName(package_id, resource_name):
+    conn = psycopg2.connect(connStr)
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("select * from resource where name = %s and package_id = %s", (resource_name, package_id))
+    resource = cur.fetchall()
+    cur.close()
+
+    if len(resource) == 0:
+        return None
+    else:
+        resource = resource[0]
+
+    conn.close()
+
+    return resource
+
 # get all active resources for a package
 def active(package_id):
     conn = psycopg2.connect(connStr)

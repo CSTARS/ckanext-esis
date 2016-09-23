@@ -37,6 +37,8 @@
           <a class="btn btn-default" id="rightArrow" on-click="moveRight"><i class="fa fa-arrow-right"></i></a>
       </div>
 
+      <div id="photoPreview" style="text-align:center"></div>
+
       <div id="sliderRoot" style="margin-top: 15px"></div>
     </div>
 
@@ -233,6 +235,7 @@
 
     renderTable : function(metadata, ignorelist) {
       if( ignorelist === undefined ) ignorelist = [];
+      ignorelist.push('photo');
 
       var layout = this.sheet.layout || 'row';
       var table = '<h5>Metadata</h5><table class="table">';
@@ -240,7 +243,7 @@
       if( this.sheet.layout === 'column' ) {
         var c = 0;
         for( var key in metadata ) {
-          if( ignorelist.indexOf(key) > -1 ) continue;
+          if( ignorelist.indexOf(key.trim().toLowerCase()) > -1 ) continue;
 
           var units = this.getUnitsLabel(key);
           table += '<tr><td><span style="font-weight:bold">'+key+units+'</span></td><td>'+metadata[key]+this.getProcessInfo(key, metadata)+'</td></tr>';
@@ -256,7 +259,7 @@
         var header = '<tr>';
         var data = '<tr>';
         for( var key in metadata ) {
-          if( ignorelist.indexOf(key) > -1 ) continue;
+          if( ignorelist.indexOf(key.trim().toLowerCase()) > -1 ) continue;
 
           var units = this.getUnitsLabel(key);
           header += '<th style="white-space:nowrap">'+key+units+'</th>';
@@ -272,6 +275,24 @@
         table += header+'</tr>'+data+'</tr>';
       }
 
+      var photoUrl = '';
+      for( var key in metadata ) {
+        if( key.trim().toLowerCase() === 'photo' ) {
+          photoUrl = metadata[key];
+          break;
+        }
+      }
+
+      if( photoUrl ) {
+        this.$.photoPreview.innerHTML = '<img src="'+photoUrl+'" class="img img-thumbnail" style="margin:10px" />';
+        $(this.$.photoPreview)
+          .find('img')
+          .on('error', function(){
+            this.$.photoPreview.innerHTML = '<a href="'+photoUrl+'" target="_blank" >Spectra Photo</a>';
+          }.bind(this));
+      } else {
+        this.$.photoPreview.innerHTML = '';
+      }
 
       this.$[layout+'TableRoot'].innerHTML = table+'</table>';
 
