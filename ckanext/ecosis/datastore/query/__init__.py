@@ -175,6 +175,9 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
                     "index" : r.get("index")
                 })
 
+    # set photo
+    setPhoto(packageId, chunk.get('spectra'))
+
     # return metadata and join information
     return {
         "metadata" : chunk.get('spectra'),
@@ -238,8 +241,10 @@ def total(packageId, resourceId=None, sheetId=None):
 # if the spectra has a 'photo' attribute see if it's a name of a resource file,
 # if so, set the download URL as the value
 def setPhoto(packageId, spectra):
-    photoKey = None
+    if spectra is None:
+        return
 
+    photoKey = None
     for key in spectra:
         if utils.flatten(key) == 'photo':
             photoKey = key
