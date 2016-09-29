@@ -1,0 +1,31 @@
+{
+  "title" : "Mocha Dataset 2",
+  "name" : "mocha-dataset-2",
+  "description" : "This is a test of excel sheet, joining spectra and metadata between sheets",
+  "keywords" : "excel,spectra",
+  "cleanKeywords" : [
+    {
+      "display_name" : "excel",
+      "name" : "excel"
+    },{
+      "display_name" : "spectra",
+      "name" : "spectra"
+    }
+  ],
+  "license" : {
+    "id" : "odc-pddl",
+    "title" : "Open Data Commons Public Domain Dedication and License (PDDL)"
+  },
+  "organization" : "cstars",
+  "version" : "v0.1",
+  "website" : "http://labs.russell.wisc.edu/townsend/",
+  "Theme" : "Forest",
+  "cleanTheme" : ["Forest"],
+  "EcosystemType" : "Forest",
+  "cleanEcosystemType" : ["Forest"],
+  "SamplePlatform" : ["Boom", "Tower"],
+  "Author" : "Quinn Hart",
+  "AuthorEmail" : "qjhart@gmail.com",
+  "Maintainer" : "Justin Merz",
+  "MaintainerEmail" : "jrmerz@gmail.com"
+}
