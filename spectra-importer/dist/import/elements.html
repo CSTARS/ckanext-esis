@@ -11744,7 +11744,7 @@ this.fire('dom-change');
       }
 
       if( photoUrl ) {
-        this.$.photoPreview.innerHTML = '<img src="'+photoUrl+'" class="img img-thumbnail" style="margin:10px" />';
+        this.$.photoPreview.innerHTML = '<img src="'+photoUrl+'" class="img img-thumbnail" style="margin:10px; max-height: 350px" />';
         $(this.$.photoPreview)
           .find('img')
           .on('error', function(){
