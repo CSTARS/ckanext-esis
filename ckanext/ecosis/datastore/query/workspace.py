@@ -1,5 +1,7 @@
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
+import ckan.lib.uploader as uploader
+import os
 
 collections = None
 getResource = None
@@ -36,6 +38,13 @@ def get(package_id):
     # append information about the dataset resources to response
     for resource in resources:
         sheets = getResource(resource.get('id'))
+
+        upload = uploader.ResourceUpload(resource)
+        path = upload.get_path(resource['id'])
+        if os.path.exists(path):
+            resource['file_size'] = os.path.getsize(path)
+        else:
+            resource['file_size'] = 0
 
         for sheet in sheets:
             # we don't care about root excel files, only the sheets

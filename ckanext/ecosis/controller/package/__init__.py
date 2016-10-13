@@ -186,6 +186,8 @@ def getTemplate():
         pkg["aliases"] = json.loads(extras["aliases"])
         del extras["aliases"]
 
+    # resourceUpdateCount is only for keeping track of when resource files are
+    # modified, does not need to be passed along.
     if extras != None:
         if extras.get("resourceUpdateCount") is not None:
             del extras["resourceUpdateCount"]

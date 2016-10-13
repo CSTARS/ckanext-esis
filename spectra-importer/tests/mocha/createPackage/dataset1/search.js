@@ -14,7 +14,7 @@ describe('Search - Dataset 1', function() {
     setTimeout(function(){
       assert(true);
       next();
-    }, 8000);
+    }, 9000);
   });
 
   it('should find the dataset in search', function(next){
