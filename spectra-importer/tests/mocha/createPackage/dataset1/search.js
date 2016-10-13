@@ -10,11 +10,11 @@ describe('Search - Dataset 1', function() {
   });
 
   it('just wait a sec and let Mongo do it\'s thing', function(next){
-    this.timeout(7000);
+    this.timeout(10000);
     setTimeout(function(){
       assert(true);
       next();
-    }, 6000);
+    }, 8000);
   });
 
   it('should find the dataset in search', function(next){

@@ -257,7 +257,7 @@ describe('Create Package - Dataset 1', function() {
     assert.equal(pkg.isPrivate(), false);
   });
 
-    it('should map spectra metadata attributes', function(next){
+  it('should map spectra metadata attributes', function(next){
     var map = {
       'USDA Symbol' : 'species'
     };

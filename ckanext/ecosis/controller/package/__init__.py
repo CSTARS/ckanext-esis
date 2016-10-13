@@ -186,6 +186,10 @@ def getTemplate():
         pkg["aliases"] = json.loads(extras["aliases"])
         del extras["aliases"]
 
+    if extras != None:
+        if extras.get("resourceUpdateCount") is not None:
+            del extras["resourceUpdateCount"]
+
     # backward compatability with the old 'map' attribute.  Used to be used instead of 'aliases'
     if pkg.get("aliases") == None:
         wpkg = collections.get('package').find_one({"packageId": package_id},{"map": 1})

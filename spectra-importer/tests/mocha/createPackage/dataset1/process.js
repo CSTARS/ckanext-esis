@@ -187,6 +187,8 @@ describe('Add Resources & Configure - Dataset 1', function() {
   });
 
   it('let you push to search', function(next){
+    this.timeout(5000);
+    
     SDK.ckan.pushToSearch(pkg.getId(), false, function(resp){
       assert.equal(resp.error, undefined);
       assert.equal(resp.emailing, false);
