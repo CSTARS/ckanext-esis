@@ -116,7 +116,8 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         "spectra_metadata_schema" : {
             "wavelengths" : [],
             "metadata" : [],
-            "units" : {}
+            "units" : {},
+            "aliases" : None,
         },
         "resources" : [],
         "linked_data" : [],
@@ -156,6 +157,14 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     keywords = []
     for item in pkg['tags']:
         keywords.append(item['display_name'])
+
+    # add metadata aliases
+    aliases = getPackageExtra('aliases', pkg)
+    if aliases is not None:
+        try:
+            ecosis["spectra_metadata_schema"]["aliases"] = json.loads(aliases)
+        except Exception:
+            pass
 
     # append the data groups
     for item in pkg['groups']:
