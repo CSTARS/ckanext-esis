@@ -144,6 +144,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('get_spectra_metadata', '/ecosis/resource/getMetadataChunk', controller=controller, action='getMetadataChunk')
         map.connect('getMetadataInfo', '/ecosis/resource/getMetadataInfo', controller=controller, action='getMetadataInfo')
         map.connect('get_spectra_count', '/ecosis/resource/getSpectraCount', controller=controller, action='getSpectraCount')
+        map.connect('get_resource_by_name', '/ecosis/resource/byname/{package_id}/{resource_name}', controller=controller, action='getResourceByName')
 
         # ecosis - spectra
         map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')

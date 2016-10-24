@@ -13,6 +13,7 @@ import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.datastore.workspace as workspace
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.controller.package.doi import hasAppliedDoi
+from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 
 parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 
@@ -209,6 +210,13 @@ def getSpectraCount():
         sheet_id = None
 
     return jsonStringify(query.total(package_id, resource_id, sheet_id))
+
+def getByName(package_id, resource_name):
+    resource = ckanResourceQuery.getByName(package_id, resource_name)
+
+    response.status_int = 307
+    response.headers["Location"] = resource['url']
+    return "Redirecting"
 
 # helper for getting index as int
 def _getIndex():

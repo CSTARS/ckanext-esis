@@ -205,6 +205,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def getResourceByName(self, package_id, resource_name):
+        try:
+            return resource.getByName(package_id, resource_name)
+        except Exception as e:
+            return handleError(e)
+
     def setPackageOptions(self):
         try:
             return package.setOptions()

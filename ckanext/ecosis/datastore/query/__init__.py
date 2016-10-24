@@ -1,4 +1,5 @@
 import re, pymongo, json, dateutil
+from pylons import config
 
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
@@ -260,9 +261,7 @@ def setPhoto(packageId, spectra):
     if re.match(r'^https?', spectra['photo'], re.I):
         return
 
-    resource = ckanResourceQuery.getByName(packageId, spectra['photo'])
-    if resource is not None:
-        spectra['photo'] = resource.get('url')
+    spectra['photo'] = "%s/ecosis/resource/byname/%s/%s" % (config.get('ckan.site_url'), packageId, spectra['photo'])
 
 
 # make sure location information for spectra is valid geojson
