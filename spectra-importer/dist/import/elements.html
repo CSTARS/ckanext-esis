@@ -11200,7 +11200,6 @@ this.fire('dom-change');
           </div>
           <div class="layout horizontal file-metadata">
             <div>Created: <span id="createdDate"></span></div>
-            <div>Last Modified: <span id="modifiedDate"></span></div>
             <div>Size: <span id="fileSize"></span></div>
           </div>
       </div>
@@ -11227,7 +11226,6 @@ this.fire('dom-change');
           </div>
           <div class="layout horizontal file-metadata">
             <div>Created: <span id="createdDate"></span></div>
-            <div>Last Modified: <span id="modifiedDate"></span></div>
             <div>Size: <span id="fileSize"></span></div>
           </div>
         </div>
@@ -11299,7 +11297,6 @@ this.fire('dom-change');
       this.$.templateRoot.innerHTML = '';
       this.$.templateRoot.appendChild(this.ele.root);
 
-      this.querySelector('#modifiedDate').innerHTML = new Date(this.resource.last_modified).toLocaleString();
       this.querySelector('#createdDate').innerHTML =  new Date(this.resource.created).toLocaleString();
 
       var size = this.resource.file_size;
