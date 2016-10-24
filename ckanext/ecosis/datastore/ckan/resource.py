@@ -30,7 +30,7 @@ def getByName(package_id, resource_name):
     conn = psycopg2.connect(connStr)
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("select * from resource where name = %s and package_id = %s", (resource_name, package_id))
+    cur.execute("select * from resource where name = %s and package_id = %s and state = 'active'", (resource_name, package_id))
     resource = cur.fetchall()
     cur.close()
 
