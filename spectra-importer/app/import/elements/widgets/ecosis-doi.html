@@ -88,7 +88,13 @@
 
       setData : function(pkg) {
         this.pkg = pkg;
-        this.pkg.on('save-end', this.render.bind(this));
+        this.pkg.on('save-end', function(){
+          if( this.doiUpdating ) {
+            window.location.reload();
+          } else {
+            this.render.bind(this);
+          }
+        }.bind(this));
         this.render();
       },
       
@@ -97,6 +103,7 @@
            return;
          }
         
+         this.doiUpdating = true;
          if( this.pkg.requestDoi() ) {
            $(this)
             .find('.btn-request')
@@ -115,6 +122,7 @@
            return;
          }
         
+         this.doiUpdating = true;
          if( this.pkg.cancelDoiRequest() ) {
            $(this)
             .find('.btn-request')

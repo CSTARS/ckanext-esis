@@ -153,7 +153,7 @@
     checkDoiStatus : function() {
       var status = ecosis.ds.package.getDoi().status;
       if( status && status.value ) {
-        if( status.value.toLowerCase() === 'applied' ) {
+        if( status.value.toLowerCase() === 'applied' || status.value.toLowerCase() === 'pending approval') {
           this.hasDOI = true;
           this.$.removeAll.style.display = 'none';
         }

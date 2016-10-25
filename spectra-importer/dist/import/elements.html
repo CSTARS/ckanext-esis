@@ -12510,7 +12510,13 @@ this.fire('dom-change');
 
       setData : function(pkg) {
         this.pkg = pkg;
-        this.pkg.on('save-end', this.render.bind(this));
+        this.pkg.on('save-end', function(){
+          if( this.doiUpdating ) {
+            window.location.reload();
+          } else {
+            this.render.bind(this);
+          }
+        }.bind(this));
         this.render();
       },
       
@@ -12519,6 +12525,7 @@ this.fire('dom-change');
            return;
          }
         
+         this.doiUpdating = true;
          if( this.pkg.requestDoi() ) {
            $(this)
             .find('.btn-request')
@@ -12537,6 +12544,7 @@ this.fire('dom-change');
            return;
          }
         
+         this.doiUpdating = true;
          if( this.pkg.cancelDoiRequest() ) {
            $(this)
             .find('.btn-request')
@@ -13021,7 +13029,7 @@ this.fire('dom-change');
         var status = ecosis.ds.package.getDoi().status;
         var hasDOI = false;
         if( status && status.value ) {
-          if( status.value.toLowerCase() === 'applied' ) {
+          if( status.value.toLowerCase() === 'applied' || status.value.toLowerCase() === 'pending approval' ) {
             hasDOI = true;
           }
         }
@@ -13420,7 +13428,7 @@ this.fire('dom-change');
     checkDoiStatus : function() {
       var status = ecosis.ds.package.getDoi().status;
       if( status && status.value ) {
-        if( status.value.toLowerCase() === 'applied' ) {
+        if( status.value.toLowerCase() === 'applied' || status.value.toLowerCase() === 'pending approval') {
           this.hasDOI = true;
           this.$.removeAll.style.display = 'none';
         }

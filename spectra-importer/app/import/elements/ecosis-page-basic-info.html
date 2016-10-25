@@ -317,7 +317,7 @@
         var status = ecosis.ds.package.getDoi().status;
         var hasDOI = false;
         if( status && status.value ) {
-          if( status.value.toLowerCase() === 'applied' ) {
+          if( status.value.toLowerCase() === 'applied' || status.value.toLowerCase() === 'pending approval' ) {
             hasDOI = true;
           }
         }
