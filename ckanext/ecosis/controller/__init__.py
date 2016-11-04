@@ -114,6 +114,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def upgrade(self):
+        try:
+            return admin.upgrade()
+        except Exception as e:
+            return handleError(e)
+
     def doiQuery(self):
         try:
             return package.doi.doiQuery()

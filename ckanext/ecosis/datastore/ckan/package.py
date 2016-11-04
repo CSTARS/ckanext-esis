@@ -13,6 +13,9 @@ def init(pgConn, s):
 def getSchema():
     return schema
 
+def getPgConn():
+    return psycopg2.connect(connStr)
+
 # get a dataset by id
 def get(package_id):
     conn = psycopg2.connect(connStr)

@@ -7,6 +7,7 @@ import json, subprocess, os, urllib2, re
 from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
+from upgrade import run as runUpgrade
 
 # rebuild entire search index
 def rebuildIndex(collections):
@@ -191,3 +192,9 @@ def isAdmin():
     if not c.userobj.sysadmin:
         return False
     return True
+
+def upgrade():
+    if not isAdmin():
+        raise Exception('Nope.')
+
+    return jsonStringify(runUpgrade())

@@ -122,6 +122,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('verifyWorkspace', '/ecosis/admin/verifyWorkspace', controller=controller, action='verifyWorkspace')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
+        map.connect('upgrade', '/ecosis/admin/upgrade', controller=controller, action='upgrade')
+
         # ecosis - admin doi
         map.connect('doi_query', '/ecosis/admin/doi/query', controller=controller, action='doiQuery')
         map.connect('doi_update_status', '/ecosis/admin/doi/update', controller=controller, action='doiUpdateStatus')

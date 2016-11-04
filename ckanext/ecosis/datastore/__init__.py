@@ -16,8 +16,12 @@ import mapreduce
 import push
 from ckan import package
 
+collections = None
 
-def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
+def init(schema, coll, pgConn, host, resourceUtil, workspacePath):
+    global collections
+    collections = coll;
+
     ensureIndexes(collections)
 
     files.init(collections, workspacePath)
@@ -28,6 +32,9 @@ def init(schema, collections, pgConn, host, resourceUtil, workspacePath):
     workspace.init(collections, resourceUtil, workspacePath)
     mapreduce.init(collections, schema)
     push.init(collections)
+
+def getCollections():
+    return collections
 
 def ensureIndexes(collections):
     collections.get('spectra').create_index('index')
