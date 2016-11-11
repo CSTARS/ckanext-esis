@@ -127,7 +127,7 @@ describe('Create Package - Dataset 2 (excel test)', function() {
   });
 
   it('can create dataset', function(next){
-    this.timeout(5000);
+    this.timeout(10000);
 
     pkg.create(function(resp){
       assert.equal(resp.error, undefined);

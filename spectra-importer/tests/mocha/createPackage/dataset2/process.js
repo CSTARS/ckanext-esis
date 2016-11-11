@@ -44,7 +44,7 @@ describe('Add Resources & Configure - Dataset 2', function() {
 
 
   it('should add excel resource', function(next){
-    this.timeout(5000);
+    this.timeout(10000);
 
     var file = {
       mimetype : 'application/vnd.ms-excel',

@@ -48,7 +48,7 @@ describe('Add Resources & Configure - Dataset 1', function() {
   });
 
   it('should add spectra data csv', function(next){
-    this.timeout(5000);
+    this.timeout(10000);
 
     var file = {
       mimetype : 'text/csv',
@@ -64,7 +64,7 @@ describe('Add Resources & Configure - Dataset 1', function() {
   });
 
   it('should add spectra metadata csv', function(next){
-    this.timeout(5000);
+    this.timeout(10000);
 
     var file = {
       mimetype : 'text/csv',
@@ -138,7 +138,7 @@ describe('Add Resources & Configure - Dataset 1', function() {
   });
 
   it('should let you join the metadata', function(next){
-    this.timeout(5000);
+    this.timeout(10000);
     
     var options = {
       layout : 'row',
@@ -187,7 +187,7 @@ describe('Add Resources & Configure - Dataset 1', function() {
   });
 
   it('let you push to search', function(next){
-    this.timeout(5000);
+    this.timeout(10000);
     
     SDK.ckan.pushToSearch(pkg.getId(), false, function(resp){
       assert.equal(resp.error, undefined);
