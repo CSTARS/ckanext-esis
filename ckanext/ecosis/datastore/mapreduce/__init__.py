@@ -127,7 +127,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     }
 
     # append the units
-    units = query.allUnits(pkg.get("package_id"))
+    units = query.allUnits(pkg.get("id"))
     if units != None:
          ecosis["spectra_metadata_schema"]["units"] = units
 

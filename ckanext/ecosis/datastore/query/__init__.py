@@ -541,7 +541,7 @@ def getResource(resource_id, sheet_id=None):
 # get the dict of attribute name to units type
 def allUnits(package_id):
     query = {
-        "package_id" : package_id
+        "packageId" : package_id
     }
 
     # query workspace resources for package
