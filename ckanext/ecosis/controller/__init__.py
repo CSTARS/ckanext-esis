@@ -120,6 +120,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def fixUnits(self):
+        try:
+            return admin.fixUnits()
+        except Exception as e:
+            return handleError(e)
+
     def doiQuery(self):
         try:
             return package.doi.doiQuery()

@@ -8,6 +8,8 @@ from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
 from upgrade import run as runUpgrade
+from upgrade import fixUnits as runFixUnits
+
 
 # rebuild entire search index
 def rebuildIndex(collections):
@@ -198,3 +200,9 @@ def upgrade():
         raise Exception('Nope.')
 
     return jsonStringify(runUpgrade())
+
+def fixUnits():
+    if not isAdmin():
+        raise Exception('Nope.')
+
+    return jsonStringify(runFixUnits())
