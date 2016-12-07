@@ -258,9 +258,9 @@ def _processSheetArray(data, sheetConfig):
             sp = {}
             for i in range(len(data[start])):
                 try:
-                    if data[start+j][i]:
+                    if data[j][i]:
                         # grab the attribute name as set the data
-                        sp[_getName(nameMap, data[start][i])] = data[start+j][i]
+                        sp[_getName(nameMap, data[start][i])] = data[j][i]
                 except Exception as e:
                     pass
 
@@ -277,7 +277,7 @@ def _processSheetArray(data, sheetConfig):
 
     else:
         start = localRange['start']
-        for j in range(1, len(data[start])):
+        for j in range(start+1, len(data[start])):
             sp = {}
             for i in range(start, localRange['stop']+1):
                 try:

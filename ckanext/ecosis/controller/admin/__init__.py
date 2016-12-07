@@ -111,8 +111,12 @@ def clean(collections):
         logic.get_action('package_delete')(context, {'id': package['id']})
 
     # clear mongo
-    for collection in collections:
-        collection.remove({})
+    collections.get('spectra').remove({})
+    collections.get('resource').remove({})
+    collections.get('package').remove({})
+    collections.get('search_package').remove({})
+    collections.get('search_spectra').remove({})
+    collections.get('lookup').remove({})
 
     return json.dumps({
         'removed': packages,
