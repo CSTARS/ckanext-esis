@@ -1,6 +1,6 @@
 #! /bin/bash
 
-cpFiles=( "index.html" )
+cpFiles=("index.html" "webcomponents-lite.js")
 dist=dist/doi-admin
 
 rm -rf dist
