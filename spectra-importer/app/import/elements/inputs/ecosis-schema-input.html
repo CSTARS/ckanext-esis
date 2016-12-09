@@ -33,10 +33,18 @@
           this.innerHTML = '<ecosis-controlled-input metadata="'+this.metadata+'"></ecosis-controlled-input>';
         }
       } else {
+
+        // TODO: this needs to be a larger migration
+        var name = this.schema.name;
+        if( name === 'Citation DOI' ) {
+          this.schema.description = 'If available, enter the pre-existing DOI for this dataset. Otherwise, request a dataset DOI from EcoSIS (below).';
+          name = 'Dataset DOI';
+        }
+
         var html =
           '<div class="form-group">'+
             '<label for="'+this.schema.flat+'Input" class="col-md-3 control-label">'  +
-              (this.schema.level == 1 ? '<i class="fa fa-star" style="color:#2196f3"></i> ' : '') + this.schema.name+': </label>'+
+              (this.schema.level == 1 ? '<i class="fa fa-star" style="color:#2196f3"></i> ' : '') + name +': </label>'+
             '<div class="col-md-7">'+
               '<input type="'+this.schema.input+'" class="form-control" />';
 
