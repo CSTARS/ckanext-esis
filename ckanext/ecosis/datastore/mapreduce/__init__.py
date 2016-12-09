@@ -80,10 +80,12 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     collection = collections.get('search_package')
 
 
-    # TODO: shouldn't this be accessing the package extra for the sorting information?
-    sort = config.get("sort")
+
+    sort = getPackageExtra("sort", pkg)
     if sort is None:
         sort = {}
+    else:
+        sort = json.loads(sort)
 
     # store these as dates
     created = None
@@ -123,6 +125,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         "linked_data" : [],
         "geojson" : None,
         "sort_on" : sort.get("on"),
+        "sort_type": sort.get("type"),
         "sort_description" : sort.get("description")
     }
 

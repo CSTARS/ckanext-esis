@@ -104,7 +104,13 @@ def getWorksheetData(sheet, workbook):
                     val = datetime.datetime(*xlrd.xldate_as_tuple(val, workbook.datemode)).isoformat()
                 # otherwise, just read value as string
                 else:
-                    val = str(sheet.cell_value(i, j))
+                    val = sheet.cell_value(i, j)
+                    if isinstance(val, unicode):
+                        val = val.encode("utf-8")
+                    else:
+                        val = str(val) # see if this fails.  if so, we have badness
+
+
 
             # if anything fails, see if it's cause of bad utf-8 characters
             except Exception as e:

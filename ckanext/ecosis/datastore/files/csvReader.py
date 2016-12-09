@@ -1,4 +1,5 @@
 import csv, re
+import codecs
 
 # parse a csv file
 def read(file, separator):
@@ -12,10 +13,13 @@ def read(file, separator):
             # TODO: is there a better way todo this?
             for i in range(0, len(row)):
                 try:
-                    # HACK, remove bad characters
-                    row[i]  = re.sub(r'[^\x00-\x7F]+',' ', row[i]).encode("utf-8", "ignore")
+                    row[i] = unicode(row[i], 'utf-8').encode("utf-8", "ignore")
                 except Exception as e:
-                    row[i] = '__invalid_utf-8_characters__'
+                    # HACK, remove bad characters
+                    try:
+                        row[i]  = re.sub(r'[^\x00-\x7F]+',' ', row[i]).encode("utf-8", "ignore")
+                    except Exception as e:
+                        row[i] = '__invalid_utf-8_characters__'
 
             data.append(row)
         csvfile.close()

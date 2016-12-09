@@ -6,6 +6,11 @@
   </style>
 
   <template>
+
+    <div class="help-block">
+      Citation will be generated as you complete the fields below. This is how your EcoSIS dataset will be cited by others.
+    </div>
+
     <div class="horizontal-form">
       <div class="form-group">
         <label class="col-md-2 control-label">Citation</label>
@@ -41,6 +46,7 @@
         for( var i = 0; i < this.schema.length; i++ ) {
           // inserted at top of basic info form, skip here
           if( this.customInputList.indexOf(this.schema[i].name) > -1 ) continue;
+          
           c++;
           var input = '<ecosis-schema-input metadata="'+this.schema[i].name+'"></ecosis-schema-input>';
 
