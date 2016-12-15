@@ -166,6 +166,13 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
     if aliases is not None:
         try:
             ecosis["spectra_metadata_schema"]["aliases"] = json.loads(aliases)
+
+            # map units for aliases
+            for key, value in ecosis["spectra_metadata_schema"]["aliases"].iteritems():
+                unit = ecosis["spectra_metadata_schema"]["units"].get(value)
+                if unit is not None:
+                    ecosis["spectra_metadata_schema"]["units"][key] = unit
+
         except Exception:
             pass
 
