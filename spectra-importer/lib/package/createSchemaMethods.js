@@ -6,7 +6,7 @@ var ckanAttriutes = ['Keywords', 'Website', 'Author', 'Author Email',
 
 module.exports = function(attribute, Package) {
   if( attribute.name === 'Keywords' || attribute.name === 'Website' ) return;
-if(attribute.name === 'NASA GCMD Science & Services Keywords') debugger;
+
   if( attribute.input === 'controlled' ) {
     createControlledInput(attribute, Package);
   } else if( attribute.input === 'split-text' ) {
