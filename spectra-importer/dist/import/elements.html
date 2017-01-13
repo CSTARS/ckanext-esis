@@ -9012,7 +9012,7 @@ this.fire('dom-change');
       setValue: function(value) {
         if( value.toLowerCase() === 'yes' ) {
           this.$.yes.checked = true;
-        } else {
+        } else if( value.toLowerCase() === 'no' ) {
           this.$.no.checked = true;
         }
       }
@@ -9223,7 +9223,7 @@ this.fire('dom-change');
 
         citation.push(ecosis.ds.package.getTitle());
 
-        citation.push('Data set. Available on-line [http://ecosis.org] from the Ecosystem Spectral Information System (EcoSIS)')
+        citation.push('Data set. Available on-line [http://ecosis.org] from the Ecological Spectral Information System (EcoSIS)')
 
         var doi = ecosis.ds.package.getDoi().value;
         if( !doi ) {

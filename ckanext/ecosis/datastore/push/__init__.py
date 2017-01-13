@@ -187,7 +187,7 @@ def setCitation(pkg):
     if title is not None:
         citation.append(title)
 
-    citation.append('Data set. Available on-line [http://ecosis.org] from the Ecosystem Spectral Information System (EcoSIS)')
+    citation.append('Data set. Available on-line [http://ecosis.org] from the Ecological Spectral Information System (EcoSIS)')
 
     if doi is not None:
         citation.append(doi)

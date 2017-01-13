@@ -132,6 +132,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def fixCitations(self):
+        try:
+            return admin.fixCitationText()
+        except Exception as e:
+            return handleError(e)
+
     def doiQuery(self):
         try:
             return package.doi.doiQuery()

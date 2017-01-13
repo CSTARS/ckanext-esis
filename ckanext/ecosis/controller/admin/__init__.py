@@ -9,6 +9,7 @@ from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
 from upgrade import run as runUpgrade
 from upgrade import fixUnits as runFixUnits
+from upgrade import fixCitationText as runFixCitationText
 
 # rebuild entire search index
 def rebuildIndex(collections):
@@ -209,3 +210,10 @@ def fixUnits():
         raise Exception('Nope.')
 
     return jsonStringify(runFixUnits())
+
+def fixCitationText():
+    if not isAdmin():
+        raise Exception('Nope.')
+
+    return jsonStringify(runFixCitationText())
+

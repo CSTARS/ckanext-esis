@@ -48,7 +48,7 @@
       setValue: function(value) {
         if( value.toLowerCase() === 'yes' ) {
           this.$.yes.checked = true;
-        } else {
+        } else if( value.toLowerCase() === 'no' ) {
           this.$.no.checked = true;
         }
       }
