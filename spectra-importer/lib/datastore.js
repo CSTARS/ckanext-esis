@@ -355,7 +355,7 @@ module.exports = function(config) {
 
     // if we have ecosis doi, add to Citation score
     if( this.package.getDoi().value ) {
-      breakdown.Citation.score++;
+      breakdown.citation.score++;
     }
 
 
