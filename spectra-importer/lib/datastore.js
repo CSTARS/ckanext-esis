@@ -329,6 +329,7 @@ module.exports = function(config) {
       if( key === 'Latitude' || key === 'Longitude' ) {
         continue;
       }
+
       // toggle to enable
       // if( key === 'NASAGCMDKeywords' ) continue;
 
@@ -351,6 +352,13 @@ module.exports = function(config) {
         }
       }
     }
+
+    // if we have ecosis doi, add to Citation score
+    if( this.package.getDoi().value ) {
+      count++;
+      breakdown.citation.score++;
+    }
+
 
     if( this.package.getTitle() ) {
       count++;

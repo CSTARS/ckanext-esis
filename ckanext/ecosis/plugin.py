@@ -124,6 +124,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
         map.connect('upgrade', '/ecosis/admin/upgrade', controller=controller, action='upgrade')
         map.connect('fixUnits', '/ecosis/admin/fixUnits', controller=controller, action='fixUnits')
+        map.connect('fixCitations', '/ecosis/admin/fixCitations', controller=controller, action='fixCitations')
 
         # ecosis - admin doi
         map.connect('doi_query', '/ecosis/admin/doi/query', controller=controller, action='doiQuery')

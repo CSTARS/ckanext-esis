@@ -1,4 +1,4 @@
-import psycopg2, json
+import psycopg2, json, re
 from ckanext.ecosis.datastore.ckan.package import getPgConn
 from ckanext.ecosis.datastore import getCollections
 
@@ -72,3 +72,46 @@ def fixUnits():
 
     return packages
 
+def fixCitationText():
+    conn = getPgConn()
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(("select * from package_extra where key = 'Citation';"))
+    rows = cur.fetchall()
+    cur.close()
+
+    pgCount = 0
+    for row in rows:
+        citation = re.sub(r'Ecosystem', 'Ecological', row.get('value'), flags=re.I)
+
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(("update package_extra set value = '%s' where id = '%s';" % (citation, row.get('id'))))
+        conn.commit()
+        cur.close()
+
+        pgCount += 1
+
+    mongoCount = 0
+    searchCollection = getCollections().get('search_package')
+    results = searchCollection.find({'value.Citation':{'$exists': True}}, {'value.Citation':1})
+    for item in results:
+        citation = re.sub(r'Ecosystem', 'Ecological', item.get('value').get('Citation')[0], flags=re.I)
+
+        searchCollection.update(
+            {'_id': item.get('_id')},
+            {
+                '$set' : {
+                    'value.Citation' : [citation]
+                }
+            }
+        )
+
+        mongoCount += 1
+
+    return {
+        'success' : True,
+        'stats' : {
+            'MongoUpdates' : mongoCount,
+            'PGUpdates' : pgCount
+        }
+    }

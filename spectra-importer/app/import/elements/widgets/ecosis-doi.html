@@ -13,7 +13,7 @@
     </style>
 
     <h4 class="page-header">
-      <a class="btn-toggle" on-click="toggleCat"><i class="fa fa-arrow-right"></i></a> Dataset DOI
+      <a class="btn-toggle" on-click="toggleCat"><i class="fa fa-arrow-right"></i></a> EcoSIS Dataset DOI
     </h4>
     
     <div id="panel" style="display:none">
@@ -29,9 +29,11 @@
         <table class="table" id="needsDataTable"></table>
       </div>
 
+      <div class="subpanel" id="otherMessage"></div>
+
       <div id="request" class="subpanel">
-        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, only be able to edit the metadata.  
-          Make sure ALL data is valid and complete before proceeding.
+        <div class="text text-warning"><b>Warning:</b> Once a DOI is applied, you will only be able to edit the metadata.  
+          Make sure ALL data (file resources) are valid and complete before proceeding.
         </div>
 
         <a class="btn btn-default btn-request" on-click="requestDoi">Request Dataset Doi</a>
@@ -92,7 +94,7 @@
           if( this.doiUpdating ) {
             window.location.reload();
           } else {
-            this.render.bind(this);
+            this.render();
           }
         }.bind(this));
         this.render();
@@ -191,6 +193,15 @@
       },
 
       verify : function() {
+        this.$.needsData.style.display = 'none';
+
+        if( ecosis.ds.package.getCitationDOI() ) {
+          this.$.otherMessage.style.display = 'block';
+          this.$.otherMessage.innerHTML = '<div class="text text-danger">Your dataset already has a DOI provided in the <b>Citation: Dataset DOI</b> field.</div>';
+          return;
+        }
+
+        this.$.otherMessage.style.display = 'none';
         var html = '';
 
         var extras = ['Theme','Ecosystem Type','Acquisition Method'];
@@ -252,14 +263,18 @@
           if( c % 2 === 0 ) {
             html += '</tr><tr>';
           }
-
         }
 
+        this.$.needsDataTable.innerHTML = '<tr>'+html+'</tr>';
+
+        this.updateRequestBtnVisibility(canRequest, html);
+      },
+
+      updateRequestBtnVisibility : function(canRequest, html) {
         if( canRequest ) {
           this.$.request.style.display = 'block';
         } else {
           this.$.needsData.style.display = 'block';
-          this.$.needsDataTable.innerHTML = '<tr>'+html+'</tr>';
         }
       },
 

@@ -13,12 +13,12 @@
 
     <div class="horizontal-form">
       <div class="form-group">
-        <label class="col-md-2 control-label">Citation</label>
+        <label class="col-md-2 control-label">Dataset Citation:</label>
         <div class="col-md-10" id="citation"></div>
       </div>
 
       <div class="form-group">
-        <label class="col-md-2 control-label">Author(s)</label>
+        <label class="col-md-2 control-label">Author(s):</label>
         <div class="col-md-10">
           <ecosis-author-input metadata="Author"></ecosis-author-input>
         </div>
@@ -85,6 +85,14 @@
           }
 
           ele.setValue(value, other);
+
+          if( this.schema[i].name == 'Citation DOI' ) {
+            if( ecosis.ds.package.getDoi().value ) {
+              ele.style.display = 'none';
+            } else {
+              ele.style.display = 'block';
+            }
+          }
         }
       },
 
@@ -111,7 +119,7 @@
 
         citation.push(ecosis.ds.package.getTitle());
 
-        citation.push('Data set. Available on-line [http://ecosis.org] from the Ecosystem Spectral Information System (EcoSIS)')
+        citation.push('Data set. Available on-line [http://ecosis.org] from the Ecological Spectral Information System (EcoSIS)')
 
         var doi = ecosis.ds.package.getDoi().value;
         if( !doi ) {
