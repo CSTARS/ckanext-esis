@@ -9284,10 +9284,12 @@ this.fire('dom-change');
 
       this.map = L.map(this.$.map, {
           center: [0, 0],
-          zoom: 2
+          zoom: 2,
+          noWrap : true
       });
 
       L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        noWrap : true,
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(this.map);
       L.Control.geocoder()
