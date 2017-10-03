@@ -75,8 +75,15 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             updateBbox(spectra, bbox)
 
         # see if we found a bounding box from the spectra
-        if bbox["maxlat"] != -9999 and bbox["maxlng"] != -9999 and bbox["minlng"] != 9999 and bbox["minlng"] != -9999:
+        if bbox["maxlat"] != -9999 and bbox["maxlng"] != -9999 and bbox["minlng"] != 9999 and bbox["minlat"] != -9999:
             bbox["use"] = True
+
+        # max sure all of the spectra points were not in the same position
+        # this cause the geojson index mongo to break
+        if bbox["maxlat"] == bbox["minlat"]:
+            bbox["maxlat"] += 0.00001
+        if bbox["maxlng"] == bbox["minlng"]:
+            bbox["maxlng"] += 0.00001
 
         # mapreduce the dataset package data
         mapreduce.mapreducePackage(ckanPackage, bbox)
