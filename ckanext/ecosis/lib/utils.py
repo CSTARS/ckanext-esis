@@ -1,6 +1,7 @@
 import urllib2, json, datetime, re
 import ckan.lib.helpers as h
 from ckan.common import response
+import traceback, sys
 
 # replicating default param parsing in ckan... really python... really...
 # TODO: see if this is really needed
@@ -32,22 +33,31 @@ def get_request_data(request):
 def handleError(e):
     response.headers["Content-Type"] = "application/json"
 
+    stack = ""
+    try:
+        stack = traceback.format_exc()
+    except e:
+        pass
+
     if hasattr(e, 'message'):
         if e.message is not None:
             return json.dumps({
                 "error": True,
-                "message": "%s:%s" % (type(e).__name__, e.message)
+                "message": "%s:%s" % (type(e).__name__, e.message),
+                "stack" : stack
             })
     if hasattr(e, 'error_summary'):
         if e.error_summary is not None:
             return json.dumps({
                 "error": True,
-                "message": "%s:%s" % (type(e).__name__, e.error_summary)
+                "message": "%s:%s" % (type(e).__name__, e.error_summary),
+                "stack" : "stack"
             })
 
     return json.dumps({
         "error": True,
-        "message": "%s:%s" % (type(e).__name__, str(e))
+        "message": "%s:%s" % (type(e).__name__, str(e)),
+        "stack" : stack
     })
 
 # helper for sending json, mostly adds ability to encode dates in ISO format.
