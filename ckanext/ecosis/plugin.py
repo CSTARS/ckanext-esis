@@ -1,5 +1,6 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
+import ckan.lib.base as base
 import pylons.config as config
 
 import ckanext.ecosis.datastore.query as query
@@ -43,6 +44,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
         # that CKAN will use this plugin's custom templates.
         tk.add_template_directory(config, 'templates')
+
+        tk.add_resource('public/fanstatic', 'ecosis')
 
     # set helpers for ecosis templates
     def get_helpers(self):
@@ -161,6 +164,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('get_workspace', '/ecosis/workspace/get', controller=controller, action='getWorkspace')
         map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
 
+        # custom pages
+        map.connect('remotelogin', '/user/remotelogin', controller='ckanext.ecosis.plugin:StaticPageController', action='remotelogin')
+
 
         return map
 
@@ -217,3 +223,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
     def package_form(self):
         return super(EcosisPlugin, self).package_form()
+
+
+class StaticPageController(base.BaseController):
+
+    def remotelogin(self):
+        return base.render('user/remotelogin.html')
