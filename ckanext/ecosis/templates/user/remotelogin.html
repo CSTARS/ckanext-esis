@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 
 
-
-{% block subtitle %}EcoSML Login{% endblock %}
-
 {% block page %}
 <div role="main">
     <div id="content" class="container">
         <section class="module wrapper">
             <div class="module-content">
-              <h1 class="page-heading">Login to EcoSML</h1>
+              <h1 class="page-heading">Login to <span class="remote-site-label"></span></h1>
               {% block form %}
                 {% snippet "user/snippets/login_form.html", action=c.login_handler, error_summary=error_summary %}
               {% endblock %}
@@ -21,5 +18,5 @@
 {% endblock %}
 
 {% block scripts %}
-{% resource 'ecosis/test.js' %}
+{% resource 'ecosis/remotelogin.js' %}
 {% endblock %}

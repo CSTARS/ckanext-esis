@@ -143,6 +143,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # ecosis - root
         map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
         map.connect('userInfo', '/ecosis/user/get', controller=controller, action='userInfo')
+        map.connect('userJwtLogin', '/ecosis/user/jwtLogin', controller=controller, action='userJwtLogin')
 
         # ecosis - resource
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')

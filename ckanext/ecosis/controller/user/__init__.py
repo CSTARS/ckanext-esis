@@ -1,9 +1,9 @@
-from ckan.common import response
+from ckan.common import response, request
 from ckan.lib.base import c, model
 import ckan.logic as logic
-import json
-import jwt
+import json, jwt
 import pylons.config as config
+import ckan.lib.authenticator as authenticator
 
 from ckanext.ecosis.lib.auth import isAdmin
 
@@ -34,28 +34,41 @@ def info():
 def jwtLogin():
     response.headers["Content-Type"] = "application/json"
 
+    username = request.params.get('username')
+    password = request.params.get('password')
+
     if len(c.user) != 0:
-        return json.dumps(jwt(c.user))
+        return json.dumps(create_jwt(c.user))
+
+    if username is None or password is None:
+        return json.dumps({"loggedIn": False})
+
 
     identity = {
-        username : '',
-        password : ''
+        'login' : username,
+        'password' : password
     }
-    
+
     auth = authenticator.UsernamePasswordAuthenticator()
     user = auth.authenticate(request.environ, identity)
 
+    if user == None:
+        return json.dumps({
+            "loggedIn": True,
+            "message": "invalid username or password",
+        })
 
-    return json.dumps(jwt(user))
 
-def jwt(user):
+    return json.dumps(create_jwt(user))
+
+def create_jwt(user):
     context = {'model': model, 'user': user}
 
     # see line 604 of ckan/logic/action/get about params for this method
     orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
     jwtuser = {
-        "username": c.user,
+        "username": user,
         "organizations": orgs
     }
     if isAdmin():
@@ -65,7 +78,7 @@ def jwt(user):
 
     user = {
         "loggedIn": True,
-        "username": c.user,
+        "username": user,
         "organizations": orgs,
         "jwt": encoded
     }
