@@ -175,6 +175,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def userJwtLogin(self):
+        try:
+            return user.jwtLogin()
+        except Exception as e:
+            return handleError(e)
+
     def createPackageRedirect(self):
         package.createPackageRedirect()
 
