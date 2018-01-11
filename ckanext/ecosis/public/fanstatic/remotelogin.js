@@ -33,7 +33,11 @@ function getParameterByName(name, url) {
             },
             function(data) {
                 if( data.loggedIn ) {
-                    window.location = returnTo+'?jwt='+data.jwt;
+                    if( returnTo.indexOf('?') > -1 ) {
+                        window.location = returnTo+'&jwt='+data.jwt;
+                    } else {
+                        window.location = returnTo+'?jwt='+data.jwt;
+                    }
                 } else {
                     alert('Invalid username or password');
                 }
