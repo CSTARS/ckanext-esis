@@ -175,9 +175,9 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def userJwtLogin(self):
+    def remoteLogin(self):
         try:
-            return user.jwtLogin()
+            return user.remote_login()
         except Exception as e:
             return handleError(e)
 
