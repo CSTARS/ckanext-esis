@@ -58,9 +58,6 @@ def remote_login():
             "loggedIn": False,
             "message": "invalid username or password",
         })
-    print user
-    print 'test'
-
 
     return json.dumps(create_remote_login_response(user))
 
