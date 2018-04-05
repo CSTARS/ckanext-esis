@@ -31,14 +31,15 @@ def info():
 
     return json.dumps(user)
 
-def jwtLogin():
+def remote_login():
     response.headers["Content-Type"] = "application/json"
 
-    username = request.params.get('username')
-    password = request.params.get('password')
+    token = request.params.get('token')
+    token = jwt.decode(token, secret, algorithm='HS256')
 
-    if len(c.user) != 0:
-        return json.dumps(create_jwt(c.user))
+    username = token.get('username');
+    password = token.get('password');
+
 
     if username is None or password is None:
         return json.dumps({"loggedIn": False})
@@ -54,36 +55,26 @@ def jwtLogin():
 
     if user == None:
         return json.dumps({
-            "loggedIn": True,
+            "loggedIn": False,
             "message": "invalid username or password",
         })
 
+    return json.dumps(create_remote_login_response(user))
 
-    return json.dumps(create_jwt(user))
-
-def create_jwt(user):
-    context = {'model': model, 'user': user}
+def create_remote_login_response(user):
+    # context = {'model': model, 'user': user}
 
     # see line 604 of ckan/logic/action/get about params for this method
-    orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
-
-    jwtuser = {
-        "username": user,
-        "organizations": orgs
-    }
-    if isAdmin():
-        jwtuser['admin'] = True
-
-    encoded = jwt.encode(jwtuser, secret, algorithm='HS256')
+    # orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
     user = {
-        "loggedIn": True,
-        "username": user,
-        "organizations": orgs,
-        "jwt": encoded
+        "loggedIn" : True,
+        "username": user
+        #"organizations": orgs
     }
 
     if isAdmin():
-        user['isAdmin'] = True
+        user['admin'] = True
+
 
     return user

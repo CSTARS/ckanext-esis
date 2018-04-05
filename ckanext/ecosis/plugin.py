@@ -22,6 +22,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         pass
 
     def create(self, entity):
+        orgController.notify_remotes(entity.id)
         pass
 
     def edit(self, entity):
@@ -29,12 +30,15 @@ class EcosisPlugin(plugins.SingletonPlugin,
         pass
 
     def authz_add_role(self, object_role):
+        orgController.notify_remotes(entity.id)
         pass
 
     def authz_remove_role(self, object_role):
+        orgController.notify_remotes(entity.id)
         pass
 
     def delete(self, entity):
+        orgController.notify_remotes(entity.id)
         pass
 
     def before_view(self, pkg_dict):
@@ -143,7 +147,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # ecosis - root
         map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
         map.connect('userInfo', '/ecosis/user/get', controller=controller, action='userInfo')
-        map.connect('userJwtLogin', '/ecosis/user/jwtLogin', controller=controller, action='userJwtLogin')
+        map.connect('remoteLogin', '/ecosis/user/remoteLogin', controller=controller, action='remoteLogin')
 
         # ecosis - resource
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
