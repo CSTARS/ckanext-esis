@@ -3,6 +3,7 @@ from ckan.lib.email_notifications import send_notification
 from pylons import config
 import ckan.logic as logic
 from ckan.lib.base import c, model
+import traceback
 
 from ckanext.ecosis.datastore import mapreduce
 from ckanext.ecosis.datastore import query
@@ -119,7 +120,9 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             # if badness, remove from search
             deleteUtils.cleanFromSearch(ckanPackage.get('id'))
 
-            print e
+            print unicode(e.message).encode("utf-8")
+            traceback.print_exc()
+
             if not emailOnComplete:
                 return
 
@@ -135,8 +138,9 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
                               "We apologize for the inconvenience\n\n-The EcoSIS Team") % (ckanPackage["title"])
                 }
             )
-        except:
-            pass
+        except Exception as e:
+            print unicode(e.message).encode("utf-8")
+            traceback.print_exc()
 
 # update bounding box built from spectra given either a lat/lng coordinate or geojson
 def updateBbox(spectra, bbox):
