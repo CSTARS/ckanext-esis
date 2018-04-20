@@ -29,7 +29,7 @@ Instrument,,,,,,,,,,
 Theme,,,,,,,,,,
 ,Theme,,controlled,TRUE,Both,,,"Forest, Agriculture, Ecology, Phenology, Biochemistry, Physiology, Water Quality, Land Cover, Global Change, Other",Research context for the the spectral measurements.,
 ,,Keywords,split-text,,Dataset,,user supplied text that may benefit search,,,
-,,Ecosystem Type,controlled,,Both,,these may need to be rethought,"Rainforest, Tundra, Desert, Savanna, Forest, Grassland, Shrubland, Scrubland, Steppe, Woodland, Crops, Aquatic, Marine, Freshwater, Coastal, Pond, Lake, River, Estuary, Ocean, Arctic, Antarctic, Alpine, Montane, Urban",,"v1 types: Forest, Crops, Grassland, Wetland, Aquatic, Coastal"
+,,Ecosystem Type,controlled,,Both,,these may need to be rethought,"Rainforest, Tundra, Desert, Savanna, Forest, Grassland, Shrubland, Scrubland, Steppe, Woodland, Crops, Aquatic, Marine, Freshwater, Coastal, Pond, Lake, River, Estuary, Ocean, Arctic, Antarctic, Alpine, Montane, Urban, Arctic Tundra",,"v1 types: Forest, Crops, Grassland, Wetland, Aquatic, Coastal"
 ,,NASA GCMD Keywords,text,,Both,,,"taken from ""NASA GCMD Science & Services Keywords vocabulary"" Google sheet (https://docs.google.com/a/wisc.edu/spreadsheets/d/1aEZWLKcRh1kp7KA9Asp5SSdlXA_cPE6bGPqYGuVyrvk/edit?usp=sharing)",Select spectroscopy-related keywords from the NASA Global Change Master Directory's controlled keyword vocabularies. (http://gcmd.nasa.gov/learn/keyword_list.html),
 ,,,,,,,,,,
 Location,,,,,,,,,,
