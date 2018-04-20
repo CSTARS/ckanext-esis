@@ -3,7 +3,7 @@ from ckanext.ecosis.datastore import delete as deleteUtil
 import ckan.logic as logic
 import pylons.config as config
 from ckan.common import response
-import urllib, urllib2, jwt
+import urllib, urllib2, jwt, json
 
 remote_hosts = config.get('ecosis.remote_hosts', '')
 remote_hosts = [x.strip() for x in remote_hosts.split(',')]
@@ -59,22 +59,29 @@ def update(org):
             { "$set" : {"value.ecosis.organization": name} }
         )
 
+    org = logic.get_action('organization_show')({}, {'id': id})
+
     # notify remote hosts of change
-    notify_remotes(id)
+    notify_remotes(id, False, org)
 
 
-def notify_remotes(organization_id, deleted=False):
+def notify_remotes(organization_id, deleted=False, organization=None):
     msg = {
-        "organizationId": organization_id,
+        "id": organization_id,
+        "organization": organization,
         "deleted" : deleted
     }
 
-    token = jwt.encode(msg, secret, algorithm='HS256')
-    data = urllib.urlencode({"token": token})
+    token = jwt.encode({"id": organization_id}, secret, algorithm='HS256')
+    data = json.dumps({
+        "token": token,
+        "body" : msg
+    })
 
-    for host in remote_hosts:
+
+    for url in remote_hosts:
         try:
-            req = urllib2.Request("%s/auth/webhook/organization-update" % host, data)
+            req = urllib2.Request(url, data, {'Content-Type': 'application/json'})
             urllib2.urlopen(req)
             # ignore response, we don't care
         except Exception as e:

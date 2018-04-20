@@ -318,7 +318,6 @@
         "Other",
         "Phenology",
         "Physiology",
-        "Urban",
         "Water Quality"
       ],
       "description": "Research context for the the spectral measurements.",
@@ -341,7 +340,10 @@
       "units": "",
       "forSchema": "Both",
       "vocabulary": [
+        "Alpine",
+        "Antarctic",
         "Aquatic",
+        "Arctic",
         "Coastal",
         "Crops",
         "Desert",
@@ -351,6 +353,7 @@
         "Grassland",
         "Lake",
         "Marine",
+        "Montane",
         "Ocean",
         "Pond",
         "Rainforest",
@@ -360,6 +363,7 @@
         "Shrubland",
         "Steppe",
         "Tundra",
+        "Urban",
         "Woodland"
       ],
       "description": "",
