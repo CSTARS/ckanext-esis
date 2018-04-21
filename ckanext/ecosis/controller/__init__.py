@@ -74,10 +74,6 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    # delete org from UI
-    def deleteOrganizationUi(self, id):
-        organization.delete(id)
-
     def setPrivate(self):
         try:
             return package.setPrivate()

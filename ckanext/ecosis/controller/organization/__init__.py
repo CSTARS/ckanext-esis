@@ -19,12 +19,12 @@ def init(co):
 
 # delete organization
 # when org is deleted, we need to remove all of organizations datasets
-def delete(id):
-    # first, get a list of all organizations datasets
-    group = model.Group.get(id)
-
-    if group is None:
-        raise NotFound('Organization was not found.')
+def delete(group):
+    # # first, get a list of all organizations datasets
+    # group = model.Group.get(id)
+    #
+    # if group is None:
+    #     raise NotFound('Organization was not found.')
 
     datasets = []
     for pkg in group.packages(with_private=True):
@@ -32,20 +32,16 @@ def delete(id):
 
     # now perform normal delete
     # this should check auth
-    context = {'model': model, 'user': c.user}
-    logic.get_action('organization_delete')(context, {'id': id})
+    # context = {'model': model, 'user': c.user}
+    # logic.get_action('organization_delete')(context, {'id': id})
 
     # EcoSIS package delete happens here
     for package_id in datasets:
         deleteUtil.package(package_id)
 
     # notify remote hosts of change
-    notify_remotes(id, true)
+    notify_remotes(group.id, True)
 
-    response.status_int = 307
-    response.headers["Location"] = "/dashboard/organizations"
-
-    return "Redirecting"
 
 # update search (MongoDB) org name when organization is updated
 def update(org):
@@ -59,29 +55,24 @@ def update(org):
             { "$set" : {"value.ecosis.organization": name} }
         )
 
-    org = logic.get_action('organization_show')({}, {'id': id})
-
     # notify remote hosts of change
-    notify_remotes(id, False, org)
+    notify_remotes(id, False)
 
 
-def notify_remotes(organization_id, deleted=False, organization=None):
+def notify_remotes(organization_id, deleted=False):
     msg = {
         "id": organization_id,
-        "organization": organization,
         "deleted" : deleted
     }
 
     token = jwt.encode({"id": organization_id}, secret, algorithm='HS256')
-    data = json.dumps({
-        "token": token,
-        "body" : msg
-    })
+    msg = json.dumps(msg)
 
 
     for url in remote_hosts:
         try:
-            req = urllib2.Request(url, data, {'Content-Type': 'application/json'})
+            req = urllib2.Request(url, msg, {'Content-Type': 'application/json'})
+            req.add_header('x-ecosis-signature', token)
             urllib2.urlopen(req)
             # ignore response, we don't care
         except Exception as e:

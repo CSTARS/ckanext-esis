@@ -2,9 +2,22 @@ import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import ckan.lib.base as base
 import pylons.config as config
+from ckan.logic.action.create import organization_member_create
+from ckan.logic.action.delete import organization_member_delete
 
 import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.controller.organization as orgController
+
+
+@tk.side_effect_free
+def organization_member_create_wrapper(context, member_create):
+    organization_member_create(context, member_create)
+    orgController.notify_remotes(member_create.get('id'))
+
+@tk.side_effect_free
+def organization_member_delete_wrapper(context, member_delete):
+    organization_member_delete(context, member_delete)
+    orgController.notify_remotes(member_delete.get('id'))
 
 class EcosisPlugin(plugins.SingletonPlugin,
         tk.DefaultDatasetForm):
@@ -17,32 +30,37 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IOrganizationController)
+    plugins.implements(plugins.IActions)
+
 
     def read(self, entity):
         pass
 
     def create(self, entity):
         orgController.notify_remotes(entity.id)
-        pass
 
     def edit(self, entity):
         orgController.update(entity)
-        pass
 
     def authz_add_role(self, object_role):
-        orgController.notify_remotes(entity.id)
         pass
 
     def authz_remove_role(self, object_role):
-        orgController.notify_remotes(entity.id)
         pass
 
     def delete(self, entity):
-        orgController.notify_remotes(entity.id)
-        pass
+        orgController.delete(entity)
 
     def before_view(self, pkg_dict):
         return pkg_dict
+
+    # we need to listen for org create/update/delete events and notify remotes
+    def get_actions(self):
+        return {
+            'organization_member_create' : organization_member_create_wrapper,
+            'organization_member_delete': organization_member_delete_wrapper
+        }
+
 
     def update_config(self, config):
         # Add this plugin's templates dir to CKAN's extra_template_paths, so
@@ -110,9 +128,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
         map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
         map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
-
-        # Ex: http://localhost:5000/organization/delete/12568285-6f7c-458e-a1c7-a6fb5119b296
-        map.connect('delete_organization_ui', '/organization/delete/{id}', controller=controller, action='deleteOrganizationUi')
 
         # route all resource edit screens to main ecosis dataset editor
         map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
