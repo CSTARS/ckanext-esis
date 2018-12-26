@@ -117,10 +117,9 @@ def applyDoi(pkg):
         logic.get_action('package_update')(context, pkg)
         return status
 
-    # set the returned DOI ARK and new DOI Status
+    # set the returned DOI and new DOI Status
     status = {
         'value' : DOI_STATUS["APPLIED"],
-        'ark' : doiResponse.get('ark'),
         'applied' : datetime.datetime.utcnow().isoformat()
     }
     setPackageExtra('EcoSIS DOI Status', json.dumps(status), pkg)
@@ -138,15 +137,20 @@ def applyDoi(pkg):
 # HTTP request for EZID
 def requestDoi(pkg):
     # Request body
-    data = "_target: %s/#result/%s\n" % (config.get("ecosis.search_url"), pkg.get('id'))
+    data = "_profile: datacite\n"
+    data += "_target: %s/#result/%s\n" % (config.get("ecosis.search_url"), pkg.get('id'))
     data += "datacite.creator: %s\n" % pkg.get('author')
     data += "datacite.title: %s\n" % pkg.get('title')
+    data += "datacite.resourcetype: Dataset\n"
     data += "datacite.publisher: EcoSIS\n"
     data += "datacite.publicationyear: %s" % parser.parse(pkg.get('metadata_created')).year
 
+    print DOI_CONFIG.get('url')
+    print data
     # set body, authentication header and make request
     r = urllib2.Request(DOI_CONFIG.get('url'))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    print base64string
     r.add_header("Authorization", "Basic %s" % base64string)
     r.add_header("Content-Type", "text/plain;charset=UTF-8")
     r.add_data(data)
@@ -154,19 +158,17 @@ def requestDoi(pkg):
     try:
         result = urllib2.urlopen(r).read()
     except Exception as e:
+        print e
         result = "error: request error"
 
-    # parse EZID text response format
-    (status, value) = result.split(': ')
-    doi = ""
-    ark = ""
-    if status == 'success':
-        (doi, ark) = value.split(' | ')
+    print result
+
+    # parse text response format
+    (status, doi) = result.split('\n')[0].split(': ')
 
     return {
         "status" : status,
-        "doi" : doi,
-        "ark" : ark
+        "doi" : doi
     }
 
 
