@@ -145,12 +145,9 @@ def requestDoi(pkg):
     data += "datacite.publisher: EcoSIS\n"
     data += "datacite.publicationyear: %s" % parser.parse(pkg.get('metadata_created')).year
 
-    print DOI_CONFIG.get('url')
-    print data
     # set body, authentication header and make request
     r = urllib2.Request(DOI_CONFIG.get('url'))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
-    print base64string
     r.add_header("Authorization", "Basic %s" % base64string)
     r.add_header("Content-Type", "text/plain;charset=UTF-8")
     r.add_data(data)
@@ -158,10 +155,7 @@ def requestDoi(pkg):
     try:
         result = urllib2.urlopen(r).read()
     except Exception as e:
-        print e
         result = "error: request error"
-
-    print result
 
     # parse text response format
     (status, doi) = result.split('\n')[0].split(': ')
