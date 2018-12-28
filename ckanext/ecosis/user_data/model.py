@@ -1,9 +1,8 @@
 import logging
 import datetime
 
-import meta
 from sqlalchemy import Table, Column, types
-from ckan.model.meta import mapper, metadata
+from ckan.model.meta import mapper, metadata, Session
 from ckan.model.domain_object import DomainObject
 from ckan import model
 from ckan.model.types import make_uuid
@@ -35,7 +34,7 @@ def setup():
         # for migration
 
 def get(user_id):
-    q = meta.Session.query(UserGithubInfo).\
+    q = Session.query(UserGithubInfo).\
         filter(UserGithubInfo.user_id == user_id)
     return q.first()
 

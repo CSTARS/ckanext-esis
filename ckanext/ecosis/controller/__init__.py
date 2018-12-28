@@ -177,6 +177,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def setGithubUsername(self):
+        try:
+            return user.set_github_username()
+        except Exception as e:
+            return handleError(e)
+
     def createPackageRedirect(self):
         package.createPackageRedirect()
 

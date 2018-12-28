@@ -1,9 +1,11 @@
 from ckan.common import response, request
 from ckan.lib.base import c, model
 import ckan.logic as logic
-import json, jwt
+import json, jwt, re
 import pylons.config as config
 import ckan.lib.authenticator as authenticator
+import ckanext.ecosis.user_data.model as githubInfoModel
+import ckanext.ecosis.lib.utils as utils
 
 from ckanext.ecosis.lib.auth import isAdmin
 
@@ -26,10 +28,15 @@ def info():
         "organizations" : orgs
     }
 
+    githubInfo = githubInfoModel.get(c.user)
+    if githubInfo is not None:
+        user['githubUsername'] = githubInfo.githubUsername
+
     if isAdmin():
         user['isAdmin'] = True
 
     return json.dumps(user)
+
 
 def remote_login():
     response.headers["Content-Type"] = "application/json"
@@ -69,12 +76,37 @@ def create_remote_login_response(user):
 
     user = {
         "loggedIn" : True,
-        "username": user
+        "username": user,
         #"organizations": orgs
     }
 
-    if isAdmin():
+    is_admin = isAdmin()
+    if is_admin:
         user['admin'] = True
 
+    user['token'] = jwt.encode({
+        'username': user,
+        'admin' : is_admin
+    }, secret, algorithm='HS256')
 
     return user
+
+# TODO: implementing JWT support is kinda a can of worms.
+# will work as a workaround hack for now...
+def set_github_username():
+    params = utils.get_request_data(request)
+    token = request.headers.get('authorization')
+    if not token:
+        raise Exception('No jwt token provided')
+
+    token = re.sub(r"Bearer ", "", token)
+    token = jwt.decode(token, secret, algorithm='HS256')
+    user_id = token.get("username")
+
+    if not user_id:
+        raise Exception('Jwt token did not provide user id')
+
+    github_username = params.get('github_username')
+
+    githubInfoModel.update(user_id, github_username)
+    return info()
