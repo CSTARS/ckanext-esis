@@ -12,3 +12,4 @@ node_modules
 bower_components
 ckanext_ecosis.egg-info
 .idea/*
+ckanext_ecosis.egg-info

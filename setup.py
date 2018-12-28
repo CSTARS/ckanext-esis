@@ -20,9 +20,11 @@ setup(
         include_package_data=True,
         zip_safe=False,
         install_requires=[],
-        entry_points=\
-        """
+        entry_points="""
                 [ckan.plugins]
                 ecosis=ckanext.ecosis.plugin:EcosisPlugin
+                
+                [paste.paster_command]
+                initdb = ckanext.ecosis.user_data.paster:InitCommand
         """,
 )
