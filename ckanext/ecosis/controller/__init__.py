@@ -177,9 +177,9 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def setGithubUsername(self):
+    def setGithubInfo(self):
         try:
-            return user.set_github_username()
+            return user.set_github_info()
         except Exception as e:
             return handleError(e)
 

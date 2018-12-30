@@ -162,6 +162,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # ecosis - root
         map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
         map.connect('userInfo', '/ecosis/user/get', controller=controller, action='userInfo')
+        map.connect('userInfo', '/ecosis/user/githubInfo', controller=controller, action='setGithubInfo')
         map.connect('remoteLogin', '/ecosis/user/remoteLogin', controller=controller, action='remoteLogin')
 
         # ecosis - resource

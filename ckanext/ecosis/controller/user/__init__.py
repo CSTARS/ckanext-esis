@@ -93,7 +93,7 @@ def create_remote_login_response(user):
 
 # TODO: implementing JWT support is kinda a can of worms.
 # will work as a workaround hack for now...
-def set_github_username():
+def set_github_info():
     params = utils.get_request_data(request)
     token = request.headers.get('authorization')
     if not token:
@@ -106,7 +106,7 @@ def set_github_username():
     if not user_id:
         raise Exception('Jwt token did not provide user id')
 
-    github_username = params.get('github_username')
+    github_username = params.get('username')
 
     githubInfoModel.update(user_id, github_username)
     return info()
