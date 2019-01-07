@@ -52,13 +52,14 @@ def define_table():
 
     global source_table
 
-    source_table = Table('user_github_info', metadata,
-        Column('id', types.UnicodeText, primary_key=True, default=make_uuid),
-        Column('created', types.DateTime, default=datetime.datetime.utcnow),
-        Column('user_id', types.UnicodeText, default=u''),
-        Column('github_username', types.UnicodeText, default=u''),
-    )
-    mapper(UserGithubInfo, source_table)
+    if source_table is None:
+        source_table = Table('user_github_info', metadata,
+            Column('id', types.UnicodeText, primary_key=True, default=make_uuid),
+            Column('created', types.DateTime, default=datetime.datetime.utcnow),
+            Column('user_id', types.UnicodeText, default=u''),
+            Column('github_username', types.UnicodeText, default=u''),
+        )
+        mapper(UserGithubInfo, source_table)
 
 
 class UserGithubInfo(DomainObject):

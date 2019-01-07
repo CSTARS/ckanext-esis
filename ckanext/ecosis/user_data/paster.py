@@ -1,5 +1,7 @@
 from ckan.lib.cli import CkanCommand
 
+# paster --plugin=ckanext-ecosis initdb -c
+
 class InitCommand(CkanCommand):
     """
     Initialize database tables.
