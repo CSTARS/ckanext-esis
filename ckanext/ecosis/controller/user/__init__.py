@@ -31,6 +31,7 @@ def info():
     githubInfo = githubInfoModel.get(c.user)
     if githubInfo is not None:
         user['githubUsername'] = githubInfo.githubUsername
+        user['githubAccessToken'] = githubInfo.githubAccessToken
 
     if isAdmin():
         user['isAdmin'] = True
@@ -107,6 +108,7 @@ def set_github_info():
         raise Exception('Jwt token did not provide user id')
 
     github_username = params.get('username')
+    github_access_token = params.get('accessToken')
 
-    githubInfoModel.update(user_id, github_username)
+    githubInfoModel.update(user_id, github_username, github_access_token)
     return info()
