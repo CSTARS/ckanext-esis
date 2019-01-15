@@ -98,8 +98,6 @@ def create_remote_login_response(user):
         'admin' : is_admin
     }, secret, algorithm='HS256')
 
-    print user
-
     return user
 
 # TODO: implementing JWT support is kinda a can of worms.
