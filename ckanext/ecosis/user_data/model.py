@@ -38,7 +38,7 @@ def get(user_id):
         filter(UserGithubInfo.user_id == user_id)
     return q.first()
 
-def update(user_id, github_username, github_access_token):
+def update(user_id, github_username, github_access_token, github_data):
     info = get(user_id)
 
     if info is None:
@@ -47,6 +47,7 @@ def update(user_id, github_username, github_access_token):
 
     info.github_username = github_username
     info.github_access_token = github_access_token
+    info.github_data = github_data # string encoded JSON
     info.save()
 
 def define_table():
@@ -59,7 +60,8 @@ def define_table():
             Column('created', types.DateTime, default=datetime.datetime.utcnow),
             Column('user_id', types.UnicodeText, default=u''),
             Column('github_username', types.UnicodeText, default=u''),
-            Column('github_access_token', types.UnicodeText, default=u'')
+            Column('github_access_token', types.UnicodeText, default=u''),
+            Column('github_data', types.UnicodeText, default=u'')
         )
         mapper(UserGithubInfo, source_table)
 

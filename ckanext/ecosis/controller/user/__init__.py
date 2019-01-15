@@ -78,6 +78,7 @@ def create_remote_login_response(user):
     user = {
         "loggedIn" : True,
         "username": user,
+        "github" : {}
         #"organizations": orgs
     }
 
@@ -85,10 +86,19 @@ def create_remote_login_response(user):
     if is_admin:
         user['admin'] = True
 
+    githubInfo = githubInfoModel.get(user['username'])
+    if githubInfo is not None:
+        user['github']['username'] = githubInfo.github_username
+        user['github']['accessToken'] = githubInfo.github_access_token
+        if githubInfo.github_data is not None:
+            user['github']['data'] = json.loads(githubInfo.github_data)
+
     user['token'] = jwt.encode({
-        'username': user,
+        'username': user['username'],
         'admin' : is_admin
     }, secret, algorithm='HS256')
+
+    print user
 
     return user
 
@@ -109,6 +119,7 @@ def set_github_info():
 
     github_username = params.get('username')
     github_access_token = params.get('accessToken')
+    github_data = params.get('data')
 
-    githubInfoModel.update(user_id, github_username, github_access_token)
+    githubInfoModel.update(user_id, github_username, github_access_token, github_data)
     return info()
