@@ -38,6 +38,10 @@ def get(user_id):
         filter(UserGithubInfo.user_id == user_id)
     return q.first()
 
+def getAll():
+    q = Session.query(UserGithubInfo)
+    return q.all()
+
 def update(user_id, github_username, github_access_token, github_data):
     info = get(user_id)
 

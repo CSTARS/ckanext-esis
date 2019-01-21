@@ -121,3 +121,19 @@ def set_github_info():
 
     githubInfoModel.update(user_id, github_username, github_access_token, github_data)
     return info()
+
+def get_all_github_info():
+    token = request.headers.get('authorization')
+    if not token:
+        raise Exception('No jwt token provided')
+
+    token = re.sub(r"Bearer ", "", token)
+    jwt.decode(token, secret, algorithm='HS256')
+
+    githubInfo = githubInfoModel.getAll()
+    results = []
+    for user in githubInfo:
+        results.append(user.as_dict())
+
+    return json.dumps(results)
+

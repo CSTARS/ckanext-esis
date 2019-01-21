@@ -153,6 +153,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('doi_query', '/ecosis/admin/doi/query', controller=controller, action='doiQuery')
         map.connect('doi_update_status', '/ecosis/admin/doi/update', controller=controller, action='doiUpdateStatus')
         map.connect('doi_clear', '/ecosis/admin/doi/clear', controller=controller, action='clearDoi')
+        map.connect('getAllGithubInfo', '/ecosis/admin/github/sync', controller=controller, action='getAllGithubInfo')
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
