@@ -30,8 +30,8 @@ def info():
 
     githubInfo = githubInfoModel.get(c.user)
     if githubInfo is not None:
-        user['githubUsername'] = githubInfo.githubUsername
-        user['githubAccessToken'] = githubInfo.githubAccessToken
+        user['githubUsername'] = githubInfo.github_username
+        # user['githubAccessToken'] = githubInfo.github_access_token
 
     if isAdmin():
         user['isAdmin'] = True
