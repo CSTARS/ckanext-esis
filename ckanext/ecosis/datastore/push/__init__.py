@@ -70,6 +70,8 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
             if len(spectra['datapoints']) == 0:
                 continue
 
+            # TODO: make sure species attributes are lower case
+
             # update search
             spectraCollection.insert(spectra)
             # update the bounding box if the spectra has a lat/lng

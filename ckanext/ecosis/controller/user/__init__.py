@@ -70,14 +70,19 @@ def remote_login():
     return json.dumps(create_remote_login_response(user))
 
 def create_remote_login_response(user):
-    # context = {'model': model, 'user': user}
+    context = {'model': model, 'user': user}
 
     # see line 604 of ckan/logic/action/get about params for this method
     # orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
+    user = logic.get_action('user_show')(context, {'id':user})
     user = {
         "loggedIn" : True,
-        "username": user,
+        "username": user['name'],
+        "fullname": user['fullname'],
+        "email" : user['email'],
+        "id" : user['id'],
+        "state" : user['state'],
         "github" : {}
         #"organizations": orgs
     }
