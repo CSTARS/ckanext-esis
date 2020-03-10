@@ -104,15 +104,21 @@ def applyDoi(pkg):
     context = {'model': model, 'user': c.user}
     logic.get_action('package_update')(context, pkg)
 
-    # Request DOI from EZID
-    doiResponse = requestDoi(pkg)
+    # Request DOI from Datacite
+    try:
+        doiResponse = requestDoi(pkg)
+    except Exception as e:
+        doiResponse = {
+            'status' : 'error',
+            'message' : str(e)
+        }
 
     # If request failed, reset DOI status, return new error
     if doiResponse.get('status') != 'success':
         status = {
             'value': DOI_STATUS["ACCEPTED"],
             'error' : True,
-            'message': 'Failed to request DOI from service',
+            'message': doiResponse.get('message'),
             'serverResponseStatus' : doiResponse.get('status')
         }
         setPackageExtra('EcoSIS DOI Status', json.dumps(status), pkg)
@@ -137,7 +143,7 @@ def applyDoi(pkg):
     return {'success': True}
 
 # HTTP request for EZID
-def requestDoi(pkg):
+def requestDoiEzid(pkg):
     # Request body
     data = "_profile: datacite\n"
     data += "_target: %s/#result/%s\n" % (config.get("ecosis.search_url"), pkg.get('id'))
@@ -167,7 +173,8 @@ def requestDoi(pkg):
         "doi" : doi
     }
 
-def requestDoiDatasite(pkg):
+# HTTP request for Datacite
+def requestDoi(pkg):
     doi = "%s/%s" % (DOI_CONFIG.get('shoulder'), shortuuid.ShortUUID().random(length=8))
     data = {
         'type' : 'dois',
@@ -182,10 +189,12 @@ def requestDoiDatasite(pkg):
     r.add_header("Content-Type", "application/vnd.api+json")
     r.add_data(json.dumps(data))
 
-    try:
-        result = urllib2.urlopen(r).read()
-    except Exception as e:
-        result = "error: request error"
+    result = urllib2.urlopen(r)
+    if result.getcode() != 201:
+        if result.getcode() == 422:
+            raise Exception('Doi already taken, please try again')
+        else:
+            raise Exception('Invalid response from doi draft service %s: %s', (result.getcode(), result.read()))
 
     data = {
         'data': {
@@ -224,13 +233,12 @@ def requestDoiDatasite(pkg):
     r.add_header("Content-Type", "application/vnd.api+json")
     r.add_data(json.dumps(data))
 
-    try:
-        result = urllib2.urlopen(r).read()
-    except Exception as e:
-        result = "error: request error"
+    result = urllib2.urlopen(r)
+    if result.getcode() != 201:
+        raise Exception('Invalid response from doi publish service %s: %s', (result.getcode(), result.read()))
 
     return {
-        "result" : result,
+        "result" : 'success',
         "doi" : doi
     }
 
