@@ -9,6 +9,7 @@ from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import setPackageExtra, getPackageExtra
 from ckanext.ecosis.lib.auth import isAdmin
 from ckanext.ecosis.datastore.ckan import package
+import shortuuid
 
 DOI_STATUS = {
     'APPLIED' : 'Applied',                   # DOI has been applied by EZID
@@ -18,8 +19,9 @@ DOI_STATUS = {
     'PENDING_APPROVAL' : 'Pending Approval'  # User has requested DOI
 }
 
-# EZID config
+# Datacite config
 DOI_CONFIG = {
+    "sholder" : config.get('ecosis.doi.shoulder'),
     "url" : config.get("ecosis.doi.url"),
     "username" : config.get("ecosis.doi.username"),
     "password" : config.get("ecosis.doi.password")
@@ -162,6 +164,73 @@ def requestDoi(pkg):
 
     return {
         "status" : status,
+        "doi" : doi
+    }
+
+def requestDoiDatasite(pkg):
+    doi = "%s/%s" % (DOI_CONFIG.get('shoulder'), shortuuid.ShortUUID().random(length=8))
+    data = {
+        'type' : 'dois',
+        'attributes' : {
+            'doi' : doi
+        }
+    }
+
+    r = urllib2.Request(DOI_CONFIG.get('url'))
+    base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    r.add_header("Authorization", "Basic %s" % base64string)
+    r.add_header("Content-Type", "application/vnd.api+json")
+    r.add_data(json.dumps(data))
+
+    try:
+        result = urllib2.urlopen(r).read()
+    except Exception as e:
+        result = "error: request error"
+
+    data = {
+        'data': {
+            'id': doi,
+            'type': "dois",
+            'attributes': {
+                'event': 'publish',
+                'doi': doi,
+                'creators': [{
+                    'name': pkg.get('author')
+                }],
+                'titles': [{
+                    'title': pkg.get('title')
+                }],
+                'descriptions': [{
+                    'description': pkg.overview
+                }],
+                'identifiers': [{
+                    'identifierType': 'ecosis-uid',
+                    'identifier': pkg.get('id')
+                }],
+                'publisher': 'EcoSIS',
+                'publicationYear': parser.parse(pkg.get('metadata_created')).year,
+                'types': {
+                    'resourceTypeGeneral': 'Dataset'
+                },
+                'url': "%s/doi:%s" % (config.get("ecosis.search_url"),  doi),
+                'schemaVersion': 'http://datacite.org/schema/kernel-4'
+            }
+        }
+    }
+
+    r = urllib2.Request("%s/%s" % (DOI_CONFIG.get('url'), doi))
+    base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    r.add_header("Authorization", "Basic %s" % base64string)
+    r.add_header("Content-Type", "application/vnd.api+json")
+    r.add_data(json.dumps(data))
+
+    try:
+        result = urllib2.urlopen(r).read()
+    except Exception as e:
+        result = "error: request error"
+
+    return {
+        "result" : result,
         "doi" : doi
     }
 

@@ -2,3 +2,4 @@ pymongo
 psycopg2
 xlrd
 PyJWT
+shortuuid
