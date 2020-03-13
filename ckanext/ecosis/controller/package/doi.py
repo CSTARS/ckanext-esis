@@ -21,7 +21,7 @@ DOI_STATUS = {
 
 # Datacite config
 DOI_CONFIG = {
-    "sholder" : config.get('ecosis.doi.shoulder'),
+    "shoulder" : config.get('ecosis.doi.shoulder'),
     "url" : config.get("ecosis.doi.url"),
     "username" : config.get("ecosis.doi.username"),
     "password" : config.get("ecosis.doi.password")
@@ -177,20 +177,26 @@ def requestDoiEzid(pkg):
 def requestDoi(pkg):
     doi = "%s/%s" % (DOI_CONFIG.get('shoulder'), shortuuid.ShortUUID().random(length=8))
     data = {
-        'type' : 'dois',
-        'attributes' : {
-            'doi' : doi
+        'data' : {
+            'type' : 'dois',
+            'attributes' : {
+                'doi' : doi
+            }
         }
     }
 
+    print DOI_CONFIG.get('url')
     r = urllib2.Request(DOI_CONFIG.get('url'))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    print "Basic %s" % base64string
+    print json.dumps(data)
     r.add_header("Authorization", "Basic %s" % base64string)
     r.add_header("Content-Type", "application/vnd.api+json")
     r.add_data(json.dumps(data))
 
     result = urllib2.urlopen(r)
     if result.getcode() != 201:
+        print result.read()
         if result.getcode() == 422:
             raise Exception('Doi already taken, please try again')
         else:
@@ -210,7 +216,7 @@ def requestDoi(pkg):
                     'title': pkg.get('title')
                 }],
                 'descriptions': [{
-                    'description': pkg.overview
+                    'description': pkg.get('overview')
                 }],
                 'identifiers': [{
                     'identifierType': 'ecosis-uid',
@@ -227,18 +233,20 @@ def requestDoi(pkg):
         }
     }
 
+    print "%s/%s" % (DOI_CONFIG.get('url'), doi)
     r = urllib2.Request("%s/%s" % (DOI_CONFIG.get('url'), doi))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    r.get_method = lambda: 'PUT'
     r.add_header("Authorization", "Basic %s" % base64string)
     r.add_header("Content-Type", "application/vnd.api+json")
     r.add_data(json.dumps(data))
 
     result = urllib2.urlopen(r)
-    if result.getcode() != 201:
-        raise Exception('Invalid response from doi publish service %s: %s', (result.getcode(), result.read()))
+    if result.getcode() != 200 and result.getcode() != 201:
+        raise Exception('Invalid response from doi publish service %s: %s' % (result.getcode(), result.read()))
 
     return {
-        "result" : 'success',
+        "status" : 'success',
         "doi" : doi
     }
 
