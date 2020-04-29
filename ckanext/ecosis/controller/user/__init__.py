@@ -76,6 +76,8 @@ def create_remote_login_response(user):
     # orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
     user = logic.get_action('user_show')(context, {'id':user})
+    is_admin = user.get('sysadmin')
+
     user = {
         "loggedIn" : True,
         "username": user['name'],
@@ -87,7 +89,6 @@ def create_remote_login_response(user):
         #"organizations": orgs
     }
 
-    is_admin = isAdmin()
     if is_admin:
         user['admin'] = True
 
