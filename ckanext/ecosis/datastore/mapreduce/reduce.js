@@ -51,10 +51,10 @@ function(key, spectra){
             if( measurement.tmp__schema__ ) {
 
                 for( var key in measurement.tmp__schema__.wavelengths ) {
-                    measurement.tmp__schema__.wavelengths[key] = 1;
+                    searchObj.tmp__schema__.wavelengths[key] = 1;
                 }
                 for( var key in measurement.tmp__schema__.metadata ) {
-                    measurement.tmp__schema__.metadata[key] = 1;
+                    searchObj.tmp__schema__.metadata[key] = 1;
                 }
 
             } else if ( measurement.datapoints ) {
