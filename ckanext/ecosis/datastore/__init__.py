@@ -1,4 +1,4 @@
-import json
+import json, re
 import ConfigParser
 import time
 
@@ -15,6 +15,7 @@ from utils import storage as ckanFileStorage
 import mapreduce
 import push
 from ckan import package
+from ckanext.ecosis.datastore.mongo import db
 
 collections = None
 
@@ -37,8 +38,10 @@ def getCollections():
     return collections
 
 def ensureIndexes(collections):
-    collections.get('spectra').create_index('index')
-    collections.get('spectra').create_index('packageId')
+    collectionNames = db.collection_names()
+    for name in collectionNames:
+        if re.match(r'workspace_spectra_.*', name):
+            db[name].create_index('index')
 
     collections.get('resource').create_index('sheetId')
 

@@ -1,7 +1,6 @@
 import json
 import os
 
-from pymongo import MongoClient
 import pylons.config as config
 
 import ckan.lib.uploader as uploader
@@ -10,6 +9,7 @@ from ckanext.ecosis.controller import git, admin, organization, package, resourc
 from ckanext.ecosis.controller import workspace as workspaceController
 from ckanext.ecosis.lib.utils import handleError
 from ckanext.ecosis import datastore
+from ckanext.ecosis.datastore.mongo import collections
 
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
@@ -20,21 +20,6 @@ pgConnStr = config.get("sqlalchemy.url")
 
 with open(schema) as schema_file:
     schema = json.load(schema_file)
-
-client = MongoClient(config.get("ecosis.mongo.url"))
-db = client[config.get("ecosis.mongo.db")]
-
-collections = {
-    "spectra" : db[config.get("ecosis.mongo.workspace_spectra_collection", "workspace_spectra")],
-    "resource" : db[config.get("ecosis.mongo.workspace_resource_collection", "workspace_resources")],
-    "package" : db[config.get("ecosis.mongo.workspace_package_collection", "workspace_packages")],
-    "usda" : db[config.get("ecosis.mongo.usda_collection", "usda")],
-    "top" : db[config.get("ecosis.mongo.top_collection", "top")],
-    "gcmd" : db[config.get("ecosis.mongo.gcmd_collection", "gcmd")],
-    "search_package" : db[config.get("ecosis.mongo.search_collection", "search")],
-    "search_spectra" : db[config.get("ecosis.mongo.spectra_collection", "spectra")],
-    "lookup" : db["lookup"]
-}
 
 upload = uploader.ResourceUpload({})
 

@@ -7,6 +7,7 @@ import json, subprocess, os, urllib2, re
 from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
+from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
 from upgrade import run as runUpgrade
 from upgrade import fixUnits as runFixUnits
 from upgrade import fixCitationText as runFixCitationText
@@ -113,7 +114,7 @@ def clean(collections):
         logic.get_action('package_delete')(context, {'id': package['id']})
 
     # clear mongo
-    collections.get('spectra').remove({})
+    get_package_spectra_collection(package['id']).remove({})
     collections.get('resource').remove({})
     collections.get('package').remove({})
     collections.get('search_package').remove({})
@@ -160,7 +161,7 @@ def verifyWorkspace(collections):
         packageInfo[package.get("packageId")] = {
             "prepared" : package.get("prepared"),
             "lastTouched" : package.get("lastTouched"),
-            "workspaceSpectra" : collections.get('spectra').count({"packageId": package.get("packageId")})
+            "workspaceSpectra" : get_package_spectra_collection(package.get("packageId")).count()
         }
 
         if package.get("packageId") in ids:
@@ -184,8 +185,8 @@ def verifyWorkspace(collections):
     return jsonStringify({
         "packageCount" : pCount,
         "resourceCount" : rCount,
-        "spectraCount" : collections.get('spectra').count({"type": "data"}),
-        "metadataCount" : collections.get('spectra').count({"type": "metadata"}),
+        "spectraCount" : get_package_spectra_collection(package.get("packageId")).count({"type": "data"}),
+        "metadataCount" : get_package_spectra_collection(package.get("packageId")).count({"type": "metadata"}),
         "repeats" : {
             "resources" : repeatResources,
             "packages" : repeatPackages

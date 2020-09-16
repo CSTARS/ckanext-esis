@@ -2,6 +2,7 @@ import utils, excel, hashlib, datetime
 
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.files import csvReader
+from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
 
 collections = None
 
@@ -72,7 +73,7 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
     }
     if sheetId is not None:
         removeQuery["sheetId"] = sheetId
-    collections.get('spectra').remove(removeQuery)
+    get_package_spectra_collection(packageId).remove(removeQuery)
 
     # has this sheet been marked by user to ignore?
     if sheetConfig.get('ignore') == True:
@@ -135,6 +136,12 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         response = {
             "message" : "not parsed, invalid file type"
         }
+
+    # ensure joinOn opts have indexes
+    sp_col = get_package_spectra_collection(packageId)
+    sp_col.create_index('index')
+    if options.get('joinOn') is not None:
+        sp_col.create_index("spectra.%s" % options.get('joinOn'))
 
     return response
 
@@ -324,7 +331,7 @@ def _insertSpectra(sp, sheetConfig, index):
     }
 
     try:
-        collections.get('spectra').insert(data)
+        get_package_spectra_collection(sheetConfig.get("packageId")).insert(data)
     except Exception as e:
         pass
 

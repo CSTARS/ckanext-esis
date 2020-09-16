@@ -6,6 +6,7 @@ from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.vocab import usda
 from ckanext.ecosis.datastore.vocab import controlled as controlledVocab
 from ckanext.ecosis.datastore.utils import mongo
+from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
 from ckanext.ecosis.lib import utils
 import workspace
 
@@ -39,7 +40,7 @@ def get(packageId="", resourceId=None, sheetId=None, index=0, showProcessInfo=Fa
         query["sheetId"] = sheetId
 
     # get spectra at index
-    main = collections.get('spectra').find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
+    main = get_package_spectra_collection(packageId).find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
 
     if main == None:
         raise Exception('Unabled to get spectra from package_id: %s at index %s' % (packageId, index))
@@ -118,7 +119,7 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
         query['sheetId'] = sheetId
 
     # grab metadata chunk at given index
-    chunk = collections.get('spectra').find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
+    chunk = get_package_spectra_collection(packageId).find_one(query, skip=index, sort=[("index", pymongo.ASCENDING)])
     if chunk is None:
         raise Exception('Invalid resource ids given')
 
@@ -142,7 +143,7 @@ def getMetadataChunk(packageId, resourceId=None, sheetId=None, index=0):
         joinQuery['spectra.%s' % sheetInfo.get("joinOn")] = chunk.get('spectra')[sheetInfo.get("joinOn")]
 
         # run query
-        joined = collections.get('spectra').find(joinQuery)
+        joined = get_package_spectra_collection(packageId).find(joinQuery)
 
         # for all results, append sheet information to the 'joinedNames' resources array.
         for r in joined:
@@ -206,9 +207,9 @@ def getMetadataInfo(packageId, resourceId=None, sheetId=None):
     query['type'] = "metadata"
 
     # get all distinct join values
-    attrs = mongo.distinct(collections.get('spectra'), 'spectra.%s' % sheetInfo.get('joinOn'), query)
+    attrs = mongo.distinct(get_package_spectra_collection(packageId), 'spectra.%s' % sheetInfo.get('joinOn'), query)
     # get total number of metadata rows or columns
-    total = mongo.count(collections.get('spectra'), query)
+    total = mongo.count(get_package_spectra_collection(packageId), query)
 
     query = {
         "packageId" : packageId,
@@ -220,7 +221,7 @@ def getMetadataInfo(packageId, resourceId=None, sheetId=None):
 
     # get the number of spectra that match to this sheet
     return {
-        "joinCount": mongo.count(collections.get('spectra'), query),
+        "joinCount": mongo.count(get_package_spectra_collection(packageId), query),
         "total" : total
     }
 
@@ -237,7 +238,7 @@ def total(packageId, resourceId=None, sheetId=None):
         query['sheetId'] = sheetId
 
     # need to support 2.8 drive cause pythons 3.0 seems to be a POS
-    return {"total" : mongo.count(collections.get('spectra'), query)}
+    return {"total" : mongo.count(get_package_spectra_collection(packageId), query)}
 
 # if the spectra has a 'photo' attribute see if it's a name of a resource file,
 # if so, set the download URL as the value
@@ -458,7 +459,7 @@ def join(packageId, spectra, processInfo):
                 query["sheetId"] = sheetConfig.get('sheetId')
 
             # query for matches to spectras value
-            joinData = collections.get('spectra').find_one(query)
+            joinData = get_package_spectra_collection(packageId).find_one(query)
             if joinData != None:
 
                 # for each match, append all attributes

@@ -1,4 +1,5 @@
 import os, shutil
+from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
 
 collections = None
 workspaceDir = None
@@ -27,9 +28,7 @@ def package(package_id):
     })
 
     # remove from the spectra workspace
-    collections.get('spectra').remove({
-        "packageId": package_id,
-    })
+    get_package_spectra_collection(package_id).remove({})
 
     # remove from the resources workspace
     collections.get('resource').remove({
@@ -60,7 +59,7 @@ def cleanFromSearch(package_id):
 # remove a resource from Mongo collections as well as disk
 # Note: this does not handle removing resource for CKAN, the EcoSIS extension
 def resource(package_id, resource_id):
-    collections.get('spectra').remove({
+    get_package_spectra_collection(package_id).remove({
         "resourceId": resource_id,
     })
 
@@ -72,7 +71,7 @@ def resource(package_id, resource_id):
     childResources = collections.get('resource').find({"zip.resourceId": resource_id})
 
     for childResource in childResources:
-        collections.get('spectra').remove({
+        get_package_spectra_collection(package_id).remove({
             "resourceId": childResource.get('resourceId'),
         })
 
@@ -97,7 +96,7 @@ def removeDeletedExcelSheets(resource_id, current_sheet_id_list):
         }
     })
 
-    collections.get('spectra').remove({
+    get_package_spectra_collection(package_id).remove({
         'resourceId' : resource_id,
         'sheetId' : {
             '$nin' : current_sheet_id_list

@@ -8,6 +8,7 @@ import hashlib
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
 from ckanext.ecosis.datastore.files import process as importer
+from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
 
 dataExtension = ["xlsx","xls","spectra","csv","tsv"]
 allowedOptions = ['map', 'sort']
@@ -65,9 +66,7 @@ def clean(current_package_id=None):
 # remove a package from the workspace
 def cleanPackage(package_id):
     # remove all spectra chunks
-    collections.get('spectra').remove({
-        "packageId" : package_id,
-    })
+    get_package_spectra_collection(package_id).remove({})
 
     # set not prepared
     collections.get("package").update({
