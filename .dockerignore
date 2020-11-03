@@ -1,0 +1,6 @@
+.idea
+*.pyc
+**/bower_components
+**/components
+**/.vscode
+.tmp
