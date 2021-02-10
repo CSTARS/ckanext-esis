@@ -1,7 +1,8 @@
 import os
 import json
 
-from ckan.common import request, response
+# from ckan.common import request, response
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader

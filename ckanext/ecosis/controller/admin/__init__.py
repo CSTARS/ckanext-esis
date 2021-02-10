@@ -1,16 +1,16 @@
-from ckan.common import response
+# from ckan.common import response
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
-import json, subprocess, os, urllib2, re
+import json, subprocess, os, urllib, re
 
 from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
-from upgrade import run as runUpgrade
-from upgrade import fixUnits as runFixUnits
-from upgrade import fixCitationText as runFixCitationText
+from .upgrade import run as runUpgrade
+from .upgrade import fixUnits as runFixUnits
+from .upgrade import fixCitationText as runFixCitationText
 
 
 # rebuild entire search index
@@ -68,7 +68,7 @@ def cleanTests():
                 revision = model.Session.query(model.Revision).get(id)
                 try:
                     model.repo.purge_revision(revision, leave_record=False)
-                except Exception, inst:
+                except Exception as inst:
                     msgs.append('Problem purging revision %s: %s' % (id, inst))
 
 

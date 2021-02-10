@@ -1,4 +1,4 @@
-import controlled, usda, top, gcmd
+from . import controlled, usda, top, gcmd
 
 # inject global dependencies
 def init(schema, collections):

@@ -1,4 +1,5 @@
-import re, utils
+import re
+from . import utils
 
 schema = None
 

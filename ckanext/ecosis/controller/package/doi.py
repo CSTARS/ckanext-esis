@@ -1,9 +1,10 @@
 from ckan.lib.base import c, model
 import ckan.logic as logic
 from ckan.lib.email_notifications import send_notification
-from pylons import config
-from ckan.common import request, response
-import json, datetime, psycopg2, urllib2, base64
+from ckan.common import config
+# from ckan.common import request, response
+from ckan.common import request
+import json, datetime, psycopg2, urllib, base64
 from dateutil import parser
 from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import setPackageExtra, getPackageExtra
@@ -185,18 +186,18 @@ def requestDoi(pkg):
         }
     }
 
-    print DOI_CONFIG.get('url')
+    print(DOI_CONFIG.get('url'))
     r = urllib2.Request(DOI_CONFIG.get('url'))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
-    print "Basic %s" % base64string
-    print json.dumps(data)
+    print("Basic %s" % base64string)
+    print(json.dumps(data))
     r.add_header("Authorization", "Basic %s" % base64string)
     r.add_header("Content-Type", "application/vnd.api+json")
     r.add_data(json.dumps(data))
 
     result = urllib2.urlopen(r)
     if result.getcode() != 201:
-        print result.read()
+        print(result.read())
         if result.getcode() == 422:
             raise Exception('Doi already taken, please try again')
         else:
@@ -233,7 +234,7 @@ def requestDoi(pkg):
         }
     }
 
-    print "%s/%s" % (DOI_CONFIG.get('url'), doi)
+    print("%s/%s" % (DOI_CONFIG.get('url'), doi))
     r = urllib2.Request("%s/%s" % (DOI_CONFIG.get('url'), doi))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
     r.get_method = lambda: 'PUT'
@@ -333,7 +334,7 @@ def sendAdminNotification(pkg):
                     }
                 )
             except:
-                print "Failed to send admin email"
+                print("Failed to send admin email")
 
 # send user notification of approval/denial of DOI request
 def sendUserNotification(pkg, approved):
@@ -384,7 +385,7 @@ def sendUserNotification(pkg, approved):
                     }
                 )
             except:
-                print "Failed to send admin email"
+                print("Failed to send admin email")
 
     return {
         "email" : email,

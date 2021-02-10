@@ -1,6 +1,7 @@
 import json
 
-from ckan.common import request, response
+# from ckan.common import request, response
+from ckan.common import request
 
 from ckanext.ecosis.lib.utils import jsonStringify
 import ckanext.ecosis.datastore.query as query

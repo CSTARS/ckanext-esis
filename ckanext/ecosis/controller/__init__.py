@@ -1,10 +1,9 @@
 import json
 import os
 
-import pylons.config as config
-
+from ckan.common import config
 import ckan.lib.uploader as uploader
-from ckan.controllers.package import PackageController
+# from ckan.controllers.package import PackageController
 from ckanext.ecosis.controller import git, admin, organization, package, resource, spectra, user
 from ckanext.ecosis.controller import workspace as workspaceController
 from ckanext.ecosis.lib.utils import handleError
@@ -27,7 +26,8 @@ datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), 
 package.init(collections, pgConnStr)
 organization.init(collections)
 
-class EcosisController(PackageController):
+# class EcosisController(PackageController):
+class EcosisController():
 
     def createPackage(self):
         try:

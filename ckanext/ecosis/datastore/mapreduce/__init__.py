@@ -2,8 +2,8 @@ import os, json, re
 import datetime
 from bson.code import Code
 from bson.son import SON
-from pylons import config
-import lookup
+from ckan.common import config
+from . import lookup
 import dateutil.parser as dateparser
 from ckanext.ecosis.datastore import query
 from ckanext.ecosis.lib.utils import getPackageExtra
@@ -47,7 +47,7 @@ def init(mongoCollections, jsonSchema):
     lookup.init(collections)
 
     # loop schema and lookup mapreduce attributes
-    for cat, arr in schema.iteritems():
+    for cat, arr in schema.items():
         for item in arr:
             if item.get('name') == 'Latitude' or item.get('name') == 'geojson' or item.get('name') == 'Longitude':
                 continue

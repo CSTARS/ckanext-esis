@@ -1,5 +1,6 @@
-import utils, excel, hashlib, datetime
+import hashlib, datetime
 
+from . import utils, excel
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.files import csvReader
 from ckanext.ecosis.datastore.mongo import get_package_spectra_collection

@@ -1,8 +1,9 @@
-from ckan.common import response, request
+# from ckan.common import response, request
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import json, jwt, re
-import pylons.config as config
+from ckan.common import config
 import ckan.lib.authenticator as authenticator
 import ckanext.ecosis.user_data.model as githubInfoModel
 import ckanext.ecosis.lib.utils as utils

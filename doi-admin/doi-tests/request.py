@@ -17,4 +17,4 @@ response = requests.post(endpoint,
                          data = file.encode('utf-8'),
                          headers = {'Content-Type':'text/plain;charset=UTF-8'})
 
-print str(response.status_code) + " " + response.text
+print(str(response.status_code) + " " + response.text)

@@ -1,7 +1,7 @@
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import ckan.lib.base as base
-import pylons.config as config
+from ckan.common import config
 from ckan.logic.action.create import organization_member_create
 from ckan.logic.action.delete import organization_member_delete
 
@@ -248,7 +248,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         return super(EcosisPlugin, self).package_form()
 
 
-class StaticPageController(base.BaseController):
+# class StaticPageController(base.BaseController):
 
-    def remotelogin(self):
-        return base.render('user/remotelogin.html')
+#     def remotelogin(self):
+#         return base.render('user/remotelogin.html')

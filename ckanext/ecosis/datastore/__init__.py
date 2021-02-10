@@ -1,20 +1,15 @@
 import json, re
-import ConfigParser
+# import ConfigParser
 import time
 
 from pymongo import MongoClient
 
-import files
-import ckan
-import vocab
-import delete
-import query
-import workspace
-import query.workspace as workspaceQuery
-from utils import storage as ckanFileStorage
-import mapreduce
-import push
-from ckan import package
+from . import files, ckan, vocab, delete, query, workspace
+from .query import workspace as workspaceQuery
+from .utils import storage as ckanFileStorage
+from . import mapreduce
+from . import push
+from .ckan import package
 from ckanext.ecosis.datastore.mongo import db
 
 collections = None
@@ -52,7 +47,7 @@ def ensureIndexes(collections):
 def test():
     t = time.time()*1000
 
-    config = ConfigParser.ConfigParser()
+    # config = ConfigParser.ConfigParser()
     config.read('/etc/ckan/default/development.ini')
 
     schema = "test/schema.json"

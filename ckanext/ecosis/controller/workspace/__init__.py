@@ -3,7 +3,8 @@ import ckanext.ecosis.datastore.query.workspace as workspaceQuery
 from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import jsonStringify
 
-from ckan.common import request, response
+# from ckan.common import request, response
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 

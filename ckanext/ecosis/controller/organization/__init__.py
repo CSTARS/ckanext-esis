@@ -1,9 +1,9 @@
 from ckan.lib.base import c, model
 from ckanext.ecosis.datastore import delete as deleteUtil
 import ckan.logic as logic
-import pylons.config as config
-from ckan.common import response
-import urllib, urllib2, jwt, json
+from ckan.common import config
+# from ckan.common import response
+import urllib, jwt, json
 
 remote_hosts = config.get('ecosis.remote_hosts', '')
 remote_hosts = [x.strip() for x in remote_hosts.split(',')]

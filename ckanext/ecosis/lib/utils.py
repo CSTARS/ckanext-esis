@@ -1,6 +1,7 @@
-import urllib2, json, datetime, re
+import urllib, json, datetime, re
 import ckan.lib.helpers as h
-from ckan.common import response
+print("need to figure out flask response")
+# from ckan.common import response
 import traceback, sys
 
 # replicating default param parsing in ckan... really python... really...
@@ -13,15 +14,15 @@ def get_request_data(request):
         if keys and request.POST[keys[0]] in [u'1', u'']:
             request_data = keys[0]
         else:
-            request_data = urllib2.unquote(request.body)
-    except Exception, inst:
+            request_data = urllib.unquote(request.body)
+    except Exception as inst:
         msg = "Could not find the POST data: %r : %s" % \
               (request.POST, inst)
         raise ValueError(msg)
 
     try:
         request_data = h.json.loads(request_data, encoding='utf8')
-    except ValueError, e:
+    except ValueError as e:
         raise ValueError('Error decoding JSON data. '
                          'Error: %r '
                          'JSON data extracted from the request: %r' %

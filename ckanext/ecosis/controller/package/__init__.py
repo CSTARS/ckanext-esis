@@ -5,15 +5,16 @@ from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.lib.auth import hasAccess
 from ckanext.ecosis.datastore import workspace
 from ckanext.ecosis.datastore.ckan import package
-from ckan.common import request, response
+# from ckan.common import request, response
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.lib.utils import setPackageExtra
 from ckan.lib.email_notifications import send_notification
-from pylons import config
-from doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
-from doi import init as initDoi
+from ckan.common import config
+from .doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
+from .doi import init as initDoi
 
 collections = None
 ignoreTemplateVars = ["metadata_modified", "state", "creator_user_id", "revision_id", "type", "url","organization"]
@@ -123,7 +124,7 @@ def create():
                     }
                 )
             except:
-                print "Failed to send admin email"
+                print("Failed to send admin email")
 
     return json.dumps(ckanPackage)
 
