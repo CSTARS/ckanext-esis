@@ -66,7 +66,9 @@ def clean(current_package_id=None):
 # remove a package from the workspace
 def cleanPackage(package_id):
     # remove all spectra chunks
-    get_package_spectra_collection(package_id).remove({})
+    wkspaceCol = get_package_spectra_collection(package_id)
+    wkspaceCol.remove({})
+    wkspaceCol.drop()
 
     # set not prepared
     collections.get("package").update({

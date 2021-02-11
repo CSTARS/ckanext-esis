@@ -127,6 +127,19 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
         sheets = excel.process(collections.get("resource"), sheetConfig, hash)
         response = []
         for sheet in sheets:
+
+            tabConfig = sheet.get('config')
+            if tabConfig.get('ignore') is True:
+                response.append({
+                    "ignored" : True,
+                    "message" : "ignore flag set or invalid file type",
+                    "resourceId" : resourceId,
+                    "fromZip" : resource.get("fromZip"),
+                    "name" : resource.get("name"),
+                    "sheetId" : tabConfig.get('sheetId')
+                })
+                continue
+
             t = _processSheetArray(sheet.get('data'), sheet.get('config'))
             t['sheetId'] = sheet.get('config').get('sheetId')
             t['name'] = resource.get('name')

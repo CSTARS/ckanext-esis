@@ -21,7 +21,7 @@ def prepare():
 
     force = request.params.get('force')
     clean = request.params.get('clean')
-    if force == None:
+    if force is None:
         force = False
 
     # remove old unused packages
