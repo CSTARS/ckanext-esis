@@ -21,7 +21,9 @@ def prepare():
 
     force = request.params.get('force')
     clean = request.params.get('clean')
-    if force is None:
+    if force == "true":
+        force = False
+    else:
         force = False
 
     # remove old unused packages
@@ -67,3 +69,14 @@ def get():
     ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
     return jsonStringify(workspaceQuery.get(ckanPackage.get("id")))
+
+def clean():
+    response.headers["Content-Type"] = "application/json"
+
+    package_id = request.params.get('package_id')
+    workspace.cleanPackage(package_id)
+
+    return jsonStringify({
+        "cleaned": True,
+        "packageId" : package_id
+    })

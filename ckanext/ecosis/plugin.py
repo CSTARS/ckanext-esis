@@ -184,6 +184,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - workspace
         map.connect('prepare_workspace', '/ecosis/workspace/prepare', controller=controller, action='prepareWorkspace')
+        map.connect('clean_workspace', '/ecosis/workspace/clean', controller=controller, action='cleanWorkspace')
         map.connect('get_workspace', '/ecosis/workspace/get', controller=controller, action='getWorkspace')
         map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
 

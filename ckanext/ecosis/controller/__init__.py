@@ -210,6 +210,12 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
+    def cleanWorkspace(self):
+        try:
+            return workspaceController.clean()
+        except Exception as e:
+            return handleError(e)
+
     def getWorkspace(self):
         try:
             return workspaceController.get()
