@@ -3,13 +3,11 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$" />
     <content url="file://$MODULE_DIR$/../ecosis-local/src/ckan" />
-    <orderEntry type="jdk" jdkName="Python 2.7.10 virtualenv at ~/dev/cstars/EcoSIS/ecosis-local" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 2.7 (ecosis-local)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
+    <option name="format" value="PLAIN" />
     <option name="myDocStringFormat" value="Plain" />
-  </component>
-  <component name="TestRunnerService">
-    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
   </component>
 </module>
