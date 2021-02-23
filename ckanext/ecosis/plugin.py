@@ -9,7 +9,6 @@ import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.controller.organization as orgController
 import ckanext.ecosis.user_data.model as userDataModel
 
-
 @tk.side_effect_free
 def organization_member_create_wrapper(context, member_create):
     organization_member_create(context, member_create)
@@ -32,7 +31,18 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IOrganizationController)
     plugins.implements(plugins.IActions)
+    plugins.implements(plugins.IClick)
 
+
+    # IClick
+    def get_commands(self):
+        import click
+        from ckanext.ecosis.user_data.paster import ecosis as ecosisCmd
+
+        # @click.command()
+        # def hello():
+        #     click.echo('Hello, World!')
+        return [ecosisCmd]
 
     def read(self, entity):
         pass
