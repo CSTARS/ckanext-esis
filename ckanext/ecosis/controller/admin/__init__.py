@@ -1,4 +1,3 @@
-# from ckan.common import response
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
@@ -23,19 +22,18 @@ def rebuildIndex(collections):
     list = logic.get_action('package_list')(context,{})
 
     # clear the current collection
-    collections.get("package_search").remove({})
+    collections.get("search_package").remove({})
 
     for pkgId in list:
         context = {'model': model, 'user': c.user}
         ckanPackage = logic.get_action('package_show')(context,{id: pkgId})
 
-        mapreducePackage(ckanPackage, collections.get("spectra_search"), collections.get("package_search"))
+        mapreducePackage(ckanPackage, collections.get("search_spectra"), collections.get("package_search"))
 
     return json.dumps({'success': True, 'rebuildCount': len(list)})
 
 # Remove all testing data flagged with _testing_
 def cleanTests():
-    response.headers["Content-Type"] = "application/json"
     context = {'model': model, 'user': c.user}
 
     path = os.path.dirname(__file__)
@@ -82,7 +80,6 @@ def cleanTests():
 # dump everything (data)!
 # this will not work on the master branch
 def clean(collections):
-    response.headers["Content-Type"] = "application/json"
     context = {'model': model, 'user': c.user}
 
     path = os.path.dirname(__file__)
@@ -92,7 +89,7 @@ def clean(collections):
 
     cmd = "git branch"
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, cwd=path)
-    branches = process.communicate()[0].split("\n")
+    branches = process.communicate()[0].decode("utf-8").split("\n")
     for branch in branches:
         if "*" in branch:
             branch = branch.replace("* ","")
@@ -112,9 +109,9 @@ def clean(collections):
                     if os.path.exists(path):
                         os.remove(path)
         logic.get_action('package_delete')(context, {'id': package['id']})
+        get_package_spectra_collection(package['id']).remove({})
 
     # clear mongo
-    get_package_spectra_collection(package['id']).remove({})
     collections.get('resource').remove({})
     collections.get('package').remove({})
     collections.get('search_package').remove({})

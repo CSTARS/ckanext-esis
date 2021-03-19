@@ -1,13 +1,20 @@
+import json, os
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import ckan.lib.base as base
-from ckan.common import config
+from ckan.common import config, request
 from ckan.logic.action.create import organization_member_create
 from ckan.logic.action.delete import organization_member_delete
+
+from flask import Blueprint, make_response, send_from_directory
+import ckanext.ecosis.lib.utils as utils
 
 import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.controller.organization as orgController
 import ckanext.ecosis.user_data.model as userDataModel
+from ckanext.ecosis.controller import EcosisController
+
+controller = EcosisController()
 
 @tk.side_effect_free
 def organization_member_create_wrapper(context, member_create):
@@ -32,6 +39,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IOrganizationController)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IClick)
+    plugins.implements(plugins.IMiddleware)
 
 
     # IClick
@@ -118,8 +126,37 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # spectral types not handled by any other IDatasetForm plugin.
         return False
 
+    def make_middleware(self, app, config):
+      editor_redirects = Blueprint(u'editor_redirects', __name__, url_prefix=u'/')
+      # route all resource edit screens to main ecosis dataset editor
+      editor_redirects.add_url_rule(u'/dataset/new', methods=[u'GET'],
+          view_func=controller.createPackageRedirect)
+
+      editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
+          view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
+
+      app.register_blueprint(editor_redirects)
+
+      # API
+      api = Blueprint(u'ecosis', __name__, url_prefix=u'/ecosis')
+
+      # ecosis - admin
+      api.add_url_rule(u'/admin/rebuildIndex', methods=[u'GET'],
+          view_func=controller.rebuildIndex)
+      api.add_url_rule(u'/admin/clean', methods=[u'GET'],
+          view_func=controller.clean)
+
+          # ecosis - admin
+
+      app.register_blueprint(api)
+      return app
+
+    def make_error_log_middleware(self, app, config):
+      return app
+
+
     def before_map(self, map):
-        self.set_map(map);
+        self.set_map(map)
         return map
 
     # override?
@@ -141,17 +178,14 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
 
         # route all resource edit screens to main ecosis dataset editor
-        map.connect('create_package_ui', '/dataset/new', controller=controller, action='createPackageRedirect')
         # TODO: can we get fancy and point at specific action or resource?
-        map.connect('edit_package_ui', '/dataset/edit/{id}', controller=controller, action='editPackageRedirect')
-        map.connect('package_resources_ui', '/dataset/resources/{id}', controller=controller, action='editPackageRedirect')
-        map.connect('new_resource_ui', '/dataset/new_resource/{id}', controller=controller, action='editPackageRedirect')
-        map.connect('edit_resource_ui', '/dataset/{id}/resource_edit/{resource_id}', controller=controller, action='editPackageRedirect')
+        map.connect('edit_package_ui', '/dataset/edit/<id>', controller=controller, action='editPackageRedirect')
+        map.connect('package_resources_ui', '/dataset/resources/<id>', controller=controller, action='editPackageRedirect')
+        map.connect('new_resource_ui', '/dataset/new_resource/<id>', controller=controller, action='editPackageRedirect')
+        map.connect('edit_resource_ui', '/dataset/<id>/resource_edit/<resource_id>', controller=controller, action='editPackageRedirect')
 
 
         # ecosis - admin
-        map.connect('rebuild_index', '/ecosis/admin/rebuildIndex', controller=controller, action='rebuildIndex')
-        map.connect('clean', '/ecosis/admin/clean', controller=controller, action='clean')
         map.connect('verifyWorkspace', '/ecosis/admin/verifyWorkspace', controller=controller, action='verifyWorkspace')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')

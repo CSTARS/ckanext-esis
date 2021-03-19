@@ -1,7 +1,6 @@
 import urllib, json, datetime, re
 import ckan.lib.helpers as h
-print("need to figure out flask response")
-# from ckan.common import response
+from flask import make_response
 import traceback, sys
 
 # replicating default param parsing in ckan... really python... really...
@@ -32,7 +31,7 @@ def get_request_data(request):
 # We don't want to send HTML templated errors when things go wrong (CKAN default).
 # Instead we catch errors and respond with this.
 def handleError(e):
-    response.headers["Content-Type"] = "application/json"
+    headers = {"Content-Type": "application/json"}
 
     stack = ""
     try:
@@ -42,24 +41,24 @@ def handleError(e):
 
     if hasattr(e, 'message'):
         if e.message is not None:
-            return json.dumps({
+            return make_response((json.dumps({
                 "error": True,
                 "message": "%s:%s" % (type(e).__name__, e.message),
                 "stack" : stack
-            })
+            }), 500, headers))
     if hasattr(e, 'error_summary'):
         if e.error_summary is not None:
-            return json.dumps({
+            return make_response((json.dumps({
                 "error": True,
                 "message": "%s:%s" % (type(e).__name__, e.error_summary),
                 "stack" : "stack"
-            })
+            }), 500, headers))
 
-    return json.dumps({
+    return make_response(json.dumps({
         "error": True,
         "message": "%s:%s" % (type(e).__name__, str(e)),
         "stack" : stack
-    })
+    }), 500, headers)
 
 # helper for sending json, mostly adds ability to encode dates in ISO format.
 def jsonStringify(obj, formatted=False):

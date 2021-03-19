@@ -9,6 +9,7 @@ from ckanext.ecosis.controller import workspace as workspaceController
 from ckanext.ecosis.lib.utils import handleError
 from ckanext.ecosis import datastore
 from ckanext.ecosis.datastore.mongo import collections
+from flask import make_response
 
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
@@ -26,7 +27,6 @@ datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), 
 package.init(collections, pgConnStr)
 organization.init(collections)
 
-# class EcosisController(PackageController):
 class EcosisController():
 
     def createPackage(self):
@@ -97,7 +97,7 @@ class EcosisController():
 
     def rebuildIndex(self):
         try:
-            return admin.rebuildIndex(collections)
+            return resp(admin.rebuildIndex(collections))
         except Exception as e:
             return handleError(e)
 
@@ -175,10 +175,11 @@ class EcosisController():
             return handleError(e)
 
     def createPackageRedirect(self):
-        package.createPackageRedirect()
+        return package.createPackageRedirect()
 
     def editPackageRedirect(self, id):
-        package.editPackageRedirect(id)
+
+      return package.editPackageRedirect(id)
 
     def rebuildUSDACollection(self):
         try:
@@ -269,3 +270,9 @@ class EcosisController():
             return workspaceController.pushToSearch()
         except Exception as e:
             return handleError(e)
+
+def resp(msg, code=200, headers={}):
+  if not isinstance(msg, str):
+    msg = json.dumps(msg)
+  headers['Content-Type'] = 'text/json'
+  return make_response((msg, 200, headers))

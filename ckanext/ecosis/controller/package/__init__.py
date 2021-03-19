@@ -1,11 +1,11 @@
 import json
+from flask import make_response
 
 import ckanext.ecosis.lib.utils as utils
 from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.lib.auth import hasAccess
 from ckanext.ecosis.datastore import workspace
 from ckanext.ecosis.datastore.ckan import package
-# from ckan.common import request, response
 from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
@@ -221,33 +221,32 @@ def getTemplate():
 
 # TODO: remove.  this used to set sort and alias, these fields are now stored the
 # the CKAN 'extra'.
-def setOptions():
-    response.headers["Content-Type"] = "application/json"
-    package_id = request.params.get('package_id')
-    hasAccess(package_id)
+# def setOptions():
+#     response.headers["Content-Type"] = "application/json"
+#     package_id = request.params.get('package_id')
+#     hasAccess(package_id)
 
-    options = json.loads(request.params.get('options'))
+#     options = json.loads(request.params.get('options'))
 
-    workspace.setOptions(package_id, options)
+#     workspace.setOptions(package_id, options)
 
-    return json.dumps({'success': True})
+#     return json.dumps({'success': True})
 
 # if someone is trying to access the main CKAN package create screen, redirect to
 # EcoSIS spectra importer app.
 def createPackageRedirect():
     group = request.params.get('group')
-    response.status_int = 307
+    headers = {}
 
     if group == None:
-        response.headers["Location"] = "/import/"
+      headers["Location"] = "/import/"
     else:
-        response.headers["Location"] = "/import/?group=%s" % group.encode('ascii','ignore')
+      headers["Location"] = "/import/?group=%s" % group.encode('ascii','ignore')
 
-    return "Redirecting"
+    return make_response(("Redirecting", 307, headers))
 
 # if someone is trying to access the main CKAN package edit screen, redirect to
 # EcoSIS spectra importer app.
 def editPackageRedirect(id):
-    response.status_int = 307
-    response.headers["Location"] = "/import/?id=%s" % id.encode('ascii','ignore')
-    return "Redirecting"
+    headers = {"Location" : "/import/?id=%s" % id.encode('ascii','ignore')}
+    return make_response(("Redirecting", 307, headers))
