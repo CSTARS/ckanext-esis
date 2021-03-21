@@ -1,9 +1,7 @@
 import json
 
-# from ckan.common import request, response
 from ckan.common import request
 
-from ckanext.ecosis.lib.utils import jsonStringify
 import ckanext.ecosis.datastore.query as query
 from ckanext.ecosis.datastore.vocab import top
 from ckanext.ecosis.datastore.vocab import gcmd
@@ -31,8 +29,6 @@ def suggestAttributeName():
 # for a list of attributes of a spectra, returns attributes which might
 # have TOP suggestions
 def suggestOverview():
-    response.headers["Content-Type"] = "application/json"
-
     params = {}
     try:
         keys = request.POST.keys()
@@ -44,7 +40,7 @@ def suggestOverview():
     if params.get('names') is None:
         raise Exception('Name list not provided')
 
-    return jsonStringify(top.overview(json.loads(params.get('names'))))
+    return top.overview(json.loads(params.get('names')))
 
 # Query NASA GCDM vocab
 def suggestGCMD():

@@ -145,8 +145,24 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.rebuildIndex)
       api.add_url_rule(u'/admin/clean', methods=[u'GET'],
           view_func=controller.clean)
+      api.add_url_rule(u'/admin/verifyWorkspace', methods=[u'GET'],
+          view_func=controller.verifyWorkspace)
 
-          # ecosis - admin
+      # ecosis - root
+      api.add_url_rule(u'/user/get', methods=[u'GET'],
+          view_func=controller.userInfo)
+      api.add_url_rule(u'/gitInfo', methods=[u'GET'],
+          view_func=controller.gitInfo)
+
+      # ecosis - workspace
+      api.add_url_rule(u'/workspace/prepare', methods=[u'GET'],
+          view_func=controller.prepareWorkspace)
+      api.add_url_rule(u'/workspace/get', methods=[u'GET'],
+          view_func=controller.getWorkspace)
+
+      # ecosis - spectra
+      api.add_url_rule(u'/spectra/suggestOverview', methods=[u'GET', 'POST'],
+          view_func=controller.topOverview)
 
       app.register_blueprint(api)
       return app
@@ -186,7 +202,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
 
         # ecosis - admin
-        map.connect('verifyWorkspace', '/ecosis/admin/verifyWorkspace', controller=controller, action='verifyWorkspace')
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
         map.connect('upgrade', '/ecosis/admin/upgrade', controller=controller, action='upgrade')
@@ -206,8 +221,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setPackageOptions')
 
         # ecosis - root
-        map.connect('git_info', '/ecosis/gitInfo', controller=controller, action='gitInfo')
-        map.connect('userInfo', '/ecosis/user/get', controller=controller, action='userInfo')
         map.connect('userInfo', '/ecosis/user/githubInfo', controller=controller, action='setGithubInfo')
         map.connect('remoteLogin', '/ecosis/user/remoteLogin', controller=controller, action='remoteLogin')
 
@@ -223,12 +236,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # ecosis - spectra
         map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')
         map.connect('top_suggest', '/ecosis/spectra/suggest', controller=controller, action='topSuggest')
-        map.connect('top_overview', '/ecosis/spectra/suggestOverview', controller=controller, action='topOverview')
         map.connect('gcmd_suggest', '/ecosis/spectra/gcmd', controller=controller, action='gcmdSuggest')
 
         # ecosis - workspace
-        map.connect('prepare_workspace', '/ecosis/workspace/prepare', controller=controller, action='prepareWorkspace')
-        map.connect('get_workspace', '/ecosis/workspace/get', controller=controller, action='getWorkspace')
         map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
 
         # custom pages

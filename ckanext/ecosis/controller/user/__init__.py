@@ -14,9 +14,8 @@ secret = config.get('ecosis.jwt.secret')
 
 # get information about logged in user, including if they are logged in
 def info():
-    response.headers["Content-Type"] = "application/json"
     if len(c.user) == 0:
-        return json.dumps({"loggedIn": False})
+        return {"loggedIn": False}
 
     context = {'model': model, 'user': c.user}
 
@@ -37,7 +36,7 @@ def info():
     if isAdmin():
         user['isAdmin'] = True
 
-    return json.dumps(user)
+    return user
 
 
 def remote_login():

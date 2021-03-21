@@ -16,3 +16,4 @@ def ecosis():
 def initdb():
   u'''Initialize ecosis tables'''
   from .model import setup
+  setup()

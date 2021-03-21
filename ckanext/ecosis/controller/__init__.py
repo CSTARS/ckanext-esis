@@ -1,5 +1,4 @@
-import json
-import os
+import os, json
 
 from ckan.common import config
 import ckan.lib.uploader as uploader
@@ -9,6 +8,8 @@ from ckanext.ecosis.controller import workspace as workspaceController
 from ckanext.ecosis.lib.utils import handleError
 from ckanext.ecosis import datastore
 from ckanext.ecosis.datastore.mongo import collections
+from ckanext.ecosis.lib.utils import jsonStringify
+
 from flask import make_response
 
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
@@ -140,19 +141,19 @@ class EcosisController():
 
     def verifyWorkspace(self):
         try:
-            return admin.verifyWorkspace(collections)
+            return resp(admin.verifyWorkspace(collections))
         except Exception as e:
             return handleError(e)
 
     def gitInfo(self):
         try:
-            return git.info()
+            return resp(git.info())
         except Exception as e:
             return handleError(e)
 
     def userInfo(self):
         try:
-            return user.info()
+            return resp(user.info())
         except Exception as e:
             return handleError(e)
 
@@ -201,19 +202,19 @@ class EcosisController():
 
     def topOverview(self):
         try:
-            return spectra.suggestOverview()
+            return resp(spectra.suggestOverview())
         except Exception as e:
             return handleError(e)
 
     def prepareWorkspace(self):
         try:
-            return workspaceController.prepare()
+            return resp(workspaceController.prepare())
         except Exception as e:
             return handleError(e)
 
     def getWorkspace(self):
         try:
-            return workspaceController.get()
+            return resp(workspaceController.get())
         except Exception as e:
             return handleError(e)
 
@@ -273,6 +274,6 @@ class EcosisController():
 
 def resp(msg, code=200, headers={}):
   if not isinstance(msg, str):
-    msg = json.dumps(msg)
-  headers['Content-Type'] = 'text/json'
+    msg = jsonStringify(msg)
+  headers['Content-Type'] = 'application/json'
   return make_response((msg, 200, headers))
