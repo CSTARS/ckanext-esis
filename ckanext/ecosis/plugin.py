@@ -11,6 +11,7 @@ import ckanext.ecosis.lib.utils as utils
 
 import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.controller.organization as orgController
+import ckanext.ecosis.controller.package as pkgController
 import ckanext.ecosis.user_data.model as userDataModel
 from ckanext.ecosis.controller import EcosisController
 
@@ -37,6 +38,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IOrganizationController)
+    plugins.implements(plugins.IPackageController)
+    plugins.implements(plugins.IAuthFunctions)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IClick)
     plugins.implements(plugins.IMiddleware)
@@ -44,22 +47,67 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
     # IClick
     def get_commands(self):
+        """Implemented for IClick Plugin
+        
+        register the 'ckan ecosis' CLI commands
+        """
         import click
         from ckanext.ecosis.user_data.paster import ecosis as ecosisCmd
 
-        # @click.command()
-        # def hello():
-        #     click.echo('Hello, World!')
         return [ecosisCmd]
 
+    def get_auth_functions(self):
+        return {
+          'package_update' : self.package_update_auth
+        }
+
+    def get_class_name(self, entity):
+        """Helper for getting nice class name string
+        required because some plugin methods overlap, need to sniff
+        test which is calling
+        """
+        return entity.__class__.__name__ 
+
+    def is_group(self, entity):
+        return self.get_class_name(entity) == 'Group'
+
+    def is_package(self, entity):
+        return self.get_class_name(entity) == 'Package'
+
     def read(self, entity):
+        """Implemented for IOrganizationController and IPackageController Plugins
+
+        not used by the EcoSIS Plugin
+        """
         pass
 
     def create(self, entity):
-        orgController.notify_remotes(entity.id)
+        """Implemented for IOrganizationController and IPackageController Plugins
+
+        IOrganizationController: notify remotes of org update
+        """
+        if self.is_group(entity):
+            orgController.notify_remotes(entity.id)
+
+    def after_create(self, context, pkg_dict):
+        """Implemented for IPackageController"""
+        if self.get_class_name(pkg_dict) == "dict": # safety check
+            pkgController.after_create()
+        return pkg_dict
+
+    def before_index(self, pkg_dict):
+        """Implemented for IPackageController"""
+        return pkg_dict
 
     def edit(self, entity):
-        orgController.update(entity)
+        pass
+        # orgController.update(entity)
+    
+    @tk.auth_sysadmins_check
+    def package_update_auth(self, context, data_dict=None):
+        """Always check that doi has not been applied
+        """
+        return {'success': False, 'msg': 'DOI has been applied'}
 
     def authz_add_role(self, object_role):
         pass
@@ -70,8 +118,17 @@ class EcosisPlugin(plugins.SingletonPlugin,
     def delete(self, entity):
         orgController.delete(entity)
 
+    def after_show(self, context, entity):
+        return entity
+
     def before_view(self, pkg_dict):
         return pkg_dict
+
+    def before_search(self, search_params):
+      return search_params
+
+    def after_search(self, search_results, search_params):
+      return search_results
 
     # we need to listen for org create/update/delete events and notify remotes
     def get_actions(self):
@@ -135,7 +192,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
       editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
           view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
 
-      app.register_blueprint(editor_redirects)
+      # app.register_blueprint(editor_redirects)
 
       # API
       api = Blueprint(u'ecosis', __name__, url_prefix=u'/ecosis')
@@ -301,8 +358,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
     def package_form(self):
         return super(EcosisPlugin, self).package_form()
 
-
-# class StaticPageController(base.BaseController):
-
-#     def remotelogin(self):
-#         return base.render('user/remotelogin.html')
+    ###
+    # IPackageController
+    ###

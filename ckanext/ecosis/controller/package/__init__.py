@@ -93,16 +93,7 @@ def update():
     return json.dumps(pkg)
 
 # create a package. notify admins
-def create():
-    response.headers["Content-Type"] = "application/json"
-
-    params = json.loads(request.body)
-
-    # normal CKAN create logic
-    context = {'model': model, 'user': c.user}
-    package_create = logic.get_action('package_create')
-    ckanPackage = package_create(context, params)
-
+def after_create():
     # send email to the admin email group
     url = config.get('ckan.site_url')
     admin_email = config.get('ecosis.admin_email')
@@ -125,8 +116,6 @@ def create():
                 )
             except:
                 print("Failed to send admin email")
-
-    return json.dumps(ckanPackage)
 
 # Once a DOI is applied, the update package function is disabled
 # this is a simple workaround service, for just upda
