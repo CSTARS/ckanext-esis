@@ -95,23 +95,21 @@ def create():
 # this will be given a set of options, then parse the measurement data or metadata out of
 # the resource based on this options
 def process():
-    response.headers["Content-Type"] = "application/json"
-
-    package_id = request.params.get('package_id')
+    package_id = request.form.get('package_id')
     hasAccess(package_id)
 
     if hasAppliedDoi(package_id):
         return {'error':True, 'message':'Cannot edit resource of package with applied DOI'}
 
-    sheet_id = request.params.get('sheet_id')
-    resource_id = request.params.get('resource_id')
-    ids = request.params.get('resource_ids')
+    sheet_id = request.form.get('sheet_id')
+    resource_id = request.form.get('resource_id')
+    ids = request.form.get('resource_ids')
 
     if sheet_id == "":
         sheet_id = None
 
     try:
-        options = json.loads(request.params.get('options'))
+        options = json.loads(request.form.get('options'))
     except:
         options = {}
 
@@ -153,7 +151,7 @@ def process():
         'result' : result
     }
 
-    return jsonStringify(result)
+    return result
 
 # get a specific resource
 # optional sheet id, it the resource has multiple sheets (excel file)
@@ -174,7 +172,6 @@ def get():
 # a get a row or column (depending on sheet orientation) of a resource file
 # index is the row/column to retrieve
 def getMetadataChunk():
-    response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
@@ -183,12 +180,11 @@ def getMetadataChunk():
     if sheet_id == "":
         sheet_id = None
 
-    return jsonStringify(query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex()))
+    return query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex())
 
 # get overview information for file, like number of rows/columns (chunks)
 # also returns number of join rows/columns if metadata resource type
 def getMetadataInfo():
-    response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
@@ -197,12 +193,10 @@ def getMetadataInfo():
     if sheet_id == "":
         sheet_id = None
 
-    return jsonStringify(query.getMetadataInfo(package_id, resource_id, sheet_id))
+    return query.getMetadataInfo(package_id, resource_id, sheet_id)
 
 # get the number of spectra measurements found in the file
 def getSpectraCount():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
@@ -210,7 +204,7 @@ def getSpectraCount():
     if sheet_id == "":
         sheet_id = None
 
-    return jsonStringify(query.total(package_id, resource_id, sheet_id))
+    return query.total(package_id, resource_id, sheet_id)
 
 def getByName(package_id, resource_name):
     resource = ckanResourceQuery.getByName(package_id, resource_name)

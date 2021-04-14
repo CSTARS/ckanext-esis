@@ -215,7 +215,7 @@ def _processSheetArray(data, sheetConfig):
         if stop > 1:# check for bad parse
             for i in range(0, stop):
                 # actually parse attribute info
-                info = utils.parseAttrType(data[localRange['start']][i], [localRange['start'], i])
+                info = utils.parseAttrType(data[localRange['start']][i].decode('utf-8'), [localRange['start'], i])
                 attrTypes.append(info)
     else:
         for i in range(localRange['start'], localRange['stop']+1):
@@ -223,14 +223,14 @@ def _processSheetArray(data, sheetConfig):
                 continue
 
             # actually parse attribute info
-            info = utils.parseAttrType(data[i][0], [i,0])
+            info = utils.parseAttrType(data[i][0].decode('utf-8'), [i,0])
             attrTypes.append(info)
 
     # if there is a global range, read in attribute information for global
     # attributes as well
     if globalRange != None:
         for i in range(globalRange['start'], globalRange['stop']+1):
-            info = utils.parseAttrType(data[i][0], [i,0])
+            info = utils.parseAttrType(data[i][0].decode('utf-8'), [i,0])
             attrTypes.append(info)
 
     # store attribute information as well as range information

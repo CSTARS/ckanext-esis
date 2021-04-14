@@ -220,7 +220,7 @@ class EcosisController():
 
     def processResource(self):
         try:
-            return resource.process()
+            return resp(resource.process())
         except Exception as e:
             return handleError(e)
 
@@ -250,19 +250,19 @@ class EcosisController():
 
     def getSpectraCount(self):
         try:
-            return resource.getSpectraCount()
+            return resp(resource.getSpectraCount())
         except Exception as e:
             return handleError(e)
 
     def getMetadataChunk(self):
         try:
-            return resource.getMetadataChunk()
+            return resp(resource.getMetadataChunk())
         except Exception as e:
             return handleError(e)
 
     def getMetadataInfo(self):
         try:
-            return resource.getMetadataInfo()
+            return resp(resource.getMetadataInfo())
         except Exception as e:
             return handleError(e)
 

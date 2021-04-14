@@ -39,7 +39,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IOrganizationController)
     plugins.implements(plugins.IPackageController)
-    plugins.implements(plugins.IAuthFunctions)
+    # plugins.implements(plugins.IAuthFunctions)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IClick)
     plugins.implements(plugins.IMiddleware)
@@ -56,6 +56,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         return [ecosisCmd]
 
+    # add iauth functions
     def get_auth_functions(self):
         return {
           'package_update' : self.package_update_auth
@@ -89,6 +90,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
         if self.is_group(entity):
             orgController.notify_remotes(entity.id)
 
+    def after_update(self, context, pkg_dict):
+        pass
+
     def after_create(self, context, pkg_dict):
         """Implemented for IPackageController"""
         if self.get_class_name(pkg_dict) == "dict": # safety check
@@ -103,11 +107,11 @@ class EcosisPlugin(plugins.SingletonPlugin,
         pass
         # orgController.update(entity)
     
-    @tk.auth_sysadmins_check
-    def package_update_auth(self, context, data_dict=None):
-        """Always check that doi has not been applied
-        """
-        return {'success': False, 'msg': 'DOI has been applied'}
+    # @tk.auth_sysadmins_check
+    # def package_update_auth(self, context, data_dict=None):
+    #     """Always check that doi has not been applied
+    #     """
+    #     return {'success': False, 'msg': 'DOI has been applied'}
 
     def authz_add_role(self, object_role):
         pass
@@ -192,7 +196,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
       editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
           view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
 
-      # app.register_blueprint(editor_redirects)
+      app.register_blueprint(editor_redirects)
 
       # API
       api = Blueprint(u'ecosis', __name__, url_prefix=u'/ecosis')
@@ -220,6 +224,16 @@ class EcosisPlugin(plugins.SingletonPlugin,
       # ecosis - spectra
       api.add_url_rule(u'/spectra/suggestOverview', methods=[u'GET', 'POST'],
           view_func=controller.topOverview)
+
+      # ecosis - resource
+      api.add_url_rule(u'/resource/getSpectraCount', methods=[u'GET'],
+          view_func=controller.getSpectraCount)
+      api.add_url_rule(u'/resource/process', methods=[u'POST'],
+          view_func=controller.processResource)
+      api.add_url_rule(u'/resource/getMetadataInfo', methods=[u'GET'],
+          view_func=controller.getMetadataInfo)
+      api.add_url_rule(u'/resource/getMetadataChunk', methods=[u'GET'],
+          view_func=controller.getMetadataChunk)
 
       app.register_blueprint(api)
       return app
@@ -283,11 +297,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - resource
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
-        map.connect('process_resource', '/ecosis/resource/process', controller=controller, action='processResource')
         map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
-        map.connect('get_spectra_metadata', '/ecosis/resource/getMetadataChunk', controller=controller, action='getMetadataChunk')
-        map.connect('getMetadataInfo', '/ecosis/resource/getMetadataInfo', controller=controller, action='getMetadataInfo')
-        map.connect('get_spectra_count', '/ecosis/resource/getSpectraCount', controller=controller, action='getSpectraCount')
         map.connect('get_resource_by_name', '/ecosis/resource/byname/{package_id}/{resource_name}', controller=controller, action='getResourceByName')
 
         # ecosis - spectra
