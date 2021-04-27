@@ -221,9 +221,17 @@ class EcosisPlugin(plugins.SingletonPlugin,
       api.add_url_rule(u'/workspace/get', methods=[u'GET'],
           view_func=controller.getWorkspace)
 
+      # ecosis - package
+      api.add_url_rule(u'/package/getTemplate', methods=[u'GET'],
+          view_func=controller.getTemplate)
+
       # ecosis - spectra
       api.add_url_rule(u'/spectra/suggestOverview', methods=[u'GET', 'POST'],
           view_func=controller.topOverview)
+      api.add_url_rule(u'/spectra/get', methods=[u'GET'],
+          view_func=controller.getSpectra)
+
+      # map.connect('top_suggest', '/ecosis/spectra/suggest', controller=controller, action='topSuggest')
 
       # ecosis - resource
       api.add_url_rule(u'/resource/getSpectraCount', methods=[u'GET'],
@@ -288,7 +296,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
         map.connect('updateLinkedResources', '/ecosis/package/updateLinkedResources', controller=controller, action='updateLinkedResources')
-        map.connect('getTemplate', '/ecosis/package/getTemplate', controller=controller, action='getTemplate')
         map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setPackageOptions')
 
         # ecosis - root
@@ -301,8 +308,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('get_resource_by_name', '/ecosis/resource/byname/{package_id}/{resource_name}', controller=controller, action='getResourceByName')
 
         # ecosis - spectra
-        map.connect('get_spectra', '/ecosis/spectra/get', controller=controller, action='getSpectra')
-        map.connect('top_suggest', '/ecosis/spectra/suggest', controller=controller, action='topSuggest')
         map.connect('gcmd_suggest', '/ecosis/spectra/gcmd', controller=controller, action='gcmdSuggest')
 
         # ecosis - workspace

@@ -268,7 +268,7 @@ def _processSheetArray(data, sheetConfig):
                 try:
                     if data[j][i]:
                         # grab the attribute name as set the data
-                        sp[_getName(nameMap, data[start][i])] = data[j][i]
+                        sp[_getName(nameMap, data[start][i].decode('utf-8'))] = data[j][i].decode('utf-8')
                 except Exception as e:
                     pass
 
@@ -276,7 +276,7 @@ def _processSheetArray(data, sheetConfig):
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']+1):
                     # grab the attribute name as set the data
-                    sp[_getName(nameMap, data[i][0])] = data[i][1]
+                    sp[_getName(nameMap, data[i][0].decode('utf-8'))] = data[i][1].decode('utf-8')
 
             index += 1
 
@@ -291,7 +291,7 @@ def _processSheetArray(data, sheetConfig):
                 try:
                     if data[i][j]:
                         # grab the attribute name as set the data
-                        sp[_getName(nameMap, data[i][0])] = data[i][j]
+                        sp[_getName(nameMap, data[i][0].decode('utf-8'))] = data[i][j].decode('utf-8')
                 except:
                     pass
 
@@ -299,7 +299,7 @@ def _processSheetArray(data, sheetConfig):
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']+1):
                     # grab the attribute name as set the data
-                    sp[_getName(nameMap, data[i][0])] = data[i][1]
+                    sp[_getName(nameMap, data[i][0].decode('utf-8'))] = data[i][1].decode('utf-8')
 
             index += 1
 
@@ -332,9 +332,12 @@ def _insertSpectra(sp, sheetConfig, index):
     }
 
     try:
-        get_package_spectra_collection(sheetConfig.get("packageId")).insert(data)
+      resp = get_package_spectra_collection(sheetConfig.get("packageId")).insert(data)
+      t=1
     except Exception as e:
-        pass
+      print(e)
+      pass
+    
 
 # get the md5 hash of a files contents
 def hashfile(file):

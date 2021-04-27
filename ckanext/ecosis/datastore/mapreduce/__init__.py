@@ -210,7 +210,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         # process ecosis schema
         # bubble attributes from mapreduce
         names = []
-        for category, items in schema.iteritems():
+        for category, items in schema.items():
             for item in items:
                 name = item.get('name')
                 input = item.get('input')

@@ -74,7 +74,8 @@ class EcosisController():
 
     def getTemplate(self):
         try:
-            return package.getTemplate()
+            content = package.getTemplate()
+            return make_response((content['body'], 200, content['headers']))
         except Exception as e:
             return handleError(e)
 
@@ -244,7 +245,7 @@ class EcosisController():
 
     def getSpectra(self):
         try:
-            return spectra.get()
+            return resp(spectra.get())
         except Exception as e:
             return handleError(e)
 

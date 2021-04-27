@@ -153,7 +153,10 @@ def setPrivate():
 
 # create the reusable template for a package
 def getTemplate():
-    response.headers["Content-Type"] = "application/json"
+    headers = {
+      "Content-Type" : "application/json"
+    }
+    
     package_id = request.params.get('id')
     format = request.params.get('format')
 
@@ -192,12 +195,12 @@ def getTemplate():
 
     # are we downloading or are we sending as rest api call?
     if format != "json":
-        response.headers["Content-Disposition"] = "attachment; filename=\"%s.json\"" % pkg.get('name')
+        headers["Content-Disposition"] = "attachment; filename=\"%s.json\"" % pkg.get('name')
 
     # we are only interested in the aliases template
     if mapOnly:
         schema = package.getSchema()
-        for key, s in schema.iteritems():
+        for key, s in schema.items():
             for item in s:
                 if pkg['aliases'].get(item.get('name')) == None:
                     pkg['aliases'][item.get('name')] = ''
@@ -206,7 +209,7 @@ def getTemplate():
             'aliases' : pkg['aliases']
         }
 
-    return jsonStringify(pkg, formatted=True)
+    return {"body": jsonStringify(pkg, formatted=True), "headers": headers}
 
 # TODO: remove.  this used to set sort and alias, these fields are now stored the
 # the CKAN 'extra'.

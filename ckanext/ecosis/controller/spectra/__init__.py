@@ -8,13 +8,11 @@ from ckanext.ecosis.datastore.vocab import gcmd
 
 # get a spectra measurement with joined metadata
 def get():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
 
-    return jsonStringify(query.get(package_id, resource_id, sheet_id, _getIndex(), showProcessInfo=True))
+    return query.get(package_id, resource_id, sheet_id, _getIndex(), showProcessInfo=True)
 
 # get TOP suggestions for given attribute name
 def suggestAttributeName():
@@ -29,13 +27,11 @@ def suggestAttributeName():
 # for a list of attributes of a spectra, returns attributes which might
 # have TOP suggestions
 def suggestOverview():
-    params = {}
-    try:
-        keys = request.POST.keys()
-        if 'names' in keys:
-            params['names'] = request.POST['names']
-    except Exception as e:
-        params = {'names': request.params.get('names')}
+    params = {
+      'names' : request.form.get('names')
+    }
+    if params.get('names') is None:
+      params['names'] = request.params.get('names')
 
     if params.get('names') is None:
         raise Exception('Name list not provided')

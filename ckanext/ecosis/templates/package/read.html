@@ -2,7 +2,7 @@
 
 {% block content_action %}
   {% if h.check_access('package_update', {'id':pkg.id }) %}
-    <a class="btn btn-success btn-large" style="margin-top:-8px" href="/import?id={{pkg.id}}"><i class="icon-wrench"></i> Manage Dataset</a>
+    <a class="btn btn-success btn-large" href="/import?id={{pkg.id}}"><i class="fa fa-wrench"></i> Manage Dataset</a>
   {% endif %}
 {% endblock %}
 
