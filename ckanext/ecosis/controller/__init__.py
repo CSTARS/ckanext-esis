@@ -191,7 +191,7 @@ class EcosisController():
 
     def gcmdSuggest(self):
         try:
-            return spectra.suggestGCMD()
+            return resp(spectra.suggestGCMD())
         except Exception as e:
             return handleError(e)
 

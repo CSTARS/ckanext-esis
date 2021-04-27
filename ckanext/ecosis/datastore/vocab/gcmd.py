@@ -11,7 +11,8 @@ def suggest(query):
     # split on comma's
     query = re.split(',|\s', query)
     # clean up query
-    query = map(unicode.strip, query)
+    # TODO: this is not required in python3 anymore?
+    # query = map(unicode.strip, query)
 
     # create regex for each string
     arr = []

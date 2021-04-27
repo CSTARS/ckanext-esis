@@ -40,13 +40,11 @@ def suggestOverview():
 
 # Query NASA GCDM vocab
 def suggestGCMD():
-    response.headers["Content-Type"] = "application/json"
-
     query = request.params.get('query')
     if query is None:
         query = ""
 
-    return jsonStringify(gcmd.suggest(query))
+    return gcmd.suggest(query)
 
 
 def _getIndex():

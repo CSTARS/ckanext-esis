@@ -230,6 +230,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.topOverview)
       api.add_url_rule(u'/spectra/get', methods=[u'GET'],
           view_func=controller.getSpectra)
+      api.add_url_rule(u'/spectra/gcmd', methods=[u'GET'],
+          view_func=controller.gcmdSuggest)
 
       # map.connect('top_suggest', '/ecosis/spectra/suggest', controller=controller, action='topSuggest')
 
@@ -306,9 +308,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
         map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
         map.connect('get_resource_by_name', '/ecosis/resource/byname/{package_id}/{resource_name}', controller=controller, action='getResourceByName')
-
-        # ecosis - spectra
-        map.connect('gcmd_suggest', '/ecosis/spectra/gcmd', controller=controller, action='gcmdSuggest')
 
         # ecosis - workspace
         map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
