@@ -214,6 +214,10 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.userInfo)
       api.add_url_rule(u'/gitInfo', methods=[u'GET'],
           view_func=controller.gitInfo)
+      api.add_url_rule(u'/user/remoteLogin', methods=[u'POST'],
+          view_func=controller.remoteLogin)
+      api.add_url_rule(u'/user/githubInfo', methods=[u'POST'],
+          view_func=controller.setGithubInfo)
 
       # ecosis - workspace
       api.add_url_rule(u'/workspace/prepare', methods=[u'GET'],
@@ -224,6 +228,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
       # ecosis - package
       api.add_url_rule(u'/package/getTemplate', methods=[u'GET'],
           view_func=controller.getTemplate)
+      api.add_url_rule(u'/package/updateLinkedResources', methods=[u'POST'],
+          view_func=controller.updateLinkedResources)
 
       # ecosis - spectra
       api.add_url_rule(u'/spectra/suggestOverview', methods=[u'GET', 'POST'],
@@ -232,8 +238,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.getSpectra)
       api.add_url_rule(u'/spectra/gcmd', methods=[u'GET'],
           view_func=controller.gcmdSuggest)
-
-      # map.connect('top_suggest', '/ecosis/spectra/suggest', controller=controller, action='topSuggest')
+      api.add_url_rule(u'/spectra/suggest', methods=[u'GET'],
+          view_func=controller.topSuggest)
 
       # ecosis - resource
       api.add_url_rule(u'/resource/getSpectraCount', methods=[u'GET'],
@@ -242,8 +248,14 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.processResource)
       api.add_url_rule(u'/resource/getMetadataInfo', methods=[u'GET'],
           view_func=controller.getMetadataInfo)
+      api.add_url_rule(u'/resource/byname/<package_id>/<resource_name>', methods=[u'GET'],
+          view_func=controller.getResourceByName)
+      api.add_url_rule(u'/resource/deleteMany', methods=[u'POST'],
+          view_func=controller.deleteResources)
       api.add_url_rule(u'/resource/getMetadataChunk', methods=[u'GET'],
           view_func=controller.getMetadataChunk)
+      api.add_url_rule(u'/resource/get', methods=[u'GET'],
+          view_func=controller.getResource)
 
       app.register_blueprint(api)
       return app
@@ -297,23 +309,12 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
         # ecosis - package
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
-        map.connect('updateLinkedResources', '/ecosis/package/updateLinkedResources', controller=controller, action='updateLinkedResources')
-        map.connect('set_package_options', '/ecosis/package/setOptions', controller=controller, action='setPackageOptions')
-
-        # ecosis - root
-        map.connect('userInfo', '/ecosis/user/githubInfo', controller=controller, action='setGithubInfo')
-        map.connect('remoteLogin', '/ecosis/user/remoteLogin', controller=controller, action='remoteLogin')
-
-        # ecosis - resource
-        map.connect('delete_resources', '/ecosis/resource/deleteMany', controller=controller, action='deleteResources')
-        map.connect('get_resource', '/ecosis/resource/get', controller=controller, action='getResource')
-        map.connect('get_resource_by_name', '/ecosis/resource/byname/{package_id}/{resource_name}', controller=controller, action='getResourceByName')
 
         # ecosis - workspace
         map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
 
         # custom pages
-        map.connect('remotelogin', '/user/remotelogin', controller='ckanext.ecosis.plugin:StaticPageController', action='remotelogin')
+        # map.connect('remotelogin', '/user/remotelogin', controller='ckanext.ecosis.plugin:StaticPageController', action='remotelogin')
 
 
         return map

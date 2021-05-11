@@ -290,17 +290,6 @@ module.exports = function(config) {
     });
   };
 
-  /*this.setPackageOptions = function(pkgid, options, callback) {
-    var data = {
-      package_id : pkgid,
-      options : JSON.stringify(options)
-    };
-
-    post(this.host+'/ecosis/package/setOptions', data, function(err, resp) {
-      handleResp(err, resp, callback);
-    });
-  };*/
-
   this.topSuggestOverview = function(list, callback) {
     var data = {
       names : JSON.stringify(list),
@@ -324,13 +313,13 @@ module.exports = function(config) {
   };
 
   this.removeResource = function(resourceId, callback) {
-    postRaw(this.host+'/api/3/action/resource_delete', JSON.stringify({id : resourceId }), function(err, resp) {
+    postRaw(this.host+'/api/3/action/resource_delete', {id : resourceId }, function(err, resp) {
       handleResp(err, resp, callback);
     });
   };
 
   this.deleteResources = function(resourceIds, callback) {
-    postRaw(this.host+'/ecosis/resource/deleteMany', JSON.stringify({ids : resourceIds }), function(err, resp) {
+    postRaw(this.host+'/ecosis/resource/deleteMany', {ids : resourceIds }, function(err, resp) {
       handleResp(err, resp, callback);
     });
   };
@@ -375,14 +364,20 @@ function post(url, data, callback) {
 function postRaw(url, data, callback) {
   var r = request
    .post(url)
-   .withCredentials()
-   .send(data);
+   .withCredentials();
 
-   if( key ) {
-     r.set('Authorization', key);
-   }
+  debugger;
+  if( typeof data === 'object' ) {
+    data = JSON.stringify(data);
+    r.set('Content-type', 'application/json');
+  }
+  r.send(data);
 
-   r.end(callback);
+  if( key ) {
+    r.set('Authorization', key);
+  }
+
+  r.end(callback);
 }
 
 function get(url, data, callback) {

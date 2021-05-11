@@ -121,10 +121,9 @@ def after_create():
 # this is a simple workaround service, for just upda
 # TODO: remove this, not required anymore, app should use normal package update
 def updateLinkedResources():
-    response.headers["Content-Type"] = "application/json"
     context = {'model': model, 'user': c.user}
 
-    params = json.loads(request.body)
+    params = request.get_json()
     package_id = params.get('id')
     hasAccess(package_id)
 
@@ -134,7 +133,7 @@ def updateLinkedResources():
     setPackageExtra('LinkedData', json.dumps(linkedResources), cpkg)
     pkg = logic.get_action('package_update')(context, cpkg)
 
-    return json.dumps({'success': True})
+    return {'success': True}
 
 # set a package to private
 def setPrivate():
@@ -210,19 +209,6 @@ def getTemplate():
         }
 
     return {"body": jsonStringify(pkg, formatted=True), "headers": headers}
-
-# TODO: remove.  this used to set sort and alias, these fields are now stored the
-# the CKAN 'extra'.
-# def setOptions():
-#     response.headers["Content-Type"] = "application/json"
-#     package_id = request.params.get('package_id')
-#     hasAccess(package_id)
-
-#     options = json.loads(request.params.get('options'))
-
-#     workspace.setOptions(package_id, options)
-
-#     return json.dumps({'success': True})
 
 # if someone is trying to access the main CKAN package create screen, redirect to
 # EcoSIS spectra importer app.

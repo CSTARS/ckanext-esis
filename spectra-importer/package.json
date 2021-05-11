@@ -6,12 +6,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev": "node server.js --dev"
+    "dev": "node server.js --dev",
+    "build": "./bundle.sh",
+    "dist": "grunt build"
   },
   "author": "Justin Merz (jrmerz@gmail.com)",
   "license": "ISC",
   "dependencies": {
-    "browserify": "^9.0.8",
     "express": "^3.20.2",
     "extend": "^3.0.0",
     "fast-csv": "^1.0.0",
@@ -26,6 +27,8 @@
     "time-grunt": "^1.1.1"
   },
   "devDependencies": {
+    "browserify": "^9.0.8",
+    "grunt-cli": "^1.4.2",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-copy": "^0.8.0",

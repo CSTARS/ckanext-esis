@@ -1,8 +1,7 @@
-import os
-import json
+import os, json, re
 
 # from ckan.common import request, response
-from ckan.common import request
+from ckan.common import request, config
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
@@ -15,6 +14,8 @@ import ckanext.ecosis.datastore.workspace as workspace
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.controller.package.doi import hasAppliedDoi
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
+
+from flask import make_response
 
 parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 
@@ -32,17 +33,13 @@ def delete():
 
 # Single HTTP call for deleting multiple resources
 def deleteMany():
-    response.headers["Content-Type"] = "application/json"
-
-    params = utils.get_request_data(request)
-    ids = params.get('ids')
+    ids = request.get_json().get('ids')
 
     resp = []
-
     for id in ids:
         resp.append(_delete({'id': id}))
 
-    return jsonStringify(resp)
+    return resp
 
 # Actually delete are srource
 def _delete(params):
@@ -156,8 +153,6 @@ def process():
 # get a specific resource
 # optional sheet id, it the resource has multiple sheets (excel file)
 def get():
-    response.headers["Content-Type"] = "application/json"
-
     pid = request.params.get('package_id')
     rid = request.params.get('resource_id')
     sid = request.params.get('sheet_id')
@@ -167,7 +162,7 @@ def get():
 
     hasAccess(pid)
 
-    return jsonStringify(query.getResource(rid, sid))
+    return query.getResource(rid, sid)
 
 # a get a row or column (depending on sheet orientation) of a resource file
 # index is the row/column to retrieve
@@ -208,10 +203,14 @@ def getSpectraCount():
 
 def getByName(package_id, resource_name):
     resource = ckanResourceQuery.getByName(package_id, resource_name)
+    url = resource['url'];
 
-    response.status_int = 307
-    response.headers["Location"] = resource['url']
-    return "Redirecting"
+    # ckan 2.9 doesn't seem to return full url...
+    if not re.match(r'^https?', url, re.I):
+      url = "%s/dataset/%s/resource/%s/download/%s" % (config.get('ckan.site_url'), package_id, resource['id'], resource_name)
+
+    headers = {"Location": url}
+    return make_response(("Redirecting", 307, headers))
 
 # helper for getting index as int
 def _getIndex():

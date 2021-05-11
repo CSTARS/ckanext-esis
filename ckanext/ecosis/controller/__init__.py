@@ -68,7 +68,7 @@ class EcosisController():
 
     def updateLinkedResources(self):
         try:
-            return package.updateLinkedResources()
+            return (package.updateLinkedResources())
         except Exception as e:
             return handleError(e)
 
@@ -93,7 +93,7 @@ class EcosisController():
 
     def deleteResources(self):
         try:
-            return resource.deleteMany()
+            return resp(resource.deleteMany())
         except Exception as e:
             return handleError(e)
 
@@ -160,13 +160,13 @@ class EcosisController():
 
     def remoteLogin(self):
         try:
-            return user.remote_login()
+            return resp(user.remote_login())
         except Exception as e:
             return handleError(e)
 
     def setGithubInfo(self):
         try:
-            return user.set_github_info()
+            return resp(user.set_github_info())
         except Exception as e:
             return handleError(e)
 
@@ -197,7 +197,7 @@ class EcosisController():
 
     def topSuggest(self):
         try:
-            return spectra.suggestAttributeName()
+            return resp(spectra.suggestAttributeName())
         except Exception as e:
             return handleError(e)
 
@@ -227,19 +227,13 @@ class EcosisController():
 
     def getResource(self):
         try:
-            return resource.get()
+            return resp(resource.get())
         except Exception as e:
             return handleError(e)
 
     def getResourceByName(self, package_id, resource_name):
         try:
             return resource.getByName(package_id, resource_name)
-        except Exception as e:
-            return handleError(e)
-
-    def setPackageOptions(self):
-        try:
-            return package.setOptions()
         except Exception as e:
             return handleError(e)
 

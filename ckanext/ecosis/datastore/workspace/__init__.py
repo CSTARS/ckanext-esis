@@ -103,25 +103,6 @@ def touch(package_id):
         }}
     )
 
-# TODO: verify this can go away
-# def setOptions(package_id, options):
-#     # TODO: should we always run a prepare?
-#     # are just insert default option setup if not prepared?
-#     prepare(package_id)
-#
-#     packageInfo = collections.get("package").find_one({"packageId": package_id})
-#     if packageInfo is None:
-#         return
-#
-#     for option in allowedOptions:
-#         if option in options:
-#             packageInfo[option] = options[option]
-#
-#     packageInfo["lastTouched"] = datetime.utcnow()
-#     packageInfo["modified"] = datetime.utcnow()
-#
-#     collections.get("package").update({"packageId": package_id}, packageInfo)
-
 # prepare a package, that means expand it out, make sure the workspace package and
 # spectra collections are populated for this package.  Make sure all disk resources
 # are properly created in workspace folder

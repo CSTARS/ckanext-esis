@@ -40,9 +40,7 @@ def info():
 
 
 def remote_login():
-    response.headers["Content-Type"] = "application/json"
-
-    token = request.params.get('token')
+    token = request.form.get('token')
     token = jwt.decode(token, secret, algorithm='HS256')
 
     username = token.get('username');
@@ -67,7 +65,7 @@ def remote_login():
             "message": "invalid username or password",
         })
 
-    return json.dumps(create_remote_login_response(user))
+    return create_remote_login_response(user)
 
 def create_remote_login_response(user):
     context = {'model': model, 'user': user}
@@ -109,7 +107,7 @@ def create_remote_login_response(user):
 # TODO: implementing JWT support is kinda a can of worms.
 # will work as a workaround hack for now...
 def set_github_info():
-    params = utils.get_request_data(request)
+    params = request.get_json()
     token = request.headers.get('authorization')
     if not token:
         raise Exception('No jwt token provided')

@@ -16,13 +16,11 @@ def get():
 
 # get TOP suggestions for given attribute name
 def suggestAttributeName():
-    response.headers["Content-Type"] = "application/json"
-
     name = request.params.get('name')
     if name is None:
         name = ""
 
-    return jsonStringify(top.suggest(name))
+    return top.suggest(name)
 
 # for a list of attributes of a spectra, returns attributes which might
 # have TOP suggestions
