@@ -177,11 +177,16 @@ class EcosisController():
             return handleError(e)
 
     def createPackageRedirect(self):
-        return package.createPackageRedirect()
+      return package.createPackageRedirect()
 
-    def editPackageRedirect(self, id):
+    def editPackageRedirect(self, package_id):
+      return package.editPackageRedirect(package_id)
+    
+    def editPackageRedirectWResource(self, package_id, resource_id):
+      return package.editPackageRedirect(package_id)
 
-      return package.editPackageRedirect(id)
+    # def editPackageRedirect(self):
+    #   return package.editPackageRedirect()
 
     def rebuildUSDACollection(self):
         try:
@@ -263,7 +268,7 @@ class EcosisController():
 
     def pushToSearch(self):
         try:
-            return workspaceController.pushToSearch()
+            return resp(workspaceController.pushToSearch())
         except Exception as e:
             return handleError(e)
 

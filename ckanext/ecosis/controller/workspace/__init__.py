@@ -36,8 +36,6 @@ def prepare():
     return jsonStringify(result)
 
 def pushToSearch():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
     email = request.params.get('email')
     if email is None:
@@ -53,7 +51,7 @@ def pushToSearch():
 
     push = Push()
 
-    return jsonStringify(push.run(ckanPackage, email, c.userobj.email, c.userobj.display_name))
+    return push.run(ckanPackage, email, c.userobj.email, c.userobj.display_name)
 
 def get():
     package_id = request.params.get('package_id')

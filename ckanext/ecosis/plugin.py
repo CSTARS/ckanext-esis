@@ -51,7 +51,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         
         register the 'ckan ecosis' CLI commands
         """
-        import click
+        # import click
         from ckanext.ecosis.user_data.paster import ecosis as ecosisCmd
 
         return [ecosisCmd]
@@ -188,7 +188,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
         return False
 
     def make_middleware(self, app, config):
+      # REDIRECTS
       editor_redirects = Blueprint(u'editor_redirects', __name__, url_prefix=u'/')
+      
       # route all resource edit screens to main ecosis dataset editor
       editor_redirects.add_url_rule(u'/dataset/new', methods=[u'GET'],
           view_func=controller.createPackageRedirect)
@@ -224,6 +226,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.prepareWorkspace)
       api.add_url_rule(u'/workspace/get', methods=[u'GET'],
           view_func=controller.getWorkspace)
+      api.add_url_rule(u'/workspace/push', methods=[u'GET'],
+          view_func=controller.pushToSearch)
 
       # ecosis - package
       api.add_url_rule(u'/package/getTemplate', methods=[u'GET'],
@@ -286,14 +290,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
         map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
 
-        # route all resource edit screens to main ecosis dataset editor
-        # TODO: can we get fancy and point at specific action or resource?
-        map.connect('edit_package_ui', '/dataset/edit/<id>', controller=controller, action='editPackageRedirect')
-        map.connect('package_resources_ui', '/dataset/resources/<id>', controller=controller, action='editPackageRedirect')
-        map.connect('new_resource_ui', '/dataset/new_resource/<id>', controller=controller, action='editPackageRedirect')
-        map.connect('edit_resource_ui', '/dataset/<id>/resource_edit/<resource_id>', controller=controller, action='editPackageRedirect')
-
-
         # ecosis - admin
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
         map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
@@ -311,7 +307,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
 
         # ecosis - workspace
-        map.connect('push_to_search', '/ecosis/workspace/push', controller=controller, action='pushToSearch')
 
         # custom pages
         # map.connect('remotelogin', '/user/remotelogin', controller='ckanext.ecosis.plugin:StaticPageController', action='remotelogin')
