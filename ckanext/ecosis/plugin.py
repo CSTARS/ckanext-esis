@@ -195,8 +195,22 @@ class EcosisPlugin(plugins.SingletonPlugin,
       editor_redirects.add_url_rule(u'/dataset/new', methods=[u'GET'],
           view_func=controller.createPackageRedirect)
 
-      editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
-          view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
+      # TODO: the below don't actually work and are currently handled by the template.  badness.
+      editor_redirects.add_url_rule(u'/dataset/resources/<package_id>', methods=[u'GET'],
+          view_func=controller.editPackageRedirect)
+      editor_redirects.add_url_rule(u'/dataset/edit/<package_id>', methods=[u'GET'],
+          view_func=controller.editPackageRedirect)
+      editor_redirects.add_url_rule(u'/dataset/new_resource/<package_id>', methods=[u'GET'],
+          view_func=controller.editPackageRedirect)
+      editor_redirects.add_url_rule(u'/dataset/<package_id>/resource_edit/<resource_id>', methods=[u'GET'],
+          view_func=controller.editPackageRedirect)
+      editor_redirects.add_url_rule(u'/dataset/new_resource/<package_id>', methods=[u'GET'],
+          view_func=controller.editPackageRedirectWResource)
+      # editor_redirects.add_url_rule(u'/import/index.html', methods=[u'GET'],
+      #     view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
+      # editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
+      #     view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
+      # print(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html')
 
       app.register_blueprint(editor_redirects)
 

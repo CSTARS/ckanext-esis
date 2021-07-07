@@ -1,4 +1,4 @@
-import os, json, re
+import os, json, re, traceback
 import datetime
 from bson.code import Code
 from bson.son import SON
@@ -175,6 +175,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
         except Exception as e:
             print(e)
+            traceback.print_exc()
             pass
 
     # append the data groups
