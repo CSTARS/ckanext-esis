@@ -12534,8 +12534,9 @@ this.fire('dom-change');
     Polymer({
       is: 'ecosis-doi',
 
-      setData : function(pkg) {
+      setData : function(pkg, pushed) {
         this.pkg = pkg;
+        this.pushedToSearch = pushed;
         this.pkg.on('save-end', function(){
           if( this.doiUpdating ) {
             window.location.reload();
@@ -12659,7 +12660,8 @@ this.fire('dom-change');
           author : false,
           'author email': false,
           maintainer : false,
-          'maintainer email': false
+          'maintainer email': false,
+          'push to search': false
         };
 
         extras.forEach(function(e){
@@ -12693,6 +12695,9 @@ this.fire('dom-change');
         }
         if( this.pkg.getMaintainerEmail() !== '' ) {
           valid['maintainer email'] = true;
+        }
+        if( (this.pushedToSearch instanceof Date) === true ) {
+          valid['push to search'] = true;
         }
 
         var canRequest = true;
@@ -13089,7 +13094,7 @@ this.fire('dom-change');
       this.$.versionInput.value = pkg.getVersion();
       this.$.websiteInput.value = pkg.getWebsite();
       this.$.linkedDataInput.setData(pkg.getLinkedData());
-      this.$.doi.setData(pkg);
+      this.$.doi.setData(pkg, ecosis.ds.lastPushed);
       this.updateVisibilityControl();
     },
 
