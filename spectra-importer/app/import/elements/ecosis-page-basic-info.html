@@ -338,7 +338,7 @@
       this.$.versionInput.value = pkg.getVersion();
       this.$.websiteInput.value = pkg.getWebsite();
       this.$.linkedDataInput.setData(pkg.getLinkedData());
-      this.$.doi.setData(pkg);
+      this.$.doi.setData(pkg, ecosis.ds.lastPushed);
       this.updateVisibilityControl();
     },
 

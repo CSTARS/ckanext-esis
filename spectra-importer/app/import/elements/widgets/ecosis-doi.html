@@ -88,8 +88,9 @@
     Polymer({
       is: 'ecosis-doi',
 
-      setData : function(pkg) {
+      setData : function(pkg, pushed) {
         this.pkg = pkg;
+        this.pushedToSearch = pushed;
         this.pkg.on('save-end', function(){
           if( this.doiUpdating ) {
             window.location.reload();
@@ -213,7 +214,8 @@
           author : false,
           'author email': false,
           maintainer : false,
-          'maintainer email': false
+          'maintainer email': false,
+          'push to search': false
         };
 
         extras.forEach(function(e){
@@ -247,6 +249,9 @@
         }
         if( this.pkg.getMaintainerEmail() !== '' ) {
           valid['maintainer email'] = true;
+        }
+        if( (this.pushedToSearch instanceof Date) === true ) {
+          valid['push to search'] = true;
         }
 
         var canRequest = true;
