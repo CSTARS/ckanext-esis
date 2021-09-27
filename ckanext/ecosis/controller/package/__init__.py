@@ -81,7 +81,7 @@ def update():
 
     pkg = logic.get_action('package_update')(context, params)
 
-    doiStatus = getDoiStatus(pkg);
+    doiStatus = getDoiStatus(pkg)
     if doiStatus.get('status').get('value') == DOI_STATUS["ACCEPTED"]:
         applyDoi(pkg)
 
@@ -219,7 +219,7 @@ def createPackageRedirect():
     if group == None:
       headers["Location"] = "/import/"
     else:
-      headers["Location"] = "/import/?group=%s" % group.encode('ascii','ignore')
+      headers["Location"] = "/import/?group=%s" % group
 
     return make_response(("Redirecting", 307, headers))
 

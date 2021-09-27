@@ -30,23 +30,23 @@ organization.init(collections)
 
 class EcosisController():
 
-    def createPackage(self):
-        try:
-            return package.create()
-        except Exception as e:
-            return handleError(e)
+    # def createPackage(self):
+    #     try:
+    #         return package.create()
+    #     except Exception as e:
+    #         return handleError(e)
 
-    def deletePackage(self):
-        try:
-            return package.delete()
-        except Exception as e:
-            return handleError(e)
+    # def deletePackage(self):
+    #     try:
+    #         return package.delete()
+    #     except Exception as e:
+    #         return handleError(e)
 
-    def updatePackage(self):
-        try:
-            return package.update()
-        except Exception as e:
-            return handleError(e)
+    # def updatePackage(self):
+    #     try:
+    #         return package.update()
+    #     except Exception as e:
+    #         return handleError(e)
 
     def cleanTests(self):
         try:
@@ -60,11 +60,11 @@ class EcosisController():
         except Exception as e:
             return handleError(e)
 
-    def setPrivate(self):
-        try:
-            return package.setPrivate()
-        except Exception as e:
-            return handleError(e)
+    # def setPrivate(self):
+    #     try:
+    #         return package.setPrivate()
+    #     except Exception as e:
+    #         return handleError(e)
 
     def updateLinkedResources(self):
         try:
@@ -85,11 +85,11 @@ class EcosisController():
         except Exception as e:
             return handleError(e)
 
-    def deleteResource(self):
-        try:
-            return resource.delete()
-        except Exception as e:
-            return handleError(e)
+    # def deleteResource(self):
+    #     try:
+    #         return resp(resource.delete())
+    #     except Exception as e:
+    #         return handleError(e)
 
     def deleteResources(self):
         try:
@@ -123,13 +123,13 @@ class EcosisController():
 
     def doiQuery(self):
         try:
-            return package.doi.doiQuery()
+            return resp(package.doi.doiQuery())
         except Exception as e:
             return handleError(e)
 
     def clearDoi(self):
         try:
-            return package.doi.clearDoi()
+            return resp(package.doi.clearDoi())
         except Exception as e:
             return handleError(e)
 

@@ -5,13 +5,16 @@ import ckan.lib.base as base
 from ckan.common import config, request
 from ckan.logic.action.create import organization_member_create
 from ckan.logic.action.delete import organization_member_delete
+import ckan.logic as logic
 
 from flask import Blueprint, make_response, send_from_directory
 import ckanext.ecosis.lib.utils as utils
 
 import ckanext.ecosis.datastore.query as query
+from ckanext.ecosis.datastore import delete as deleteUtil
 import ckanext.ecosis.controller.organization as orgController
 import ckanext.ecosis.controller.package as pkgController
+from ckanext.ecosis.controller.package.doi import handleDoiUpdate, validDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
 import ckanext.ecosis.user_data.model as userDataModel
 from ckanext.ecosis.controller import EcosisController
 
@@ -39,10 +42,12 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IOrganizationController)
     plugins.implements(plugins.IPackageController)
-    # plugins.implements(plugins.IAuthFunctions)
+    plugins.implements(plugins.IResourceController)
+    plugins.implements(plugins.IAuthFunctions)
     plugins.implements(plugins.IActions)
     plugins.implements(plugins.IClick)
     plugins.implements(plugins.IMiddleware)
+    # plugins.implements(plugins.IDatasetForm)
 
 
     # IClick
@@ -59,7 +64,11 @@ class EcosisPlugin(plugins.SingletonPlugin,
     # add iauth functions
     def get_auth_functions(self):
         return {
-          'package_update' : self.package_update_auth
+          'package_update' : self.package_update_auth,
+          'package_create' : self.package_update_auth,
+          'package_delete' : self.package_delete_auth,
+          'resource_delete' : self.resource_delete_auth,
+          'resource_create' : self.resource_create_auth
         }
 
     def get_class_name(self, entity):
@@ -74,6 +83,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
     def is_package(self, entity):
         return self.get_class_name(entity) == 'Package'
+
+    def is_resource(self, entity):
+        return self.get_class_name(entity) == 'Resource'
 
     def read(self, entity):
         """Implemented for IOrganizationController and IPackageController Plugins
@@ -91,12 +103,26 @@ class EcosisPlugin(plugins.SingletonPlugin,
             orgController.notify_remotes(entity.id)
 
     def after_update(self, context, pkg_dict):
+        if pkg_dict.get('type') == "dataset":    
+          # if doi status changed to ACCEPTED, start DOI application process
+          resp = handleDoiUpdate(context['before_package_update'], pkg_dict)
+
+          doiStatus = getDoiStatus(pkg_dict)
+          if doiStatus.get('status').get('value') == DOI_STATUS["ACCEPTED"]:
+              applyDoi(pkg_dict)
+
+          if resp.get('email') is not None:
+              pkg_dict['doi_user_email'] = resp.get('email')
+              pkg_dict['doi_user_name'] = resp.get('user')
+
+    def before_create(self, context, resource):
         pass
 
     def after_create(self, context, pkg_dict):
         """Implemented for IPackageController"""
         if self.get_class_name(pkg_dict) == "dict": # safety check
-            pkgController.after_create()
+            if pkg_dict.get('type') == "dataset":
+              pkgController.after_create()
         return pkg_dict
 
     def before_index(self, pkg_dict):
@@ -107,11 +133,48 @@ class EcosisPlugin(plugins.SingletonPlugin,
         pass
         # orgController.update(entity)
     
-    # @tk.auth_sysadmins_check
-    # def package_update_auth(self, context, data_dict=None):
-    #     """Always check that doi has not been applied
-    #     """
-    #     return {'success': False, 'msg': 'DOI has been applied'}
+    @tk.auth_sysadmins_check
+    def package_update_auth(self, context, data_dict=None):
+        """Check for DOI issues that should prevent saving. store old values
+        to be used in the after_update() method so we know which DOI actions to
+        preform
+        """
+        if data_dict.get('id') is not None:
+          cpkg = {}
+          if  data_dict['id'] != '':
+            cpkg = logic.get_action('package_show')(context, {'id': data_dict['id']})
+          context['before_package_update'] = cpkg
+          return validDoiUpdate(cpkg, data_dict)
+        
+        return {'success': True}
+
+    @tk.auth_sysadmins_check
+    def package_delete_auth(self, context, data_dict=None):
+        """Check that a package can be deleted
+        """
+        if hasAppliedDoi(data_dict.get('id')):
+          return {'success': False, 'message':'Cannot delete package with applied DOI'}
+
+        return {'success': True}
+
+    @tk.auth_sysadmins_check
+    def resource_delete_auth(self, context, data_dict=None):
+        """Check that a resource can be deleted
+        """
+        resource = logic.get_action('resource_show')(context, {'id': data_dict['id']})
+        if hasAppliedDoi(resource.get('package_id')):
+          return {'success': False, 'msg': 'Cannot delete resource of package with applied DOI'}
+
+        return {'success': True}
+
+    @tk.auth_sysadmins_check
+    def resource_create_auth(self, context, data_dict=None):
+        """Check that a resource can be created
+        """
+        if hasAppliedDoi(data_dict.get('package_id')):
+          return {'success': False, 'msg': 'Cannot create resource of package with applied DOI'}
+
+        return {'success': True}
 
     def authz_add_role(self, object_role):
         pass
@@ -119,11 +182,23 @@ class EcosisPlugin(plugins.SingletonPlugin,
     def authz_remove_role(self, object_role):
         pass
 
+    def before_delete(self, context, resource, resources):
+      pass
+
     def delete(self, entity):
-        orgController.delete(entity)
+      pass
+
+    def after_delete(self, context, pkg_dict):
+      if self.is_group(pkg_dict):
+        orgController.delete(pkg_dict)
+      if self.is_package(pkg_dict):
+        deleteUtil.package(pkg_dict.get('id'))
 
     def after_show(self, context, entity):
         return entity
+
+    def before_show(self, resource_dict):
+        pass
 
     def before_view(self, pkg_dict):
         return pkg_dict
@@ -206,11 +281,18 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.editPackageRedirect)
       editor_redirects.add_url_rule(u'/dataset/new_resource/<package_id>', methods=[u'GET'],
           view_func=controller.editPackageRedirectWResource)
-      # editor_redirects.add_url_rule(u'/import/index.html', methods=[u'GET'],
-      #     view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
-      # editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
-      #     view_func=lambda: send_from_directory(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
-      # print(os.path.join(os.getcwd(), 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html')
+
+      # Serve index.html static paths
+      root_dir = os.environ.get('CKAN_HOME', os.getcwd())
+      if not os.path.exists(root_dir):
+        raise Exception('CKAN_HOME not found: %s.  Unable to load static assests' % root_dir)
+      editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
+          endpoint="spectra-importer",
+          view_func=lambda: send_from_directory(os.path.join(root_dir, 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
+      editor_redirects.add_url_rule(u'/doi-admin/', methods=[u'GET'],
+          endpoint="doi-admin",
+          view_func=lambda: send_from_directory(os.path.join(root_dir, 'ckanext-ecosis/doi-admin/dist/doi-admin'), 'index.html'))
+      # print(os.path.join(root_dir, 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html')
 
       app.register_blueprint(editor_redirects)
 
@@ -275,6 +357,15 @@ class EcosisPlugin(plugins.SingletonPlugin,
       api.add_url_rule(u'/resource/get', methods=[u'GET'],
           view_func=controller.getResource)
 
+      # ecosis - admin doi
+      # map.connect('doi_query', '/ecosis/admin/doi/query', controller=controller, action='doiQuery')
+      # map.connect('doi_clear', '/ecosis/admin/doi/clear', controller=controller, action='clearDoi')      
+      # ecosis - admin doi
+      api.add_url_rule(u'/admin/doi/query', methods=[u'GET'],
+          view_func=controller.doiQuery)
+      api.add_url_rule(u'/admin/doi/clear', methods=[u'GET'],
+          view_func=controller.clearDoi)
+
       app.register_blueprint(api)
       return app
 
@@ -293,16 +384,16 @@ class EcosisPlugin(plugins.SingletonPlugin,
         controller = 'ckanext.ecosis.controller:EcosisController'
 
         # Standard CKAN overrides
-        map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
-        map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
-        map.connect('update_package_3', '/api/3/action/package_update', controller=controller, action='updatePackage')
-        map.connect('update_package', '/api/action/package_update', controller=controller, action='updatePackage')
-        map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
-        map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
-        map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-        map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
-        map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
-        map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
+        # map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
+        # map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
+        # map.connect('update_package_3', '/api/3/action/package_update', controller=controller, action='updatePackage')
+        # map.connect('update_package', '/api/action/package_update', controller=controller, action='updatePackage')
+        # map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
+        # map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
+        # map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
+        # map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+        # map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
+        # map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
 
         # ecosis - admin
         map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
@@ -312,9 +403,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
         map.connect('fixCitations', '/ecosis/admin/fixCitations', controller=controller, action='fixCitations')
 
         # ecosis - admin doi
-        map.connect('doi_query', '/ecosis/admin/doi/query', controller=controller, action='doiQuery')
-        map.connect('doi_update_status', '/ecosis/admin/doi/update', controller=controller, action='doiUpdateStatus')
-        map.connect('doi_clear', '/ecosis/admin/doi/clear', controller=controller, action='clearDoi')
         map.connect('getAllGithubInfo', '/ecosis/admin/github/sync', controller=controller, action='getAllGithubInfo')
 
         # ecosis - package

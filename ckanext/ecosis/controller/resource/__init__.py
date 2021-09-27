@@ -22,14 +22,12 @@ parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 # delete are resource
 # By default, CKAN keeps resources on disk after they are deleted.  EcoSIS does not.
 def delete():
-    response.headers["Content-Type"] = "application/json"
-
     params = utils.get_request_data(request)
 
     # remove resource from disk - normally this doesn't happen
     resp = _delete(params)
 
-    return json.dumps(resp)
+    return resp
 
 # Single HTTP call for deleting multiple resources
 def deleteMany():
@@ -41,7 +39,7 @@ def deleteMany():
 
     return resp
 
-# Actually delete are srource
+# Actually delete a resource
 def _delete(params):
     # remove resource from disk - normally this doesn't happen
     context = {'model': model, 'user': c.user}

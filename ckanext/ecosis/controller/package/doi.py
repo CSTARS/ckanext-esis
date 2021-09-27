@@ -17,7 +17,8 @@ DOI_STATUS = {
     'REQUESTING' : 'Requesting',             # Requesting DOI from EZID
     'ACCEPTED' : 'Accepted',                 # Admins have accepted DOI request
     'PENDING_REVISION' : 'Pending Revision', # Admins not approved the DOI request, dataset needs revision
-    'PENDING_APPROVAL' : 'Pending Approval'  # User has requested DOI
+    'PENDING_APPROVAL' : 'Pending Approval', # User has requested DOI
+    'FAILED_REQUEST' : 'Failed Request'      # Request to Datacite failed
 }
 
 # Datacite config
@@ -33,6 +34,35 @@ connStr = ""
 def init(pgConn):
     global connStr
     connStr = pgConn
+
+
+## helper for updating package
+## for use by package_update_auth in plugin.py
+def validDoiUpdate(currentPackage, newPackage):
+    oldDoi = getDoiStatus(currentPackage)
+    newDoi = getDoiStatus(newPackage)
+
+    # No changes
+    if oldDoi.get('status').get('value') == newDoi.get('status').get('value') and oldDoi.get('status').get('error') != True:
+        if oldDoi.get('value') == newDoi.get('value'):
+            return {'success': True}
+
+    # the one thing a USER can do is request approval
+    if oldDoi.get('status').get('value') in (None, DOI_STATUS['PENDING_REVISION']):
+        if newDoi.get('status').get('value') == DOI_STATUS['PENDING_APPROVAL'] and newDoi.get('value') is None:
+            return {'success': True}
+
+        # user is canceling request
+        if newDoi.get('status').get('value') is None:
+            return {'success': True}
+
+    if not isAdmin():
+        return {
+            'success' : False,
+            'msg' : 'You do not have access to update DOI values'
+        }
+
+    return {'success': True} 
 
 ## helper for updating package
 def handleDoiUpdate(currentPackage, newPackage):
@@ -54,7 +84,7 @@ def handleDoiUpdate(currentPackage, newPackage):
 
     # the one thing a USER can do is request approval
     if oldDoi.get('status').get('value') in (None, DOI_STATUS['PENDING_REVISION']):
-        if newDoi.get('status').get('value') == DOI_STATUS['PENDING_APPROVAL'] and newDoi.get('value') is None:
+        if newDoi.get('status').get('value') == DOI_STATUS['PENDING_APPROVAL'] and newDoi.get('value') in (None, ''):
             # set the requesting user
             status = {
                 'value' : DOI_STATUS['PENDING_APPROVAL'],
@@ -103,7 +133,7 @@ def applyDoi(pkg):
 
     # update the dataset
     context = {'model': model, 'user': c.user}
-    logic.get_action('package_update')(context, pkg)
+    pkg = logic.get_action('package_update')(context, pkg)
 
     # Request DOI from Datacite
     try:
@@ -117,7 +147,7 @@ def applyDoi(pkg):
     # If request failed, reset DOI status, return new error
     if doiResponse.get('status') != 'success':
         status = {
-            'value': DOI_STATUS["ACCEPTED"],
+            'value': DOI_STATUS["FAILED_REQUEST"],
             'error' : True,
             'message': doiResponse.get('message'),
             'serverResponseStatus' : doiResponse.get('status')
@@ -155,14 +185,14 @@ def requestDoiEzid(pkg):
     data += "datacite.publicationyear: %s" % parser.parse(pkg.get('metadata_created')).year
 
     # set body, authentication header and make request
-    r = urllib2.Request(DOI_CONFIG.get('url'))
+    r = urllib.request.Request(DOI_CONFIG.get('url'))
     base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
     r.add_header("Authorization", "Basic %s" % base64string)
     r.add_header("Content-Type", "text/plain;charset=UTF-8")
-    r.add_data(data)
+    r.data = bytes(data, 'utf-8')
 
     try:
-        result = urllib2.urlopen(r).read()
+        result = urllib.request.urlopen(r).read()
     except Exception as e:
         result = "error: request error"
 
@@ -186,16 +216,16 @@ def requestDoi(pkg):
         }
     }
 
-    print(DOI_CONFIG.get('url'))
-    r = urllib2.Request(DOI_CONFIG.get('url'))
-    base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
-    print("Basic %s" % base64string)
-    print(json.dumps(data))
-    r.add_header("Authorization", "Basic %s" % base64string)
+    r = urllib.request.Request(DOI_CONFIG.get('url'))
+    userpass = '%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))
+    base64string = base64.b64encode(bytes(userpass, 'utf-8'))
+    auth_header = "Basic %s" % base64string.decode("utf-8")
+    r.add_header("Authorization", auth_header)
     r.add_header("Content-Type", "application/vnd.api+json")
-    r.add_data(json.dumps(data))
+    r.get_method = lambda: 'POST'
+    r.data = bytes(json.dumps(data), 'utf-8')
 
-    result = urllib2.urlopen(r)
+    result = urllib.request.urlopen(r)
     if result.getcode() != 201:
         print(result.read())
         if result.getcode() == 422:
@@ -235,14 +265,13 @@ def requestDoi(pkg):
     }
 
     print("%s/%s" % (DOI_CONFIG.get('url'), doi))
-    r = urllib2.Request("%s/%s" % (DOI_CONFIG.get('url'), doi))
-    base64string = base64.encodestring('%s:%s' % (DOI_CONFIG.get('username'), DOI_CONFIG.get('password'))).replace('\n', '')
+    r = urllib.request.Request("%s/%s" % (DOI_CONFIG.get('url'), doi))
     r.get_method = lambda: 'PUT'
-    r.add_header("Authorization", "Basic %s" % base64string)
+    r.add_header("Authorization", auth_header)
     r.add_header("Content-Type", "application/vnd.api+json")
-    r.add_data(json.dumps(data))
+    r.data = bytes(json.dumps(data), 'utf-8')
 
-    result = urllib2.urlopen(r)
+    result = urllib.request.urlopen(r)
     if result.getcode() != 200 and result.getcode() != 201:
         raise Exception('Invalid response from doi publish service %s: %s' % (result.getcode(), result.read()))
 
@@ -272,8 +301,6 @@ def hasAppliedDoi(pkgId):
 
 # for admin DOI interface, query datasets by DOI status
 def doiQuery():
-    response.headers["Content-Type"] = "application/json"
-
     if not isAdmin():
         return {
             'error' : True,
@@ -285,14 +312,11 @@ def doiQuery():
     offset = request.params.get('offset')
     limit = request.params.get('limit')
 
-    resp = package.doiQuery(query=query, status=status, offset=offset, limit=limit)
-    return json.dumps(resp)
+    return package.doiQuery(query=query, status=status, offset=offset, limit=limit)
 
 # for admin, allows admin to completely clear a DOI.  Should only be used in
 # dev interface, never in production.
 def clearDoi():
-    response.headers["Content-Type"] = "application/json"
-
     if not isAdmin():
         return {
             'error' : True,
@@ -310,7 +334,7 @@ def clearDoi():
 
     pkg = logic.get_action('package_update')(context, pkg)
 
-    return json.dumps({'success': True})
+    return {'success': True}
 
 # Send admin notification of DOI request
 def sendAdminNotification(pkg):
@@ -330,7 +354,7 @@ def sendAdminNotification(pkg):
                         "body" : ("A DOI has been requested for the dataset '%s' by user %s/user/%s.  "
                                     "You can view the dataset here:  %s/#result/%s and approve the DOI here: %s/doi-admin/#%s"
                                     "\n\n-EcoSIS Server") %
-                                 (pkg.get('title'), config.get('ckan.site_url'), c.user, config.get('ecosis.search_url'), pkg.get("id"), config.get('ckan.site_url'), urllib2.quote(pkg.get("title")))
+                                 (pkg.get('title'), config.get('ckan.site_url'), c.user, config.get('ecosis.search_url'), pkg.get("id"), config.get('ckan.site_url'), urllib.parse.urlencode(pkg.get("title"), quote_via=urllib.parse.quote_plus))
                     }
                 )
             except:
@@ -361,7 +385,7 @@ def sendUserNotification(pkg, approved):
     if approved:
         body = ("The DOI request for the dataset '%s' has been approved.  "
                 "It may take a couple minutes for the DOI to generate.  "
-                "You can view the dataset here:  %s/#result/%s\n\n"
+                "You can view the dataset here:  %s/package/%s\n\n"
                 "\n\n-EcoSIS Team") % (pkg.get('title'),
                                        config.get('ecosis.search_url'),
                                        pkg.get("id"))
