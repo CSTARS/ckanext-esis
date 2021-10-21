@@ -139,7 +139,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
         to be used in the after_update() method so we know which DOI actions to
         preform
         """
-        if data_dict.get('id') is not None:
+        if data_dict is not None and data_dict.get('id') is not None:
           cpkg = {}
           if  data_dict['id'] != '':
             cpkg = logic.get_action('package_show')(context, {'id': data_dict['id']})
