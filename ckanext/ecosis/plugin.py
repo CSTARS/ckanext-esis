@@ -139,12 +139,15 @@ class EcosisPlugin(plugins.SingletonPlugin,
         to be used in the after_update() method so we know which DOI actions to
         preform
         """
-        if data_dict is not None and data_dict.get('id') is not None:
-          cpkg = {}
-          if  data_dict['id'] != '':
-            cpkg = logic.get_action('package_show')(context, {'id': data_dict['id']})
-          context['before_package_update'] = cpkg
-          return validDoiUpdate(cpkg, data_dict)
+        if data_dict is not None:
+          # bypass flag for view elements to see if something should be displayed
+          # DOI editing is not part of this, so we can ignore
+          if data_dict.get('view_auth_check') != True and data_dict.get('id') is not None:
+            cpkg = {}
+            if  data_dict['id'] != '':
+              cpkg = logic.get_action('package_show')(context, {'id': data_dict['id']})
+            context['before_package_update'] = cpkg
+            return validDoiUpdate(cpkg, data_dict)
         
         return {'success': True}
 

@@ -1,7 +1,7 @@
 {% ckan_extends %}
 
 {% block content_action %}
-  {% if h.check_access('package_update', {'id':pkg.id }) %}
+  {% if h.check_access('package_update', {'id':pkg.id, 'view_auth_check' : True }) %}
     <a class="btn btn-success btn-large" href="/import?id={{pkg.id}}"><i class="fa fa-wrench"></i> Manage Dataset</a>
   {% endif %}
 {% endblock %}
