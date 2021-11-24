@@ -48,7 +48,7 @@ def validDoiUpdate(currentPackage, newPackage):
             return {'success': True}
 
     # the one thing a USER can do is request approval
-    if oldDoi.get('status').get('value') in (None, DOI_STATUS['PENDING_REVISION']):
+    if oldDoi.get('status').get('value') in (None, DOI_STATUS['PENDING_REVISION'],  DOI_STATUS['PENDING_APPROVAL']):
         if newDoi.get('status').get('value') == DOI_STATUS['PENDING_APPROVAL'] and newDoi.get('value') is None:
             return {'success': True}
 
