@@ -1,19 +1,20 @@
 import json
+from flask import make_response
 
 import ckanext.ecosis.lib.utils as utils
 from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.lib.auth import hasAccess
 from ckanext.ecosis.datastore import workspace
 from ckanext.ecosis.datastore.ckan import package
-from ckan.common import request, response
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.lib.utils import setPackageExtra
 from ckan.lib.email_notifications import send_notification
-from pylons import config
-from doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
-from doi import init as initDoi
+from ckan.common import config
+from .doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
+from .doi import init as initDoi
 
 collections = None
 ignoreTemplateVars = ["metadata_modified", "state", "creator_user_id", "revision_id", "type", "url","organization"]
@@ -80,7 +81,7 @@ def update():
 
     pkg = logic.get_action('package_update')(context, params)
 
-    doiStatus = getDoiStatus(pkg);
+    doiStatus = getDoiStatus(pkg)
     if doiStatus.get('status').get('value') == DOI_STATUS["ACCEPTED"]:
         applyDoi(pkg)
 
@@ -92,16 +93,7 @@ def update():
     return json.dumps(pkg)
 
 # create a package. notify admins
-def create():
-    response.headers["Content-Type"] = "application/json"
-
-    params = json.loads(request.body)
-
-    # normal CKAN create logic
-    context = {'model': model, 'user': c.user}
-    package_create = logic.get_action('package_create')
-    ckanPackage = package_create(context, params)
-
+def after_create():
     # send email to the admin email group
     url = config.get('ckan.site_url')
     admin_email = config.get('ecosis.admin_email')
@@ -123,18 +115,15 @@ def create():
                     }
                 )
             except:
-                print "Failed to send admin email"
-
-    return json.dumps(ckanPackage)
+                print("Failed to send admin email")
 
 # Once a DOI is applied, the update package function is disabled
 # this is a simple workaround service, for just upda
 # TODO: remove this, not required anymore, app should use normal package update
 def updateLinkedResources():
-    response.headers["Content-Type"] = "application/json"
     context = {'model': model, 'user': c.user}
 
-    params = json.loads(request.body)
+    params = request.get_json()
     package_id = params.get('id')
     hasAccess(package_id)
 
@@ -144,7 +133,7 @@ def updateLinkedResources():
     setPackageExtra('LinkedData', json.dumps(linkedResources), cpkg)
     pkg = logic.get_action('package_update')(context, cpkg)
 
-    return json.dumps({'success': True})
+    return {'success': True}
 
 # set a package to private
 def setPrivate():
@@ -163,7 +152,10 @@ def setPrivate():
 
 # create the reusable template for a package
 def getTemplate():
-    response.headers["Content-Type"] = "application/json"
+    headers = {
+      "Content-Type" : "application/json"
+    }
+    
     package_id = request.params.get('id')
     format = request.params.get('format')
 
@@ -202,12 +194,12 @@ def getTemplate():
 
     # are we downloading or are we sending as rest api call?
     if format != "json":
-        response.headers["Content-Disposition"] = "attachment; filename=\"%s.json\"" % pkg.get('name')
+        headers["Content-Disposition"] = "attachment; filename=\"%s.json\"" % pkg.get('name')
 
     # we are only interested in the aliases template
     if mapOnly:
         schema = package.getSchema()
-        for key, s in schema.iteritems():
+        for key, s in schema.items():
             for item in s:
                 if pkg['aliases'].get(item.get('name')) == None:
                     pkg['aliases'][item.get('name')] = ''
@@ -216,37 +208,23 @@ def getTemplate():
             'aliases' : pkg['aliases']
         }
 
-    return jsonStringify(pkg, formatted=True)
-
-# TODO: remove.  this used to set sort and alias, these fields are now stored the
-# the CKAN 'extra'.
-def setOptions():
-    response.headers["Content-Type"] = "application/json"
-    package_id = request.params.get('package_id')
-    hasAccess(package_id)
-
-    options = json.loads(request.params.get('options'))
-
-    workspace.setOptions(package_id, options)
-
-    return json.dumps({'success': True})
+    return {"body": jsonStringify(pkg, formatted=True), "headers": headers}
 
 # if someone is trying to access the main CKAN package create screen, redirect to
 # EcoSIS spectra importer app.
 def createPackageRedirect():
     group = request.params.get('group')
-    response.status_int = 307
+    headers = {}
 
     if group == None:
-        response.headers["Location"] = "/import/"
+      headers["Location"] = "/import/"
     else:
-        response.headers["Location"] = "/import/?group=%s" % group.encode('ascii','ignore')
+      headers["Location"] = "/import/?group=%s" % group
 
-    return "Redirecting"
+    return make_response(("Redirecting", 307, headers))
 
 # if someone is trying to access the main CKAN package edit screen, redirect to
 # EcoSIS spectra importer app.
 def editPackageRedirect(id):
-    response.status_int = 307
-    response.headers["Location"] = "/import/?id=%s" % id.encode('ascii','ignore')
-    return "Redirecting"
+    headers = {"Location" : "/import/?id=%s" % id.encode('ascii','ignore')}
+    return make_response(("Redirecting", 307, headers))

@@ -37,26 +37,31 @@ Polymer({
     },
     
     query : function() {
-        if( this.queryParams.status == "Accepted" ) {
-            var options = extend(true, {}, this.queryParams);
+        // if( this.queryParams.status == "Accepted" ) {
+        //     var options = extend(true, {}, this.queryParams);
             
-            options.status = 'Requesting';
-            var self = this;
+        //     options.status = 'Requesting';
+        //     var self = this;
             
-            rest.getDoiPackages(options, (packages) => {
-                self.packages = packages;
-                rest.getDoiPackages(self.queryParams, (packages) => {
-                    packages.forEach((p) => {
-                        self.packages.push(p);
-                    });
-                    self.render();
-                });
-            });
+        //     rest.getDoiPackages(options, (packages) => {
+        //         self.packages = packages;
+        //         rest.getDoiPackages(self.queryParams, (packages) => {
+        //             packages.forEach((p) => {
+        //                 self.packages.push(p);
+        //             });
+        //             self.render();
+        //         });
+        //     });
 
-            return;
+        //     return;
+        // }
+
+        var queryParams = extend(true, {}, this.queryParams);
+        if( this.queryParams.status == "Accepted" ) {
+          queryParams.status = "Accepted,Requesting,Failed Request";
         }
 
-        rest.getDoiPackages(this.queryParams, this.onPackagesLoad.bind(this));
+        rest.getDoiPackages(queryParams, this.onPackagesLoad.bind(this));
     },
     
     next : function() {
@@ -137,6 +142,16 @@ Polymer({
                             <li><a pkg="${pkg.id}" action="deny">Deny, Request More Information</a></li>
                         </ul>
                     </div>`;
+           } else if( pkg.status.value === 'Failed Request' ) {
+            html += `
+                <div class="btn-group">
+                    <button id="btn-${pkg.id}" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Update <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a pkg="${pkg.id}" action="approve">Retry</a></li>
+                    </ul>
+                </div>`;
            } else if( pkg.status.value === 'Applied' ) {
                 html += pkg.doi;
            } else if( pkg.status.value === 'Accepted' && pkg.status.error ) {

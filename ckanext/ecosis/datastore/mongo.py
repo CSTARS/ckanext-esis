@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-import pylons.config as config
+from ckan.common import config
 
 client = MongoClient(config.get("ecosis.mongo.url"))
 db = client[config.get("ecosis.mongo.db")]

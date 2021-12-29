@@ -1,8 +1,9 @@
-from ckan.common import response, request
+# from ckan.common import response, request
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import json, jwt, re
-import pylons.config as config
+from ckan.common import config
 import ckan.lib.authenticator as authenticator
 import ckanext.ecosis.user_data.model as githubInfoModel
 import ckanext.ecosis.lib.utils as utils
@@ -13,9 +14,8 @@ secret = config.get('ecosis.jwt.secret')
 
 # get information about logged in user, including if they are logged in
 def info():
-    response.headers["Content-Type"] = "application/json"
     if len(c.user) == 0:
-        return json.dumps({"loggedIn": False})
+        return {"loggedIn": False}
 
     context = {'model': model, 'user': c.user}
 
@@ -36,13 +36,11 @@ def info():
     if isAdmin():
         user['isAdmin'] = True
 
-    return json.dumps(user)
+    return user
 
 
 def remote_login():
-    response.headers["Content-Type"] = "application/json"
-
-    token = request.params.get('token')
+    token = request.form.get('token')
     token = jwt.decode(token, secret, algorithm='HS256')
 
     username = token.get('username');
@@ -67,7 +65,7 @@ def remote_login():
             "message": "invalid username or password",
         })
 
-    return json.dumps(create_remote_login_response(user))
+    return create_remote_login_response(user)
 
 def create_remote_login_response(user):
     context = {'model': model, 'user': user}
@@ -109,7 +107,7 @@ def create_remote_login_response(user):
 # TODO: implementing JWT support is kinda a can of worms.
 # will work as a workaround hack for now...
 def set_github_info():
-    params = utils.get_request_data(request)
+    params = request.get_json()
     token = request.headers.get('authorization')
     if not token:
         raise Exception('No jwt token provided')

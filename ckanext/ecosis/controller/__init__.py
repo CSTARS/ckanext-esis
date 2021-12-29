@@ -1,15 +1,16 @@
-import json
-import os
+import os, json
 
-import pylons.config as config
-
+from ckan.common import config
 import ckan.lib.uploader as uploader
-from ckan.controllers.package import PackageController
+# from ckan.controllers.package import PackageController
 from ckanext.ecosis.controller import git, admin, organization, package, resource, spectra, user
 from ckanext.ecosis.controller import workspace as workspaceController
 from ckanext.ecosis.lib.utils import handleError
 from ckanext.ecosis import datastore
 from ckanext.ecosis.datastore.mongo import collections
+from ckanext.ecosis.lib.utils import jsonStringify
+
+from flask import make_response
 
 usdaApiUrl = 'http://plants.usda.gov/java/AdvancedSearchServlet?symbol=&dsp_vernacular=on&dsp_category=on&dsp_genus=on&dsp_family=on&Synonyms=all&viewby=sciname&download=on'
 
@@ -27,25 +28,25 @@ datastore.init(schema, collections, pgConnStr, config.get("ecosis.search_url"), 
 package.init(collections, pgConnStr)
 organization.init(collections)
 
-class EcosisController(PackageController):
+class EcosisController():
 
-    def createPackage(self):
-        try:
-            return package.create()
-        except Exception as e:
-            return handleError(e)
+    # def createPackage(self):
+    #     try:
+    #         return package.create()
+    #     except Exception as e:
+    #         return handleError(e)
 
-    def deletePackage(self):
-        try:
-            return package.delete()
-        except Exception as e:
-            return handleError(e)
+    # def deletePackage(self):
+    #     try:
+    #         return package.delete()
+    #     except Exception as e:
+    #         return handleError(e)
 
-    def updatePackage(self):
-        try:
-            return package.update()
-        except Exception as e:
-            return handleError(e)
+    # def updatePackage(self):
+    #     try:
+    #         return package.update()
+    #     except Exception as e:
+    #         return handleError(e)
 
     def cleanTests(self):
         try:
@@ -59,21 +60,22 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def setPrivate(self):
-        try:
-            return package.setPrivate()
-        except Exception as e:
-            return handleError(e)
+    # def setPrivate(self):
+    #     try:
+    #         return package.setPrivate()
+    #     except Exception as e:
+    #         return handleError(e)
 
     def updateLinkedResources(self):
         try:
-            return package.updateLinkedResources()
+            return (package.updateLinkedResources())
         except Exception as e:
             return handleError(e)
 
     def getTemplate(self):
         try:
-            return package.getTemplate()
+            content = package.getTemplate()
+            return make_response((content['body'], 200, content['headers']))
         except Exception as e:
             return handleError(e)
 
@@ -83,21 +85,21 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def deleteResource(self):
-        try:
-            return resource.delete()
-        except Exception as e:
-            return handleError(e)
+    # def deleteResource(self):
+    #     try:
+    #         return resp(resource.delete())
+    #     except Exception as e:
+    #         return handleError(e)
 
     def deleteResources(self):
         try:
-            return resource.deleteMany()
+            return resp(resource.deleteMany())
         except Exception as e:
             return handleError(e)
 
     def rebuildIndex(self):
         try:
-            return admin.rebuildIndex(collections)
+            return resp(admin.rebuildIndex(collections))
         except Exception as e:
             return handleError(e)
 
@@ -121,13 +123,13 @@ class EcosisController(PackageController):
 
     def doiQuery(self):
         try:
-            return package.doi.doiQuery()
+            return resp(package.doi.doiQuery())
         except Exception as e:
             return handleError(e)
 
     def clearDoi(self):
         try:
-            return package.doi.clearDoi()
+            return resp(package.doi.clearDoi())
         except Exception as e:
             return handleError(e)
 
@@ -140,31 +142,31 @@ class EcosisController(PackageController):
 
     def verifyWorkspace(self):
         try:
-            return admin.verifyWorkspace(collections)
+            return resp(admin.verifyWorkspace(collections))
         except Exception as e:
             return handleError(e)
 
     def gitInfo(self):
         try:
-            return git.info()
+            return resp(git.info())
         except Exception as e:
             return handleError(e)
 
     def userInfo(self):
         try:
-            return user.info()
+            return resp(user.info())
         except Exception as e:
             return handleError(e)
 
     def remoteLogin(self):
         try:
-            return user.remote_login()
+            return resp(user.remote_login())
         except Exception as e:
             return handleError(e)
 
     def setGithubInfo(self):
         try:
-            return user.set_github_info()
+            return resp(user.set_github_info())
         except Exception as e:
             return handleError(e)
 
@@ -175,10 +177,16 @@ class EcosisController(PackageController):
             return handleError(e)
 
     def createPackageRedirect(self):
-        package.createPackageRedirect()
+      return package.createPackageRedirect()
 
-    def editPackageRedirect(self, id):
-        package.editPackageRedirect(id)
+    def editPackageRedirect(self, package_id):
+      return package.editPackageRedirect(package_id)
+    
+    def editPackageRedirectWResource(self, package_id, resource_id):
+      return package.editPackageRedirect(package_id)
+
+    # def editPackageRedirect(self):
+    #   return package.editPackageRedirect()
 
     def rebuildUSDACollection(self):
         try:
@@ -188,25 +196,25 @@ class EcosisController(PackageController):
 
     def gcmdSuggest(self):
         try:
-            return spectra.suggestGCMD()
+            return resp(spectra.suggestGCMD())
         except Exception as e:
             return handleError(e)
 
     def topSuggest(self):
         try:
-            return spectra.suggestAttributeName()
+            return resp(spectra.suggestAttributeName())
         except Exception as e:
             return handleError(e)
 
     def topOverview(self):
         try:
-            return spectra.suggestOverview()
+            return resp(spectra.suggestOverview())
         except Exception as e:
             return handleError(e)
 
     def prepareWorkspace(self):
         try:
-            return workspaceController.prepare()
+            return resp(workspaceController.prepare())
         except Exception as e:
             return handleError(e)
 
@@ -218,19 +226,19 @@ class EcosisController(PackageController):
 
     def getWorkspace(self):
         try:
-            return workspaceController.get()
+            return resp(workspaceController.get())
         except Exception as e:
             return handleError(e)
 
     def processResource(self):
         try:
-            return resource.process()
+            return resp(resource.process())
         except Exception as e:
             return handleError(e)
 
     def getResource(self):
         try:
-            return resource.get()
+            return resp(resource.get())
         except Exception as e:
             return handleError(e)
 
@@ -240,38 +248,38 @@ class EcosisController(PackageController):
         except Exception as e:
             return handleError(e)
 
-    def setPackageOptions(self):
-        try:
-            return package.setOptions()
-        except Exception as e:
-            return handleError(e)
-
     def getSpectra(self):
         try:
-            return spectra.get()
+            return resp(spectra.get())
         except Exception as e:
             return handleError(e)
 
     def getSpectraCount(self):
         try:
-            return resource.getSpectraCount()
+            return resp(resource.getSpectraCount())
         except Exception as e:
             return handleError(e)
 
     def getMetadataChunk(self):
         try:
-            return resource.getMetadataChunk()
+            return resp(resource.getMetadataChunk())
         except Exception as e:
             return handleError(e)
 
     def getMetadataInfo(self):
         try:
-            return resource.getMetadataInfo()
+            return resp(resource.getMetadataInfo())
         except Exception as e:
             return handleError(e)
 
     def pushToSearch(self):
         try:
-            return workspaceController.pushToSearch()
+            return resp(workspaceController.pushToSearch())
         except Exception as e:
             return handleError(e)
+
+def resp(msg, code=200, headers={}):
+  if not isinstance(msg, str):
+    msg = jsonStringify(msg)
+  headers['Content-Type'] = 'application/json'
+  return make_response((msg, 200, headers))

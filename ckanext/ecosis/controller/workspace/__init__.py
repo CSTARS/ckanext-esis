@@ -3,13 +3,11 @@ import ckanext.ecosis.datastore.query.workspace as workspaceQuery
 from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import jsonStringify
 
-from ckan.common import request, response
+from ckan.common import request
 from ckan.lib.base import c, model
 import ckan.logic as logic
 
 def prepare():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
 
     # get package by name or id
@@ -40,8 +38,6 @@ def prepare():
     return jsonStringify(result)
 
 def pushToSearch():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
     email = request.params.get('email')
     if email is None:
@@ -57,11 +53,9 @@ def pushToSearch():
 
     push = Push()
 
-    return jsonStringify(push.run(ckanPackage, email, c.userobj.email, c.userobj.display_name))
+    return push.run(ckanPackage, email, c.userobj.email, c.userobj.display_name)
 
 def get():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
 
     # get package by name or id

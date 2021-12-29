@@ -88,7 +88,8 @@ def doiQuery(status="", query="", limit=10, offset=0):
          "from package_extra pe join package p on pe.package_id = p.id "
          "left join package_extra pev on pev.package_id = p.id and pev.key = 'EcoSIS DOI' "
          "where pe.key = 'EcoSIS DOI Status' and pe.state != 'deleted' "
-         "and pe.value::json->>'value' = %s and lower(p.title) like %s order by title limit %s offset %s;"),(status, query, limit, offset)
+         "and pe.value::json->>'value' = ANY(%s) and lower(p.title) like %s order by title limit %s offset %s;"),
+         (status.split(','), query, limit, offset)
         )
     packages = cur.fetchall()
     cur.close()

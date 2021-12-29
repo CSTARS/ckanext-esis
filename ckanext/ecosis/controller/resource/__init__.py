@@ -1,7 +1,7 @@
-import os
-import json
+import os, json, re
 
-from ckan.common import request, response
+# from ckan.common import request, response
+from ckan.common import request, config
 from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
@@ -15,35 +15,31 @@ from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.controller.package.doi import hasAppliedDoi
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 
+from flask import make_response
+
 parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
 
 # delete are resource
 # By default, CKAN keeps resources on disk after they are deleted.  EcoSIS does not.
 def delete():
-    response.headers["Content-Type"] = "application/json"
-
     params = utils.get_request_data(request)
 
     # remove resource from disk - normally this doesn't happen
     resp = _delete(params)
 
-    return json.dumps(resp)
+    return resp
 
 # Single HTTP call for deleting multiple resources
 def deleteMany():
-    response.headers["Content-Type"] = "application/json"
-
-    params = utils.get_request_data(request)
-    ids = params.get('ids')
+    ids = request.get_json().get('ids')
 
     resp = []
-
     for id in ids:
         resp.append(_delete({'id': id}))
 
-    return jsonStringify(resp)
+    return resp
 
-# Actually delete are srource
+# Actually delete a resource
 def _delete(params):
     # remove resource from disk - normally this doesn't happen
     context = {'model': model, 'user': c.user}
@@ -94,23 +90,21 @@ def create():
 # this will be given a set of options, then parse the measurement data or metadata out of
 # the resource based on this options
 def process():
-    response.headers["Content-Type"] = "application/json"
-
-    package_id = request.params.get('package_id')
+    package_id = request.form.get('package_id')
     hasAccess(package_id)
 
     if hasAppliedDoi(package_id):
         return {'error':True, 'message':'Cannot edit resource of package with applied DOI'}
 
-    sheet_id = request.params.get('sheet_id')
-    resource_id = request.params.get('resource_id')
-    ids = request.params.get('resource_ids')
+    sheet_id = request.form.get('sheet_id')
+    resource_id = request.form.get('resource_id')
+    ids = request.form.get('resource_ids')
 
     if sheet_id == "":
         sheet_id = None
 
     try:
-        options = json.loads(request.params.get('options'))
+        options = json.loads(request.form.get('options'))
     except:
         options = {}
 
@@ -152,13 +146,11 @@ def process():
         'result' : result
     }
 
-    return jsonStringify(result)
+    return result
 
 # get a specific resource
 # optional sheet id, it the resource has multiple sheets (excel file)
 def get():
-    response.headers["Content-Type"] = "application/json"
-
     pid = request.params.get('package_id')
     rid = request.params.get('resource_id')
     sid = request.params.get('sheet_id')
@@ -168,12 +160,11 @@ def get():
 
     hasAccess(pid)
 
-    return jsonStringify(query.getResource(rid, sid))
+    return query.getResource(rid, sid)
 
 # a get a row or column (depending on sheet orientation) of a resource file
 # index is the row/column to retrieve
 def getMetadataChunk():
-    response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
@@ -182,12 +173,11 @@ def getMetadataChunk():
     if sheet_id == "":
         sheet_id = None
 
-    return jsonStringify(query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex()))
+    return query.getMetadataChunk(package_id, resource_id, sheet_id, _getIndex())
 
 # get overview information for file, like number of rows/columns (chunks)
 # also returns number of join rows/columns if metadata resource type
 def getMetadataInfo():
-    response.headers["Content-Type"] = "application/json"
 
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
@@ -196,12 +186,10 @@ def getMetadataInfo():
     if sheet_id == "":
         sheet_id = None
 
-    return jsonStringify(query.getMetadataInfo(package_id, resource_id, sheet_id))
+    return query.getMetadataInfo(package_id, resource_id, sheet_id)
 
 # get the number of spectra measurements found in the file
 def getSpectraCount():
-    response.headers["Content-Type"] = "application/json"
-
     package_id = request.params.get('package_id')
     resource_id = request.params.get('resource_id')
     sheet_id = request.params.get('sheet_id')
@@ -209,14 +197,18 @@ def getSpectraCount():
     if sheet_id == "":
         sheet_id = None
 
-    return jsonStringify(query.total(package_id, resource_id, sheet_id))
+    return query.total(package_id, resource_id, sheet_id)
 
 def getByName(package_id, resource_name):
     resource = ckanResourceQuery.getByName(package_id, resource_name)
+    url = resource['url'];
 
-    response.status_int = 307
-    response.headers["Location"] = resource['url']
-    return "Redirecting"
+    # ckan 2.9 doesn't seem to return full url...
+    if not re.match(r'^https?', url, re.I):
+      url = "%s/dataset/%s/resource/%s/download/%s" % (config.get('ckan.site_url'), package_id, resource['id'], resource_name)
+
+    headers = {"Location": url}
+    return make_response(("Redirecting", 307, headers))
 
 # helper for getting index as int
 def _getIndex():

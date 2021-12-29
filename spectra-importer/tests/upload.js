@@ -24,7 +24,6 @@ Browser.visit("http://localhost:3000/test.html", {
         console.log('I am done waiting...');
         setTimeout(function(){
             console.log('Where we at?');
-            debugger;
 
         }.bind(this), 5000);
     });

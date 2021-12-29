@@ -1,9 +1,9 @@
-import os, json, re
+import os, json, re, traceback
 import datetime
 from bson.code import Code
 from bson.son import SON
-from pylons import config
-import lookup
+from ckan.common import config
+from . import lookup
 import dateutil.parser as dateparser
 from ckanext.ecosis.datastore import query
 from ckanext.ecosis.lib.utils import getPackageExtra
@@ -47,7 +47,7 @@ def init(mongoCollections, jsonSchema):
     lookup.init(collections)
 
     # loop schema and lookup mapreduce attributes
-    for cat, arr in schema.iteritems():
+    for cat, arr in schema.items():
         for item in arr:
             if item.get('name') == 'Latitude' or item.get('name') == 'geojson' or item.get('name') == 'Longitude':
                 continue
@@ -173,7 +173,9 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
                 if unit is not None:
                     ecosis["spectra_metadata_schema"]["units"][key] = unit
 
-        except Exception:
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
             pass
 
     # append the data groups
@@ -210,7 +212,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
         # process ecosis schema
         # bubble attributes from mapreduce
         names = []
-        for category, items in schema.iteritems():
+        for category, items in schema.items():
             for item in items:
                 name = item.get('name')
                 input = item.get('input')
@@ -250,8 +252,8 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
 
             # create unique array of all gcmd keywords to be searched on
             for item in arr:
-                parts = item.get('label').split('>')
-                parts =  map(unicode.strip, parts)
+                parts = item.get('label').encode('ascii', 'ignore').decode('utf-8').split('>')
+                # parts =  map(unicode.strip, parts)
                 for key in parts:
                     if key not in keywords:
                         keywords.append(key)
@@ -259,7 +261,7 @@ def updateEcosisNs(pkg, spectra_count, bboxInfo):
             setValues['$set']['value.NASA GCMD Keywords'] = keywords
 
         # finally, let's handle geojson
-        geojson = processGeoJson(bboxInfo, pkg);
+        geojson = processGeoJson(bboxInfo, pkg)
         if len(geojson.get('geometries')) == 0:
             setValues['$set']['value.ecosis']['geojson'] = None
         else:
@@ -347,6 +349,7 @@ def processAttribute(name, input, pkg, mrValue, setValues, keywords):
 
     # finally, clean all values (strip and set to lower case)
     if name != 'geojson' and name != 'Citation':
-        val = map(lambda it: cleanValue(it), val)
+        # TODO: fix this
+        val = list(map(lambda it: cleanValue(it), val))
 
     setValues['$set']['value.'+name] = val

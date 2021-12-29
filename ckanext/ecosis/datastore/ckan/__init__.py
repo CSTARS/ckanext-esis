@@ -1,5 +1,5 @@
-import package as ckanPackageQuery
-import resource as ckanResourceQuery
+from . import package as ckanPackageQuery
+from . import resource as ckanResourceQuery
 
 '''
 This module clones so CKAN functionality, allow access of CKAN-like objects

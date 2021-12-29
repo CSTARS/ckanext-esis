@@ -36,7 +36,7 @@ def update():
     try:
         _update()
     except Exception as e:
-        print "Error creating lookup index"
+        print("Error creating lookup index")
     running = False
 
 # update the filter lookup collection

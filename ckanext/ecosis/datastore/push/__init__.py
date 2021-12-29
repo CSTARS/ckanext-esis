@@ -1,6 +1,6 @@
 from multiprocessing import Process, Queue
 from ckan.lib.email_notifications import send_notification
-from pylons import config
+from ckan.common import config
 import ckan.logic as logic
 from ckan.lib.base import c, model
 import traceback
@@ -111,18 +111,18 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
                 }
             )
         except Exception as e:
-            print "Failed to send email: %s" % emailAddress
+            print("Failed to send email: %s" % emailAddress)
 
         updateLookup()
 
     except Exception as e:
         try:
-            print 'ERROR pushing to search: %s' % ckanPackage.get('id')
+            print('ERROR pushing to search: %s' % ckanPackage.get('id'))
 
             # if badness, remove from search
             deleteUtils.cleanFromSearch(ckanPackage.get('id'))
 
-            print unicode(e.message).encode("utf-8")
+            print(e)
             traceback.print_exc()
 
             if not emailOnComplete:
@@ -141,7 +141,7 @@ def sub_run(q, ckanPackage, emailOnComplete, emailAddress, username):
                 }
             )
         except Exception as e:
-            print unicode(e.message).encode("utf-8")
+            print(e)
             traceback.print_exc()
 
 # update bounding box built from spectra given either a lat/lng coordinate or geojson
@@ -184,8 +184,8 @@ def setCitation(pkg):
         doi = getPackageExtra('Citation DOI', pkg)
 
     if authors is not None:
-        authors = authors.split(',')
-        authors = map(unicode.strip, authors)
+        authors = authors.encode('ascii', 'ignore').decode("utf-8").split(',')
+        # authors = map(unicode.strip, authors)
         if len(authors) == 1:
             citation.append(authors[0])
         elif len(authors) == 2:

@@ -17,7 +17,7 @@ MongoClient.connect(url, function(err, db) {
 });
 
 function insert(collection) {
-  collection.insert(keywords, {w: 1}, function(err){
+  collection.insert(keywords, {w: 1}, function(err){ 
       if( err ) {
         console.log(err);
       }

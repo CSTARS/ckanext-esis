@@ -12075,14 +12075,14 @@ this.fire('dom-change');
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close singleMode" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-            <h4 class="modal-title text text-danger">Oooh no, badness :(</h4>
+            <h4 class="modal-title text text-danger">Badness</h4>
           </div>
 
           <div class="modal-body" style="padding: 0 25px">
             <h5 class="text text-danger">Error: <span id="message"></span></h5>
 
             <div id="report" style="margin: 50px 15px 20px 15px">
-              Please help us fix bugs by reporting them
+              If you feel this is a bug, please help us fix by reporting
               <a href="https://github.com/CSTARS/ckanext-ecosis/issues/new" target="_blank">here on GitHub</a>!
               <br><b>Copy and paste</b> message below into GitHub Issue:
             </div>
@@ -12138,7 +12138,26 @@ this.fire('dom-change');
 
       _show : function(e) {
         var msg = '';
-        if( e.details && e.details.message ) {
+        var body;
+
+        // hack
+        if( e.details && e.details.response && e.details.response.body ) {
+          body = e.details.response.body;
+          if( typeof body === 'object' && body.error ) {
+            let keys = Object.keys(body.error);
+            keys.forEach(key => {
+              if( key.match(/^__/) ) return;
+              if( Array.isArray(body.error[key]) ) {
+                msg += body.error[key].join('. ')+'. ';
+              } else {
+                msg += body.error[key]+'. ';
+              }
+            });
+          }
+        }
+
+
+        if( !msg && e.details && e.details.message ) {
           msg = e.details.message;
         }
 

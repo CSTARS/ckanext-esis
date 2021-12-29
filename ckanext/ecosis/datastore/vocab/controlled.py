@@ -1,4 +1,5 @@
-import re, utils
+import re
+from . import utils
 
 schema = None
 
@@ -23,7 +24,7 @@ def enforce(spectra):
     remove = []
 
     # loop through all attributes in spactra
-    for key, value in spectra.iteritems():
+    for key, value in spectra.items():
         # TODO: why?
         value = spectra[key]
 
@@ -64,7 +65,7 @@ def enforce(spectra):
                 remove.append(key)
 
     # the loop above is keeping track of additional items to add and remove, do that here
-    for key, value in set.iteritems():
+    for key, value in set.items():
         spectra[key] = value
 
     for key in remove:

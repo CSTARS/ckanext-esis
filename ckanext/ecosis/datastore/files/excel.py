@@ -172,7 +172,7 @@ def cacheWrite(collection, sheetConfig, hash):
             csvfile.close()
 
     except Exception as e:
-        print e
+        print(e)
         pass
 
     # make sure we save the hash

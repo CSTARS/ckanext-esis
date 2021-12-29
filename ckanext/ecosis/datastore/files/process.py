@@ -1,5 +1,6 @@
-import utils, excel, hashlib, datetime
+import hashlib, datetime
 
+from . import utils, excel
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 from ckanext.ecosis.datastore.files import csvReader
 from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
@@ -227,7 +228,7 @@ def _processSheetArray(data, sheetConfig):
         if stop > 1:# check for bad parse
             for i in range(0, stop):
                 # actually parse attribute info
-                info = utils.parseAttrType(data[localRange['start']][i], [localRange['start'], i])
+                info = utils.parseAttrType(data[localRange['start']][i].decode('utf-8'), [localRange['start'], i])
                 attrTypes.append(info)
     else:
         for i in range(localRange['start'], localRange['stop']+1):
@@ -235,14 +236,14 @@ def _processSheetArray(data, sheetConfig):
                 continue
 
             # actually parse attribute info
-            info = utils.parseAttrType(data[i][0], [i,0])
+            info = utils.parseAttrType(data[i][0].decode('utf-8'), [i,0])
             attrTypes.append(info)
 
     # if there is a global range, read in attribute information for global
     # attributes as well
     if globalRange != None:
         for i in range(globalRange['start'], globalRange['stop']+1):
-            info = utils.parseAttrType(data[i][0], [i,0])
+            info = utils.parseAttrType(data[i][0].decode('utf-8'), [i,0])
             attrTypes.append(info)
 
     # store attribute information as well as range information
@@ -280,7 +281,7 @@ def _processSheetArray(data, sheetConfig):
                 try:
                     if data[j][i]:
                         # grab the attribute name as set the data
-                        sp[_getName(nameMap, data[start][i])] = data[j][i]
+                        sp[_getName(nameMap, data[start][i].decode('utf-8'))] = data[j][i].decode('utf-8')
                 except Exception as e:
                     pass
 
@@ -288,7 +289,7 @@ def _processSheetArray(data, sheetConfig):
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']+1):
                     # grab the attribute name as set the data
-                    sp[_getName(nameMap, data[i][0])] = data[i][1]
+                    sp[_getName(nameMap, data[i][0].decode('utf-8'))] = data[i][1].decode('utf-8')
 
             index += 1
 
@@ -303,7 +304,7 @@ def _processSheetArray(data, sheetConfig):
                 try:
                     if data[i][j]:
                         # grab the attribute name as set the data
-                        sp[_getName(nameMap, data[i][0])] = data[i][j]
+                        sp[_getName(nameMap, data[i][0].decode('utf-8'))] = data[i][j].decode('utf-8')
                 except:
                     pass
 
@@ -311,7 +312,7 @@ def _processSheetArray(data, sheetConfig):
             if globalRange != None:
                 for i in range(globalRange['start'], globalRange['stop']+1):
                     # grab the attribute name as set the data
-                    sp[_getName(nameMap, data[i][0])] = data[i][1]
+                    sp[_getName(nameMap, data[i][0].decode('utf-8'))] = data[i][1].decode('utf-8')
 
             index += 1
 
@@ -344,9 +345,12 @@ def _insertSpectra(sp, sheetConfig, index):
     }
 
     try:
-        get_package_spectra_collection(sheetConfig.get("packageId")).insert(data)
+      resp = get_package_spectra_collection(sheetConfig.get("packageId")).insert(data)
+      t=1
     except Exception as e:
-        pass
+      print(e)
+      pass
+    
 
 # get the md5 hash of a files contents
 def hashfile(file):

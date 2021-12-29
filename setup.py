@@ -23,8 +23,8 @@ setup(
         entry_points="""
                 [ckan.plugins]
                 ecosis=ckanext.ecosis.plugin:EcosisPlugin
-                
-                [paste.paster_command]
-                initdb = ckanext.ecosis.user_data.paster:InitCommand
+
+                [ckan.click_command]
+                ecosis = ckanext.ecosis.user_data.paster
         """,
 )

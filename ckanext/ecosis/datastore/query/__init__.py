@@ -1,5 +1,5 @@
 import re, pymongo, json, dateutil
-from pylons import config
+from ckan.common import config
 
 from ckanext.ecosis.datastore.ckan import package as ckanPackageQuery
 from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
@@ -8,7 +8,7 @@ from ckanext.ecosis.datastore.vocab import controlled as controlledVocab
 from ckanext.ecosis.datastore.utils import mongo
 from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
 from ckanext.ecosis.lib import utils
-import workspace
+from . import workspace
 
 '''
 Query ecosis workspace collections
@@ -404,7 +404,7 @@ def mapNames(spectra, config, processInfo, package):
         aliases = config.get("map")
 
     if aliases != None and isinstance(aliases, dict):
-        for key, value in aliases.iteritems():
+        for key, value in aliases.items():
             if value in spectra:
                 spectra[key] = spectra[value]
 
