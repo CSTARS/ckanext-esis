@@ -366,7 +366,6 @@ function postRaw(url, data, callback) {
    .post(url)
    .withCredentials();
 
-  debugger;
   if( typeof data === 'object' ) {
     data = JSON.stringify(data);
     r.set('Content-type', 'application/json');

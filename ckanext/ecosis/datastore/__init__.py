@@ -33,7 +33,7 @@ def getCollections():
     return collections
 
 def ensureIndexes(collections):
-    collectionNames = db.collection_names()
+    collectionNames = db.list_collection_names()
     for name in collectionNames:
         if re.match(r'workspace_spectra_.*', name):
             db[name].create_index('index')

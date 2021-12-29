@@ -54,6 +54,7 @@ function save(callback) {
 }
 
 function _save(ref, callback) {
+  debugger;
   // make sure we have the correct package state
   // all resources need to be included when you make a updatePackage call
   ref.SDK.ckan.getPackage(ref.data.id, function(resp) {
