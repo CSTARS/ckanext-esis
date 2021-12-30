@@ -49,6 +49,11 @@ class EcosisPlugin(plugins.SingletonPlugin,
     plugins.implements(plugins.IMiddleware)
     # plugins.implements(plugins.IDatasetForm)
 
+    # map of ecosis required package property to a nice property label
+    REQUIRED_FIELDS = {
+      'license_id': { 'label': 'License', 'empty_value' : 'notspecified'}
+    }
+
 
     # IClick
     def get_commands(self):
@@ -65,7 +70,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
     def get_auth_functions(self):
         return {
           'package_update' : self.package_update_auth,
-          'package_create' : self.package_update_auth,
+          'package_create' : self.package_create_auth,
           'package_delete' : self.package_delete_auth,
           'resource_delete' : self.resource_delete_auth,
           'resource_create' : self.resource_create_auth
@@ -132,6 +137,21 @@ class EcosisPlugin(plugins.SingletonPlugin,
     def edit(self, entity):
         pass
         # orgController.update(entity)
+
+    @tk.auth_sysadmins_check
+    def package_create_auth(self, context, data_dict=None):
+        """Check for required fields
+        """
+        if data_dict is not None:
+          for field, props in self.REQUIRED_FIELDS.items():
+            value = data_dict.get(field)
+            if value == None or value == '' or value == props.get('empty_value'):
+              return {
+                'success' : False,
+                'msg' : 'The %s field is required' % props.get('label')
+              }
+        
+        return self.package_update_auth(context, data_dict)
     
     @tk.auth_sysadmins_check
     def package_update_auth(self, context, data_dict=None):

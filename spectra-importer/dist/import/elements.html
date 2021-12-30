@@ -9451,7 +9451,7 @@ this.fire('dom-change');
 
     <div id="inputMode" class="form-horizontal">
       <div class="form-group">
-        <label for="titleInput" class="col-md-2 control-label">Title</label>
+        <label for="titleInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> Title</label>
         <div class="col-md-9">
           <input type="text" class="form-control" id="titleInput" placeholder="Unique Dataset Title" on-blur="onBlur" on-keyup="onTitleInputChange">
           <div id="static"></div>
@@ -12837,7 +12837,7 @@ this.fire('dom-change');
       <ecosis-keyword-input id="keywordInput"></ecosis-keyword-input>
 
       <div class="form-group">
-        <label for="licenseInput" class="col-md-2 control-label">License: </label>
+        <label for="licenseInput" class="col-md-2 control-label"><i class="fa fa-star" style="color:#2196f3"></i> License: </label>
         <div class="col-md-9">
           <div style="display:none">Loading...</div>
           <select class="form-control" id="licenseInput" on-change="onLicenseInputChange">
@@ -13149,6 +13149,7 @@ this.fire('dom-change');
       var options = '<option></option>';
       for( var i = 0; i < resp.length; i++ ) {
         var item = resp[i];
+        if( item.id === 'notspecified' ) continue; 
         options += '<option value="'+item.id+'">'+item.title+'</option>';
       }
       this.$.licenseInput.innerHTML = options;
