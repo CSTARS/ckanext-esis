@@ -142,13 +142,18 @@ class EcosisPlugin(plugins.SingletonPlugin,
     def package_create_auth(self, context, data_dict=None):
         """Check for required fields
         """
+
+        # hack.  how do we know if this is a view check or not?!
+        if data_dict is not None and len(data_dict) == 0:
+          return {'success': True}
+
         if data_dict is not None:
-          for field, props in self.REQUIRED_FIELDS.items():
-            value = data_dict.get(field)
-            if value == None or value == '' or value == props.get('empty_value'):
-              return {
-                'success' : False,
-                'msg' : 'The %s field is required' % props.get('label')
+            for field, props in self.REQUIRED_FIELDS.items():
+              value = data_dict.get(field)
+              if value == None or value == '' or value == props.get('empty_value'):
+                return {
+                  'success' : False,
+                  'msg' : 'The %s field is required' % props.get('label')
               }
         
         return self.package_update_auth(context, data_dict)
