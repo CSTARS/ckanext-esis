@@ -108,8 +108,11 @@ def process():
     except:
         options = {}
 
-    # option, if a resource id and a datasheet id are passed, then the full 'merged' view will be return
+    _process(package_id, sheet_id, resource_id, ids, options)
 
+
+def _process(package_id, sheet_id, resource_id, ids, options):
+    # option, if a resource id and a datasheet id are passed, then the full 'merged' view will be return
     # only allow specified options
     safeOptions = {}
     for option in parseOptions:

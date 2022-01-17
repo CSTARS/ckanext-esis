@@ -358,6 +358,8 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.getTemplate)
       api.add_url_rule(u'/package/updateLinkedResources', methods=[u'POST'],
           view_func=controller.updateLinkedResources)
+      api.add_url_rule(u'/package/import', methods=[u'GET'],
+          view_func=controller.importPackage)
 
       # ecosis - spectra
       api.add_url_rule(u'/spectra/suggestOverview', methods=[u'GET', 'POST'],

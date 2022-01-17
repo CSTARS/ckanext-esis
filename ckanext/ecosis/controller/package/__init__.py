@@ -15,6 +15,7 @@ from ckan.lib.email_notifications import send_notification
 from ckan.common import config
 from .doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
 from .doi import init as initDoi
+from ckanext.ecosis.lib.data_package_importer import DataPackageImporter
 
 collections = None
 ignoreTemplateVars = ["metadata_modified", "state", "creator_user_id", "revision_id", "type", "url","organization"]
@@ -134,6 +135,19 @@ def updateLinkedResources():
     pkg = logic.get_action('package_update')(context, cpkg)
 
     return {'success': True}
+
+def importPackage():
+    context = {'model': model, 'user': c.user}
+
+    package_uri = request.args.get('uri')
+    if package_uri is None:
+        raise Exception('uri parameter not provided')
+
+    inst = DataPackageImporter(package_uri)
+    newPkg = inst.run(context)
+
+    headers = {"Location" : "/import/?id=%s" % newPkg.get('id')}
+    return make_response(("Redirecting", 307, headers))
 
 # set a package to private
 def setPrivate():

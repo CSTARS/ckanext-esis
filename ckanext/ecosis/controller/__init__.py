@@ -72,6 +72,12 @@ class EcosisController():
         except Exception as e:
             return handleError(e)
 
+    def importPackage(self):
+        try:
+            return package.importPackage()
+        except Exception as e:
+            return handleError(e)
+
     def getTemplate(self):
         try:
             content = package.getTemplate()
