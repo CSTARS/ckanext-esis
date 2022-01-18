@@ -48,12 +48,14 @@ class DataPackageImporter():
   def run(self, context):
     self.context = context
 
-    # try catch
-    self.download()
-    self.unzip()
-    self.validate()
-    self.create()
-    # always cleanup?
+    try:
+      self.download()
+      self.unzip()
+      self.validate()
+      self.create()
+    except Exception as e:
+      self.cleanup()
+      raise e
 
     self.cleanup()
     return self.newPkg
@@ -155,11 +157,12 @@ class DataPackageImporter():
     """
     Create package
     """
-    try:
-      logic.get_action('package_delete')(self.context, {'id': self.package.get('name')})
-    except Exception as err:
-      print(err)
-      pass
+    # For debugging
+    # try:
+    #   logic.get_action('package_delete')(self.context, {'id': self.package.get('name')})
+    # except Exception as err:
+    #   print(err)
+    #   pass
 
     # TODO: does this raise error on badness?
     self.newPkg = logic.get_action('package_create')(self.context, self.package)
