@@ -78,7 +78,9 @@ class DataPackageImporter():
     """
     Download file from S3 bucket
     """
-    s3.download_file(self.uri_parts.netloc, self.uri_parts.path, self.zipfile)
+    obj_key = re.sub(r'^/', '', self.uri_parts.path)
+    print("Attempting S3 download: %s %s %s" % (self.uri_parts.netloc, obj_key, self.zipfile))
+    s3.download_file(self.uri_parts.netloc, obj_key, self.zipfile)
 
   def downloadHttp(self):
     """
