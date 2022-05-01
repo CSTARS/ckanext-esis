@@ -17,7 +17,7 @@ from ckanext.ecosis.datastore.ckan import resource as ckanResourceQuery
 
 from flask import make_response
 
-parseOptions = ["ignore", "layout", "metadata", "joinOn", "seperator"]
+parseOptions = ["ignore", "layout", "metadata", "joinOn", "separator"]
 
 # delete are resource
 # By default, CKAN keeps resources on disk after they are deleted.  EcoSIS does not.

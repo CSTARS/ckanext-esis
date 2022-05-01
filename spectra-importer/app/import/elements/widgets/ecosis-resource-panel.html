@@ -135,7 +135,7 @@
         var sheet = this.resource.datasheets[0];
         if( !sheet.ignore && sheet.name) {
           if( sheet.name.match(/(spectra|csv|tsv)$/i) ){
-            parseInfo = ' ('+(this.resource.datasheets[0].layout || 'row')+'/'+(this.resource.datasheets[0].seperator || 'comma')+')';
+            parseInfo = ' ('+(this.resource.datasheets[0].layout || 'row')+'/'+(this.resource.datasheets[0].separator || 'comma')+')';
           }
         }
       }

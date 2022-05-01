@@ -18,7 +18,7 @@ from .aws import s3
     "[filename]" : {
       "layout" : "column|row",
       "metadata" : Boolean,
-      "seperator" : "empty (comma),tab or character"
+      "separator" : "empty (comma),tab or character"
     }
   }
  }

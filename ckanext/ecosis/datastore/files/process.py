@@ -161,24 +161,29 @@ def processFile(file="", packageId="", resourceId="", sheetId=None, options={}, 
 
 # start of parsing csv file
 def _processCsv(sheetConfig):
-    # default seperator
-    seperator = ","
+    # default separator
+    separator = ","
 
-    # user can specify seperator as well
-    if sheetConfig.get("seperator") is not None:
-        seperator = str(sheetConfig.get("seperator"))
-        if seperator == "tab":
-            seperator = "\t"
+    # user can specify separator as well
+    if sheetConfig.get("separator") is not None:
+        separator = str(sheetConfig.get("separator"))
+        if separator == "tab":
+            separator = "\t"
+    # for old missspelling config
+    elif sheetConfig.get("seperator") is not None:
+        separator = str(sheetConfig.get("separator"))
+        if separator == "tab":
+            separator = "\t"
 
     # actually parse file with given sperator
-    return _processSeperatorFile(seperator, sheetConfig)
+    return _processSeparatorFile(separator, sheetConfig)
 
 # like _processCsv above but defaults to tab
 def _processTsv(sheetConfig):
-    return _processSeperatorFile("\t", sheetConfig)
+    return _processSeparatorFile("\t", sheetConfig)
 
 # parse a csv or tsv file location into array
-def _processSeperatorFile(separator, sheetConfig):
+def _processSeparatorFile(separator, sheetConfig):
     # parse using csvReader module
     data = csvReader.read(sheetConfig.get('file'), separator)
 

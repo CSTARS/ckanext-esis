@@ -41,6 +41,13 @@ def init(co, resourceUtils, workDir):
     resourceUtil = resourceUtils
     workspaceDir = workDir
 
+    # fix seperator misselling -> separator
+    # TODO: remove this when patch applied
+    collections.get("resource").update_many(
+      {'seperator': {'$exists': True}},
+      { '$rename': { 'seperator': 'separator'}}
+    )
+
 # cleanup unused workspaces
 def clean(current_package_id=None):
     expired = datetime.utcnow() - packageExpireTime

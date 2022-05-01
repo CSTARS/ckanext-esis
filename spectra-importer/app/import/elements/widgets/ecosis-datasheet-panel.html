@@ -91,35 +91,35 @@
         </div>
       </div>
 
-      <!-- Datasheet Seperator -->
-      <div class="form-horizontal" id="seperatorPanel" style="display:none">
+      <!-- Datasheet Separator -->
+      <div class="form-horizontal" id="separatorPanel" style="display:none">
         <div class="form-group">
 
-            <label class="col-md-2 control-label">File Seperator</label>
+            <label class="col-md-2 control-label">File Separator</label>
             <div class="col-md-10">
               <div class="radio">
                 <label>
-                  <input type="radio" class="orientation-radio" id="commaInput" value="," checked="" on-click="onSeperatorChange">
+                  <input type="radio" class="orientation-radio" id="commaInput" value="," checked="" on-click="onSeparatorChange">
                   Comma
                 </label>
               </div>
               <div class="radio">
                 <label>
-                  <input type="radio" class="orientation-radio" id="tabInput" value="tab" on-click="onSeperatorChange">
+                  <input type="radio" class="orientation-radio" id="tabInput" value="tab" on-click="onSeparatorChange">
                   Tab
                 </label>
               </div>
               <div class="radio">
                 <label>
-                  <input type="radio" class="orientation-radio" id="semicolonInput" value=";" on-click="onSeperatorChange">
+                  <input type="radio" class="orientation-radio" id="semicolonInput" value=";" on-click="onSeparatorChange">
                   Semicolon
                 </label>
               </div>
               <div class="radio">
                 <label>
-                  <input type="radio" class="orientation-radio" id="otherInput" value="other" on-click="onSeperatorChange">
+                  <input type="radio" class="orientation-radio" id="otherInput" value="other" on-click="onSeparatorChange">
                   Other
-                  <input type="text" id="otherSeperatorInput" on-blur="onSeperatorChange" />
+                  <input type="text" id="otherSeparatorInput" on-blur="onSeparatorChange" />
                 </label>
               </div>
             </div>
@@ -160,8 +160,8 @@
         joinOn : this.sheet.joinOn
       }
 
-      if( this.sheet.seperator ) {
-        options.seperator = this.sheet.seperator;
+      if( this.sheet.separator ) {
+        options.separator = this.sheet.separator;
       }
 
       ecosis.ckan.processResource(
@@ -237,7 +237,7 @@
 
       this.updateMetadataUi();
       this.updateIgnoreUi();
-      this.updateSeperatorUi();
+      this.updateSeparatorUi();
 
       // see if there are repeats
       if( this.sheet.repeatAttributes && !this.sheet.ignore) {
@@ -291,29 +291,29 @@
       }
     },
 
-    updateSeperatorUi : function() {
+    updateSeparatorUi : function() {
       if( !this.sheet.isCSV ) {
-        this.$.seperatorPanel.style.display = 'none';
+        this.$.separatorPanel.style.display = 'none';
         return;
       }
 
-      this.$.seperatorPanel.style.display = 'block';
+      this.$.separatorPanel.style.display = 'block';
       $(this).find('.orientation-radio').prop('checked', false);
-      this.$.otherSeperatorInput.value = '';
+      this.$.otherSeparatorInput.value = '';
 
-      if( !this.sheet.seperator ) {
+      if( !this.sheet.separator ) {
         this.$.commaInput.checked = true;
         return;
       }
 
       var options = [',', 'tab', ';'];
-      if( options.indexOf(this.sheet.seperator) > -1 ) {
-        $(this).find('[value="'+this.sheet.seperator+'"]').prop('checked', true);
+      if( options.indexOf(this.sheet.separator) > -1 ) {
+        $(this).find('[value="'+this.sheet.separator+'"]').prop('checked', true);
         return;
       }
 
       this.$.otherInput.checked = true;
-      this.$.otherSeperatorInput.value = this.sheet.seperator;
+      this.$.otherSeparatorInput.value = this.sheet.separator;
     },
 
     onOrientationChange : function(e) {
@@ -327,7 +327,7 @@
       this.save();
     },
 
-    onSeperatorChange : function(e) {
+    onSeparatorChange : function(e) {
       var ele = e.currentTarget;
 
       if( ele.getAttribute('type') == 'radio' ) {
@@ -337,12 +337,12 @@
 
       var val = e.currentTarget.value;
       if( val === 'other' ) {
-        val = this.$.otherSeperatorInput.value;
+        val = this.$.otherSeparatorInput.value;
       }
 
       if( !val ) return;
 
-      this.sheet.seperator = val;
+      this.sheet.separator = val;
       this.save();
     },
 
