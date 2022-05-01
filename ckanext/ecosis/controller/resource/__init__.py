@@ -108,7 +108,7 @@ def process():
     except:
         options = {}
 
-    _process(package_id, sheet_id, resource_id, ids, options)
+    return _process(package_id, sheet_id, resource_id, ids, options)
 
 
 def _process(package_id, sheet_id, resource_id, ids, options):
