@@ -1,5 +1,4 @@
 import csv, re
-import codecs
 
 # parse a csv file
 def read(file, separator):

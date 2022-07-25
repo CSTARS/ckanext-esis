@@ -1,4 +1,3 @@
-from this import d
 from urllib.parse import urlparse
 import urllib.request
 import re, shutil, shortuuid, zipfile, json
