@@ -13,7 +13,7 @@
   "author": "Justin Merz (jrmerz@gmail.com)",
   "license": "ISC",
   "dependencies": {
-    "express": "^3.20.2",
+    "express": "^4.18.2",
     "extend": "^3.0.0",
     "fast-csv": "^1.0.0",
     "grunt": "^0.4.5",
@@ -23,7 +23,7 @@
     "grunt-usemin": "^3.0.0",
     "grunt-vulcanize": "^0.4.2",
     "load-grunt-tasks": "^0.6.0",
-    "superagent": "^1.7.2",
+    "superagent": "^8.0.5",
     "time-grunt": "^1.1.1"
   },
   "devDependencies": {
