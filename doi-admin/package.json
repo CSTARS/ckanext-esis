@@ -35,7 +35,7 @@
     "material-ui": "^0.15.0-alpha.2",
     "poly-next": "0.0.5",
     "resolve-url-loader": "^1.4.3",
-    "superagent": "^1.8.3",
+    "superagent": "^8.0.8",
     "tether": "^1.2.0",
     "url-loader": "^0.5.7"
   }
