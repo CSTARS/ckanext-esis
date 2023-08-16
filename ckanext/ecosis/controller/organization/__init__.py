@@ -1,4 +1,3 @@
-from ckan.lib.base import c, model
 from ckanext.ecosis.datastore import delete as deleteUtil
 import ckan.logic as logic
 from ckan.common import config

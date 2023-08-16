@@ -3,7 +3,7 @@ import csv, re
 # parse a csv file
 def read(file, separator):
     data = []
-    with open(file, 'rU') as csvfile:
+    with open(file, 'rU', errors='ignore') as csvfile:
         # open will csv files
         reader = csv.reader(csvfile, delimiter=separator, quotechar='"')
 

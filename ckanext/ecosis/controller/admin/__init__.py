@@ -1,4 +1,3 @@
-from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
 import json, subprocess, os, urllib, re
@@ -7,6 +6,7 @@ from ckanext.ecosis.datastore import delete as deleteUtil
 from ckanext.ecosis.datastore.mapreduce import mapreducePackage
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.datastore.mongo import get_package_spectra_collection
+from ckanext.ecosis.lib.context import get_context
 from .upgrade import run as runUpgrade
 from .upgrade import fixUnits as runFixUnits
 from .upgrade import fixCitationText as runFixCitationText
@@ -14,7 +14,7 @@ from .upgrade import fixCitationText as runFixCitationText
 
 # rebuild entire search index
 def rebuildIndex(collections):
-    context = {'model': model, 'user': c.user}
+    context = get_context()
 
     if not isAdmin():
         raise Exception('Nope.')
@@ -25,7 +25,7 @@ def rebuildIndex(collections):
     collections.get("search_package").remove({})
 
     for pkgId in list:
-        context = {'model': model, 'user': c.user}
+        context = get_context()
         ckanPackage = logic.get_action('package_show')(context,{id: pkgId})
 
         mapreducePackage(ckanPackage, collections.get("search_spectra"), collections.get("package_search"))
@@ -34,7 +34,7 @@ def rebuildIndex(collections):
 
 # Remove all testing data flagged with _testing_
 def cleanTests():
-    context = {'model': model, 'user': c.user}
+    context = get_context()
 
     path = os.path.dirname(__file__)
 
@@ -80,7 +80,7 @@ def cleanTests():
 # dump everything (data)!
 # this will not work on the master branch
 def clean(collections):
-    context = {'model': model, 'user': c.user}
+    context = get_context()
 
     path = os.path.dirname(__file__)
 

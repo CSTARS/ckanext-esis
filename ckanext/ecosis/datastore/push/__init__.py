@@ -1,8 +1,7 @@
 from multiprocessing import Process, Queue
-from ckan.lib.email_notifications import send_notification
+from ckanext.activity.email_notifications import send_notification
 from ckan.common import config
 import ckan.logic as logic
-from ckan.lib.base import c, model
 import traceback
 
 from ckanext.ecosis.datastore import mapreduce
@@ -10,6 +9,7 @@ from ckanext.ecosis.datastore import query
 from ckanext.ecosis.datastore import delete as deleteUtils
 from ckanext.ecosis.datastore.mapreduce.lookup import update as updateLookup
 from ckanext.ecosis.lib.utils import getPackageExtra, setPackageExtra
+from ckanext.ecosis.lib.context import get_context
 
 spectraCollection = None
 
@@ -38,7 +38,7 @@ class Push:
 
         # set the citation field
         setCitation(ckanPackage)
-        context = {'model': model, 'user': c.user}
+        context = get_context()
         ckanPackage = logic.get_action('package_update')(context, ckanPackage)
 
         # start our new thread

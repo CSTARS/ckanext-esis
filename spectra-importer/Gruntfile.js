@@ -75,7 +75,7 @@ module.exports = function (grunt) {
         useminPrepare: {
             options: {
                 root : '<%= yeoman.app %>/import',
-                dest: '<%= yeoman.dist %>/import',
+                dest: '<%= yeoman.dist %>',
                 verbose : true
             },
             html: '<%= yeoman.app %>/import/index.html'

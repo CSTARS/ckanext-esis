@@ -1,10 +1,10 @@
 # from ckan.common import response, request
 from ckan.common import request
-from ckan.lib.base import c, model
 import ckan.logic as logic
 import json, jwt, re
 from ckan.common import config
 import ckan.lib.authenticator as authenticator
+from ckanext.ecosis.lib.context import get_context
 import ckanext.ecosis.user_data.model as githubInfoModel
 import ckanext.ecosis.lib.utils as utils
 
@@ -12,23 +12,26 @@ from ckanext.ecosis.lib.auth import isAdmin
 
 secret = config.get('ecosis.jwt.secret')
 
+print("EcoSIS user controller init")
+
 # get information about logged in user, including if they are logged in
 def info():
-    if len(c.user) == 0:
-        return {"loggedIn": False}
+    context = get_context()
+    username = context.get('user')
 
-    context = {'model': model, 'user': c.user}
+    if len(username) == 0:
+        return {"loggedIn": False}
 
     # see line 604 of ckan/logic/action/get about params for this method
     orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
     user = {
         "loggedIn": True,
-        "username": c.user,
+        "username": username,
         "organizations" : orgs
     }
 
-    githubInfo = githubInfoModel.get(c.user)
+    githubInfo = githubInfoModel.get(username)
     if githubInfo is not None:
         user['githubUsername'] = githubInfo.github_username
         # user['githubAccessToken'] = githubInfo.github_access_token
@@ -68,7 +71,7 @@ def remote_login():
     return create_remote_login_response(user)
 
 def create_remote_login_response(user):
-    context = {'model': model, 'user': user}
+    context = get_context()
 
     # see line 604 of ckan/logic/action/get about params for this method
     # orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})

@@ -2,12 +2,12 @@ import os, json, re
 
 # from ckan.common import request, response
 from ckan.common import request, config
-from ckan.lib.base import c, model
 import ckan.logic as logic
 import ckan.lib.uploader as uploader
 
 import ckanext.ecosis.lib.utils as utils
 from ckanext.ecosis.lib.auth import hasAccess
+from ckanext.ecosis.lib.context import get_context
 import ckanext.ecosis.datastore.delete as deleteUtil
 import ckanext.ecosis.datastore.query as query
 import ckanext.ecosis.datastore.workspace as workspace
@@ -42,7 +42,7 @@ def deleteMany():
 # Actually delete a resource
 def _delete(params):
     # remove resource from disk - normally this doesn't happen
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     resource = logic.get_action('resource_show')(context, params)
 
     # if package has DOI applied, resources cannot be modified
@@ -77,7 +77,7 @@ def create():
         return {'error': True, 'message': 'Cannot add resources to package with applied DOI'}
 
     # run the default CKAN create resource logic
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     resource_create = logic.get_action('resource_create')
     resp = resource_create(context, request_data)
 
@@ -131,7 +131,7 @@ def _process(package_id, sheet_id, resource_id, ids, options):
         result = query.getResource(resource_id, sheet_id)
 
     # update the dataset, so the metadata timestamp changes
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     pkg = logic.get_action('package_show')(context, {'id': package_id})
 
     # use this counter to poke the dataset.  This will update the last modified timestamps

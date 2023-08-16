@@ -7,11 +7,11 @@ from ckanext.ecosis.lib.auth import hasAccess
 from ckanext.ecosis.datastore import workspace
 from ckanext.ecosis.datastore.ckan import package
 from ckan.common import request
-from ckan.lib.base import c, model
 import ckan.logic as logic
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.lib.utils import setPackageExtra
-from ckan.lib.email_notifications import send_notification
+from ckanext.ecosis.lib.context import get_context
+from ckanext.activity.email_notifications import send_notification
 from ckan.common import config
 from .doi import handleDoiUpdate, hasAppliedDoi, getDoiStatus, DOI_STATUS, applyDoi
 from .doi import init as initDoi
@@ -54,7 +54,7 @@ def delete():
         return json.dumps({'error': True, 'message':'Cannot delete package with applied DOI'})
 
     # remove from CKAN
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     logic.get_action('package_delete')(context, params)
 
     # remove from EcoSIS
@@ -70,7 +70,7 @@ def update():
     params = json.loads(request.body)
 
     hasAccess(params['id'])
-    context = {'model': model, 'user': c.user}
+    context = get_context()
 
     cpkg = logic.get_action('package_show')(context, {'id': params['id']})
 
@@ -122,7 +122,7 @@ def after_create():
 # this is a simple workaround service, for just upda
 # TODO: remove this, not required anymore, app should use normal package update
 def updateLinkedResources():
-    context = {'model': model, 'user': c.user}
+    context = get_context()
 
     params = request.get_json()
     package_id = params.get('id')
@@ -137,7 +137,7 @@ def updateLinkedResources():
     return {'success': True}
 
 def importPackage():
-    context = {'model': model, 'user': c.user}
+    context = get_context()
 
     package_uri = request.args.get('uri')
     if package_uri is None:

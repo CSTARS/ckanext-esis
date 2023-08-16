@@ -2,7 +2,7 @@ import json, os
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as tk
 import ckan.lib.base as base
-from ckan.common import config, request
+from ckan.common import config
 from ckan.logic.action.create import organization_member_create
 from ckan.logic.action.delete import organization_member_delete
 import ckan.logic as logic
@@ -39,7 +39,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
     '''
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.ITemplateHelpers)
-    plugins.implements(plugins.IRoutes, inherit=True)
+    # plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IOrganizationController)
     plugins.implements(plugins.IPackageController)
     plugins.implements(plugins.IResourceController)
@@ -254,6 +254,7 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
     # set helpers for ecosis templates
     def get_helpers(self):
+        print("get_helpers")
         # Example:
         #return { 'to_json' : 'self.to_json' }
         return {
@@ -264,12 +265,14 @@ class EcosisPlugin(plugins.SingletonPlugin,
         }
 
     def pushed_to_search(self, package_id):
+        print("pushed_to_search", package_id)
         result = query.isPushed(package_id)
         if result is None:
             return False
         return True
 
     def get_last_pushed_str(self, package_id):
+        print("get_last_pushed_str", package_id)
         result = query.isPushed(package_id)
         if result is None:
             return None
@@ -314,11 +317,13 @@ class EcosisPlugin(plugins.SingletonPlugin,
       root_dir = os.environ.get('CKAN_HOME', os.getcwd())
       if not os.path.exists(root_dir):
         raise Exception('CKAN_HOME not found: %s.  Unable to load static assests' % root_dir)
-      editor_redirects.add_url_rule(u'/import/', methods=[u'GET'],
+      editor_redirects.add_url_rule(u'/import', methods=[u'GET'],
           endpoint="spectra-importer",
+          strict_slashes=False,
           view_func=lambda: send_from_directory(os.path.join(root_dir, 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html'))
-      editor_redirects.add_url_rule(u'/doi-admin/', methods=[u'GET'],
+      editor_redirects.add_url_rule(u'/doi-admin', methods=[u'GET'],
           endpoint="doi-admin",
+          strict_slashes=False,
           view_func=lambda: send_from_directory(os.path.join(root_dir, 'ckanext-ecosis/doi-admin/dist/doi-admin'), 'index.html'))
       # print(os.path.join(root_dir, 'ckanext-ecosis/spectra-importer/dist/import'), 'index.html')
 
@@ -403,48 +408,48 @@ class EcosisPlugin(plugins.SingletonPlugin,
       return app
 
 
-    def before_map(self, map):
-        self.set_map(map)
-        return map
+    # def before_map(self, map):
+    #     self.set_map(map)
+    #     return map
 
     # override?
-    def set_map(self, map):
+    # def set_map(self, map):
 
-        # The 'new' way
-        controller = 'ckanext.ecosis.controller:EcosisController'
+    #     # The 'new' way
+    #     controller = 'ckanext.ecosis.controller:EcosisController'
 
-        # Standard CKAN overrides
-        # map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
-        # map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
-        # map.connect('update_package_3', '/api/3/action/package_update', controller=controller, action='updatePackage')
-        # map.connect('update_package', '/api/action/package_update', controller=controller, action='updatePackage')
-        # map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
-        # map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
-        # map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
-        # map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
-        # map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
-        # map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
+    #     # Standard CKAN overrides
+    #     # map.connect('create_package_3', '/api/3/action/package_create', controller=controller, action='createPackage')
+    #     # map.connect('create_package', '/api/action/package_create', controller=controller, action='createPackage')
+    #     # map.connect('update_package_3', '/api/3/action/package_update', controller=controller, action='updatePackage')
+    #     # map.connect('update_package', '/api/action/package_update', controller=controller, action='updatePackage')
+    #     # map.connect('delete_package_3', '/api/3/action/package_delete', controller=controller, action='deletePackage')
+        # # map.connect('delete_package', '/api/action/package_delete', controller=controller, action='deletePackage')
+        # # map.connect('delete_resource_3', '/api/3/action/resource_delete', controller=controller, action='deleteResource')
+        # # map.connect('delete_resource', '/api/action/resource_delete', controller=controller, action='deleteResource')
+        # # map.connect('create_resource_3', '/api/3/action/resource_create', controller=controller, action='createResource')
+        # # map.connect('create_resource', '/api/action/resource_create', controller=controller, action='createResource')
 
-        # ecosis - admin
-        map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
-        map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
-        map.connect('upgrade', '/ecosis/admin/upgrade', controller=controller, action='upgrade')
-        map.connect('fixUnits', '/ecosis/admin/fixUnits', controller=controller, action='fixUnits')
-        map.connect('fixCitations', '/ecosis/admin/fixCitations', controller=controller, action='fixCitations')
+        # # ecosis - admin
+        # map.connect('rebuild_usda_collection', '/ecosis/admin/rebuildUSDA', controller=controller, action='rebuildUSDACollection')
+        # map.connect('clean_tests', '/ecosis/admin/cleanTests', controller=controller, action='cleanTests')
+        # map.connect('upgrade', '/ecosis/admin/upgrade', controller=controller, action='upgrade')
+        # map.connect('fixUnits', '/ecosis/admin/fixUnits', controller=controller, action='fixUnits')
+        # map.connect('fixCitations', '/ecosis/admin/fixCitations', controller=controller, action='fixCitations')
 
-        # ecosis - admin doi
-        map.connect('getAllGithubInfo', '/ecosis/admin/github/sync', controller=controller, action='getAllGithubInfo')
+        # # ecosis - admin doi
+        # map.connect('getAllGithubInfo', '/ecosis/admin/github/sync', controller=controller, action='getAllGithubInfo')
 
-        # ecosis - package
-        map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
+        # # ecosis - package
+        # map.connect('setPrivate', '/ecosis/package/setPrivate', controller=controller, action='setPrivate')
 
-        # ecosis - workspace
+        # # ecosis - workspace
 
-        # custom pages
-        # map.connect('remotelogin', '/user/remotelogin', controller='ckanext.ecosis.plugin:StaticPageController', action='remotelogin')
+        # # custom pages
+        # # map.connect('remotelogin', '/user/remotelogin', controller='ckanext.ecosis.plugin:StaticPageController', action='remotelogin')
 
 
-        return map
+        # return map
 
     def package_types(self):
         # This plugin doesn't handle any special package types, it just

@@ -1,11 +1,11 @@
-from ckan.lib.base import c, model
 import ckan.logic as logic
-from ckan.lib.email_notifications import send_notification
+from ckanext.activity.email_notifications import send_notification
 from ckan.common import config
 # from ckan.common import request, response
 from ckan.common import request
 import json, datetime, psycopg2, urllib, base64
 from dateutil import parser
+from ckanext.ecosis.lib.context import get_context
 from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import setPackageExtra, getPackageExtra
 from ckanext.ecosis.lib.auth import isAdmin
@@ -132,7 +132,7 @@ def applyDoi(pkg):
     setPackageExtra('EcoSIS DOI Status', json.dumps({'value':DOI_STATUS["REQUESTING"]}), pkg)
 
     # update the dataset
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     pkg = logic.get_action('package_update')(context, pkg)
 
     # Request DOI from Datacite
@@ -283,7 +283,7 @@ def requestDoi(pkg):
 
 # helper for deleting package or updating resources
 def hasAppliedDoi(pkgId):
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     pkg = logic.get_action('package_show')(context, {'id': pkgId})
     resp = not canUpdate(getDoiStatus(pkg))
     return resp
@@ -325,7 +325,7 @@ def clearDoi():
 
     id = request.params.get('id')
 
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     pkg = logic.get_action('package_show')(context, {'id': id})
 
     # check EcoSIS DOI status

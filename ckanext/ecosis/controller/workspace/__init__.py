@@ -2,16 +2,16 @@ import ckanext.ecosis.datastore.workspace as workspace
 import ckanext.ecosis.datastore.query.workspace as workspaceQuery
 from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import jsonStringify
+from ckanext.ecosis.lib.context import get_context
 
 from ckan.common import request
-from ckan.lib.base import c, model
 import ckan.logic as logic
 
 def prepare():
     package_id = request.params.get('package_id')
 
     # get package by name or id
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
     if ckanPackage == None:
@@ -43,7 +43,7 @@ def pushToSearch():
     if email is None:
         email = "false"
 
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     ckanPackage = logic.get_action('package_show')(context, {"id": package_id})
 
     if email == True or email.lower() == "true":
@@ -59,7 +59,7 @@ def get():
     package_id = request.params.get('package_id')
 
     # get package by name or id
-    context = {'model': model, 'user': c.user}
+    context = get_context()
     ckanPackage = logic.get_action('package_show')(context, {'id': package_id})
 
     return jsonStringify(workspaceQuery.get(ckanPackage.get("id")))
