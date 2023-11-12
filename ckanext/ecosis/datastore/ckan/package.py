@@ -18,7 +18,7 @@ def getPgConn():
 
 # get a dataset by id
 def get(package_id):
-    conn = psycopg2.connect(connStr)
+    conn = getPgConn()
 
     # query pg for dataset
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -69,7 +69,7 @@ def get(package_id):
 # query package by EcoSIS DOI status.  Uses pg-json functionality
 # TODO: build index on doi status -> value field
 def doiQuery(status="", query="", limit=10, offset=0):
-    conn = psycopg2.connect(connStr)
+    conn = getPgConn()
 
     if status == "" or status is None:
         status = "Pending Approval"

@@ -12,8 +12,6 @@ from ckanext.ecosis.lib.auth import isAdmin
 
 secret = config.get('ecosis.jwt.secret')
 
-print("EcoSIS user controller init")
-
 # get information about logged in user, including if they are logged in
 def info():
     context = get_context()

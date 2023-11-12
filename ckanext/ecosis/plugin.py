@@ -254,7 +254,6 @@ class EcosisPlugin(plugins.SingletonPlugin,
 
     # set helpers for ecosis templates
     def get_helpers(self):
-        print("get_helpers")
         # Example:
         #return { 'to_json' : 'self.to_json' }
         return {
@@ -265,14 +264,12 @@ class EcosisPlugin(plugins.SingletonPlugin,
         }
 
     def pushed_to_search(self, package_id):
-        print("pushed_to_search", package_id)
         result = query.isPushed(package_id)
         if result is None:
             return False
         return True
 
     def get_last_pushed_str(self, package_id):
-        print("get_last_pushed_str", package_id)
         result = query.isPushed(package_id)
         if result is None:
             return None
@@ -400,6 +397,9 @@ class EcosisPlugin(plugins.SingletonPlugin,
           view_func=controller.doiQuery)
       api.add_url_rule(u'/admin/doi/clear', methods=[u'GET'],
           view_func=controller.clearDoi)
+      # map.connect('getAllGithubInfo', '/ecosis/admin/github/sync', controller=controller, action='getAllGithubInfo')     
+      api.add_url_rule(u'/admin/github/sync', methods=[u'GET'],
+          view_func=controller.getAllGithubInfo)
 
       app.register_blueprint(api)
       return app
