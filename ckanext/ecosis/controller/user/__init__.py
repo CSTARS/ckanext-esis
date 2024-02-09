@@ -57,8 +57,7 @@ def remote_login():
         'password' : password
     }
 
-    auth = authenticator.UsernamePasswordAuthenticator()
-    user = auth.authenticate(request.environ, identity)
+    user = authenticator.ckan_authenticator(identity)
 
     if user == None:
         return json.dumps({
@@ -74,16 +73,15 @@ def create_remote_login_response(user):
     # see line 604 of ckan/logic/action/get about params for this method
     # orgs = logic.get_action('organization_list_for_user')(context,{"permission": "create_dataset"})
 
-    user = logic.get_action('user_show')(context, {'id':user})
-    is_admin = user.get('sysadmin')
+    # user = logic.get_action('user_show')(context, {'id':user.id})
 
     user = {
         "loggedIn" : True,
-        "username": user['name'],
-        "fullname": user['fullname'],
-        "email" : user['email'],
-        "id" : user['id'],
-        "state" : user['state'],
+        "username": user.name,
+        "fullname": user.fullname,
+        "email" : user.email,
+        "id" : user.id,
+        "state" : user.state,
         "github" : {}
         #"organizations": orgs
     }
