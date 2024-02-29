@@ -17,7 +17,7 @@ def get(resource_id):
     cur.close()
 
     if len(resource) == 0:
-        raise Exception('Invalid resource ID')
+        raise Exception(f'Invalid resource ID: {resource_id}')
     else:
         resource = resource[0]
 
