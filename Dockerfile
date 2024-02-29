@@ -7,3 +7,5 @@ COPY ./ ckanext-ecosis/
 
 RUN pip install -e /ckan/src/ckanext-ecosis
 RUN pip install -r /ckan/src/ckanext-ecosis/requirements.txt
+
+ENV WTF_CSRF_ENABLED=False

@@ -4,6 +4,7 @@ from ckanext.ecosis.datastore.push import Push
 from ckanext.ecosis.lib.utils import jsonStringify
 from ckanext.ecosis.lib.context import get_context
 
+import ckan.model as model
 from ckan.common import request
 import ckan.logic as logic
 
@@ -46,6 +47,9 @@ def pushToSearch():
     context = get_context()
     ckanPackage = logic.get_action('package_show')(context, {"id": package_id})
 
+    # might be: model = context['model']
+    user = model.User.get(context.get('user'))
+
     if email == True or email.lower() == "true":
         email = True
     else:
@@ -53,7 +57,7 @@ def pushToSearch():
 
     push = Push()
 
-    return push.run(ckanPackage, email, c.userobj.email, c.userobj.display_name)
+    return push.run(ckanPackage, email, user.email, user.display_name)
 
 def get():
     package_id = request.params.get('package_id')
