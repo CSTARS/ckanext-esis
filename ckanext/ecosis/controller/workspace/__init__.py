@@ -21,7 +21,7 @@ def prepare():
     force = request.params.get('force')
     clean = request.params.get('clean')
     if force == "true":
-        force = False
+        force = True
     else:
         force = False
 

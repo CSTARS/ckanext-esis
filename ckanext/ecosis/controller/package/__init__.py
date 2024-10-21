@@ -98,6 +98,7 @@ def after_create():
     # send email to the admin email group
     url = config.get('ckan.site_url')
     admin_email = config.get('ecosis.admin_email')
+    username = get_context().get('user')
 
     if url != "" and url is not None:
         if admin_email != "" and admin_email is not None:
@@ -112,7 +113,7 @@ def after_create():
                         "body" : ("The dataset '%s' has been created by %s/user/%s.  "
                                     "You can view the dataset here:  %s/dataset/%s"
                                     "\n\n-EcoSIS Server") %
-                                 (ckanPackage.get('title'), config.get('ckan.site_url'), c.user, config.get('ckan.site_url'), ckanPackage.get("name"))
+                                 (ckanPackage.get('title'), config.get('ckan.site_url'), username, config.get('ckan.site_url'), ckanPackage.get("name"))
                     }
                 )
             except:

@@ -69,6 +69,8 @@ def handleDoiUpdate(currentPackage, newPackage):
     oldDoi = getDoiStatus(currentPackage)
     newDoi = getDoiStatus(newPackage)
 
+    username = get_context().get('user')
+
     # No changes
     if oldDoi.get('status').get('value') == newDoi.get('status').get('value') and oldDoi.get('status').get('error') != True:
         if oldDoi.get('value') == newDoi.get('value'):
@@ -88,7 +90,7 @@ def handleDoiUpdate(currentPackage, newPackage):
             # set the requesting user
             status = {
                 'value' : DOI_STATUS['PENDING_APPROVAL'],
-                'requested_by' : c.user
+                'requested_by' : username
             }
             setPackageExtra('EcoSIS DOI Status', json.dumps(status), newPackage)
 
@@ -340,6 +342,7 @@ def clearDoi():
 def sendAdminNotification(pkg):
     url = config.get('ckan.site_url')
     admin_email = config.get('ecosis.admin_email')
+    username = get_context().get('user')
 
     if url != "" and url is not None:
         if admin_email != "" and admin_email is not None:
@@ -354,7 +357,7 @@ def sendAdminNotification(pkg):
                         "body" : ("A DOI has been requested for the dataset '%s' by user %s/user/%s.  "
                                     "You can view the dataset here:  %s/#result/%s and approve the DOI here: %s/doi-admin/#%s"
                                     "\n\n-EcoSIS Server") %
-                                 (pkg.get('title'), config.get('ckan.site_url'), c.user, config.get('ecosis.search_url'), pkg.get("id"), config.get('ckan.site_url'), urllib.parse.urlencode(pkg.get("title"), quote_via=urllib.parse.quote_plus))
+                                 (pkg.get('title'), config.get('ckan.site_url'), username, config.get('ecosis.search_url'), pkg.get("id"), config.get('ckan.site_url'), urllib.parse.urlencode(pkg.get("title"), quote_via=urllib.parse.quote_plus))
                     }
                 )
             except:
